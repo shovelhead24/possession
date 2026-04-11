@@ -12,7 +12,7 @@ config_version=5
 
 config/name="HaloTest"
 run/main_scene="uid://baveer3oax27d"
-config/features=PackedStringArray("4.5", "Forward Plus")
+config/features=PackedStringArray("4.5", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [display]
