@@ -141,6 +141,12 @@ if (-not $diagOk) {
     exit 1
 }
 
+# Auto-extract any asset packs that are in assets/ but not yet in game/
+$extractScript = "$projectPath\scripts\extract-assets.ps1"
+if (Test-Path $extractScript) {
+    & powershell -ExecutionPolicy Bypass -File $extractScript
+}
+
 Write-Host "Watching for new commits every $pollSeconds seconds. Close this window to stop."
 Write-Host "Press L to push the current log so Claude can read it."
 Write-Host ""
