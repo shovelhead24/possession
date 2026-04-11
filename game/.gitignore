@@ -1,5 +1,6 @@
-# Godot 4+ specific ignores
-.godot/
+# Godot 4+ specific ignores — exclude editor cache but keep imported textures
+.godot/*
+!.godot/imported/
 /android/
 
 # Large 3D asset packs — stored locally only, not tracked in git
