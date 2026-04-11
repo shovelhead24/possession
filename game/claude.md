@@ -3,7 +3,7 @@
 ## Project Context
 
 This is a Godot 4.5 scifi FPS game targeting low-spec/potato hardware.
-Main project folder: `halo-test - heightmaps 13/`
+Main project folder: `game/`
 Large 3D asset packs are NOT in git — they live locally only (see .gitignore).
 
 ---
@@ -22,7 +22,7 @@ powershell -ExecutionPolicy Bypass -File "C:\Games\possession\scripts\diagnose.p
 
 ```powershell
 # Replace paths to match your machine
-& "C:\Godot\Godot_v4.x.exe" --path "C:\Games\possession\halo-test - heightmaps 13" --verbose 2>&1 | Tee-Object -FilePath "$env:USERPROFILE\godot_log.txt"
+& "C:\Godot\Godot_v4.x.exe" --path "C:\Games\possession\game" --verbose 2>&1 | Tee-Object -FilePath "$env:USERPROFILE\godot_log.txt"
 ```
 
 Log saved to: `%USERPROFILE%\godot_log.txt`

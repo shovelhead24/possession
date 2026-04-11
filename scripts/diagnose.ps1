@@ -3,7 +3,7 @@
 # Usage: powershell -ExecutionPolicy Bypass -File "C:\Games\possession\scripts\diagnose.ps1"
 
 $projectPath = "C:\Games\possession"
-$gameDir     = "$projectPath\halo-test - heightmaps 13"
+$gameDir     = "$projectPath\game"
 
 Write-Host ""
 Write-Host "=== SYSTEM ===" -ForegroundColor Cyan

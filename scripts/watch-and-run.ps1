@@ -44,11 +44,11 @@ function Run-Diagnostics {
     }
 
     # 2. Project path and project.godot
-    if (Test-Path "$projectPath\halo-test - heightmaps 13\project.godot") {
+    if (Test-Path "$projectPath\game\project.godot") {
         Write-Host "[OK]  project.godot found" -ForegroundColor Green
     } else {
         Write-Host "[FAIL] project.godot not found under: $projectPath" -ForegroundColor Red
-        Write-Host "       Expected: $projectPath\halo-test - heightmaps 13\project.godot" -ForegroundColor Red
+        Write-Host "       Expected: $projectPath\game\project.godot" -ForegroundColor Red
         $ok = $false
     }
 
@@ -62,7 +62,7 @@ function Run-Diagnostics {
     }
 
     # 4. Large asset packs (local-only, not in git)
-    $gameDir = "$projectPath\halo-test - heightmaps 13"
+    $gameDir = "$projectPath\game"
     $assetPacks = @(
         "custom_halo_classic_ring",
         "enemy",
@@ -117,7 +117,7 @@ function Start-Godot {
         Start-Sleep -Seconds 2
     }
 
-    $gamePath = "$projectPath\halo-test - heightmaps 13"
+    $gamePath = "$projectPath\game"
     Write-Host "$(Get-Date -Format HH:mm:ss) Launching Godot..."
     Write-Host "  Path: $gamePath"
 
