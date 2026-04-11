@@ -17,9 +17,13 @@ $packs = [ordered]@{
     "fp_arms"                               = "fp_arms"
     "fps_arms"                              = "fps_arms"
     "enemy"                                 = "enemy"
-    "grass_pack_of_9_vars_lowpoly_game_ready" = "grass_pack_of_9_vars_lowpoly_game_ready"
-    "realistic_fir_trees_pack_lods_gameready" = "realistic_fir_trees_pack_lods_gameready"
-    "custom_halo_classic_ring"              = "custom_halo_classic_ring"
+    "grass_pack_of_9_vars_lowpoly_game_ready"   = "grass_pack_of_9_vars_lowpoly_game_ready"
+    "realistic_fir_trees_pack_lods_gameready"   = "realistic_fir_trees_pack_lods_gameready"
+    "realistic_trees_collection"                = "realistic_trees_collection"
+    "tall_coniferous_fir_variant_low_poly"      = "tall_coniferous_fir_variant_low_poly"
+    "low_poly_red_spruce_tree_custom_textures"  = "low_poly_red_spruce_tree_custom_textures"
+    "skybox"                                    = "skybox"
+    "custom_halo_classic_ring"                  = "custom_halo_classic_ring"
 }
 
 Write-Host ""
