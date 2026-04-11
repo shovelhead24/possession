@@ -118,17 +118,15 @@ function Start-Godot {
     }
 
     $gamePath = "$projectPath\game"
+    $godotBuiltinLog = "$env:APPDATA\Godot\app_userdata\HaloTest\logs\godot.log"
     Write-Host "$(Get-Date -Format HH:mm:ss) Launching Godot..."
     Write-Host "  Path: $gamePath"
-    Write-Host "  Log : $logFile"
+    Write-Host "  Log : $godotBuiltinLog"
+    Write-Host "  Tip : Get-Content `"$godotBuiltinLog`" -Wait -Tail 40"
 
-    # Clear previous log so each run starts fresh
-    if (Test-Path $logFile) { Clear-Content $logFile }
-
-    # Wrap in cmd so stdout+stderr are captured to log while Godot window stays visible
-    # cmd /c runs Godot, redirects output, then exits - Godot's own window is unaffected
-    $cmdArgs = '/c "' + $godotExe + '" --path "' + $gamePath + '" --verbose > "' + $logFile + '" 2>&1'
-    return Start-Process -FilePath "cmd.exe" -ArgumentList $cmdArgs -WindowStyle Hidden -PassThru
+    # Launch Godot directly so its window appears on screen
+    $args = '--path "' + $gamePath + '" --verbose'
+    return Start-Process -FilePath $godotExe -ArgumentList $args -PassThru
 }
 
 # ------------------------------------------------------------------ #
