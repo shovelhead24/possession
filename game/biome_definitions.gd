@@ -204,24 +204,24 @@ static func get_biome_traits(biome: BiomeType) -> NoiseTraits:
 			traits.water_level = -1  # No local water (above water table)
 
 		BiomeType.RIVER_VALLEY:
-			# Low-lying, fertile, winding terrain
-			traits.continental_freq = 0.0002
-			traits.mountain_freq = 0.0006
+			# Low-lying, fertile, winding terrain with distinct hills and valleys
+			traits.continental_freq = 0.00015
+			traits.mountain_freq = 0.0008
 			traits.hill_freq = 0.003
 			traits.detail_freq = 0.012
 
-			traits.continental_weight = 0.45
-			traits.mountain_weight = 0.25
+			traits.continental_weight = 0.35
+			traits.mountain_weight = 0.35
 			traits.hill_weight = 0.2
 			traits.detail_weight = 0.1
 
-			traits.height_multiplier = 0.4
+			traits.height_multiplier = 0.65
 			traits.base_elevation = 0.02  # Near water level
 
-			# Medium warping - creates winding valleys and meandering features
-			traits.warp_strength = 45.0
-			traits.warp_frequency = 0.0025
-			traits.ridge_power = 1.3
+			# Stronger warping for more dramatic ridges and valleys
+			traits.warp_strength = 90.0
+			traits.warp_frequency = 0.002
+			traits.ridge_power = 1.5
 
 			# Moderate micro-detail for riverbed stones and banks
 			traits.micro_freq = 0.022

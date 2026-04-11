@@ -28,8 +28,8 @@ background_color = Color(0.02, 0.04, 0.10, 1)
 background_mode = 1
 background_color = Color(0, 0, 0, 0)
 ambient_light_source = 2
-ambient_light_color = Color(0.7, 0.7, 0.75, 1)
-ambient_light_energy = 1.4
+ambient_light_color = Color(0.55, 0.57, 0.62, 1)
+ambient_light_energy = 0.5
 
 [node name="World" type="Node3D"]
 
@@ -79,7 +79,7 @@ own_world_3d = true
 transparent_bg = true
 handle_input_locally = false
 size = Vector2i(1366, 768)
-render_target_update_mode = 4
+render_target_update_mode = 3
 
 [node name="WeaponWorldEnvironment" type="WorldEnvironment" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
 environment = SubResource("Environment_weapon")
@@ -128,7 +128,7 @@ use_heightmap = false
 use_custom_terrain = false
 terrain_width = 500.0
 terrain_depth = 500.0
-terrain_height = 45.0
+terrain_height = 400.0
 water_level = 40.0
 biome_type = 4
 
