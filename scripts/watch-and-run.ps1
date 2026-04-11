@@ -241,6 +241,11 @@ while ($true) {
         Write-Host "$(Get-Date -Format HH:mm:ss) [watching] commit $hash8 | poll #$pollCount" -ForegroundColor DarkGray
     }
 
+    # Auto-push log every 20 polls (~5 minutes) so Claude can read it without L keypress
+    if ($pollCount % 20 -eq 0) {
+        Push-Log
+    }
+
     if ($godotProcess -and $godotProcess.HasExited) {
         Write-Host "$(Get-Date -Format HH:mm:ss) Godot exited (code $($godotProcess.ExitCode)). Relaunching..."
         $godotProcess = Start-Godot $null
