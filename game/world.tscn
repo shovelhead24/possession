@@ -22,7 +22,7 @@ albedo_color = Color(0.38014632, 0.6847695, 0.3898171, 1)
 
 [sub_resource type="Environment" id="Environment_tlwt5"]
 background_mode = 1
-background_color = Color(0.02, 0.04, 0.10)
+background_color = Color(0.02, 0.04, 0.10, 1)
 
 [node name="World" type="Node3D"]
 
