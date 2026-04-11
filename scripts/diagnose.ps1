@@ -90,8 +90,8 @@ $logFile = "$projectPath\logs\godot_latest.log"
 if (Test-Path $logFile) {
     Get-Content $logFile -Tail 50
 } else {
-    Write-Host "No log yet — run watch-and-run.ps1 first to generate one"
+    Write-Host "No log yet - run watch-and-run.ps1 first to generate one"
 }
 
 Write-Host ""
-Write-Host "=== DONE — paste everything above into the chat ===" -ForegroundColor Cyan
+Write-Host "=== DONE - paste everything above into the chat ===" -ForegroundColor Cyan
