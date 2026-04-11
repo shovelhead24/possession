@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://baveer3oax27d"]
+[gd_scene load_steps=17 format=3 uid="uid://baveer3oax27d"]
 
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_f3sb7"]
 [ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_fj7yv"]
@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://b6djpqa2ixj86" path="res://enemy/scene.gltf" id="10_enemy"]
 [ext_resource type="Script" path="res://enemy_controller.gd" id="11_enemy_ctrl"]
 [ext_resource type="PackedScene" uid="uid://cwarthog123" path="res://warthog.tscn" id="12_warthog"]
-[ext_resource type="Shader" path="res://sky_shader.gdshader" id="13_sky_shader"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gv5m4"]
 albedo_color = Color(0.38014632, 0.6847695, 0.3898171, 1)
@@ -21,15 +20,9 @@ albedo_color = Color(0.38014632, 0.6847695, 0.3898171, 1)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fj7yv"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
-shader = ExtResource("13_sky_shader")
-
-[sub_resource type="Sky" id="Sky_fj7yv"]
-sky_material = SubResource("ShaderMaterial_sky")
-
 [sub_resource type="Environment" id="Environment_tlwt5"]
-background_mode = 2
-sky = SubResource("Sky_fj7yv")
+background_mode = 1
+background_color = Color(0.02, 0.04, 0.10)
 
 [node name="World" type="Node3D"]
 

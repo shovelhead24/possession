@@ -840,20 +840,27 @@ func create_simple_tree() -> Node3D:
 
 	return tree
 
+static func _load_tex(path: String) -> ImageTexture:
+	# Load image directly from file, bypassing the .godot/imported cache.
+	# This works even when headless import hasn't run (no .ctex files).
+	var img = Image.new()
+	if img.load(path) == OK:
+		return ImageTexture.create_from_image(img)
+	return null
+
 func create_terrain_material() -> Material:
 	# Try to load shader and textures
 	var shader = load("res://terrain_shader.gdshader") if ResourceLoader.exists("res://terrain_shader.gdshader") else null
-	var grass_tex = load("res://grass.jpeg") if ResourceLoader.exists("res://grass.jpeg") else null
-	var snow_tex = load("res://snow.jpeg") if ResourceLoader.exists("res://snow.jpeg") else null
-	var stone_tex = load("res://stone.jpg") if ResourceLoader.exists("res://stone.jpg") else null
-	# Note: chalk.avif not supported - try common formats or use null
-	var chalk_tex = null
+	var grass_tex = _load_tex("res://grass.jpeg")
+	var snow_tex  = _load_tex("res://snow.jpeg")
+	var stone_tex = _load_tex("res://stone.jpg")
+	var chalk_tex: ImageTexture = null
 	for ext in [".png", ".jpg", ".jpeg"]:
-		var path = "res://chalk" + ext
-		if ResourceLoader.exists(path):
-			chalk_tex = load(path)
+		var t = _load_tex("res://chalk" + ext)
+		if t:
+			chalk_tex = t
 			break
-	var sand_tex = load("res://sand.jpg") if ResourceLoader.exists("res://sand.jpg") else null
+	var sand_tex = _load_tex("res://sand.jpg")
 
 	if shader and grass_tex and snow_tex:
 		# Use shader material with textures

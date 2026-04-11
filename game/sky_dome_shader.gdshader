@@ -22,6 +22,16 @@ uniform float ring_azimuth_offset : hint_range(0.0, 360.0) = 0.0;
 uniform vec3  ring_near_color : source_color = vec3(0.30, 0.45, 0.25);
 uniform vec3  ring_far_color  : source_color = vec3(0.50, 0.58, 0.68);
 
+// Pass local sphere vertex position as the sky ray direction.
+// SphereMesh vertices are centred at origin, so VERTEX normalised = outward direction.
+// cull_front renders the inner surface; the local position still points "outward"
+// from the sphere centre, which is exactly the sky ray we want.
+varying vec3 sky_dir;
+
+void vertex() {
+	sky_dir = VERTEX;
+}
+
 // --- helpers ---
 
 float hash(vec2 p) {
@@ -52,15 +62,12 @@ float star_field(vec3 dir) {
 // --- main ---
 
 void fragment() {
-	// World-space sky direction — outward sphere normal transformed from view space.
-	// cull_front means we see the inner surface; NORMAL still points outward (away from
-	// sphere centre = away from camera), which is exactly the sky ray direction.
-	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	vec3 dir = normalize(sky_dir);
 
 	float day    = smoothstep(-10.0, 20.0, sun_elevation);
 	float sunset = smoothstep(-10.0, 5.0, sun_elevation) * smoothstep(25.0, 5.0, sun_elevation);
 
-	// Sky gradient
+	// Sky gradient — dir.y: +1 = zenith, 0 = horizon, -1 = nadir
 	vec3 top   = mix(night_sky_top,   day_sky_top,    day);
 	vec3 horiz = mix(night_sky_horiz, day_sky_horizon, day);
 	horiz      = mix(horiz, sunset_color, sunset * 0.7);
@@ -84,7 +91,7 @@ void fragment() {
 	}
 
 	// Halo ring horizon — a great circle passing through zenith.
-	// Perspective: width scales as 1/sin(elevation), capped at 50×.
+	// Perspective: width scales as 1/sin(elevation), capped at 50x.
 	float ring_rad   = radians(ring_azimuth_offset);
 	vec3 rot_dir = vec3(
 		dir.x * cos(ring_rad) - dir.z * sin(ring_rad),

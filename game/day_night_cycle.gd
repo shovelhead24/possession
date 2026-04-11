@@ -43,6 +43,9 @@ func _ready():
 		print("DayNightCycle: Using existing sun light: ", sun_light.name)
 
 	sun_light.light_energy = 1.0
+	# Exclude weapon layer (layer 2) so the day/night sun doesn't dim weapon models.
+	# The dedicated WeaponLight inside the SubViewport handles weapon illumination.
+	sun_light.light_cull_mask = 0xFFFFFD  # all layers except layer 2
 
 	# Setup environment
 	setup_environment()
@@ -109,7 +112,7 @@ func _process(delta):
 	# Keep sky dome centred on the camera so it always fills the background
 	if sky_dome:
 		var camera = get_viewport().get_camera_3d()
-		if camera:
+		if camera and camera.is_inside_tree():
 			sky_dome.global_position = camera.global_position
 
 func update_sun():
@@ -186,7 +189,7 @@ func check_sun_visibility() -> bool:
 	var space_state = get_world_3d().direct_space_state
 	var camera = get_viewport().get_camera_3d()
 
-	if not camera:
+	if not camera or not camera.is_inside_tree():
 		return true
 
 	var from = camera.global_position
