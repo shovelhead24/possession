@@ -38,6 +38,7 @@ if ($godotCmd) {
     $candidates = @(
         "$env:USERPROFILE\Downloads\Godot*.exe",
         "$env:USERPROFILE\Desktop\Godot*.exe",
+        "C:\Godot\Godot_v4.5.1-stable_win64.exe",
         "C:\Godot\Godot*.exe",
         "C:\Program Files\Godot\Godot*.exe"
     )

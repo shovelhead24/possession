@@ -11,7 +11,7 @@
 
 # ---- CONFIGURE THESE ----
 $projectPath = "C:\Games\possession"          # Where you cloned the repo
-$godotExe    = "C:\Godot\Godot_v4.x.exe"     # Path to your Godot 4 executable
+$godotExe    = "C:\Godot\Godot_v4.5.1-stable_win64.exe"
 $pollSeconds = 15                              # How often to check for new commits
 # -------------------------
 
