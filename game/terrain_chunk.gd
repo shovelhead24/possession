@@ -243,63 +243,63 @@ func generate_terrain():
 	# Create skirt triangles
 	var skirt_offset = main_vert_count
 
-	# Bottom edge skirt triangles
+	# Bottom edge skirt triangles (face -Z, outward from bottom edge)
 	for x in range(resolution):
 		var top_left = x
 		var top_right = x + 1
 		var bot_left = skirt_offset + x
 		var bot_right = skirt_offset + x + 1
 		indices.push_back(top_left)
-		indices.push_back(bot_left)
-		indices.push_back(top_right)
 		indices.push_back(top_right)
 		indices.push_back(bot_left)
+		indices.push_back(top_right)
 		indices.push_back(bot_right)
+		indices.push_back(bot_left)
 
 	skirt_offset += resolution + 1
 
-	# Top edge skirt triangles
+	# Top edge skirt triangles (face +Z, outward from top edge)
 	for x in range(resolution):
 		var top_left = resolution * (resolution + 1) + x
 		var top_right = resolution * (resolution + 1) + x + 1
 		var bot_left = skirt_offset + x
 		var bot_right = skirt_offset + x + 1
 		indices.push_back(top_left)
-		indices.push_back(top_right)
 		indices.push_back(bot_left)
 		indices.push_back(top_right)
+		indices.push_back(top_right)
+		indices.push_back(bot_left)
 		indices.push_back(bot_right)
-		indices.push_back(bot_left)
 
 	skirt_offset += resolution + 1
 
-	# Left edge skirt triangles
+	# Left edge skirt triangles (face -X, outward from left edge)
 	for z in range(resolution):
 		var top_idx = z * (resolution + 1)
 		var bot_idx = (z + 1) * (resolution + 1)
 		var top_skirt = skirt_offset + z
 		var bot_skirt = skirt_offset + z + 1
 		indices.push_back(top_idx)
-		indices.push_back(bot_idx)
 		indices.push_back(top_skirt)
 		indices.push_back(bot_idx)
+		indices.push_back(top_skirt)
 		indices.push_back(bot_skirt)
-		indices.push_back(top_skirt)
+		indices.push_back(bot_idx)
 
 	skirt_offset += resolution + 1
 
-	# Right edge skirt triangles
+	# Right edge skirt triangles (face +X, outward from right edge)
 	for z in range(resolution):
 		var top_idx = z * (resolution + 1) + resolution
 		var bot_idx = (z + 1) * (resolution + 1) + resolution
 		var top_skirt = skirt_offset + z
 		var bot_skirt = skirt_offset + z + 1
 		indices.push_back(top_idx)
-		indices.push_back(top_skirt)
-		indices.push_back(bot_idx)
 		indices.push_back(bot_idx)
 		indices.push_back(top_skirt)
+		indices.push_back(bot_idx)
 		indices.push_back(bot_skirt)
+		indices.push_back(top_skirt)
 
 	# Calculate normals
 	for i in range(vertices.size()):
