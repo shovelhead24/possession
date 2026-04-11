@@ -96,8 +96,10 @@ func setup_environment():
 	sky_dome.material_override = sky_shader_material
 	sky_dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	sky_dome.gi_mode    = GeometryInstance3D.GI_MODE_DISABLED
-	# Render on a layer that nothing else uses so it can't interfere
-	get_parent().add_child(sky_dome)
+	# Defer add_child — calling it during _ready() while parent is still
+	# initialising children causes a "parent node is busy" error and silently
+	# drops the node, leaving the sky dome invisible.
+	get_parent().add_child.call_deferred(sky_dome)
 	print("DayNightCycle: Sky dome created (GL Compat spatial shader)")
 
 func _process(delta):
@@ -110,7 +112,7 @@ func _process(delta):
 	update_lighting()
 
 	# Keep sky dome centred on the camera so it always fills the background
-	if sky_dome:
+	if sky_dome and sky_dome.is_inside_tree():
 		var camera = get_viewport().get_camera_3d()
 		if camera and camera.is_inside_tree():
 			sky_dome.global_position = camera.global_position
