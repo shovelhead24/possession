@@ -40,15 +40,15 @@ var borrowed_trees: Dictionary = {}
 # Grass currently borrowed by chunks (chunk_coords -> Array of grass)
 var borrowed_grass: Dictionary = {}
 
-# Pool configuration - Trees
-@export var initial_pool_size: int = 4000  # Pre-allocate for 200 trees/chunk with multiple chunks
-@export var pool_grow_size: int = 100  # Grow in larger batches to keep up with chunk loading
-@export var max_pool_size: int = 10000  # Support up to ~50 chunks with trees (200 each)
+# Pool configuration - Trees (tuned for Intel UHD / potato hardware)
+@export var initial_pool_size: int = 15   # Small sync seed — keeps startup fast
+@export var pool_grow_size: int = 20      # Grow slowly to spread CPU cost
+@export var max_pool_size: int = 150      # Hard cap for Intel UHD
 
 # Pool configuration - Grass
-@export var initial_grass_pool_size: int = 5000  # More grass than trees
-@export var grass_grow_size: int = 100  # Grow grass in larger batches
-@export var max_grass_pool_size: int = 10000  # Max grass instances to match tree count
+@export var initial_grass_pool_size: int = 0   # Fully async — grass is less urgent
+@export var grass_grow_size: int = 30
+@export var max_grass_pool_size: int = 250
 
 var total_trees_created: int = 0
 var total_grass_created: int = 0
@@ -56,8 +56,8 @@ var total_grass_created: int = 0
 # Async pool growth - spread tree creation across frames
 var pending_grow_count: int = 0
 var pending_grass_grow_count: int = 0
-var trees_per_frame: int = 5  # Create max 5 trees per frame when growing
-var grass_per_frame: int = 20  # Create max 20 grass per frame (they're simpler)
+var trees_per_frame: int = 2   # Very slow growth — 1 GLTF instantiation per frame is ~2ms
+var grass_per_frame: int = 10
 
 func _ready():
 	print("PropPool: _ready() START")
@@ -65,18 +65,11 @@ func _ready():
 	print("PropPool: load_tree_models() DONE - ", tree_scenes.size(), " scenes loaded")
 	load_grass_models()
 	print("PropPool: load_grass_models() DONE - grass_scene=", grass_scene != null)
-	# Calculate actual mesh-based pivot offsets before creating pool
-	print("PropPool: Starting calculate_tree_pivot_offsets()...")
 	calculate_tree_pivot_offsets()
-	print("PropPool: calculate_tree_pivot_offsets() DONE")
-	# Create initial pool synchronously at startup (loading screen anyway)
-	print("PropPool: Starting grow_pool_sync(", initial_pool_size, ")...")
+	# Seed pool synchronously with a small number to give early chunks something to borrow
 	grow_pool_sync(initial_pool_size)
-	print("PropPool: grow_pool_sync() DONE - created ", total_trees_created, " trees")
-	print("PropPool: Starting grow_grass_pool_sync(", initial_grass_pool_size, ")...")
-	grow_grass_pool_sync(initial_grass_pool_size)
-	print("PropPool: grow_grass_pool_sync() DONE - created ", total_grass_created, " grass")
-	print("PropPool: Initialized with ", initial_pool_size, " trees and ", initial_grass_pool_size, " grass")
+	# Grow the rest async across many frames (avoids giant startup freeze)
+	print("PropPool: Seeded with ", total_trees_created, " trees (rest grows async as needed)")
 
 func _process(_delta):
 	# Async tree pool growth - create a few trees per frame if needed
@@ -493,6 +486,9 @@ func create_model_tree(type_index: int) -> Node3D:
 	var base_scale = tree_scales[type_index]
 	container.scale = Vector3(base_scale, base_scale, base_scale)
 
+	# Disable shadows on all mesh instances — huge perf win on Intel UHD
+	disable_shadows_recursive(container)
+
 	return container
 
 # Set up LOD nodes for a tree - hide other variants, keep all LODs of our variant
@@ -688,6 +684,17 @@ func hide_except_pattern(root_node: Node, show_pattern: String):
 			else:
 				# Add non-tree nodes to queue for processing
 				queue.push_back(child)
+
+func disable_shadows_recursive(root_node: Node):
+	var queue: Array = [root_node]
+	while queue.size() > 0:
+		var node = queue.pop_back()
+		if not node or not is_instance_valid(node):
+			continue
+		if node is MeshInstance3D:
+			(node as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		for child in node.get_children():
+			queue.push_back(child)
 
 func fix_tree_materials(root_node: Node):
 	# Iteratively fix materials on all MeshInstance3D descendants

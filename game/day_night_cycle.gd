@@ -1,8 +1,8 @@
 extends Node3D
 class_name DayNightCycle
 
-@export var day_length_seconds: float = 600.0  # Full day cycle in seconds (10 minutes)
-@export var start_time: float = 0.333  # 0.0 = midnight, 0.5 = noon, 0.333 = 8am
+@export var day_length_seconds: float = 7200.0  # Full day cycle in seconds (2 hours real time)
+@export var start_time: float = 0.45  # 0.0 = midnight, 0.5 = noon — start just before noon
 
 var time_of_day: float = 0.0
 var sun_light: DirectionalLight3D

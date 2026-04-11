@@ -147,6 +147,17 @@ if (Test-Path $extractScript) {
     & powershell -ExecutionPolicy Bypass -File $extractScript
 }
 
+# Reimport all resources (required when new assets are extracted or .godot/imported/ is stale)
+# --headless --editor --quit: starts editor without GUI, imports everything, then exits
+Write-Host ""
+Write-Host "=== ASSET IMPORT ===" -ForegroundColor Cyan
+Write-Host "Importing resources (this takes ~30-60s on first run, fast after)..." -ForegroundColor Yellow
+$importArgs = '--headless --editor --quit --path "' + $gamePath + '"'
+$importProc = Start-Process -FilePath $godotExe -ArgumentList $importArgs -Wait -PassThru -NoNewWindow 2>$null
+Write-Host "Import complete (exit: $($importProc.ExitCode))" -ForegroundColor Green
+Write-Host "====================" -ForegroundColor Cyan
+Write-Host ""
+
 Write-Host "Watching for new commits every $pollSeconds seconds. Close this window to stop."
 Write-Host "Press L to push the current log so Claude can read it."
 Write-Host ""
@@ -193,9 +204,10 @@ while ($true) {
     $remoteHash = git -C $projectPath rev-parse origin/main 2>$null
 
     if ($remoteHash -and $remoteHash -ne $lastHash) {
-        Write-Host "$(Get-Date -Format HH:mm:ss) New commits - pulling and relaunching..."
-        git -C $projectPath pull --quiet origin main 2>$null
-        $lastHash = $remoteHash
+        Write-Host "$(Get-Date -Format HH:mm:ss) New commits detected - pulling..."
+        git -C $projectPath pull origin main 2>$null
+        $lastHash = git -C $projectPath rev-parse HEAD 2>$null  # Use actual local state
+        Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
         $godotProcess = Start-Godot $godotProcess
     }
 
