@@ -219,6 +219,7 @@ while ($true) {
             $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
             if ($key.Character -eq 'l' -or $key.Character -eq 'L') {
                 Push-Log
+                $lastHash = git -C $projectPath rev-parse HEAD 2>$null
             }
         }
     }
@@ -244,6 +245,8 @@ while ($true) {
     # Auto-push log every 20 polls (~5 minutes) so Claude can read it without L keypress
     if ($pollCount % 20 -eq 0) {
         Push-Log
+        # Update lastHash so the log commit doesn't look like a new code change
+        $lastHash = git -C $projectPath rev-parse HEAD 2>$null
     }
 
     if ($godotProcess -and $godotProcess.HasExited) {
