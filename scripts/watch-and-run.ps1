@@ -106,7 +106,7 @@ function Run-Diagnostics {
 }
 
 # ------------------------------------------------------------------ #
-#  LAUNCH GODOT - captures stdout+stderr to log file                  #
+#  LAUNCH GODOT                                                       #
 # ------------------------------------------------------------------ #
 function Start-Godot {
     param($currentProcess)
@@ -117,52 +117,14 @@ function Start-Godot {
         Start-Sleep -Seconds 2
     }
 
-    Write-Host "$(Get-Date -Format HH:mm:ss) Launching Godot (log -> $logFile)..."
+    $gamePath = "$projectPath\halo-test - heightmaps 13"
+    Write-Host "$(Get-Date -Format HH:mm:ss) Launching Godot..."
+    Write-Host "  Path: $gamePath"
 
-    # Rotate old log
-    if (Test-Path $logFile) {
-        $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
-        Move-Item $logFile "$logDir\godot_$stamp.log" -Force
-        # Keep only last 5 logs
-        Get-ChildItem "$logDir\godot_*.log" |
-            Sort-Object LastWriteTime -Descending |
-            Select-Object -Skip 5 |
-            Remove-Item -Force
-    }
-
-    $psi = New-Object System.Diagnostics.ProcessStartInfo
-    $psi.FileName  = $godotExe
-    $psi.Arguments = "--path `"$projectPath\halo-test - heightmaps 13`" --verbose"
-    $psi.UseShellExecute        = $false
-    $psi.RedirectStandardOutput = $true
-    $psi.RedirectStandardError  = $true
-    $psi.CreateNoWindow         = $false
-
-    $proc = New-Object System.Diagnostics.Process
-    $proc.StartInfo = $psi
-
-    # Write stdout and stderr to log file asynchronously
-    $logStream = [System.IO.StreamWriter]::new($logFile, $false)
-    $logStream.AutoFlush = $true
-
-    $proc.add_OutputDataReceived({
-        param($sender, $e)
-        if ($e.Data) { $logStream.WriteLine($e.Data) }
-    })
-    $proc.add_ErrorDataReceived({
-        param($sender, $e)
-        if ($e.Data) { $logStream.WriteLine($e.Data) }
-    })
-
-    $proc.Start() | Out-Null
-    $proc.BeginOutputReadLine()
-    $proc.BeginErrorReadLine()
-
-    # Close log stream when process exits
-    $proc.add_Exited({ $logStream.Close() })
-    $proc.EnableRaisingEvents = $true
-
-    return $proc
+    # ArgumentList as array handles spaces in path correctly
+    return Start-Process -FilePath $godotExe `
+        -ArgumentList @("--path", $gamePath, "--verbose") `
+        -PassThru
 }
 
 # ------------------------------------------------------------------ #

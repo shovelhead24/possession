@@ -87,11 +87,18 @@ foreach ($pack in $packs) {
 
 Write-Host ""
 Write-Host "=== LAST LOG (50 lines) ===" -ForegroundColor Cyan
-$logFile = "$projectPath\logs\godot_latest.log"
-if (Test-Path $logFile) {
-    Get-Content $logFile -Tail 50
+# Godot writes its own log to AppData - check there first
+$godotLog = "$env:APPDATA\Godot\app_userdata\HaloTest\logs\godot.log"
+$customLog = "$projectPath\logs\godot_latest.log"
+if (Test-Path $godotLog) {
+    Write-Host "Source: $godotLog"
+    Get-Content $godotLog -Tail 50
+} elseif (Test-Path $customLog) {
+    Write-Host "Source: $customLog"
+    Get-Content $customLog -Tail 50
 } else {
-    Write-Host "No log yet - run watch-and-run.ps1 first to generate one"
+    Write-Host "No log found yet - launch the game first"
+    Write-Host "Checked: $godotLog"
 }
 
 Write-Host ""
