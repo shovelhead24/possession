@@ -153,8 +153,15 @@ Write-Host ""
 Write-Host "=== ASSET IMPORT ===" -ForegroundColor Cyan
 Write-Host "Importing resources (this takes ~30-60s on first run, fast after)..." -ForegroundColor Yellow
 $importArgs = '--headless --editor --quit --path "' + $gamePath + '"'
-$importProc = Start-Process -FilePath $godotExe -ArgumentList $importArgs -Wait -PassThru -NoNewWindow 2>$null
-Write-Host "Import complete (exit: $($importProc.ExitCode))" -ForegroundColor Green
+$importProc = Start-Process -FilePath $godotExe -ArgumentList $importArgs -PassThru -NoNewWindow 2>$null
+# Wait up to 120 seconds — kill if it hangs (headless editor can hang on some machines)
+$importProc.WaitForExit(120000) | Out-Null
+if (-not $importProc.HasExited) {
+    $importProc.Kill()
+    Write-Host "Import timed out after 120s - continuing anyway" -ForegroundColor Yellow
+} else {
+    Write-Host "Import complete (exit: $($importProc.ExitCode))" -ForegroundColor Green
+}
 Write-Host "====================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -183,8 +190,23 @@ function Push-Log {
 # ------------------------------------------------------------------ #
 #  POLL LOOP - checks for keypresses every 0.5s between git polls    #
 # ------------------------------------------------------------------ #
+
+# Pull any commits that arrived since the last manual pull / watcher restart
+Write-Host "$(Get-Date -Format HH:mm:ss) Checking for commits missed while watcher was offline..."
+git -C $projectPath fetch origin main 2>$null
+$startRemote = git -C $projectPath rev-parse origin/main 2>$null
+$startLocal  = git -C $projectPath rev-parse HEAD 2>$null
+if ($startRemote -and $startRemote -ne $startLocal) {
+    Write-Host "$(Get-Date -Format HH:mm:ss) Behind origin — pulling now..." -ForegroundColor Cyan
+    git -C $projectPath pull origin main 2>$null
+    Write-Host "$(Get-Date -Format HH:mm:ss) Pulled." -ForegroundColor Green
+} else {
+    Write-Host "$(Get-Date -Format HH:mm:ss) Already up to date ($(($startLocal).Substring(0,8)))." -ForegroundColor Green
+}
+
 $godotProcess = Start-Godot $null
 $lastHash = git -C $projectPath rev-parse HEAD 2>$null
+$pollCount = 0
 
 while ($true) {
     # Wait $pollSeconds but stay responsive to keypresses
@@ -200,7 +222,8 @@ while ($true) {
         }
     }
 
-    git -C $projectPath fetch --quiet origin main 2>$null
+    $pollCount++
+    git -C $projectPath fetch origin main 2>$null
     $remoteHash = git -C $projectPath rev-parse origin/main 2>$null
 
     if ($remoteHash -and $remoteHash -ne $lastHash) {
@@ -209,6 +232,12 @@ while ($true) {
         $lastHash = git -C $projectPath rev-parse HEAD 2>$null  # Use actual local state
         Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
         $godotProcess = Start-Godot $godotProcess
+    }
+
+    # Heartbeat every 4 polls (~60s) so you can confirm the watcher is alive
+    if ($pollCount % 4 -eq 0) {
+        $hash8 = (git -C $projectPath rev-parse HEAD 2>$null).Substring(0,8)
+        Write-Host "$(Get-Date -Format HH:mm:ss) [watching] commit $hash8 | poll #$pollCount" -ForegroundColor DarkGray
     }
 
     if ($godotProcess -and $godotProcess.HasExited) {

@@ -41,23 +41,23 @@ var borrowed_trees: Dictionary = {}
 var borrowed_grass: Dictionary = {}
 
 # Pool configuration - Trees (tuned for Intel UHD / potato hardware)
-@export var initial_pool_size: int = 15   # Small sync seed — keeps startup fast
-@export var pool_grow_size: int = 20      # Grow slowly to spread CPU cost
-@export var max_pool_size: int = 150      # Hard cap for Intel UHD
+@export var initial_pool_size: int = 60   # Sync seed — enough for first few visible chunks
+@export var pool_grow_size: int = 30      # Grow in batches
+@export var max_pool_size: int = 300      # Hard cap; shadows disabled so 300 is fine at 38+ FPS
 
 # Pool configuration - Grass
-@export var initial_grass_pool_size: int = 0   # Fully async — grass is less urgent
-@export var grass_grow_size: int = 30
-@export var max_grass_pool_size: int = 250
+@export var initial_grass_pool_size: int = 0   # Fully async — grass is less urgent than trees
+@export var grass_grow_size: int = 50
+@export var max_grass_pool_size: int = 500
 
 var total_trees_created: int = 0
 var total_grass_created: int = 0
 
-# Async pool growth - spread tree creation across frames
+# Async pool growth - spread creation across frames to avoid hitching
 var pending_grow_count: int = 0
 var pending_grass_grow_count: int = 0
-var trees_per_frame: int = 2   # Very slow growth — 1 GLTF instantiation per frame is ~2ms
-var grass_per_frame: int = 10
+var trees_per_frame: int = 5   # 5 GLTF insts/frame ≈ 10ms; keeps hitching invisible
+var grass_per_frame: int = 20
 
 func _ready():
 	print("PropPool: _ready() START")

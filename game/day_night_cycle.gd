@@ -9,6 +9,7 @@ var sun_light: DirectionalLight3D
 var environment: Environment
 var world_env: WorldEnvironment
 var sky_shader_material: ShaderMaterial
+var sky_dome: MeshInstance3D = null
 
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
@@ -52,47 +53,49 @@ func setup_environment():
 	# Look for existing WorldEnvironment node
 	world_env = get_node_or_null("/root/World/WorldEnvironment")
 
-	# If no WorldEnvironment exists, create one
 	if not world_env:
 		world_env = WorldEnvironment.new()
 		get_parent().add_child(world_env)
 		world_env.name = "WorldEnvironment"
 
-	# Get or create environment resource
 	if world_env.environment:
 		environment = world_env.environment
 	else:
 		environment = Environment.new()
 		world_env.environment = environment
 
-	# Setup sky with custom shader
-	var sky = Sky.new()
-	sky_shader_material = ShaderMaterial.new()
+	# GL Compatibility does NOT support shader_type sky — the Sky resource always
+	# renders black.  Use a sky dome instead: a large sphere rendered from the inside
+	# with a shader_type spatial material, which works in every renderer.
+	environment.background_mode = Environment.BG_COLOR
+	environment.background_color  = Color(0.02, 0.04, 0.10)  # deep-night fallback
+	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	environment.ambient_light_color  = Color(0.5, 0.6, 0.7)
+	environment.ambient_light_energy = 0.3
 
-	# Load the sky shader
-	var shader = load("res://sky_shader.gdshader")
-	if shader:
-		sky_shader_material.shader = shader
-		print("Sky shader loaded successfully")
-	else:
-		push_error("Failed to load sky shader!")
+	var dome_shader = load("res://sky_dome_shader.gdshader")
+	if not dome_shader:
+		push_error("DayNightCycle: sky_dome_shader.gdshader not found!")
 		return
 
-	sky.sky_material = sky_shader_material
-	sky.process_mode = Sky.PROCESS_MODE_REALTIME  # Update every frame for stars twinkle
+	sky_shader_material = ShaderMaterial.new()
+	sky_shader_material.shader = dome_shader
 
-	# Load planet texture
-	var planet_texture = load("res://Jupiter.jpeg")
-	if planet_texture:
-		sky_shader_material.set_shader_parameter("planet_texture", planet_texture)
-		print("Planet texture loaded successfully")
-	else:
-		push_warning("Planet texture not found at res://Jupiter.jpeg")
+	var sphere     = SphereMesh.new()
+	sphere.radius  = 2000.0
+	sphere.height  = 4000.0
+	sphere.radial_segments = 32
+	sphere.rings   = 16
 
-	environment.sky = sky
-	environment.background_mode = Environment.BG_SKY
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	environment.ambient_light_energy = 0.3
+	sky_dome = MeshInstance3D.new()
+	sky_dome.name = "SkyDome"
+	sky_dome.mesh = sphere
+	sky_dome.material_override = sky_shader_material
+	sky_dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sky_dome.gi_mode    = GeometryInstance3D.GI_MODE_DISABLED
+	# Render on a layer that nothing else uses so it can't interfere
+	get_parent().add_child(sky_dome)
+	print("DayNightCycle: Sky dome created (GL Compat spatial shader)")
 
 func _process(delta):
 	# Update time (0.0 to 1.0 representing full day)
@@ -102,6 +105,12 @@ func _process(delta):
 
 	update_sun()
 	update_lighting()
+
+	# Keep sky dome centred on the camera so it always fills the background
+	if sky_dome:
+		var camera = get_viewport().get_camera_3d()
+		if camera:
+			sky_dome.global_position = camera.global_position
 
 func update_sun():
 	# Rotate sun based on time of day
@@ -158,19 +167,18 @@ func update_lighting():
 	# Hide sun when it's truly below horizon
 	sun_light.visible = sun_elevation > -5
 
-	# Update environment
+	# Update environment ambient
 	if environment:
-		environment.ambient_light_color = ambient_color
-		# Night has more ambient light due to gas giant illumination
+		environment.ambient_light_color  = ambient_color
 		environment.ambient_light_energy = 0.3 if sun_elevation > 0 else 0.15
 
-	# Update sky shader uniforms
+	# Push sun position to sky dome shader
+	var sun_azimuth = fmod(time_of_day * 360.0 + 180.0, 360.0)
 	if sky_shader_material:
 		sky_shader_material.set_shader_parameter("sun_elevation", sun_elevation)
-		sky_shader_material.set_shader_parameter("sun_color", Vector3(sun_color.r, sun_color.g, sun_color.b))
-		# Sun azimuth - travels across the sky (0° at midnight, 90° at sunrise, 180° at noon, 270° at sunset)
-		var sun_azimuth = fmod(time_of_day * 360.0 + 180.0, 360.0)
-		sky_shader_material.set_shader_parameter("sun_azimuth", sun_azimuth)
+		sky_shader_material.set_shader_parameter("sun_azimuth",   sun_azimuth)
+		sky_shader_material.set_shader_parameter("sun_color",
+				Vector3(sun_color.r, sun_color.g, sun_color.b))
 
 
 func check_sun_visibility() -> bool:
