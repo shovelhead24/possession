@@ -842,10 +842,10 @@ func create_simple_tree() -> Node3D:
 
 func create_terrain_material() -> Material:
 	# Try to load shader and textures
-	var shader = load("res://terrain_shader.gdshader")
-	var grass_tex = load("res://grass.jpeg")
-	var snow_tex = load("res://snow.jpeg")
-	var stone_tex = load("res://stone.jpg")
+	var shader = load("res://terrain_shader.gdshader") if ResourceLoader.exists("res://terrain_shader.gdshader") else null
+	var grass_tex = load("res://grass.jpeg") if ResourceLoader.exists("res://grass.jpeg") else null
+	var snow_tex = load("res://snow.jpeg") if ResourceLoader.exists("res://snow.jpeg") else null
+	var stone_tex = load("res://stone.jpg") if ResourceLoader.exists("res://stone.jpg") else null
 	# Note: chalk.avif not supported - try common formats or use null
 	var chalk_tex = null
 	for ext in [".png", ".jpg", ".jpeg"]:
@@ -853,7 +853,7 @@ func create_terrain_material() -> Material:
 		if ResourceLoader.exists(path):
 			chalk_tex = load(path)
 			break
-	var sand_tex = load("res://sand.jpg")
+	var sand_tex = load("res://sand.jpg") if ResourceLoader.exists("res://sand.jpg") else null
 
 	if shader and grass_tex and snow_tex:
 		# Use shader material with textures

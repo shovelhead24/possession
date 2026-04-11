@@ -97,6 +97,9 @@ func _process(_delta):
 
 	# Async grass pool growth - create grass per frame if needed
 	if pending_grass_grow_count > 0 and total_grass_created < max_grass_pool_size:
+		if grass_variant_names.is_empty():
+			pending_grass_grow_count = 0
+			return
 		var to_create = mini(grass_per_frame, pending_grass_grow_count)
 		to_create = mini(to_create, max_grass_pool_size - total_grass_created)
 		for i in range(to_create):
