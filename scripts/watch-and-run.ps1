@@ -20,12 +20,12 @@ $logFile = "$logDir\godot_latest.log"
 $ErrorActionPreference = "SilentlyContinue"
 
 # ------------------------------------------------------------------ #
-#  DIAGNOSTICS — run at startup and print a clear summary             #
+#  DIAGNOSTICS - run at startup and print a clear summary             #
 # ------------------------------------------------------------------ #
 function Run-Diagnostics {
     Write-Host ""
     Write-Host "========================================" -ForegroundColor Cyan
-    Write-Host "  POSSESSION — startup diagnostics" -ForegroundColor Cyan
+    Write-Host "  POSSESSION - startup diagnostics" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
 
     $ok = $true
@@ -35,7 +35,7 @@ function Run-Diagnostics {
         $version = & $godotExe --version 2>&1 | Select-Object -First 1
         Write-Host "[OK]  Godot found: $version" -ForegroundColor Green
         if ($version -notmatch "^4\.5") {
-            Write-Host "[WARN] Project requires Godot 4.5 — you have: $version" -ForegroundColor Yellow
+            Write-Host "[WARN] Project requires Godot 4.5 - you have: $version" -ForegroundColor Yellow
         }
     } else {
         Write-Host "[FAIL] Godot not found at: $godotExe" -ForegroundColor Red
@@ -87,7 +87,7 @@ function Run-Diagnostics {
     if ($missingPacks.Count -eq 0) {
         Write-Host "[OK]  All asset packs present" -ForegroundColor Green
     } else {
-        Write-Host "[WARN] Missing asset packs ($($missingPacks.Count)/$($assetPacks.Count)) — game may have missing meshes:" -ForegroundColor Yellow
+        Write-Host "[WARN] Missing asset packs ($($missingPacks.Count)/$($assetPacks.Count)) - game may have missing meshes:" -ForegroundColor Yellow
         foreach ($p in $missingPacks) {
             Write-Host "       - $p" -ForegroundColor Yellow
         }
@@ -106,7 +106,7 @@ function Run-Diagnostics {
 }
 
 # ------------------------------------------------------------------ #
-#  LAUNCH GODOT — captures stdout+stderr to log file                  #
+#  LAUNCH GODOT - captures stdout+stderr to log file                  #
 # ------------------------------------------------------------------ #
 function Start-Godot {
     param($currentProcess)
@@ -190,7 +190,7 @@ while ($true) {
     $remoteHash = git -C $projectPath rev-parse origin/main 2>$null
 
     if ($remoteHash -and $remoteHash -ne $lastHash) {
-        Write-Host "$(Get-Date -Format HH:mm:ss) New commits — pulling and relaunching..."
+        Write-Host "$(Get-Date -Format HH:mm:ss) New commits - pulling and relaunching..."
         git -C $projectPath pull --quiet origin main 2>$null
         $lastHash = $remoteHash
         $godotProcess = Start-Godot $godotProcess
