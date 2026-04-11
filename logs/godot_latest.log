@@ -223,10 +223,10 @@ TerrainManager: Need spawn chunk (0, 0) - creating synchronously...
 WARNING: Loaded resource as image file, this will not work on export: 'res://grass.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:853)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:861)
-       [2] create_terrain_material (res://terrain_chunk.gd:869)
-       [3] generate_terrain (res://terrain_chunk.gd:477)
+       [0] _load_tex (res://terrain_chunk.gd:857)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:865)
+       [2] create_terrain_material (res://terrain_chunk.gd:873)
+       [3] generate_terrain (res://terrain_chunk.gd:481)
        [4] initialize (res://terrain_chunk.gd:106)
        [5] create_chunk (res://terrain_manager.gd:940)
        [6] find_or_create_player (res://terrain_manager.gd:303)
@@ -234,10 +234,10 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://gra
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:853)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:862)
-       [2] create_terrain_material (res://terrain_chunk.gd:869)
-       [3] generate_terrain (res://terrain_chunk.gd:477)
+       [0] _load_tex (res://terrain_chunk.gd:857)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:866)
+       [2] create_terrain_material (res://terrain_chunk.gd:873)
+       [3] generate_terrain (res://terrain_chunk.gd:481)
        [4] initialize (res://terrain_chunk.gd:106)
        [5] create_chunk (res://terrain_manager.gd:940)
        [6] find_or_create_player (res://terrain_manager.gd:303)
@@ -245,10 +245,10 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sno
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:853)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:863)
-       [2] create_terrain_material (res://terrain_chunk.gd:869)
-       [3] generate_terrain (res://terrain_chunk.gd:477)
+       [0] _load_tex (res://terrain_chunk.gd:857)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:867)
+       [2] create_terrain_material (res://terrain_chunk.gd:873)
+       [3] generate_terrain (res://terrain_chunk.gd:481)
        [4] initialize (res://terrain_chunk.gd:106)
        [5] create_chunk (res://terrain_manager.gd:940)
        [6] find_or_create_player (res://terrain_manager.gd:303)
@@ -256,18 +256,18 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sto
 WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:853)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:864)
-       [2] create_terrain_material (res://terrain_chunk.gd:869)
-       [3] generate_terrain (res://terrain_chunk.gd:477)
+       [0] _load_tex (res://terrain_chunk.gd:857)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:868)
+       [2] create_terrain_material (res://terrain_chunk.gd:873)
+       [3] generate_terrain (res://terrain_chunk.gd:481)
        [4] initialize (res://terrain_chunk.gd:106)
        [5] create_chunk (res://terrain_manager.gd:940)
        [6] find_or_create_player (res://terrain_manager.gd:303)
        [7] _ready (res://terrain_manager.gd:127)
 Loading resource: res://terrain_shader.gdshader
-CHUNK (0, 0) LOD0: total=35ms (verts=34ms, mesh=0ms, collision=1ms) FPS=1
+CHUNK (0, 0) LOD0: total=48ms (verts=45ms, mesh=1ms, collision=2ms) FPS=1
 TerrainManager: Created spawn chunk synchronously
-TerrainManager: Spawn chunk exists, has_collision=true collision_body=@StaticBody3D@70:<StaticBody3D#91066732948>
+TerrainManager: Spawn chunk exists, has_collision=true collision_body=@StaticBody3D@70:<StaticBody3D#91117064599>
 DayNightCycle: Using existing sun light: DirectionalLight3D
 Loading resource: res://sky_dome_shader.gdshader
 DayNightCycle: Sky dome created (GL Compat spatial shader)
@@ -288,96 +288,144 @@ Chunks: loaded 10 | queue: 746 | total: 51
 Chunks: loaded 10 | queue: 736 | total: 61
 Chunks: loaded 10 | queue: 726 | total: 71
 Chunks: loaded 10 | queue: 716 | total: 81
-Chunks: loaded 10 | queue: 706 | total: 91
-Chunks: loaded 10 | queue: 729 | total: 101 | FPS: 1 | Q:92%
+Chunks: loaded 10 | queue: 739 | total: 91
+Chunks: loaded 10 | queue: 729 | total: 101 | FPS: 2 | Q:90%
 Chunks: loaded 10 | queue: 719 | total: 111
-Chunks: loaded 10 | queue: 709 | total: 121
-Chunks: loaded 10 | queue: 699 | total: 131
-Chunks: loaded 10 | queue: 689 | total: 141
-Chunks: loaded 10 | queue: 679 | total: 151
-Chunks: loaded 10 | queue: 669 | total: 161
-Chunks: loaded 10 | queue: 659 | total: 171
-Chunks: loaded 10 | queue: 649 | total: 181
-Chunks: loaded 10 | queue: 639 | total: 191
-Chunks: loaded 10 | queue: 629 | total: 201 | FPS: 1 | Q:91%
-Chunks: loaded 10 | queue: 619 | total: 211
-Chunks: loaded 10 | queue: 609 | total: 221
-Chunks: loaded 10 | queue: 599 | total: 231
-Chunks: loaded 10 | queue: 589 | total: 241
-Chunks: loaded 10 | queue: 579 | total: 251
-Chunks: loaded 10 | queue: 569 | total: 261
-Chunks: loaded 10 | queue: 559 | total: 271
-Chunks: loaded 10 | queue: 549 | total: 281
-Chunks: loaded 10 | queue: 539 | total: 291
-Chunks: loaded 10 | queue: 529 | total: 301 | FPS: 19 | Q:91%
-Chunks: loaded 10 | queue: 519 | total: 311
-Chunks: loaded 10 | queue: 509 | total: 321
-Chunks: loaded 10 | queue: 499 | total: 331
-Chunks: loaded 10 | queue: 489 | total: 341
-Chunks: loaded 10 | queue: 479 | total: 351
-Chunks: loaded 10 | queue: 469 | total: 361
-Chunks: loaded 10 | queue: 459 | total: 371
-Chunks: loaded 10 | queue: 449 | total: 381
-Chunks: loaded 10 | queue: 439 | total: 391
-Chunks: loaded 10 | queue: 429 | total: 401 | FPS: 19 | Q:91%
-Chunks: loaded 10 | queue: 419 | total: 411
-Chunks: loaded 10 | queue: 409 | total: 421
-Chunks: loaded 10 | queue: 399 | total: 431
-Chunks: loaded 10 | queue: 389 | total: 441
-Chunks: loaded 10 | queue: 379 | total: 451
-Chunks: loaded 10 | queue: 369 | total: 461
-Chunks: loaded 10 | queue: 359 | total: 471
-Chunks: loaded 10 | queue: 349 | total: 481
-Chunks: loaded 10 | queue: 339 | total: 491
-Chunks: loaded 10 | queue: 329 | total: 501 | FPS: 19 | Q:87%
-Chunks: loaded 10 | queue: 319 | total: 511
-Chunks: loaded 10 | queue: 309 | total: 521
-Chunks: loaded 10 | queue: 299 | total: 531
-Chunks: loaded 10 | queue: 289 | total: 541
-Chunks: loaded 10 | queue: 279 | total: 551
-Chunks: loaded 10 | queue: 269 | total: 561
-Chunks: loaded 10 | queue: 259 | total: 571
-Chunks: loaded 10 | queue: 249 | total: 581
-Chunks: loaded 10 | queue: 239 | total: 591
-Chunks: loaded 10 | queue: 229 | total: 601 | FPS: 19 | Q:85%
-Chunks: loaded 10 | queue: 219 | total: 611
-Chunks: loaded 10 | queue: 209 | total: 621
-Chunks: loaded 10 | queue: 199 | total: 631
-Chunks: loaded 10 | queue: 189 | total: 641
-Chunks: loaded 10 | queue: 179 | total: 651
-Chunks: loaded 10 | queue: 169 | total: 661
-PROPS (0, -8): 4ms FPS=19
-Chunks: loaded 10 | queue: 159 | total: 671
-Chunks: loaded 10 | queue: 149 | total: 681
-PROPS (-8, 0): 4ms FPS=19
-Chunks: loaded 10 | queue: 139 | total: 691
-PROPS (-6, -5): 3ms FPS=19
-Chunks: loaded 10 | queue: 129 | total: 701 | FPS: 19 | Q:78%
-Chunks: loaded 10 | queue: 119 | total: 711
-Chunks: loaded 10 | queue: 109 | total: 721
-Chunks: loaded 10 | queue: 99 | total: 731
-Chunks: loaded 10 | queue: 89 | total: 741
-PROPS (-5, -6): 3ms FPS=49
-Chunks: loaded 10 | queue: 79 | total: 751
-Chunks: loaded 10 | queue: 69 | total: 761
-PROPS (6, -5): 3ms FPS=49
-Chunks: loaded 10 | queue: 59 | total: 771
-Chunks: loaded 10 | queue: 49 | total: 781
-PROPS (3, -7): 3ms FPS=49
-CHUNK (0, -4) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=49
-Chunks: loaded 10 | queue: 39 | total: 791
-CHUNK (-1, -3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=49
-Chunks: loaded 10 | queue: 29 | total: 801 | FPS: 49 | Q:70%
-Chunks: loaded 10 | queue: 19 | total: 811
-CHUNK (1, -2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=49
-Chunks: loaded 10 | queue: 9 | total: 821
-Chunks: loaded 9 | queue: 0 | total: 830
+Chunks: loaded 10 | queue: 707 | total: 121
+Chunks: loaded 10 | queue: 697 | total: 131
+Chunks: loaded 10 | queue: 687 | total: 141
+Chunks: loaded 10 | queue: 677 | total: 151
+Chunks: loaded 10 | queue: 667 | total: 161
+Chunks: loaded 10 | queue: 657 | total: 171
+Chunks: loaded 10 | queue: 647 | total: 181
+Chunks: loaded 10 | queue: 637 | total: 191
+Chunks: loaded 10 | queue: 627 | total: 201 | FPS: 2 | Q:88%
+Chunks: loaded 10 | queue: 617 | total: 211
+Chunks: loaded 10 | queue: 607 | total: 221
+Chunks: loaded 10 | queue: 597 | total: 231
+Chunks: loaded 10 | queue: 587 | total: 241
+Chunks: loaded 10 | queue: 577 | total: 251
+Chunks: loaded 10 | queue: 567 | total: 261
+Chunks: loaded 10 | queue: 557 | total: 271
+Chunks: loaded 10 | queue: 547 | total: 281
+Chunks: loaded 10 | queue: 537 | total: 291
+Chunks: loaded 10 | queue: 527 | total: 301 | FPS: 2 | Q:86%
+Chunks: loaded 10 | queue: 517 | total: 311
+Chunks: loaded 10 | queue: 507 | total: 321
+Chunks: loaded 10 | queue: 497 | total: 331
+Chunks: loaded 10 | queue: 487 | total: 341
+Chunks: loaded 10 | queue: 477 | total: 351
+Chunks: loaded 10 | queue: 467 | total: 361
+Chunks: loaded 10 | queue: 457 | total: 371
+Chunks: loaded 10 | queue: 447 | total: 381
+Chunks: loaded 10 | queue: 437 | total: 391
+Chunks: loaded 10 | queue: 427 | total: 401 | FPS: 2 | Q:86%
+Chunks: loaded 10 | queue: 417 | total: 411
+Chunks: loaded 10 | queue: 407 | total: 421
+Chunks: loaded 10 | queue: 397 | total: 431
+Chunks: loaded 10 | queue: 387 | total: 441
+Chunks: loaded 10 | queue: 377 | total: 451
+Chunks: loaded 10 | queue: 367 | total: 461
+Chunks: loaded 10 | queue: 357 | total: 471
+Chunks: loaded 10 | queue: 347 | total: 481
+Chunks: loaded 10 | queue: 337 | total: 491
+Chunks: loaded 10 | queue: 327 | total: 501 | FPS: 42 | Q:81%
+Chunks: loaded 10 | queue: 317 | total: 511
+Chunks: loaded 10 | queue: 307 | total: 521
+Chunks: loaded 10 | queue: 297 | total: 531
+Chunks: loaded 10 | queue: 287 | total: 541
+Chunks: loaded 10 | queue: 277 | total: 551
+Chunks: loaded 10 | queue: 267 | total: 561
+Chunks: loaded 10 | queue: 257 | total: 571
+Chunks: loaded 10 | queue: 247 | total: 581
+Chunks: loaded 10 | queue: 237 | total: 591
+Chunks: loaded 10 | queue: 227 | total: 601 | FPS: 42 | Q:76%
+Chunks: loaded 10 | queue: 217 | total: 611
+Chunks: loaded 10 | queue: 207 | total: 621
+Chunks: loaded 10 | queue: 197 | total: 631
+Chunks: loaded 10 | queue: 187 | total: 641
+Chunks: loaded 10 | queue: 177 | total: 651
+Chunks: loaded 10 | queue: 167 | total: 661
+PROPS (0, -8): 3ms FPS=42
+Chunks: loaded 10 | queue: 157 | total: 671
+Chunks: loaded 10 | queue: 147 | total: 681
+PROPS (-8, 0): 3ms FPS=42
+Chunks: loaded 10 | queue: 137 | total: 691
+PROPS (-6, -5): 3ms FPS=42
+Chunks: loaded 10 | queue: 127 | total: 701 | FPS: 42 | Q:70%
+Chunks: loaded 10 | queue: 117 | total: 711
+Chunks: loaded 10 | queue: 107 | total: 721
+PROPS (-6, 5): 4ms FPS=42
+Chunks: loaded 10 | queue: 97 | total: 731
+Chunks: loaded 10 | queue: 87 | total: 741
+Chunks: loaded 10 | queue: 77 | total: 751
+Chunks: loaded 10 | queue: 67 | total: 761
+Chunks: loaded 10 | queue: 57 | total: 771
+Chunks: loaded 10 | queue: 47 | total: 781
+PROPS (3, -7): 3ms FPS=42
+CHUNK (4, 0) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-4, 0) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (2, -3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (2, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-3, -2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-2, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-3, 2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+Chunks: loaded 10 | queue: 37 | total: 791
+CHUNK (3, -2) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (-1, -3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (3, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-1, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (1, -3) LOD0: total=7ms (verts=5ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (3, 1) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (-3, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+Chunks: loaded 10 | queue: 27 | total: 801 | FPS: 33 | Q:61%
+CHUNK (3, 0) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (2, 2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-2, -2) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (1, 2) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (1, -2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+Chunks: loaded 10 | queue: 17 | total: 811
+CHUNK (-2, 1) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-1, 2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (2, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (2, 1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-1, -2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (0, -2) LOD0: total=7ms (verts=5ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (0, 2) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (-2, 0) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (2, 0) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=33
+CHUNK (-1, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+Chunks: loaded 10 | queue: 7 | total: 821
+PROPS (-3, 7): 3ms FPS=33
+CHUNK (-1, 1) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=33
+CHUNK (1, 1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (1, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (-1, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (0, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (0, 1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+CHUNK (1, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=33
+Chunks: loaded 7 | queue: 0 | total: 828
+PROPS (-7, 3): 3ms FPS=33
 TerrainManager: Initial load complete, switching to sequential loading
 TerrainManager: Adaptive quality enabled=true budget=8.0ms
-PROPS (-6, -4): 3ms FPS=49
-PROPS (-5, 5): 3ms FPS=28
-TREE (5, 5) #0: raycast_y=11.6714172363281 local_pos=(-8.454414, 8.674408, 10.21775) chunk.pos.y=0.0 expected=11.8035825326733 global=(116.5456, 8.674408, 135.2177)
-PROPS (5, 5): 3ms FPS=28
+PROPS (-2, 7): 3ms FPS=33
+PROPS (2, 7): 3ms FPS=33
+PROPS (-7, -2): 3ms FPS=33
+PROPS (2, -7): 3ms FPS=33
+PROPS (-2, -7): 3ms FPS=33
+PROPS (4, 6): 3ms FPS=33
+PROPS (-4, 6): 3ms FPS=33
+PROPS (-6, 4): 3ms FPS=33
+PROPS (6, 4): 3ms FPS=33
+PROPS (-7, -1): 3ms FPS=33
+TREE (5, 5) #0: raycast_y=11.6714172363281 local_pos=(-8.454414, 8.672168, 10.21775) chunk.pos.y=0.0 expected=11.8035825326733 global=(116.5456, 8.672168, 135.2177)
+PROPS (5, 5): 3ms FPS=33
+PROPS (-1, 7): 3ms FPS=28
+PROPS (-6, -3): 3ms FPS=28
+TREE (4, 5) #0: raycast_y=12.0286560058594 local_pos=(2.193991, 9.029132, 1.36772) chunk.pos.y=0.0 expected=12.1210077133114 global=(102.194, 9.029132, 126.3677)
+TREE (4, 5) #1: raycast_y=12.2762451171875 local_pos=(-3.946092, 9.279236, 7.703533) chunk.pos.y=0.0 expected=12.2939147740303 global=(96.05391, 9.279236, 132.7035)
+Chunks: loaded 1 | queue: 1 | total: 829
+Chunks: loaded 1 | queue: 0 | total: 830
 Chunks: loaded 1 | queue: 22 | total: 831
 LOD: updated 1 chunks | queue: 50
 Chunks: loaded 1 | queue: 21 | total: 832
@@ -386,11 +434,11 @@ Chunks: loaded 1 | queue: 20 | total: 833
 LOD: updated 1 chunks | queue: 48
 Chunks: loaded 1 | queue: 19 | total: 834
 LOD: updated 1 chunks | queue: 47
-Chunks: loaded 1 | queue: 18 | total: 835
+Chunks: loaded 1 | queue: 18 | total: 835 | FPS: 60 | Q:31%
 LOD: updated 1 chunks | queue: 46
 Chunks: loaded 1 | queue: 17 | total: 836
 LOD: updated 1 chunks | queue: 45
-Chunks: loaded 1 | queue: 16 | total: 837 | FPS: 60 | Q:54%
+Chunks: loaded 1 | queue: 16 | total: 837
 LOD: updated 1 chunks | queue: 44
 Chunks: loaded 1 | queue: 15 | total: 838
 LOD: updated 1 chunks | queue: 43
@@ -406,11 +454,11 @@ Chunks: loaded 1 | queue: 10 | total: 843
 LOD: updated 1 chunks | queue: 38
 Chunks: loaded 1 | queue: 9 | total: 844
 LOD: updated 1 chunks | queue: 37
-Chunks: loaded 1 | queue: 8 | total: 845
+Chunks: loaded 1 | queue: 8 | total: 845 | FPS: 60 | Q:31%
 LOD: updated 1 chunks | queue: 36
 Chunks: loaded 1 | queue: 7 | total: 846
 LOD: updated 1 chunks | queue: 35
-Chunks: loaded 1 | queue: 6 | total: 847 | FPS: 60 | Q:54%
+Chunks: loaded 1 | queue: 6 | total: 847
 LOD: updated 1 chunks | queue: 34
 Chunks: loaded 1 | queue: 5 | total: 848
 LOD: updated 1 chunks | queue: 33
@@ -420,174 +468,74 @@ Chunks: loaded 1 | queue: 3 | total: 850
 LOD: updated 1 chunks | queue: 31
 Chunks: loaded 1 | queue: 2 | total: 851
 LOD: updated 1 chunks | queue: 30
-Chunks: loaded 1 | queue: 24 | total: 852
-LOD: updated 1 chunks | queue: 74
-Chunks: loaded 1 | queue: 23 | total: 853
-LOD: updated 1 chunks | queue: 73
+Chunks: loaded 1 | queue: 1 | total: 852
+LOD: updated 1 chunks | queue: 29
+Chunks: loaded 1 | queue: 0 | total: 853
+LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
+LOD: updated 1 chunks | queue: 25
 Chunks: loaded 1 | queue: 22 | total: 854
-LOD: updated 1 chunks | queue: 72
-Chunks: loaded 1 | queue: 21 | total: 855
-LOD: updated 1 chunks | queue: 71
+LOD: updated 1 chunks | queue: 69
+Chunks: loaded 1 | queue: 21 | total: 855 | FPS: 60 | Q:31%
+LOD: updated 1 chunks | queue: 68
 Chunks: loaded 1 | queue: 20 | total: 856
-LOD: updated 1 chunks | queue: 70
-Chunks: loaded 1 | queue: 19 | total: 857 | FPS: 60 | Q:54%
-LOD: updated 1 chunks | queue: 69
+LOD: updated 1 chunks | queue: 67
+Chunks: loaded 1 | queue: 19 | total: 857
+LOD: updated 1 chunks | queue: 66
 Chunks: loaded 1 | queue: 18 | total: 858
-LOD: updated 1 chunks | queue: 68
+LOD: updated 1 chunks | queue: 65
 Chunks: loaded 1 | queue: 17 | total: 859
-LOD: updated 1 chunks | queue: 67
+LOD: updated 1 chunks | queue: 64
 Chunks: loaded 1 | queue: 16 | total: 860
-LOD: updated 1 chunks | queue: 66
+LOD: updated 1 chunks | queue: 63
 Chunks: loaded 1 | queue: 15 | total: 861
-LOD: updated 1 chunks | queue: 65
+LOD: updated 1 chunks | queue: 62
 Chunks: loaded 1 | queue: 14 | total: 862
-LOD: updated 1 chunks | queue: 64
+LOD: updated 1 chunks | queue: 61
 Chunks: loaded 1 | queue: 13 | total: 863
-LOD: updated 1 chunks | queue: 63
+LOD: updated 1 chunks | queue: 60
 Chunks: loaded 1 | queue: 12 | total: 864
-LOD: updated 1 chunks | queue: 62
-Chunks: loaded 1 | queue: 11 | total: 865
-CHUNK (5, 7) LOD1: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 61
+LOD: updated 1 chunks | queue: 59
+Chunks: loaded 1 | queue: 11 | total: 865 | FPS: 60 | Q:31%
+LOD: updated 1 chunks | queue: 58
 Chunks: loaded 1 | queue: 10 | total: 866
-CHUNK (5, 1) LOD0: total=8ms (verts=4ms, mesh=0ms, collision=4ms) FPS=60
-LOD: updated 1 chunks | queue: 60
-Chunks: loaded 1 | queue: 9 | total: 867 | FPS: 60 | Q:54%
-LOD: updated 1 chunks | queue: 59
+LOD: updated 1 chunks | queue: 57
+Chunks: loaded 1 | queue: 9 | total: 867
+LOD: updated 1 chunks | queue: 56
 Chunks: loaded 1 | queue: 8 | total: 868
-LOD: updated 1 chunks | queue: 58
+CHUNK (5, 1) LOD0: total=8ms (verts=6ms, mesh=1ms, collision=1ms) FPS=60
+LOD: updated 1 chunks | queue: 55
 Chunks: loaded 1 | queue: 7 | total: 869
-CHUNK (4, 3) LOD0: total=8ms (verts=4ms, mesh=2ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 57
+LOD: updated 1 chunks | queue: 54
 Chunks: loaded 1 | queue: 6 | total: 870
-LOD: updated 1 chunks | queue: 56
+LOD: updated 1 chunks | queue: 53
 Chunks: loaded 1 | queue: 5 | total: 871
-LOD: updated 1 chunks | queue: 55
+CHUNK (4, 3) LOD0: total=9ms (verts=6ms, mesh=1ms, collision=2ms) FPS=60
+LOD: updated 1 chunks | queue: 52
 Chunks: loaded 1 | queue: 4 | total: 872
-CHUNK (3, 4) LOD0: total=7ms (verts=6ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 54
-CHUNK (3, 16) LOD3: total=29ms (verts=2ms, mesh=27ms, collision=0ms) FPS=60
+LOD: updated 1 chunks | queue: 51
 Chunks: loaded 1 | queue: 3 | total: 873
+LOD: updated 1 chunks | queue: 50
 Chunks: loaded 1 | queue: 2 | total: 874
-LOD: updated 1 chunks | queue: 53
-Chunks: loaded 1 | queue: 1 | total: 875
-LOD: updated 1 chunks | queue: 52
+CHUNK (3, 4) LOD0: total=8ms (verts=6ms, mesh=1ms, collision=1ms) FPS=60
+LOD: updated 1 chunks | queue: 49
+Chunks: loaded 1 | queue: 1 | total: 875 | FPS: 60 | Q:31%
+LOD: updated 1 chunks | queue: 48
 Chunks: loaded 1 | queue: 0 | total: 876
-CHUNK (2, 4) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-CHUNK (1, 5) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 48
 LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-PROPS (0, -4): 4ms FPS=58
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-CHUNK (-1, 4) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=58
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-PROPS (8, 1): 3ms FPS=58
-LOD: updated 1 chunks | queue: 27
-PROPS (8, -1): 3ms FPS=58
-LOD: updated 1 chunks | queue: 26
-PROPS (8, -2): 4ms FPS=58
-LOD: updated 1 chunks | queue: 25
-PROPS (8, -3): 3ms FPS=58
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-Chunks: loaded 1 | queue: 22 | total: 877 | FPS: 58 | Q:53%
-LOD: updated 1 chunks | queue: 85
-Chunks: loaded 1 | queue: 21 | total: 878
-LOD: updated 1 chunks | queue: 84
-Chunks: loaded 1 | queue: 20 | total: 879
-LOD: updated 1 chunks | queue: 83
-Chunks: loaded 1 | queue: 19 | total: 880
-LOD: updated 1 chunks | queue: 82
-Chunks: loaded 1 | queue: 18 | total: 881
-LOD: updated 1 chunks | queue: 81
-Chunks: loaded 1 | queue: 17 | total: 882
-LOD: updated 1 chunks | queue: 80
-Chunks: loaded 1 | queue: 16 | total: 883
-LOD: updated 1 chunks | queue: 79
-Chunks: loaded 1 | queue: 15 | total: 884
-LOD: updated 1 chunks | queue: 78
-Chunks: loaded 1 | queue: 14 | total: 885
-LOD: updated 1 chunks | queue: 77
-Chunks: loaded 1 | queue: 13 | total: 886
-LOD: updated 1 chunks | queue: 76
-Chunks: loaded 1 | queue: 12 | total: 887 | FPS: 58 | Q:53%
-LOD: updated 1 chunks | queue: 75
-Chunks: loaded 1 | queue: 11 | total: 888
-LOD: updated 1 chunks | queue: 74
-Chunks: loaded 1 | queue: 10 | total: 889
-LOD: updated 1 chunks | queue: 73
-Chunks: loaded 1 | queue: 9 | total: 890
-LOD: updated 1 chunks | queue: 72
-Chunks: loaded 1 | queue: 8 | total: 891
-LOD: updated 1 chunks | queue: 71
-Chunks: loaded 1 | queue: 7 | total: 892
-LOD: updated 1 chunks | queue: 70
-Chunks: loaded 1 | queue: 6 | total: 893
-LOD: updated 1 chunks | queue: 69
-Chunks: loaded 1 | queue: 5 | total: 894
-LOD: updated 1 chunks | queue: 68
-Chunks: loaded 1 | queue: 4 | total: 895
-LOD: updated 1 chunks | queue: 67
-Chunks: loaded 1 | queue: 3 | total: 896
-LOD: updated 1 chunks | queue: 66
-Chunks: loaded 1 | queue: 2 | total: 897 | FPS: 58 | Q:53%
-LOD: updated 1 chunks | queue: 65
-Chunks: loaded 1 | queue: 1 | total: 898
-LOD: updated 1 chunks | queue: 64
-Chunks: loaded 1 | queue: 0 | total: 899
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-CHUNK (6, 1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=58
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-CHUNK (5, 3) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-CHUNK (4, 4) LOD0: total=8ms (verts=6ms, mesh=1ms, collision=1ms) FPS=58
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-CHUNK (2, 5) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=58
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
+CHUNK (2, 4) LOD0: total=9ms (verts=8ms, mesh=0ms, collision=1ms) FPS=60
 LOD: updated 1 chunks | queue: 46
 LOD: updated 1 chunks | queue: 45
-PROPS (-3, 0): 3ms FPS=61
 LOD: updated 1 chunks | queue: 44
+CHUNK (1, 5) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 43
 LOD: updated 1 chunks | queue: 42
 LOD: updated 1 chunks | queue: 41
 LOD: updated 1 chunks | queue: 40
 LOD: updated 1 chunks | queue: 39
 LOD: updated 1 chunks | queue: 38
+CHUNK (-1, 4) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 37
 LOD: updated 1 chunks | queue: 36
 LOD: updated 1 chunks | queue: 35
@@ -603,106 +551,109 @@ LOD: updated 1 chunks | queue: 26
 LOD: updated 1 chunks | queue: 25
 LOD: updated 1 chunks | queue: 24
 LOD: updated 1 chunks | queue: 23
+CHUNK (7, 4) LOD1: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=55
 LOD: updated 1 chunks | queue: 22
 LOD: updated 1 chunks | queue: 21
+PROPS (7, 4): 3ms FPS=55
 LOD: updated 1 chunks | queue: 20
 LOD: updated 1 chunks | queue: 19
-PROPS (7, -5): 3ms FPS=61
 LOD: updated 1 chunks | queue: 18
 LOD: updated 1 chunks | queue: 17
-TREE (6, 6) #0: raycast_y=11.1810302734375 local_pos=(2.749207, 8.184021, 2.874964) chunk.pos.y=0.0 expected=11.1727343647683 global=(152.7492, 8.184021, 152.875)
-TREE (6, 6) #1: raycast_y=11.2061157226563 local_pos=(2.136347, 8.206866, 2.084479) chunk.pos.y=0.0 expected=11.1917227648842 global=(152.1364, 8.206866, 152.0845)
-TREE (6, 6) #2: raycast_y=11.2304992675781 local_pos=(-7.799556, 8.230975, -1.580759) chunk.pos.y=0.0 expected=11.1551565195824 global=(142.2004, 8.230975, 148.4192)
-PROPS (6, 6): 5ms FPS=61
+TREE (6, 6) #0: raycast_y=11.1810302734375 local_pos=(2.749207, 8.181781, 2.874964) chunk.pos.y=0.0 expected=11.1727343647683 global=(152.7492, 8.181781, 152.875)
+TREE (6, 6) #1: raycast_y=11.2061157226563 local_pos=(2.136347, 8.206592, 2.084479) chunk.pos.y=0.0 expected=11.1917227648842 global=(152.1364, 8.206592, 152.0845)
+TREE (6, 6) #2: raycast_y=11.2304992675781 local_pos=(-7.799556, 8.23349, -1.580759) chunk.pos.y=0.0 expected=11.1551565195824 global=(142.2004, 8.23349, 148.4192)
+PROPS (6, 6): 5ms FPS=55
 LOD: updated 1 chunks | queue: 16
-CHUNK (5, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=61
+CHUNK (5, 0) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=55
 LOD: updated 1 chunks | queue: 15
 LOD: updated 1 chunks | queue: 14
 LOD: updated 1 chunks | queue: 13
-CHUNK (4, 2) LOD0: total=7ms (verts=3ms, mesh=1ms, collision=3ms) FPS=61
+CHUNK (4, 2) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 12
 TREE (4, 7) #1: raycast_y=11.4002380371094 local_pos=(-1.334186, 8.400714, -1.125425) chunk.pos.y=0.0 expected=11.4289480327383 global=(98.66582, 8.400714, 173.8746)
-TREE (4, 7) #2: raycast_y=11.3301696777344 local_pos=(-0.554107, 8.33092, 4.398265) chunk.pos.y=0.0 expected=11.3413126912447 global=(99.44589, 8.33092, 179.3983)
-PROPS (4, 7): 5ms FPS=61
-CHUNK (4, 1) LOD0: total=7ms (verts=3ms, mesh=1ms, collision=3ms) FPS=61
+TREE (4, 7) #2: raycast_y=11.3301696777344 local_pos=(-0.554107, 8.33316, 4.398265) chunk.pos.y=0.0 expected=11.3413126912447 global=(99.44589, 8.33316, 179.3983)
+CHUNK (4, 1) LOD0: total=10ms (verts=7ms, mesh=1ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 11
-CHUNK (4, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=61
+CHUNK (4, -1) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 10
-PROPS (4, 1): 3ms FPS=61
-CHUNK (4, -2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=61
+CHUNK (4, -2) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 9
-PROPS (4, -2): 3ms FPS=61
 LOD: updated 1 chunks | queue: 8
-CHUNK (3, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=61
+CHUNK (3, 3) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 7
-Chunks: loaded 1 | queue: 22 | total: 900
-LOD: updated 1 chunks | queue: 73
-Chunks: loaded 1 | queue: 21 | total: 901
-LOD: updated 1 chunks | queue: 72
-Chunks: loaded 1 | queue: 20 | total: 902
-LOD: updated 1 chunks | queue: 71
-Chunks: loaded 1 | queue: 19 | total: 903
-LOD: updated 1 chunks | queue: 70
-Chunks: loaded 1 | queue: 18 | total: 904
-LOD: updated 1 chunks | queue: 69
-Chunks: loaded 1 | queue: 17 | total: 905
-LOD: updated 1 chunks | queue: 68
-Chunks: loaded 1 | queue: 16 | total: 906
+CHUNK (3, -3) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=55
+LOD: updated 1 chunks | queue: 6
+LOD: updated 1 chunks | queue: 5
+LOD: updated 1 chunks | queue: 4
+CHUNK (1, 4) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=55
+LOD: updated 1 chunks | queue: 3
+CHUNK (1, -4) LOD0: total=9ms (verts=7ms, mesh=0ms, collision=2ms) FPS=55
+LOD: updated 1 chunks | queue: 2
+LOD: updated 1 chunks | queue: 1
+LOD: updated 1 chunks | queue: 0
+Chunks: loaded 1 | queue: 22 | total: 877
 LOD: updated 1 chunks | queue: 67
-Chunks: loaded 1 | queue: 15 | total: 907 | FPS: 61 | Q:53%
+Chunks: loaded 1 | queue: 21 | total: 878
 LOD: updated 1 chunks | queue: 66
-Chunks: loaded 1 | queue: 14 | total: 908
+Chunks: loaded 1 | queue: 20 | total: 879
 LOD: updated 1 chunks | queue: 65
-Chunks: loaded 1 | queue: 13 | total: 909
+Chunks: loaded 1 | queue: 19 | total: 880
 LOD: updated 1 chunks | queue: 64
-Chunks: loaded 1 | queue: 12 | total: 910
+Chunks: loaded 1 | queue: 18 | total: 881
 LOD: updated 1 chunks | queue: 63
-Chunks: loaded 1 | queue: 11 | total: 911
+Chunks: loaded 1 | queue: 17 | total: 882
 LOD: updated 1 chunks | queue: 62
-Chunks: loaded 1 | queue: 10 | total: 912
+Chunks: loaded 1 | queue: 16 | total: 883
 LOD: updated 1 chunks | queue: 61
-Chunks: loaded 1 | queue: 9 | total: 913
+Chunks: loaded 1 | queue: 15 | total: 884
 LOD: updated 1 chunks | queue: 60
-Chunks: loaded 1 | queue: 8 | total: 914
+Chunks: loaded 1 | queue: 14 | total: 885 | FPS: 60 | Q:30%
 LOD: updated 1 chunks | queue: 59
-Chunks: loaded 1 | queue: 7 | total: 915
+Chunks: loaded 1 | queue: 13 | total: 886
 LOD: updated 1 chunks | queue: 58
-Chunks: loaded 1 | queue: 6 | total: 916
+Chunks: loaded 1 | queue: 12 | total: 887
 LOD: updated 1 chunks | queue: 57
-Chunks: loaded 1 | queue: 5 | total: 917 | FPS: 58 | Q:53%
-CHUNK (5, 4) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=58
+Chunks: loaded 1 | queue: 11 | total: 888
 LOD: updated 1 chunks | queue: 56
-Chunks: loaded 1 | queue: 4 | total: 918
+Chunks: loaded 1 | queue: 10 | total: 889
 LOD: updated 1 chunks | queue: 55
-Chunks: loaded 1 | queue: 3 | total: 919
+Chunks: loaded 1 | queue: 9 | total: 890
 LOD: updated 1 chunks | queue: 54
-Chunks: loaded 1 | queue: 2 | total: 920
+Chunks: loaded 1 | queue: 8 | total: 891
 LOD: updated 1 chunks | queue: 53
-Chunks: loaded 1 | queue: 1 | total: 921
-CHUNK (4, 5) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=58
+Chunks: loaded 1 | queue: 7 | total: 892
 LOD: updated 1 chunks | queue: 52
-Chunks: loaded 1 | queue: 0 | total: 922
+Chunks: loaded 1 | queue: 6 | total: 893
 LOD: updated 1 chunks | queue: 51
+Chunks: loaded 1 | queue: 5 | total: 894
 LOD: updated 1 chunks | queue: 50
+Chunks: loaded 1 | queue: 4 | total: 895 | FPS: 60 | Q:30%
 LOD: updated 1 chunks | queue: 49
+Chunks: loaded 1 | queue: 3 | total: 896
 LOD: updated 1 chunks | queue: 48
-CHUNK (3, 5) LOD0: total=7ms (verts=5ms, mesh=1ms, collision=1ms) FPS=58
+Chunks: loaded 1 | queue: 2 | total: 897
 LOD: updated 1 chunks | queue: 47
+Chunks: loaded 1 | queue: 1 | total: 898
 LOD: updated 1 chunks | queue: 46
+Chunks: loaded 1 | queue: 0 | total: 899
 LOD: updated 1 chunks | queue: 45
 LOD: updated 1 chunks | queue: 44
 LOD: updated 1 chunks | queue: 43
-CHUNK (2, 6) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=58
 LOD: updated 1 chunks | queue: 42
+CHUNK (6, 1) LOD0: total=9ms (verts=6ms, mesh=1ms, collision=2ms) FPS=60
 LOD: updated 1 chunks | queue: 41
 LOD: updated 1 chunks | queue: 40
+CHUNK (5, 3) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=60
 LOD: updated 1 chunks | queue: 39
+CHUNK (5, 2) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=60
 LOD: updated 1 chunks | queue: 38
+CHUNK (5, -1) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=60
 LOD: updated 1 chunks | queue: 37
-CHUNK (0, 5) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=58
+CHUNK (4, 4) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=60
 LOD: updated 1 chunks | queue: 36
 LOD: updated 1 chunks | queue: 35
 LOD: updated 1 chunks | queue: 34
+CHUNK (2, 5) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=60
 LOD: updated 1 chunks | queue: 33
 LOD: updated 1 chunks | queue: 32
 LOD: updated 1 chunks | queue: 31
@@ -730,2225 +681,195 @@ LOD: updated 1 chunks | queue: 10
 LOD: updated 1 chunks | queue: 9
 LOD: updated 1 chunks | queue: 8
 LOD: updated 1 chunks | queue: 7
-CHUNK (3, -3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=58
 LOD: updated 1 chunks | queue: 6
 LOD: updated 1 chunks | queue: 5
 LOD: updated 1 chunks | queue: 4
-CHUNK (1, 4) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=58
 LOD: updated 1 chunks | queue: 3
 LOD: updated 1 chunks | queue: 2
 LOD: updated 1 chunks | queue: 1
 LOD: updated 1 chunks | queue: 0
-Chunks: loaded 1 | queue: 29 | total: 923
-LOD: updated 1 chunks | queue: 91
-Chunks: loaded 1 | queue: 28 | total: 924
-LOD: updated 1 chunks | queue: 90
-Chunks: loaded 1 | queue: 27 | total: 925
-LOD: updated 1 chunks | queue: 89
-Chunks: loaded 1 | queue: 26 | total: 926
-LOD: updated 1 chunks | queue: 88
-Chunks: loaded 1 | queue: 25 | total: 927 | FPS: 59 | Q:50%
+Chunks: loaded 1 | queue: 29 | total: 900
 LOD: updated 1 chunks | queue: 87
-Chunks: loaded 1 | queue: 24 | total: 928
+Chunks: loaded 1 | queue: 28 | total: 901
 LOD: updated 1 chunks | queue: 86
-Chunks: loaded 1 | queue: 23 | total: 929
+Chunks: loaded 1 | queue: 27 | total: 902
 LOD: updated 1 chunks | queue: 85
-Chunks: loaded 1 | queue: 22 | total: 930
+Chunks: loaded 1 | queue: 26 | total: 903
 LOD: updated 1 chunks | queue: 84
-Chunks: loaded 1 | queue: 21 | total: 931
+Chunks: loaded 1 | queue: 25 | total: 904
 LOD: updated 1 chunks | queue: 83
-Chunks: loaded 1 | queue: 20 | total: 932
+Chunks: loaded 1 | queue: 24 | total: 905 | FPS: 62 | Q:30%
 LOD: updated 1 chunks | queue: 82
-Chunks: loaded 1 | queue: 19 | total: 933
+Chunks: loaded 1 | queue: 23 | total: 906
 LOD: updated 1 chunks | queue: 81
-Chunks: loaded 1 | queue: 18 | total: 934
+Chunks: loaded 1 | queue: 22 | total: 907
 LOD: updated 1 chunks | queue: 80
-Chunks: loaded 1 | queue: 17 | total: 935
+Chunks: loaded 1 | queue: 21 | total: 908
 LOD: updated 1 chunks | queue: 79
-Chunks: loaded 1 | queue: 16 | total: 936
+Chunks: loaded 1 | queue: 20 | total: 909
 LOD: updated 1 chunks | queue: 78
-Chunks: loaded 1 | queue: 15 | total: 937 | FPS: 59 | Q:50%
+Chunks: loaded 1 | queue: 19 | total: 910
 LOD: updated 1 chunks | queue: 77
-Chunks: loaded 1 | queue: 14 | total: 938
+Chunks: loaded 1 | queue: 18 | total: 911
 LOD: updated 1 chunks | queue: 76
-Chunks: loaded 1 | queue: 13 | total: 939
+Chunks: loaded 1 | queue: 17 | total: 912
 LOD: updated 1 chunks | queue: 75
-Chunks: loaded 1 | queue: 12 | total: 940
+Chunks: loaded 1 | queue: 16 | total: 913
 LOD: updated 1 chunks | queue: 74
-Chunks: loaded 1 | queue: 11 | total: 941
+Chunks: loaded 1 | queue: 15 | total: 914
 LOD: updated 1 chunks | queue: 73
-Chunks: loaded 1 | queue: 10 | total: 942
-CHUNK (6, 3) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=59
+Chunks: loaded 1 | queue: 14 | total: 915 | FPS: 58 | Q:30%
 LOD: updated 1 chunks | queue: 72
-TREE (6, 9) #0: raycast_y=12.3541564941406 local_pos=(-7.218734, 9.354632, -0.797266) chunk.pos.y=0.0 expected=12.3402016401595 global=(142.7813, 9.354632, 224.2027)
-Chunks: loaded 1 | queue: 9 | total: 943
+Chunks: loaded 1 | queue: 13 | total: 916
 LOD: updated 1 chunks | queue: 71
-Chunks: queued 13 for unload
-Chunks: loaded 1 | queue: 28 | total: 944
-LOD: updated 1 chunks | queue: 132
-Chunks: unloaded 2 | queue: 11 | remaining: 942
-Chunks: loaded 1 | queue: 27 | total: 943
-LOD: updated 1 chunks | queue: 131
-Chunks: unloaded 2 | queue: 9 | remaining: 941
-Chunks: loaded 1 | queue: 26 | total: 942
-LOD: updated 1 chunks | queue: 130
-Chunks: unloaded 2 | queue: 7 | remaining: 940
-Chunks: loaded 1 | queue: 25 | total: 941 | FPS: 59 | Q:50%
-LOD: updated 1 chunks | queue: 129
-Chunks: unloaded 2 | queue: 5 | remaining: 939
-Chunks: loaded 1 | queue: 24 | total: 940
-LOD: updated 1 chunks | queue: 128
-Chunks: unloaded 2 | queue: 3 | remaining: 938
-Chunks: loaded 1 | queue: 23 | total: 939
-LOD: updated 1 chunks | queue: 127
-Chunks: unloaded 2 | queue: 1 | remaining: 937
-Chunks: loaded 1 | queue: 22 | total: 938
-LOD: updated 1 chunks | queue: 126
-Chunks: unloaded 1 | queue: 0 | remaining: 937
-Chunks: loaded 1 | queue: 21 | total: 938
-LOD: updated 1 chunks | queue: 125
-Chunks: loaded 1 | queue: 20 | total: 939
-LOD: updated 1 chunks | queue: 124
-Chunks: loaded 1 | queue: 19 | total: 940
-LOD: updated 1 chunks | queue: 123
-Chunks: loaded 1 | queue: 18 | total: 941
-LOD: updated 1 chunks | queue: 122
-Chunks: loaded 1 | queue: 17 | total: 942
-LOD: updated 1 chunks | queue: 121
-Chunks: loaded 1 | queue: 16 | total: 943
-LOD: updated 1 chunks | queue: 120
-Chunks: loaded 1 | queue: 15 | total: 944 | FPS: 59 | Q:50%
-LOD: updated 1 chunks | queue: 119
-Chunks: loaded 1 | queue: 14 | total: 945
-LOD: updated 1 chunks | queue: 118
-Chunks: loaded 1 | queue: 13 | total: 946
-LOD: updated 1 chunks | queue: 117
-Chunks: loaded 1 | queue: 12 | total: 947
-LOD: updated 1 chunks | queue: 116
-Chunks: loaded 1 | queue: 11 | total: 948
-LOD: updated 1 chunks | queue: 115
-Chunks: loaded 1 | queue: 10 | total: 949
-LOD: updated 1 chunks | queue: 114
-Chunks: loaded 1 | queue: 9 | total: 950
-LOD: updated 1 chunks | queue: 113
-Chunks: loaded 1 | queue: 8 | total: 951
-LOD: updated 1 chunks | queue: 112
-Chunks: loaded 1 | queue: 7 | total: 952
-LOD: updated 1 chunks | queue: 111
-Chunks: loaded 1 | queue: 6 | total: 953
-CHUNK (7, 3) LOD0: total=8ms (verts=4ms, mesh=1ms, collision=3ms) FPS=59
+Chunks: loaded 1 | queue: 12 | total: 917
+LOD: updated 1 chunks | queue: 70
+Chunks: loaded 1 | queue: 11 | total: 918
+LOD: updated 1 chunks | queue: 69
+Chunks: loaded 1 | queue: 10 | total: 919
+LOD: updated 1 chunks | queue: 68
+Chunks: loaded 1 | queue: 9 | total: 920
+LOD: updated 1 chunks | queue: 67
+Chunks: loaded 1 | queue: 8 | total: 921
+LOD: updated 1 chunks | queue: 66
+Chunks: loaded 1 | queue: 18 | total: 922
 LOD: updated 1 chunks | queue: 110
-Chunks: loaded 1 | queue: 5 | total: 954 | FPS: 59 | Q:50%
+TREE (10, 2) #1: raycast_y=11.1686401367188 local_pos=(1.041413, 8.171631, -5.035615) chunk.pos.y=0.0 expected=11.1075988183296 global=(251.0414, 8.171631, 44.96439)
+Chunks: loaded 1 | queue: 17 | total: 923
 LOD: updated 1 chunks | queue: 109
-Chunks: loaded 1 | queue: 4 | total: 955
-CHUNK (6, 5) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=59
+Chunks: loaded 1 | queue: 16 | total: 924
 LOD: updated 1 chunks | queue: 108
-Chunks: loaded 1 | queue: 3 | total: 956
-CHUNK (6, 4) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=59
+Chunks: loaded 1 | queue: 15 | total: 925 | FPS: 58 | Q:30%
 LOD: updated 1 chunks | queue: 107
-Chunks: loaded 1 | queue: 2 | total: 957
-CHUNK (5, 6) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=59
+Chunks: loaded 1 | queue: 14 | total: 926
 LOD: updated 1 chunks | queue: 106
-Chunks: loaded 1 | queue: 1 | total: 958
+Chunks: loaded 1 | queue: 13 | total: 927
 LOD: updated 1 chunks | queue: 105
-Chunks: loaded 1 | queue: 0 | total: 959
+Chunks: loaded 1 | queue: 12 | total: 928
+CHUNK (10, -3) LOD1: total=7ms (verts=4ms, mesh=2ms, collision=1ms) FPS=58
 LOD: updated 1 chunks | queue: 104
-CHUNK (3, 7) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=59
+Chunks: loaded 1 | queue: 11 | total: 929
 LOD: updated 1 chunks | queue: 103
+PROPS (10, -3): 3ms FPS=58
+Chunks: loaded 1 | queue: 10 | total: 930
 LOD: updated 1 chunks | queue: 102
+Chunks: loaded 1 | queue: 9 | total: 931
 LOD: updated 1 chunks | queue: 101
+Chunks: loaded 1 | queue: 8 | total: 932
 LOD: updated 1 chunks | queue: 100
+Chunks: loaded 1 | queue: 7 | total: 933
 LOD: updated 1 chunks | queue: 99
+Chunks: loaded 1 | queue: 6 | total: 934
+CHUNK (7, 0) LOD0: total=9ms (verts=7ms, mesh=1ms, collision=1ms) FPS=58
 LOD: updated 1 chunks | queue: 98
+Chunks: loaded 1 | queue: 5 | total: 935 | FPS: 58 | Q:30%
 LOD: updated 1 chunks | queue: 97
+Chunks: loaded 1 | queue: 4 | total: 936
 LOD: updated 1 chunks | queue: 96
+PROPS (7, -6): 3ms FPS=58
+Chunks: loaded 1 | queue: 3 | total: 937
+CHUNK (6, -2) LOD0: total=9ms (verts=8ms, mesh=0ms, collision=1ms) FPS=58
 LOD: updated 1 chunks | queue: 95
+Chunks: loaded 1 | queue: 2 | total: 938
 LOD: updated 1 chunks | queue: 94
+Chunks: loaded 1 | queue: 1 | total: 939
 LOD: updated 1 chunks | queue: 93
+PROPS (6, -7): 3ms FPS=58
+Chunks: loaded 1 | queue: 0 | total: 940
+CHUNK (5, -3) LOD0: total=9ms (verts=6ms, mesh=1ms, collision=2ms) FPS=58
 LOD: updated 1 chunks | queue: 92
 LOD: updated 1 chunks | queue: 91
+CHUNK (4, -3) LOD0: total=9ms (verts=7ms, mesh=0ms, collision=2ms) FPS=58
 LOD: updated 1 chunks | queue: 90
+CHUNK (3, -4) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=58
 LOD: updated 1 chunks | queue: 89
 LOD: updated 1 chunks | queue: 88
+PROPS (3, -4): 3ms FPS=58
 LOD: updated 1 chunks | queue: 87
 LOD: updated 1 chunks | queue: 86
 LOD: updated 1 chunks | queue: 85
 LOD: updated 1 chunks | queue: 84
+PROPS (2, 5): 3ms FPS=58
 LOD: updated 1 chunks | queue: 83
 LOD: updated 1 chunks | queue: 82
 LOD: updated 1 chunks | queue: 81
+PROPS (1, 5): 3ms FPS=58
 LOD: updated 1 chunks | queue: 80
 LOD: updated 1 chunks | queue: 79
 LOD: updated 1 chunks | queue: 78
 LOD: updated 1 chunks | queue: 77
 LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-CHUNK (5, 5) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-TREE (5, 5) #0: raycast_y=11.7414245605469 local_pos=(-8.454414, 8.7419, 10.21775) chunk.pos.y=0.0 expected=11.8035825326733 global=(116.5456, 8.7419, 135.2177)
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-TREE (3, 10) #0: raycast_y=12.4456787109375 local_pos=(-7.982951, 9.448669, 10.1918) chunk.pos.y=0.0 expected=12.4483315410002 global=(67.01705, 9.448669, 260.1918)
-PROPS (3, 10): 3ms FPS=59
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-CHUNK (2, 7) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 49
-TREE (2, 11) #0: raycast_y=11.4698181152344 local_pos=(3.395298, 8.472809, 2.200842) chunk.pos.y=0.0 expected=11.4732294326261 global=(53.3953, 8.472809, 277.2008)
-TREE (2, 11) #1: raycast_y=12.0660095214844 local_pos=(-6.786269, 9.06676, 6.913771) chunk.pos.y=0.0 expected=12.0545585073876 global=(43.21373, 9.06676, 281.9138)
-TREE (2, 11) #2: raycast_y=11.5898132324219 local_pos=(2.389264, 8.590289, 6.234364) chunk.pos.y=0.0 expected=11.5564024018854 global=(52.38926, 8.590289, 281.2344)
-PROPS (2, 11): 3ms FPS=59
-Chunks: loaded 1 | queue: 26 | total: 960
-LOD: updated 1 chunks | queue: 126
-Chunks: loaded 1 | queue: 25 | total: 961
-LOD: updated 1 chunks | queue: 125
-Chunks: loaded 1 | queue: 24 | total: 962
-LOD: updated 1 chunks | queue: 124
-Chunks: loaded 1 | queue: 23 | total: 963
-LOD: updated 1 chunks | queue: 123
-Chunks: loaded 1 | queue: 22 | total: 964 | FPS: 60 | Q:50%
-LOD: updated 1 chunks | queue: 122
-Chunks: loaded 1 | queue: 21 | total: 965
-LOD: updated 1 chunks | queue: 121
-Chunks: loaded 1 | queue: 20 | total: 966
-LOD: updated 1 chunks | queue: 120
-Chunks: loaded 1 | queue: 19 | total: 967
-LOD: updated 1 chunks | queue: 119
-Chunks: loaded 1 | queue: 18 | total: 968
-LOD: updated 1 chunks | queue: 118
-Chunks: loaded 1 | queue: 17 | total: 969
-LOD: updated 1 chunks | queue: 117
-Chunks: loaded 1 | queue: 16 | total: 970
-LOD: updated 1 chunks | queue: 116
-Chunks: loaded 1 | queue: 15 | total: 971
-LOD: updated 1 chunks | queue: 115
-Chunks: loaded 1 | queue: 14 | total: 972
-LOD: updated 1 chunks | queue: 114
-Chunks: loaded 1 | queue: 13 | total: 973
-LOD: updated 1 chunks | queue: 113
-Chunks: loaded 1 | queue: 12 | total: 974 | FPS: 60 | Q:50%
-LOD: updated 1 chunks | queue: 112
-Chunks: loaded 1 | queue: 11 | total: 975
-LOD: updated 1 chunks | queue: 111
-Chunks: loaded 1 | queue: 10 | total: 976
-LOD: updated 1 chunks | queue: 110
-Chunks: loaded 1 | queue: 9 | total: 977
-LOD: updated 1 chunks | queue: 109
-Chunks: loaded 1 | queue: 8 | total: 978
-LOD: updated 1 chunks | queue: 108
-Chunks: loaded 1 | queue: 7 | total: 979
-LOD: updated 1 chunks | queue: 107
-Chunks: loaded 1 | queue: 6 | total: 980
-LOD: updated 1 chunks | queue: 106
-Chunks: loaded 1 | queue: 5 | total: 981
-LOD: updated 1 chunks | queue: 105
-Chunks: loaded 1 | queue: 4 | total: 982
-LOD: updated 1 chunks | queue: 104
-Chunks: loaded 1 | queue: 3 | total: 983
-LOD: updated 1 chunks | queue: 103
-Chunks: loaded 1 | queue: 2 | total: 984 | FPS: 60 | Q:50%
-LOD: updated 1 chunks | queue: 102
-Chunks: loaded 1 | queue: 1 | total: 985
-LOD: updated 1 chunks | queue: 101
-Chunks: loaded 1 | queue: 0 | total: 986
-LOD: updated 1 chunks | queue: 100
-LOD: updated 1 chunks | queue: 99
-LOD: updated 1 chunks | queue: 98
-LOD: updated 1 chunks | queue: 97
-LOD: updated 1 chunks | queue: 96
-LOD: updated 1 chunks | queue: 95
-CHUNK (8, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 94
-LOD: updated 1 chunks | queue: 93
-CHUNK (7, 5) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 92
-CHUNK (7, 4) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 91
-CHUNK (7, 2) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 90
-CHUNK (7, 1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 89
-CHUNK (6, 6) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 88
-TREE (6, 6) #0: raycast_y=11.1810302734375 local_pos=(2.749207, 8.181506, 2.874964) chunk.pos.y=0.0 expected=11.1727343647683 global=(152.7492, 8.181506, 152.875)
-TREE (6, 6) #1: raycast_y=11.2061157226563 local_pos=(2.136347, 8.206866, 2.084479) chunk.pos.y=0.0 expected=11.1917227648842 global=(152.1364, 8.206866, 152.0845)
-TREE (6, 6) #2: raycast_y=11.2304992675781 local_pos=(-7.799556, 8.23349, -1.580759) chunk.pos.y=0.0 expected=11.1551565195824 global=(142.2004, 8.23349, 148.4192)
-LOD: updated 1 chunks | queue: 87
-LOD: updated 1 chunks | queue: 86
-LOD: updated 1 chunks | queue: 85
-CHUNK (4, 7) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-CHUNK (1, 6) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-CHUNK (0, 6) LOD0: total=7ms (verts=5ms, mesh=1ms, collision=1ms) FPS=59
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-CHUNK (-1, 5) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-Chunks: loaded 1 | queue: 7 | total: 987
-LOD: updated 1 chunks | queue: 58
-Chunks: loaded 1 | queue: 6 | total: 988
-LOD: updated 1 chunks | queue: 57
-Chunks: loaded 1 | queue: 5 | total: 989
-LOD: updated 1 chunks | queue: 56
-Chunks: loaded 1 | queue: 4 | total: 990
-LOD: updated 1 chunks | queue: 55
-Chunks: loaded 1 | queue: 3 | total: 991
-LOD: updated 1 chunks | queue: 54
-Chunks: loaded 1 | queue: 2 | total: 992
-LOD: updated 1 chunks | queue: 53
-Chunks: loaded 1 | queue: 1 | total: 993
-LOD: updated 1 chunks | queue: 52
-Chunks: loaded 1 | queue: 0 | total: 994 | FPS: 59 | Q:46%
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-CHUNK (8, 2) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-CHUNK (7, 0) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-CHUNK (6, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 41
-CHUNK (4, -2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-TREE (4, 7) #1: raycast_y=11.4239501953125 local_pos=(-1.334186, 8.424426, -1.125425) chunk.pos.y=0.0 expected=11.4289480327383 global=(98.66582, 8.424426, 173.8746)
-TREE (4, 7) #2: raycast_y=11.342529296875 local_pos=(-0.554107, 8.34328, 4.398265) chunk.pos.y=0.0 expected=11.3413126912447 global=(99.44589, 8.34328, 179.3983)
-PROPS (4, 7): 4ms FPS=61
-CHUNK (3, -2) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=61
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-RAYCAST MISS chunk (3, -6) at (72.3658871650696, -140.078210830688) ray_start.y=290.0 fallback_height=8.54082978351962 hits=15 misses=1
-LOD: updated 1 chunks | queue: 11
-CHUNK (-1, 2) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=61
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-TREE (6, 6) #0: raycast_y=11.1770324707031 local_pos=(2.749207, 8.177783, 2.874964) chunk.pos.y=0.0 expected=11.1727343647683 global=(152.7492, 8.177783, 152.875)
-TREE (6, 6) #1: raycast_y=11.197998046875 local_pos=(2.136347, 8.198474, 2.084479) chunk.pos.y=0.0 expected=11.1917227648842 global=(152.1364, 8.198474, 152.0845)
-TREE (6, 6) #2: raycast_y=11.1552429199219 local_pos=(-7.799556, 8.158234, -1.580759) chunk.pos.y=0.0 expected=11.1551565195824 global=(142.2004, 8.158234, 148.4192)
-PROPS (6, 6): 3ms FPS=60
-CHUNK (2, -2) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-CHUNK (0, -1) LOD0: total=7ms (verts=6ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 36
-CHUNK (-1, 4) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 35
-CHUNK (-1, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 34
-CHUNK (-1, 1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 33
-CHUNK (-1, 0) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-CHUNK (-2, 2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Chunks: loaded 1 | queue: 0 | total: 995
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-LOD: updated 1 chunks | queue: 86
-LOD: updated 1 chunks | queue: 85
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-PROPS (7, 2): 5ms FPS=59
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-PROPS (6, 5): 3ms FPS=61
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 103
-LOD: updated 1 chunks | queue: 102
-LOD: updated 1 chunks | queue: 101
-LOD: updated 1 chunks | queue: 100
-LOD: updated 1 chunks | queue: 99
-LOD: updated 1 chunks | queue: 98
-LOD: updated 1 chunks | queue: 97
-LOD: updated 1 chunks | queue: 96
-LOD: updated 1 chunks | queue: 95
-LOD: updated 1 chunks | queue: 94
-LOD: updated 1 chunks | queue: 93
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-Chunks: loaded 1 | queue: 3 | total: 996
-LOD: updated 1 chunks | queue: 162
-Chunks: loaded 1 | queue: 2 | total: 997
-LOD: updated 1 chunks | queue: 161
-Chunks: loaded 1 | queue: 1 | total: 998
-LOD: updated 1 chunks | queue: 160
-Chunks: loaded 1 | queue: 0 | total: 999
-LOD: updated 1 chunks | queue: 159
-LOD: updated 1 chunks | queue: 158
-LOD: updated 1 chunks | queue: 157
-LOD: updated 1 chunks | queue: 156
-LOD: updated 1 chunks | queue: 155
-LOD: updated 1 chunks | queue: 154
-LOD: updated 1 chunks | queue: 153
-LOD: updated 1 chunks | queue: 152
-LOD: updated 1 chunks | queue: 151
-LOD: updated 1 chunks | queue: 150
-LOD: updated 1 chunks | queue: 149
-LOD: updated 1 chunks | queue: 148
-LOD: updated 1 chunks | queue: 147
-LOD: updated 1 chunks | queue: 146
-LOD: updated 1 chunks | queue: 145
-LOD: updated 1 chunks | queue: 144
-LOD: updated 1 chunks | queue: 143
-LOD: updated 1 chunks | queue: 142
-LOD: updated 1 chunks | queue: 141
-LOD: updated 1 chunks | queue: 140
-LOD: updated 1 chunks | queue: 139
-LOD: updated 1 chunks | queue: 138
-LOD: updated 1 chunks | queue: 137
-LOD: updated 1 chunks | queue: 136
-LOD: updated 1 chunks | queue: 135
-LOD: updated 1 chunks | queue: 134
-LOD: updated 1 chunks | queue: 133
-LOD: updated 1 chunks | queue: 132
-LOD: updated 1 chunks | queue: 131
-LOD: updated 1 chunks | queue: 130
-LOD: updated 1 chunks | queue: 129
-LOD: updated 1 chunks | queue: 128
-LOD: updated 1 chunks | queue: 127
-LOD: updated 1 chunks | queue: 126
-PROPS (1, 6): 4ms FPS=61
-CHUNK (0, -3) LOD0: total=7ms (verts=5ms, mesh=1ms, collision=1ms) FPS=61
-LOD: updated 1 chunks | queue: 125
-LOD: updated 1 chunks | queue: 124
-LOD: updated 1 chunks | queue: 123
-CHUNK (-2, -2) LOD0: total=7ms (verts=5ms, mesh=1ms, collision=1ms) FPS=59
-LOD: updated 1 chunks | queue: 122
-LOD: updated 1 chunks | queue: 121
-LOD: updated 1 chunks | queue: 120
-CHUNK (-3, -1) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 119
-LOD: updated 1 chunks | queue: 118
-CHUNK (-4, 1) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 117
-LOD: updated 1 chunks | queue: 116
-LOD: updated 1 chunks | queue: 115
-LOD: updated 1 chunks | queue: 114
-LOD: updated 1 chunks | queue: 113
-LOD: updated 1 chunks | queue: 112
-Chunks: loaded 1 | queue: 18 | total: 1000
-LOD: updated 1 chunks | queue: 202
-Chunks: loaded 1 | queue: 17 | total: 1001
-LOD: updated 1 chunks | queue: 201
-Chunks: loaded 1 | queue: 16 | total: 1002
-LOD: updated 1 chunks | queue: 200
-Chunks: loaded 1 | queue: 15 | total: 1003
-LOD: updated 1 chunks | queue: 199
-Chunks: loaded 1 | queue: 14 | total: 1004 | FPS: 59 | Q:46%
-LOD: updated 1 chunks | queue: 198
-Chunks: loaded 1 | queue: 13 | total: 1005
-LOD: updated 1 chunks | queue: 197
-Chunks: loaded 1 | queue: 12 | total: 1006
-LOD: updated 1 chunks | queue: 196
-Chunks: loaded 1 | queue: 11 | total: 1007
-LOD: updated 1 chunks | queue: 195
-Chunks: loaded 1 | queue: 10 | total: 1008
-LOD: updated 1 chunks | queue: 194
-Chunks: loaded 1 | queue: 9 | total: 1009
-LOD: updated 1 chunks | queue: 193
-Chunks: loaded 1 | queue: 8 | total: 1010
-LOD: updated 1 chunks | queue: 192
-Chunks: loaded 1 | queue: 7 | total: 1011
-LOD: updated 1 chunks | queue: 191
-Chunks: loaded 1 | queue: 6 | total: 1012
-LOD: updated 1 chunks | queue: 190
-Chunks: loaded 1 | queue: 5 | total: 1013
-LOD: updated 1 chunks | queue: 189
-Chunks: loaded 1 | queue: 4 | total: 1014 | FPS: 59 | Q:46%
-LOD: updated 1 chunks | queue: 188
-Chunks: loaded 1 | queue: 3 | total: 1015
-LOD: updated 1 chunks | queue: 187
-Chunks: loaded 1 | queue: 2 | total: 1016
-LOD: updated 1 chunks | queue: 186
-Chunks: loaded 1 | queue: 1 | total: 1017
-LOD: updated 1 chunks | queue: 185
-Chunks: loaded 1 | queue: 0 | total: 1018
-LOD: updated 1 chunks | queue: 184
-LOD: updated 1 chunks | queue: 183
-LOD: updated 1 chunks | queue: 182
-LOD: updated 1 chunks | queue: 181
-LOD: updated 1 chunks | queue: 180
-LOD: updated 1 chunks | queue: 179
-LOD: updated 1 chunks | queue: 178
-LOD: updated 1 chunks | queue: 177
-LOD: updated 1 chunks | queue: 176
-LOD: updated 1 chunks | queue: 175
-LOD: updated 1 chunks | queue: 174
-LOD: updated 1 chunks | queue: 173
-LOD: updated 1 chunks | queue: 172
-LOD: updated 1 chunks | queue: 171
-LOD: updated 1 chunks | queue: 170
-LOD: updated 1 chunks | queue: 169
-LOD: updated 1 chunks | queue: 168
-LOD: updated 1 chunks | queue: 167
-LOD: updated 1 chunks | queue: 166
-PROPS (5, 1): 3ms FPS=59
-LOD: updated 1 chunks | queue: 165
-LOD: updated 1 chunks | queue: 164
-PROPS (4, 4): 3ms FPS=59
-LOD: updated 1 chunks | queue: 163
-PROPS (4, 3): 3ms FPS=59
-LOD: updated 1 chunks | queue: 162
-LOD: updated 1 chunks | queue: 161
-LOD: updated 1 chunks | queue: 160
-LOD: updated 1 chunks | queue: 159
-LOD: updated 1 chunks | queue: 158
-PROPS (3, 5): 4ms FPS=59
-CHUNK (-1, -3) LOD0: total=7ms (verts=6ms, mesh=0ms, collision=1ms) FPS=59
-LOD: updated 1 chunks | queue: 157
-LOD: updated 1 chunks | queue: 156
-LOD: updated 1 chunks | queue: 155
-CHUNK (-3, 4) LOD0: total=7ms (verts=3ms, mesh=0ms, collision=4ms) FPS=60
-LOD: updated 1 chunks | queue: 154
-CHUNK (-3, -2) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 153
-CHUNK (-4, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 152
-LOD: updated 1 chunks | queue: 151
-CHUNK (-4, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 150
-CHUNK (-4, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 149
-LOD: updated 1 chunks | queue: 148
-CHUNK (-5, 1) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 147
-LOD: updated 1 chunks | queue: 146
-LOD: updated 1 chunks | queue: 145
-LOD: updated 1 chunks | queue: 144
-LOD: updated 1 chunks | queue: 143
-LOD: updated 1 chunks | queue: 142
-LOD: updated 1 chunks | queue: 141
-LOD: updated 1 chunks | queue: 140
-LOD: updated 1 chunks | queue: 139
-LOD: updated 1 chunks | queue: 138
-LOD: updated 1 chunks | queue: 137
-LOD: updated 1 chunks | queue: 136
-LOD: updated 1 chunks | queue: 135
-LOD: updated 1 chunks | queue: 134
-LOD: updated 1 chunks | queue: 133
-LOD: updated 1 chunks | queue: 132
-LOD: updated 1 chunks | queue: 131
-LOD: updated 1 chunks | queue: 130
-LOD: updated 1 chunks | queue: 129
-LOD: updated 1 chunks | queue: 128
-LOD: updated 1 chunks | queue: 127
-LOD: updated 1 chunks | queue: 126
-LOD: updated 1 chunks | queue: 125
-LOD: updated 1 chunks | queue: 124
-LOD: updated 1 chunks | queue: 123
-LOD: updated 1 chunks | queue: 122
-LOD: updated 1 chunks | queue: 121
-LOD: updated 1 chunks | queue: 120
-LOD: updated 1 chunks | queue: 119
-LOD: updated 1 chunks | queue: 118
-LOD: updated 1 chunks | queue: 117
-LOD: updated 1 chunks | queue: 116
-LOD: updated 1 chunks | queue: 115
-LOD: updated 1 chunks | queue: 114
-LOD: updated 1 chunks | queue: 113
-LOD: updated 1 chunks | queue: 112
-LOD: updated 1 chunks | queue: 111
-LOD: updated 1 chunks | queue: 110
-LOD: updated 1 chunks | queue: 109
-LOD: updated 1 chunks | queue: 108
-Chunks: loaded 1 | queue: 27 | total: 1019
-LOD: updated 1 chunks | queue: 201
-Chunks: loaded 1 | queue: 26 | total: 1020
-LOD: updated 1 chunks | queue: 200
-Chunks: loaded 1 | queue: 25 | total: 1021
-LOD: updated 1 chunks | queue: 199
-Chunks: loaded 1 | queue: 24 | total: 1022
-LOD: updated 1 chunks | queue: 198
-Chunks: loaded 1 | queue: 23 | total: 1023
-LOD: updated 1 chunks | queue: 197
-Chunks: loaded 1 | queue: 22 | total: 1024 | FPS: 60 | Q:46%
-LOD: updated 1 chunks | queue: 196
-Chunks: loaded 1 | queue: 21 | total: 1025
-LOD: updated 1 chunks | queue: 195
-Chunks: loaded 1 | queue: 20 | total: 1026
-LOD: updated 1 chunks | queue: 194
-Chunks: loaded 1 | queue: 19 | total: 1027
-LOD: updated 1 chunks | queue: 193
-Chunks: loaded 1 | queue: 18 | total: 1028
-LOD: updated 1 chunks | queue: 192
-Chunks: loaded 1 | queue: 17 | total: 1029
-LOD: updated 1 chunks | queue: 191
-Chunks: loaded 1 | queue: 16 | total: 1030
-LOD: updated 1 chunks | queue: 190
-Chunks: loaded 1 | queue: 15 | total: 1031
-LOD: updated 1 chunks | queue: 189
-Chunks: loaded 1 | queue: 14 | total: 1032
-LOD: updated 1 chunks | queue: 188
-Chunks: loaded 1 | queue: 13 | total: 1033
-LOD: updated 1 chunks | queue: 187
-Chunks: loaded 1 | queue: 12 | total: 1034 | FPS: 57 | Q:46%
-LOD: updated 1 chunks | queue: 186
-Chunks: loaded 1 | queue: 11 | total: 1035
-LOD: updated 1 chunks | queue: 185
-Chunks: loaded 1 | queue: 10 | total: 1036
-LOD: updated 1 chunks | queue: 184
-Chunks: loaded 1 | queue: 9 | total: 1037
-LOD: updated 1 chunks | queue: 183
-Chunks: loaded 1 | queue: 8 | total: 1038
-LOD: updated 1 chunks | queue: 182
-Chunks: loaded 1 | queue: 7 | total: 1039
-LOD: updated 1 chunks | queue: 181
-Chunks: loaded 1 | queue: 6 | total: 1040
-LOD: updated 1 chunks | queue: 180
-Chunks: loaded 1 | queue: 5 | total: 1041
-LOD: updated 1 chunks | queue: 179
-Chunks: loaded 1 | queue: 4 | total: 1042
-LOD: updated 1 chunks | queue: 178
-Chunks: loaded 1 | queue: 3 | total: 1043
-LOD: updated 1 chunks | queue: 177
-Chunks: loaded 1 | queue: 2 | total: 1044 | FPS: 57 | Q:46%
-LOD: updated 1 chunks | queue: 176
-Chunks: loaded 1 | queue: 1 | total: 1045
-LOD: updated 1 chunks | queue: 175
-Chunks: loaded 1 | queue: 0 | total: 1046
-LOD: updated 1 chunks | queue: 174
-LOD: updated 1 chunks | queue: 173
-LOD: updated 1 chunks | queue: 172
-LOD: updated 1 chunks | queue: 171
-LOD: updated 1 chunks | queue: 170
-LOD: updated 1 chunks | queue: 169
-LOD: updated 1 chunks | queue: 168
-LOD: updated 1 chunks | queue: 167
-LOD: updated 1 chunks | queue: 166
-LOD: updated 1 chunks | queue: 165
-LOD: updated 1 chunks | queue: 164
-PROPS (4, 1): 3ms FPS=57
-LOD: updated 1 chunks | queue: 163
-LOD: updated 1 chunks | queue: 162
-LOD: updated 1 chunks | queue: 161
-TREE (3, 4) #0: raycast_y=11.282958984375 local_pos=(-5.76935, 8.28595, -2.488566) chunk.pos.y=0.0 expected=11.3195689651348 global=(69.23065, 8.28595, 97.51144)
-TREE (3, 4) #1: raycast_y=11.4696044921875 local_pos=(-0.755272, 8.472595, 8.752575) chunk.pos.y=0.0 expected=11.5097935528325 global=(74.24473, 8.472595, 108.7526)
-TREE (3, 4) #2: raycast_y=11.4658508300781 local_pos=(-2.389726, 8.466601, 2.951614) chunk.pos.y=0.0 expected=11.4589495319273 global=(72.61028, 8.466601, 102.9516)
-PROPS (3, 4): 5ms FPS=57
-LOD: updated 1 chunks | queue: 160
-PROPS (3, 3): 4ms FPS=57
-LOD: updated 1 chunks | queue: 159
-PROPS (3, 2): 3ms FPS=57
-LOD: updated 1 chunks | queue: 158
-PROPS (3, 0): 3ms FPS=57
-LOD: updated 1 chunks | queue: 157
-PROPS (3, -1): 3ms FPS=57
-LOD: updated 1 chunks | queue: 156
-PROPS (3, -2): 3ms FPS=57
-LOD: updated 1 chunks | queue: 155
-PROPS (2, 5): 4ms FPS=57
-CHUNK (-2, 5) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 154
-PROPS (-2, 5): 3ms FPS=57
-CHUNK (-2, -3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 153
-LOD: updated 1 chunks | queue: 152
-LOD: updated 1 chunks | queue: 151
-LOD: updated 1 chunks | queue: 150
-CHUNK (-4, -2) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 149
-LOD: updated 1 chunks | queue: 148
-CHUNK (-5, 3) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 147
-Chunks: queued 24 for unload
-LOD: updated 1 chunks | queue: 146
-Chunks: unloaded 2 | queue: 22 | remaining: 1044
-CHUNK (-5, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 145
-Chunks: unloaded 2 | queue: 20 | remaining: 1042
-CHUNK (-5, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 144
-Chunks: unloaded 2 | queue: 18 | remaining: 1040
-LOD: updated 1 chunks | queue: 143
-Chunks: unloaded 2 | queue: 16 | remaining: 1038
-LOD: updated 1 chunks | queue: 142
-Chunks: unloaded 2 | queue: 14 | remaining: 1036
-LOD: updated 1 chunks | queue: 141
-Chunks: unloaded 2 | queue: 12 | remaining: 1034
-LOD: updated 1 chunks | queue: 140
-Chunks: unloaded 2 | queue: 10 | remaining: 1032
-LOD: updated 1 chunks | queue: 139
-Chunks: unloaded 2 | queue: 8 | remaining: 1030
-LOD: updated 1 chunks | queue: 138
-Chunks: unloaded 2 | queue: 6 | remaining: 1028
-LOD: updated 1 chunks | queue: 137
-Chunks: unloaded 2 | queue: 4 | remaining: 1026
-LOD: updated 1 chunks | queue: 136
-Chunks: unloaded 2 | queue: 2 | remaining: 1024
-LOD: updated 1 chunks | queue: 135
-Chunks: unloaded 2 | queue: 0 | remaining: 1022
-LOD: updated 1 chunks | queue: 134
-LOD: updated 1 chunks | queue: 133
-LOD: updated 1 chunks | queue: 132
-LOD: updated 1 chunks | queue: 131
-LOD: updated 1 chunks | queue: 130
-LOD: updated 1 chunks | queue: 129
-LOD: updated 1 chunks | queue: 128
-LOD: updated 1 chunks | queue: 127
-LOD: updated 1 chunks | queue: 126
-LOD: updated 1 chunks | queue: 125
-LOD: updated 1 chunks | queue: 124
-LOD: updated 1 chunks | queue: 123
-LOD: updated 1 chunks | queue: 122
-LOD: updated 1 chunks | queue: 121
-LOD: updated 1 chunks | queue: 120
-LOD: updated 1 chunks | queue: 119
-LOD: updated 1 chunks | queue: 118
-LOD: updated 1 chunks | queue: 117
-LOD: updated 1 chunks | queue: 116
-LOD: updated 1 chunks | queue: 115
-LOD: updated 1 chunks | queue: 114
-LOD: updated 1 chunks | queue: 113
-LOD: updated 1 chunks | queue: 112
-LOD: updated 1 chunks | queue: 111
-LOD: updated 1 chunks | queue: 110
-LOD: updated 1 chunks | queue: 109
-LOD: updated 1 chunks | queue: 108
-LOD: updated 1 chunks | queue: 107
-LOD: updated 1 chunks | queue: 106
-LOD: updated 1 chunks | queue: 105
-LOD: updated 1 chunks | queue: 104
-LOD: updated 1 chunks | queue: 103
-LOD: updated 1 chunks | queue: 102
-LOD: updated 1 chunks | queue: 101
-LOD: updated 1 chunks | queue: 100
-LOD: updated 1 chunks | queue: 99
-LOD: updated 1 chunks | queue: 98
-LOD: updated 1 chunks | queue: 97
-LOD: updated 1 chunks | queue: 96
-LOD: updated 1 chunks | queue: 95
-LOD: updated 1 chunks | queue: 94
-LOD: updated 1 chunks | queue: 93
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-LOD: updated 1 chunks | queue: 86
-TREE (5, 5) #0: raycast_y=11.7414245605469 local_pos=(-8.454414, 8.744415, 10.21775) chunk.pos.y=0.0 expected=11.8035825326733 global=(116.5456, 8.744415, 135.2177)
-PROPS (5, 5): 3ms FPS=59
-LOD: updated 1 chunks | queue: 85
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-PROPS (4, 6): 5ms FPS=59
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-PROPS (3, 6): 3ms FPS=59
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-PROPS (2, 6): 3ms FPS=59
-CHUNK (1, -3) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=59
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-CHUNK (0, -2) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 70
-PROPS (0, -2): 3ms FPS=60
-LOD: updated 1 chunks | queue: 69
-RAYCAST MISS chunk (0, -6) at (-7.16633605957031, -157.865284919739) ray_start.y=290.0 fallback_height=5.78057841839659 hits=0 misses=1
-PROPS (0, -6): 4ms FPS=60
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-CHUNK (-1, -2) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-CHUNK (-2, -1) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-CHUNK (-3, 1) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-RAYCAST MISS chunk (-3, -5) at (-65.721607208252, -116.669414520264) ray_start.y=290.0 fallback_height=5.09280243950682 hits=0 misses=1
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-CHUNK (1, -2) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-CHUNK (-1, 5) LOD0: total=8ms (verts=7ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 41
-CHUNK (-1, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-CHUNK (-2, 4) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 38
-CHUNK (-2, 3) LOD0: total=6ms (verts=3ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-LOD: updated 1 chunks | queue: 86
-LOD: updated 1 chunks | queue: 85
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-CHUNK (4, 1) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 68
-CHUNK (3, 3) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 67
-CHUNK (3, 2) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 66
-CHUNK (3, 0) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 65
-CHUNK (3, -1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-CHUNK (-2, 1) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 36
-CHUNK (-2, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-CHUNK (-3, 2) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Player: Exited vehicle
-Warthog: Player exited at (21.61576, 11.68552, 49.39238)
-Warthog: Press E to enter
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 112
-LOD: updated 1 chunks | queue: 111
-LOD: updated 1 chunks | queue: 110
-LOD: updated 1 chunks | queue: 109
-LOD: updated 1 chunks | queue: 108
-LOD: updated 1 chunks | queue: 107
-LOD: updated 1 chunks | queue: 106
-LOD: updated 1 chunks | queue: 105
-LOD: updated 1 chunks | queue: 104
-LOD: updated 1 chunks | queue: 103
-LOD: updated 1 chunks | queue: 102
-LOD: updated 1 chunks | queue: 101
-LOD: updated 1 chunks | queue: 100
-LOD: updated 1 chunks | queue: 99
-LOD: updated 1 chunks | queue: 98
-LOD: updated 1 chunks | queue: 97
-LOD: updated 1 chunks | queue: 96
-LOD: updated 1 chunks | queue: 95
-LOD: updated 1 chunks | queue: 94
-LOD: updated 1 chunks | queue: 93
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-CHUNK (5, 2) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=61
-LOD: updated 1 chunks | queue: 86
-LOD: updated 1 chunks | queue: 85
-CHUNK (4, 4) LOD0: total=7ms (verts=6ms, mesh=0ms, collision=1ms) FPS=61
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-CHUNK (4, 0) LOD0: total=7ms (verts=6ms, mesh=0ms, collision=1ms) FPS=61
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-RAYCAST MISS chunk (1, 10) at (14.3169498443604, 250.649997711182) ray_start.y=290.0 fallback_height=10.6132048869016 hits=0 misses=1
-CHUNK (1, 6) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=56
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-CHUNK (4, 2) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=56
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-RAYCAST MISS chunk (3, 9) at (67.1666946411133, 229.696664810181) ray_start.y=290.0 fallback_height=11.3493640232881 hits=0 misses=1
-TREE (3, 9) #0: raycast_y=11.3849682502142 local_pos=(-7.833305, 8.385445, 4.696665) chunk.pos.y=0.0 expected=11.3493640232881 global=(67.16669, 8.385445, 229.6967)
-CHUNK (3, 4) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=56
-LOD: updated 1 chunks | queue: 30
-TREE (3, 4) #0: raycast_y=11.2791748046875 local_pos=(-5.76935, 8.282166, -2.488566) chunk.pos.y=0.0 expected=11.3195689651348 global=(69.23065, 8.282166, 97.51144)
-TREE (3, 4) #1: raycast_y=11.4529724121094 local_pos=(-0.755272, 8.453448, 8.752575) chunk.pos.y=0.0 expected=11.5097935528325 global=(74.24473, 8.453448, 108.7526)
-TREE (3, 4) #2: raycast_y=11.4600524902344 local_pos=(-2.389726, 8.460803, 2.951614) chunk.pos.y=0.0 expected=11.4589495319273 global=(72.61028, 8.460803, 102.9516)
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-PROPS (1, -3): 3ms FPS=56
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-RAYCAST MISS chunk (0, 10) at (-10.063286781311, 241.539228439331) ray_start.y=290.0 fallback_height=9.88372582740231 hits=0 misses=1
-PROPS (0, 10): 3ms FPS=57
-CHUNK (0, 6) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-RAYCAST MISS chunk (-3, 9) at (-73.8492469787598, 230.144737243652) ray_start.y=290.0 fallback_height=8.70549977914926 hits=0 misses=1
-PROPS (-3, 9): 3ms FPS=57
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Chunks: loaded 1 | queue: 3 | total: 1023
-LOD: updated 1 chunks | queue: 68
-Chunks: loaded 1 | queue: 2 | total: 1024
-LOD: updated 1 chunks | queue: 67
-Chunks: loaded 1 | queue: 1 | total: 1025
-LOD: updated 1 chunks | queue: 66
-Chunks: loaded 1 | queue: 0 | total: 1026
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-Chunks: loaded 1 | queue: 4 | total: 1027
-LOD: updated 1 chunks | queue: 79
-Chunks: loaded 1 | queue: 3 | total: 1028
-LOD: updated 1 chunks | queue: 78
-Chunks: loaded 1 | queue: 2 | total: 1029
-LOD: updated 1 chunks | queue: 77
-Chunks: loaded 1 | queue: 1 | total: 1030 | FPS: 59 | Q:31%
-LOD: updated 1 chunks | queue: 76
-Chunks: loaded 1 | queue: 0 | total: 1031
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-CHUNK (0, 7) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=59
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-CHUNK (-3, 5) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=59
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-CHUNK (-4, 3) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=59
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-Chunks: loaded 1 | queue: 14 | total: 1032
-LOD: updated 1 chunks | queue: 123
-Chunks: loaded 1 | queue: 13 | total: 1033
-LOD: updated 1 chunks | queue: 122
-Chunks: loaded 1 | queue: 12 | total: 1034
-LOD: updated 1 chunks | queue: 121
-Chunks: loaded 1 | queue: 11 | total: 1035
-LOD: updated 1 chunks | queue: 120
-Chunks: loaded 1 | queue: 10 | total: 1036
-LOD: updated 1 chunks | queue: 119
-Chunks: loaded 1 | queue: 9 | total: 1037
-LOD: updated 1 chunks | queue: 118
-Chunks: loaded 1 | queue: 8 | total: 1038
-LOD: updated 1 chunks | queue: 117
-Chunks: loaded 1 | queue: 7 | total: 1039
-LOD: updated 1 chunks | queue: 116
-Chunks: loaded 1 | queue: 6 | total: 1040 | FPS: 59 | Q:30%
-LOD: updated 1 chunks | queue: 115
-Chunks: loaded 1 | queue: 5 | total: 1041
-LOD: updated 1 chunks | queue: 114
-Chunks: loaded 1 | queue: 4 | total: 1042
-LOD: updated 1 chunks | queue: 113
-Chunks: loaded 1 | queue: 3 | total: 1043
-LOD: updated 1 chunks | queue: 112
-Chunks: loaded 1 | queue: 2 | total: 1044
-LOD: updated 1 chunks | queue: 111
-Chunks: loaded 1 | queue: 1 | total: 1045
-LOD: updated 1 chunks | queue: 110
-Chunks: loaded 1 | queue: 0 | total: 1046
-LOD: updated 1 chunks | queue: 109
-LOD: updated 1 chunks | queue: 108
-LOD: updated 1 chunks | queue: 107
-LOD: updated 1 chunks | queue: 106
-LOD: updated 1 chunks | queue: 105
-LOD: updated 1 chunks | queue: 104
-LOD: updated 1 chunks | queue: 103
-LOD: updated 1 chunks | queue: 102
-LOD: updated 1 chunks | queue: 101
-RAYCAST MISS chunk (3, 11) at (72.3220529556274, 284.931259155273) ray_start.y=290.0 fallback_height=11.2443710488654 hits=0 misses=1
-TREE (3, 11) #1: raycast_y=12.0627041842639 local_pos=(-10.09772, 9.063455, -8.985985) chunk.pos.y=0.0 expected=12.0450226237852 global=(64.90228, 9.063455, 266.014)
-PROPS (3, 11): 3ms FPS=59
-LOD: updated 1 chunks | queue: 100
-PROPS (3, -1): 3ms FPS=59
-LOD: updated 1 chunks | queue: 99
-LOD: updated 1 chunks | queue: 98
-LOD: updated 1 chunks | queue: 97
-LOD: updated 1 chunks | queue: 96
-RAYCAST MISS chunk (2, 11) at (53.3952980041504, 277.200841903687) ray_start.y=290.0 fallback_height=11.4732294326261 hits=28 misses=1
-TREE (2, 11) #0: raycast_y=11.4766829583691 local_pos=(3.395298, 8.477433, 2.200842) chunk.pos.y=0.0 expected=11.4732294326261 global=(53.3953, 8.477433, 277.2008)
-TREE (2, 11) #1: raycast_y=12.0481736298975 local_pos=(-6.786269, 9.04865, 6.913771) chunk.pos.y=0.0 expected=12.0545585073876 global=(43.21373, 9.04865, 281.9138)
-PROPS (2, 11): 4ms FPS=57
-CHUNK (2, 7) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 95
-LOD: updated 1 chunks | queue: 94
-LOD: updated 1 chunks | queue: 93
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-CHUNK (0, 8) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 86
-LOD: updated 1 chunks | queue: 85
-LOD: updated 1 chunks | queue: 84
-CHUNK (-1, 7) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-CHUNK (-2, 7) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-CHUNK (-3, 6) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-CHUNK (-4, 4) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-CHUNK (4, 5) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=57
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-Chunks: loaded 1 | queue: 1 | total: 1047
-LOD: updated 1 chunks | queue: 84
-Chunks: loaded 1 | queue: 0 | total: 1048
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-CHUNK (5, 4) LOD0: total=7ms (verts=4ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-CHUNK (3, 7) LOD0: total=7ms (verts=6ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-CHUNK (1, 8) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-RAYCAST MISS chunk (3, 10) at (67.0170488357544, 260.191802978516) ray_start.y=290.0 fallback_height=12.4483315410002 hits=28 misses=1
-TREE (3, 10) #0: raycast_y=12.4766969206308 local_pos=(-7.982951, 9.477173, 10.1918) chunk.pos.y=0.0 expected=12.4483315410002 global=(67.01705, 9.477173, 260.1918)
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-RAYCAST MISS chunk (2, 10) at (41.2326745986938, 247.799264907837) ray_start.y=290.0 fallback_height=10.9493254628828 hits=0 misses=1
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-CHUNK (1, 7) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-RAYCAST MISS chunk (-1, 10) at (-16.4587326049805, 258.068988800049) ray_start.y=290.0 fallback_height=10.9112475012587 hits=0 misses=1
-PROPS (-1, 10): 3ms FPS=60
-CHUNK (-1, 6) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Chunks: loaded 1 | queue: 1 | total: 1049
-LOD: updated 1 chunks | queue: 79
-Chunks: loaded 1 | queue: 0 | total: 1050 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-TREE (5, 6) #0: raycast_y=11.5193481445313 local_pos=(-0.543564, 8.519824, 0.431978) chunk.pos.y=0.0 expected=11.485293457794 global=(124.4564, 8.519824, 150.432)
-TREE (5, 6) #2: raycast_y=12.0698852539063 local_pos=(-9.32117, 9.070636, 0.487257) chunk.pos.y=0.0 expected=12.0989797891219 global=(115.6788, 9.070636, 150.4873)
-PROPS (5, 6): 3ms FPS=60
-LOD: updated 1 chunks | queue: 45
-TREE (5, 5) #0: raycast_y=11.7414245605469 local_pos=(-8.454414, 8.7419, 10.21775) chunk.pos.y=0.0 expected=11.8035825326733 global=(116.5456, 8.7419, 135.2177)
-CHUNK (5, 2) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-TREE (4, 7) #1: raycast_y=11.4002380371094 local_pos=(-1.334186, 8.400989, -1.125425) chunk.pos.y=0.0 expected=11.4289480327383 global=(98.66582, 8.400989, 173.8746)
-TREE (4, 7) #2: raycast_y=11.3301696777344 local_pos=(-0.554107, 8.33092, 4.398265) chunk.pos.y=0.0 expected=11.3413126912447 global=(99.44589, 8.33092, 179.3983)
-LOD: updated 1 chunks | queue: 42
-Chunks: loaded 1 | queue: 13 | total: 1051
-LOD: updated 1 chunks | queue: 137
-Chunks: loaded 1 | queue: 12 | total: 1052
-LOD: updated 1 chunks | queue: 136
-Chunks: loaded 1 | queue: 11 | total: 1053
-LOD: updated 1 chunks | queue: 135
-Chunks: loaded 1 | queue: 10 | total: 1054
-LOD: updated 1 chunks | queue: 134
-Chunks: loaded 1 | queue: 9 | total: 1055
-LOD: updated 1 chunks | queue: 133
-Chunks: loaded 1 | queue: 8 | total: 1056
-LOD: updated 1 chunks | queue: 132
-Chunks: loaded 1 | queue: 7 | total: 1057
-LOD: updated 1 chunks | queue: 131
-Chunks: loaded 1 | queue: 6 | total: 1058
-LOD: updated 1 chunks | queue: 130
-Chunks: loaded 1 | queue: 5 | total: 1059
-LOD: updated 1 chunks | queue: 129
-Chunks: loaded 1 | queue: 4 | total: 1060 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 128
-Chunks: loaded 1 | queue: 3 | total: 1061
-LOD: updated 1 chunks | queue: 127
-Chunks: loaded 1 | queue: 2 | total: 1062
-LOD: updated 1 chunks | queue: 126
-Chunks: loaded 1 | queue: 1 | total: 1063
-LOD: updated 1 chunks | queue: 125
-Chunks: loaded 1 | queue: 0 | total: 1064
-LOD: updated 1 chunks | queue: 124
-LOD: updated 1 chunks | queue: 123
-LOD: updated 1 chunks | queue: 122
-LOD: updated 1 chunks | queue: 121
-LOD: updated 1 chunks | queue: 120
-LOD: updated 1 chunks | queue: 119
-LOD: updated 1 chunks | queue: 118
-LOD: updated 1 chunks | queue: 117
-LOD: updated 1 chunks | queue: 116
-LOD: updated 1 chunks | queue: 115
-LOD: updated 1 chunks | queue: 114
-LOD: updated 1 chunks | queue: 113
-LOD: updated 1 chunks | queue: 112
-LOD: updated 1 chunks | queue: 111
-LOD: updated 1 chunks | queue: 110
-LOD: updated 1 chunks | queue: 109
-LOD: updated 1 chunks | queue: 108
-LOD: updated 1 chunks | queue: 107
-LOD: updated 1 chunks | queue: 106
-LOD: updated 1 chunks | queue: 105
-LOD: updated 1 chunks | queue: 104
-LOD: updated 1 chunks | queue: 103
-CHUNK (7, 4) LOD0: total=6ms (verts=3ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 102
-LOD: updated 1 chunks | queue: 101
-LOD: updated 1 chunks | queue: 100
-LOD: updated 1 chunks | queue: 99
-CHUNK (6, 5) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 98
-TREE (6, 6) #0: raycast_y=11.1770324707031 local_pos=(2.749207, 8.177508, 2.874964) chunk.pos.y=0.0 expected=11.1727343647683 global=(152.7492, 8.177508, 152.875)
-TREE (6, 6) #1: raycast_y=11.197998046875 local_pos=(2.136347, 8.200989, 2.084479) chunk.pos.y=0.0 expected=11.1917227648842 global=(152.1364, 8.200989, 152.0845)
-TREE (6, 6) #2: raycast_y=11.1552429199219 local_pos=(-7.799556, 8.155993, -1.580759) chunk.pos.y=0.0 expected=11.1551565195824 global=(142.2004, 8.155993, 148.4192)
-PROPS (6, 6): 3ms FPS=60
-LOD: updated 1 chunks | queue: 97
-CHUNK (6, 2) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 96
-LOD: updated 1 chunks | queue: 95
-LOD: updated 1 chunks | queue: 94
-TREE (5, 7) #0: raycast_y=11.6054992675781 local_pos=(3.654359, 8.605975, -0.544917) chunk.pos.y=0.0 expected=11.5974626945283 global=(128.6544, 8.605975, 174.4551)
-TREE (5, 7) #1: raycast_y=12.1491394042969 local_pos=(-5.027276, 9.15213, -5.080029) chunk.pos.y=0.0 expected=12.1887321970931 global=(119.9727, 9.15213, 169.92)
-LOD: updated 1 chunks | queue: 93
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-LOD: updated 1 chunks | queue: 86
-PROPS (-2, 5): 3ms FPS=60
-LOD: updated 1 chunks | queue: 85
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-LOD: updated 1 chunks | queue: 58
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Chunks: queued 67 for unload
-Chunks: loaded 1 | queue: 20 | total: 1065
-LOD: updated 1 chunks | queue: 97
-Chunks: unloaded 2 | queue: 65 | remaining: 1063
-Chunks: loaded 1 | queue: 19 | total: 1064
-LOD: updated 1 chunks | queue: 96
-Chunks: unloaded 2 | queue: 63 | remaining: 1062
-Chunks: loaded 1 | queue: 18 | total: 1063
-LOD: updated 1 chunks | queue: 95
-Chunks: unloaded 2 | queue: 61 | remaining: 1061
-Chunks: loaded 1 | queue: 17 | total: 1062
-LOD: updated 1 chunks | queue: 94
-Chunks: unloaded 2 | queue: 59 | remaining: 1060
-Chunks: loaded 1 | queue: 16 | total: 1061
-LOD: updated 1 chunks | queue: 93
-Chunks: unloaded 2 | queue: 57 | remaining: 1059
-Chunks: loaded 1 | queue: 15 | total: 1060 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 92
-Chunks: unloaded 2 | queue: 55 | remaining: 1058
-Chunks: loaded 1 | queue: 14 | total: 1059
-LOD: updated 1 chunks | queue: 91
-Chunks: unloaded 2 | queue: 53 | remaining: 1057
-Chunks: loaded 1 | queue: 13 | total: 1058
-LOD: updated 1 chunks | queue: 90
-Chunks: unloaded 2 | queue: 51 | remaining: 1056
-Chunks: loaded 1 | queue: 12 | total: 1057
-LOD: updated 1 chunks | queue: 89
-Chunks: unloaded 2 | queue: 49 | remaining: 1055
-Chunks: loaded 1 | queue: 11 | total: 1056
-LOD: updated 1 chunks | queue: 88
-Chunks: unloaded 2 | queue: 47 | remaining: 1054
-Chunks: loaded 1 | queue: 10 | total: 1055
-LOD: updated 1 chunks | queue: 87
-Chunks: unloaded 2 | queue: 45 | remaining: 1053
-Chunks: loaded 1 | queue: 9 | total: 1054
-LOD: updated 1 chunks | queue: 86
-Chunks: unloaded 2 | queue: 43 | remaining: 1052
-Chunks: loaded 1 | queue: 8 | total: 1053
-LOD: updated 1 chunks | queue: 85
-Chunks: unloaded 2 | queue: 41 | remaining: 1051
-Chunks: loaded 1 | queue: 7 | total: 1052
-LOD: updated 1 chunks | queue: 84
-Chunks: unloaded 2 | queue: 39 | remaining: 1050
-Chunks: loaded 1 | queue: 6 | total: 1051
-LOD: updated 1 chunks | queue: 83
-Chunks: unloaded 2 | queue: 37 | remaining: 1049
-Chunks: loaded 1 | queue: 5 | total: 1050 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 82
-Chunks: unloaded 2 | queue: 35 | remaining: 1048
-Chunks: loaded 1 | queue: 4 | total: 1049
-LOD: updated 1 chunks | queue: 81
-Chunks: unloaded 2 | queue: 33 | remaining: 1047
-Chunks: loaded 1 | queue: 3 | total: 1048
-LOD: updated 1 chunks | queue: 80
-Chunks: unloaded 2 | queue: 31 | remaining: 1046
-Chunks: loaded 1 | queue: 2 | total: 1047
-LOD: updated 1 chunks | queue: 79
-Chunks: unloaded 2 | queue: 29 | remaining: 1045
-Chunks: loaded 1 | queue: 1 | total: 1046
-LOD: updated 1 chunks | queue: 78
-Chunks: unloaded 2 | queue: 27 | remaining: 1044
-Chunks: loaded 1 | queue: 0 | total: 1045
-LOD: updated 1 chunks | queue: 77
-Chunks: unloaded 2 | queue: 25 | remaining: 1043
-LOD: updated 1 chunks | queue: 76
-Chunks: unloaded 2 | queue: 23 | remaining: 1041
-LOD: updated 1 chunks | queue: 75
-Chunks: unloaded 2 | queue: 21 | remaining: 1039
-LOD: updated 1 chunks | queue: 74
-Chunks: unloaded 2 | queue: 19 | remaining: 1037
-LOD: updated 1 chunks | queue: 73
-Chunks: unloaded 2 | queue: 17 | remaining: 1035
-LOD: updated 1 chunks | queue: 72
-Chunks: unloaded 2 | queue: 15 | remaining: 1033
-LOD: updated 1 chunks | queue: 71
-Chunks: unloaded 2 | queue: 13 | remaining: 1031
-LOD: updated 1 chunks | queue: 70
-Chunks: unloaded 2 | queue: 11 | remaining: 1029
-LOD: updated 1 chunks | queue: 69
-Chunks: unloaded 2 | queue: 9 | remaining: 1027
-LOD: updated 1 chunks | queue: 68
-Chunks: unloaded 2 | queue: 7 | remaining: 1025
-LOD: updated 1 chunks | queue: 67
-Chunks: unloaded 2 | queue: 5 | remaining: 1023
-LOD: updated 1 chunks | queue: 66
-Chunks: unloaded 2 | queue: 3 | remaining: 1021
-LOD: updated 1 chunks | queue: 65
-Chunks: unloaded 2 | queue: 1 | remaining: 1019
-LOD: updated 1 chunks | queue: 64
-Chunks: unloaded 1 | queue: 0 | remaining: 1018
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-Chunks: loaded 1 | queue: 23 | total: 1019
-LOD: updated 1 chunks | queue: 160
-Chunks: loaded 1 | queue: 22 | total: 1020
-LOD: updated 1 chunks | queue: 159
-Chunks: loaded 1 | queue: 21 | total: 1021
-LOD: updated 1 chunks | queue: 158
-Chunks: loaded 1 | queue: 20 | total: 1022
-LOD: updated 1 chunks | queue: 157
-Chunks: loaded 1 | queue: 19 | total: 1023 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 156
-Chunks: loaded 1 | queue: 18 | total: 1024
-LOD: updated 1 chunks | queue: 155
-Chunks: loaded 1 | queue: 17 | total: 1025
-LOD: updated 1 chunks | queue: 154
-Chunks: loaded 1 | queue: 16 | total: 1026
-LOD: updated 1 chunks | queue: 153
-Chunks: loaded 1 | queue: 15 | total: 1027
-LOD: updated 1 chunks | queue: 152
-Chunks: loaded 1 | queue: 14 | total: 1028
-LOD: updated 1 chunks | queue: 151
-Chunks: loaded 1 | queue: 13 | total: 1029
-LOD: updated 1 chunks | queue: 150
-Chunks: loaded 1 | queue: 12 | total: 1030
-LOD: updated 1 chunks | queue: 149
-Chunks: loaded 1 | queue: 11 | total: 1031
-LOD: updated 1 chunks | queue: 148
-Chunks: loaded 1 | queue: 10 | total: 1032
-LOD: updated 1 chunks | queue: 147
-Chunks: loaded 1 | queue: 9 | total: 1033 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 146
-Chunks: loaded 1 | queue: 8 | total: 1034
-LOD: updated 1 chunks | queue: 145
-Chunks: loaded 1 | queue: 7 | total: 1035
-LOD: updated 1 chunks | queue: 144
-Chunks: loaded 1 | queue: 6 | total: 1036
-LOD: updated 1 chunks | queue: 143
-Chunks: loaded 1 | queue: 5 | total: 1037
-LOD: updated 1 chunks | queue: 142
-Chunks: loaded 1 | queue: 4 | total: 1038
-LOD: updated 1 chunks | queue: 141
-Chunks: loaded 1 | queue: 3 | total: 1039
-LOD: updated 1 chunks | queue: 140
-Chunks: loaded 1 | queue: 2 | total: 1040
-LOD: updated 1 chunks | queue: 139
-Chunks: loaded 1 | queue: 1 | total: 1041
-LOD: updated 1 chunks | queue: 138
-Chunks: loaded 1 | queue: 0 | total: 1042
-LOD: updated 1 chunks | queue: 137
-LOD: updated 1 chunks | queue: 136
-LOD: updated 1 chunks | queue: 135
-LOD: updated 1 chunks | queue: 134
-LOD: updated 1 chunks | queue: 133
-LOD: updated 1 chunks | queue: 132
-LOD: updated 1 chunks | queue: 131
-LOD: updated 1 chunks | queue: 130
-LOD: updated 1 chunks | queue: 129
-LOD: updated 1 chunks | queue: 128
-LOD: updated 1 chunks | queue: 127
-LOD: updated 1 chunks | queue: 126
-LOD: updated 1 chunks | queue: 125
-LOD: updated 1 chunks | queue: 124
-LOD: updated 1 chunks | queue: 123
-LOD: updated 1 chunks | queue: 122
-LOD: updated 1 chunks | queue: 121
-LOD: updated 1 chunks | queue: 120
-LOD: updated 1 chunks | queue: 119
-LOD: updated 1 chunks | queue: 118
-LOD: updated 1 chunks | queue: 117
-LOD: updated 1 chunks | queue: 116
-LOD: updated 1 chunks | queue: 115
-LOD: updated 1 chunks | queue: 114
-LOD: updated 1 chunks | queue: 113
-LOD: updated 1 chunks | queue: 112
-TREE (5, 8) #0: raycast_y=11.8808288574219 local_pos=(5.46979, 8.881579, -10.08355) chunk.pos.y=0.0 expected=11.8731558198793 global=(130.4698, 8.881579, 189.9164)
-TREE (5, 8) #1: raycast_y=12.2355041503906 local_pos=(6.759184, 9.23598, -0.256979) chunk.pos.y=0.0 expected=12.2078449580398 global=(131.7592, 9.23598, 199.743)
-TREE (5, 8) #2: raycast_y=12.2008666992188 local_pos=(-6.08738, 9.201617, 3.819565) chunk.pos.y=0.0 expected=12.1924578625522 global=(118.9126, 9.201617, 203.8196)
-PROPS (5, 8): 3ms FPS=60
-LOD: updated 1 chunks | queue: 111
-LOD: updated 1 chunks | queue: 110
-LOD: updated 1 chunks | queue: 109
-LOD: updated 1 chunks | queue: 108
-LOD: updated 1 chunks | queue: 107
-LOD: updated 1 chunks | queue: 106
-LOD: updated 1 chunks | queue: 105
-LOD: updated 1 chunks | queue: 104
-LOD: updated 1 chunks | queue: 103
-LOD: updated 1 chunks | queue: 102
-LOD: updated 1 chunks | queue: 101
-LOD: updated 1 chunks | queue: 100
-LOD: updated 1 chunks | queue: 99
-LOD: updated 1 chunks | queue: 98
-LOD: updated 1 chunks | queue: 97
-LOD: updated 1 chunks | queue: 96
-LOD: updated 1 chunks | queue: 95
-LOD: updated 1 chunks | queue: 94
-LOD: updated 1 chunks | queue: 93
-LOD: updated 1 chunks | queue: 92
-LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-LOD: updated 1 chunks | queue: 86
-LOD: updated 1 chunks | queue: 85
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
-CHUNK (7, 6) LOD0: total=6ms (verts=3ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 59
-TREE (7, 11) #1: raycast_y=11.1257629394531 local_pos=(-9.292521, 8.126513, -3.614774) chunk.pos.y=0.0 expected=11.1075813714772 global=(165.7075, 8.126513, 271.3852)
-TREE (7, 11) #2: raycast_y=11.4366455078125 local_pos=(-10.29304, 8.437121, -6.76842) chunk.pos.y=0.0 expected=11.3807680260749 global=(164.707, 8.437121, 268.2316)
-PROPS (7, 11): 4ms FPS=60
-CHUNK (7, 5) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 58
-TREE (7, 6) #0: raycast_y=11.635009765625 local_pos=(-3.66296, 8.63576, 5.476098) chunk.pos.y=0.0 expected=11.6346188321638 global=(171.337, 8.63576, 155.4761)
-TREE (7, 6) #1: raycast_y=11.465576171875 local_pos=(-2.799734, 8.466052, -2.560849) chunk.pos.y=0.0 expected=11.4686424724741 global=(172.2003, 8.466052, 147.4391)
-TREE (7, 6) #2: raycast_y=11.656005859375 local_pos=(-9.628604, 8.658997, 0.101006) chunk.pos.y=0.0 expected=11.6715323341349 global=(165.3714, 8.658997, 150.101)
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-RAYCAST MISS chunk (7, -3) at (184.316921234131, -78.8812894821167) ray_start.y=290.0 fallback_height=8.12039185730686 hits=38 misses=1
-PROPS (7, -3): 3ms FPS=60
-CHUNK (6, 7) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 54
-TREE (6, 7) #0: raycast_y=11.5438232421875 local_pos=(-1.891897, 8.544299, 9.92391) chunk.pos.y=0.0 expected=11.50191468039 global=(148.1081, 8.544299, 184.9239)
-TREE (6, 7) #1: raycast_y=11.216552734375 local_pos=(2.923385, 8.217303, -4.232576) chunk.pos.y=0.0 expected=11.1866871424872 global=(152.9234, 8.217303, 170.7674)
-TREE (6, 7) #2: raycast_y=11.2498168945313 local_pos=(1.297503, 8.252808, -10.2535) chunk.pos.y=0.0 expected=11.2428096706588 global=(151.2975, 8.252808, 164.7465)
-CHUNK (6, 1) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-CHUNK (4, 8) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 50
-CHUNK (4, 0) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Chunks: loaded 1 | queue: 26 | total: 1043 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 101
-Chunks: loaded 1 | queue: 25 | total: 1044
-LOD: updated 1 chunks | queue: 100
-Chunks: loaded 1 | queue: 24 | total: 1045
-LOD: updated 1 chunks | queue: 99
-Chunks: loaded 1 | queue: 23 | total: 1046
-LOD: updated 1 chunks | queue: 98
-Chunks: loaded 1 | queue: 22 | total: 1047
-LOD: updated 1 chunks | queue: 97
-Chunks: loaded 1 | queue: 21 | total: 1048
-LOD: updated 1 chunks | queue: 96
-Chunks: loaded 1 | queue: 20 | total: 1049
-LOD: updated 1 chunks | queue: 95
-Chunks: loaded 1 | queue: 19 | total: 1050
-LOD: updated 1 chunks | queue: 94
-Chunks: loaded 1 | queue: 18 | total: 1051
-LOD: updated 1 chunks | queue: 93
-Chunks: loaded 1 | queue: 17 | total: 1052
-LOD: updated 1 chunks | queue: 92
-Chunks: loaded 1 | queue: 16 | total: 1053 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 91
-Chunks: loaded 1 | queue: 15 | total: 1054
-LOD: updated 1 chunks | queue: 90
-Chunks: loaded 1 | queue: 14 | total: 1055
-LOD: updated 1 chunks | queue: 89
-Chunks: loaded 1 | queue: 13 | total: 1056
-LOD: updated 1 chunks | queue: 88
-Chunks: loaded 1 | queue: 12 | total: 1057
-LOD: updated 1 chunks | queue: 87
-Chunks: loaded 1 | queue: 11 | total: 1058
-LOD: updated 1 chunks | queue: 86
-Chunks: loaded 1 | queue: 10 | total: 1059
-LOD: updated 1 chunks | queue: 85
-Chunks: loaded 1 | queue: 9 | total: 1060
-LOD: updated 1 chunks | queue: 84
-Chunks: loaded 1 | queue: 8 | total: 1061
-LOD: updated 1 chunks | queue: 83
-Chunks: loaded 1 | queue: 7 | total: 1062
-LOD: updated 1 chunks | queue: 82
-Chunks: loaded 1 | queue: 6 | total: 1063 | FPS: 60 | Q:30%
-LOD: updated 1 chunks | queue: 81
-PROPS (13, 7): 3ms FPS=60
-Chunks: loaded 1 | queue: 5 | total: 1064
-LOD: updated 1 chunks | queue: 80
-Chunks: loaded 1 | queue: 4 | total: 1065
-LOD: updated 1 chunks | queue: 79
-Chunks: loaded 1 | queue: 3 | total: 1066
-LOD: updated 1 chunks | queue: 78
-TREE (13, 3) #2: raycast_y=11.93408203125 local_pos=(8.130817, 8.934558, 2.808876) chunk.pos.y=0.0 expected=11.9012951156015 global=(333.1308, 8.934558, 77.80888)
-Chunks: loaded 1 | queue: 2 | total: 1067
-LOD: updated 1 chunks | queue: 77
-TREE (13, 2) #0: raycast_y=11.2786865234375 local_pos=(7.082935, 8.279437, 4.101375) chunk.pos.y=0.0 expected=11.3141694753602 global=(332.0829, 8.279437, 54.10138)
-Chunks: loaded 1 | queue: 1 | total: 1068
-LOD: updated 1 chunks | queue: 76
-Chunks: loaded 1 | queue: 0 | total: 1069
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-TREE (12, 9) #0: raycast_y=11.3080749511719 local_pos=(8.794594, 8.308825, 8.337044) chunk.pos.y=0.0 expected=11.2596623109901 global=(308.7946, 8.308825, 233.337)
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-CHUNK (10, 4) LOD0: total=6ms (verts=3ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-CHUNK (9, 6) LOD0: total=10ms (verts=8ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 63
-CHUNK (9, 5) LOD0: total=7ms (verts=4ms, mesh=0ms, collision=3ms) FPS=60
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-CHUNK (9, 2) LOD0: total=6ms (verts=5ms, mesh=0ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 60
-LOD: updated 1 chunks | queue: 59
-CHUNK (8, 7) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 58
-CHUNK (8, 1) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-CHUNK (6, 0) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-LOD: updated 1 chunks | queue: 29
-LOD: updated 1 chunks | queue: 28
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-LOD: updated 1 chunks | queue: 43
-LOD: updated 1 chunks | queue: 42
-LOD: updated 1 chunks | queue: 41
-LOD: updated 1 chunks | queue: 40
-LOD: updated 1 chunks | queue: 39
-LOD: updated 1 chunks | queue: 38
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
-LOD: updated 1 chunks | queue: 33
-TREE (10, 4) #2: raycast_y=11.2479553222656 local_pos=(2.274352, 8.248431, 4.220102) chunk.pos.y=0.0 expected=11.2755184131805 global=(252.2744, 8.248431, 104.2201)
-LOD: updated 1 chunks | queue: 32
-LOD: updated 1 chunks | queue: 31
-LOD: updated 1 chunks | queue: 30
-TREE (9, 3) #0: raycast_y=11.2423400878906 local_pos=(7.037058, 8.242816, 0.995658) chunk.pos.y=0.0 expected=11.2435765541713 global=(232.0371, 8.242816, 75.99566)
-PROPS (9, 3): 3ms FPS=60
-LOD: updated 1 chunks | queue: 29
-CHUNK (1, 6) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 28
-CHUNK (1, 5) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 27
-CHUNK (1, 3) LOD0: total=6ms (verts=4ms, mesh=1ms, collision=1ms) FPS=60
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-CHUNK (0, 4) LOD0: total=6ms (verts=3ms, mesh=1ms, collision=2ms) FPS=60
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-RAYCAST MISS chunk (-1, 10) at (-16.4587326049805, 258.068988800049) ray_start.y=290.0 fallback_height=10.9112475012587 hits=0 misses=18
-LOD: updated 1 chunks | queue: 22
-RAYCAST MISS chunk (-1, -2) at (-33.0124979019165, -49.8327331542969) ray_start.y=290.0 fallback_height=6.05337172847391 hits=4 misses=1
-LOD: updated 1 chunks | queue: 21
-RAYCAST MISS chunk (-2, 9) at (-42.0233039855957, 228.75396156311) ray_start.y=290.0 fallback_height=10.7804757051623 hits=0 misses=1
 Chunks: queued 1 for unload
+Chunks: loaded 1 | queue: 21 | total: 941
+LOD: updated 1 chunks | queue: 144
+Chunks: unloaded 1 | queue: 0 | remaining: 940
+Chunks: loaded 1 | queue: 20 | total: 941
+LOD: updated 1 chunks | queue: 143
+Chunks: loaded 1 | queue: 19 | total: 942
+LOD: updated 1 chunks | queue: 142
+Chunks: loaded 1 | queue: 18 | total: 943
+LOD: updated 1 chunks | queue: 141
+Chunks: loaded 1 | queue: 17 | total: 944 | FPS: 49 | Q:30%
+LOD: updated 1 chunks | queue: 140
+Chunks: loaded 1 | queue: 16 | total: 945
+LOD: updated 1 chunks | queue: 139
+Chunks: loaded 1 | queue: 15 | total: 946
+LOD: updated 1 chunks | queue: 138
+Chunks: loaded 1 | queue: 14 | total: 947
+LOD: updated 1 chunks | queue: 137
+Chunks: loaded 1 | queue: 13 | total: 948
+LOD: updated 1 chunks | queue: 136
+Chunks: loaded 1 | queue: 12 | total: 949
+LOD: updated 1 chunks | queue: 135
+Chunks: loaded 1 | queue: 11 | total: 950
+LOD: updated 1 chunks | queue: 134
+Chunks: loaded 1 | queue: 10 | total: 951
+LOD: updated 1 chunks | queue: 133
+Chunks: loaded 1 | queue: 9 | total: 952
+LOD: updated 1 chunks | queue: 132
+Chunks: loaded 1 | queue: 8 | total: 953
+LOD: updated 1 chunks | queue: 131
+Chunks: loaded 1 | queue: 7 | total: 954 | FPS: 49 | Q:30%
+LOD: updated 1 chunks | queue: 130
+Chunks: loaded 1 | queue: 6 | total: 955
+LOD: updated 1 chunks | queue: 129
+Chunks: loaded 1 | queue: 5 | total: 956
+LOD: updated 1 chunks | queue: 128
+TREE (11, 2) #1: raycast_y=11.1072692871094 local_pos=(0.950037, 8.11026, -6.236242) chunk.pos.y=0.0 expected=11.1792988661481 global=(275.95, 8.11026, 43.76376)
+Chunks: loaded 1 | queue: 4 | total: 957
+LOD: updated 1 chunks | queue: 127
+Chunks: loaded 1 | queue: 3 | total: 958
+LOD: updated 1 chunks | queue: 126
+Chunks: loaded 1 | queue: 2 | total: 959
+LOD: updated 1 chunks | queue: 125
+Chunks: loaded 1 | queue: 1 | total: 960
+LOD: updated 1 chunks | queue: 124
+Chunks: loaded 1 | queue: 0 | total: 961
+LOD: updated 1 chunks | queue: 123
+LOD: updated 1 chunks | queue: 122
+LOD: updated 1 chunks | queue: 121
+LOD: updated 1 chunks | queue: 120
+CHUNK (8, 0) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=49
+LOD: updated 1 chunks | queue: 119
+LOD: updated 1 chunks | queue: 118
+CHUNK (7, 2) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=49
+LOD: updated 1 chunks | queue: 117
+CHUNK (7, -1) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=49
+LOD: updated 1 chunks | queue: 116
+CHUNK (7, -2) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=49
+LOD: updated 1 chunks | queue: 115
+PROPS (7, -2): 3ms FPS=49
+LOD: updated 1 chunks | queue: 114
+CHUNK (6, -3) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=49
+LOD: updated 1 chunks | queue: 113
+CHUNK (4, -4) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=49
+LOD: updated 1 chunks | queue: 112
+LOD: updated 1 chunks | queue: 111
 LOD: updated 1 chunks | queue: 110
-Chunks: unloaded 1 | queue: 0 | remaining: 1068
 LOD: updated 1 chunks | queue: 109
 LOD: updated 1 chunks | queue: 108
 LOD: updated 1 chunks | queue: 107
+PROPS (-1, 3): 4ms FPS=49
 LOD: updated 1 chunks | queue: 106
 LOD: updated 1 chunks | queue: 105
 LOD: updated 1 chunks | queue: 104
@@ -2965,34 +886,93 @@ LOD: updated 1 chunks | queue: 94
 LOD: updated 1 chunks | queue: 93
 LOD: updated 1 chunks | queue: 92
 LOD: updated 1 chunks | queue: 91
-LOD: updated 1 chunks | queue: 90
-LOD: updated 1 chunks | queue: 89
-LOD: updated 1 chunks | queue: 88
-LOD: updated 1 chunks | queue: 87
-LOD: updated 1 chunks | queue: 86
-LOD: updated 1 chunks | queue: 85
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
+Chunks: loaded 1 | queue: 10 | total: 962
+LOD: updated 1 chunks | queue: 126
+Chunks: loaded 1 | queue: 9 | total: 963
+LOD: updated 1 chunks | queue: 125
+Chunks: loaded 1 | queue: 8 | total: 964 | FPS: 52 | Q:30%
+LOD: updated 1 chunks | queue: 124
+Chunks: loaded 1 | queue: 7 | total: 965
+LOD: updated 1 chunks | queue: 123
+Chunks: loaded 1 | queue: 6 | total: 966
+LOD: updated 1 chunks | queue: 122
+Chunks: loaded 1 | queue: 5 | total: 967
+LOD: updated 1 chunks | queue: 121
+Chunks: loaded 1 | queue: 27 | total: 968
+LOD: updated 1 chunks | queue: 192
+Chunks: loaded 1 | queue: 26 | total: 969
+LOD: updated 1 chunks | queue: 191
+Chunks: loaded 1 | queue: 25 | total: 970
+LOD: updated 1 chunks | queue: 190
+Chunks: loaded 1 | queue: 24 | total: 971
+LOD: updated 1 chunks | queue: 189
+Chunks: loaded 1 | queue: 23 | total: 972
+LOD: updated 1 chunks | queue: 188
+Chunks: loaded 1 | queue: 22 | total: 973
+LOD: updated 1 chunks | queue: 187
+Chunks: loaded 1 | queue: 21 | total: 974 | FPS: 52 | Q:30%
+LOD: updated 1 chunks | queue: 186
+Chunks: loaded 1 | queue: 20 | total: 975
+LOD: updated 1 chunks | queue: 185
+Chunks: loaded 1 | queue: 19 | total: 976
+LOD: updated 1 chunks | queue: 184
+Chunks: loaded 1 | queue: 18 | total: 977
+LOD: updated 1 chunks | queue: 183
+Chunks: loaded 1 | queue: 17 | total: 978
+LOD: updated 1 chunks | queue: 182
+Chunks: loaded 1 | queue: 16 | total: 979
+LOD: updated 1 chunks | queue: 181
+Chunks: loaded 1 | queue: 15 | total: 980
+LOD: updated 1 chunks | queue: 180
+Chunks: loaded 1 | queue: 14 | total: 981
+LOD: updated 1 chunks | queue: 179
+Chunks: loaded 1 | queue: 13 | total: 982
+LOD: updated 1 chunks | queue: 178
+Chunks: loaded 1 | queue: 12 | total: 983
+LOD: updated 1 chunks | queue: 177
+Chunks: loaded 1 | queue: 11 | total: 984 | FPS: 52 | Q:30%
+LOD: updated 1 chunks | queue: 176
+PROPS (12, 4): 3ms FPS=52
+Chunks: loaded 1 | queue: 10 | total: 985
+LOD: updated 1 chunks | queue: 175
+Chunks: loaded 1 | queue: 9 | total: 986
+LOD: updated 1 chunks | queue: 174
+Chunks: loaded 1 | queue: 8 | total: 987
+LOD: updated 1 chunks | queue: 173
+Chunks: loaded 1 | queue: 7 | total: 988
+LOD: updated 1 chunks | queue: 172
+Chunks: loaded 1 | queue: 6 | total: 989
+LOD: updated 1 chunks | queue: 171
+Chunks: loaded 1 | queue: 5 | total: 990
+LOD: updated 1 chunks | queue: 170
+Chunks: loaded 1 | queue: 4 | total: 991
+LOD: updated 1 chunks | queue: 169
+Chunks: loaded 1 | queue: 3 | total: 992
+LOD: updated 1 chunks | queue: 168
+Chunks: loaded 1 | queue: 2 | total: 993
+LOD: updated 1 chunks | queue: 167
+Chunks: loaded 1 | queue: 1 | total: 994 | FPS: 52 | Q:30%
+CHUNK (9, 1) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=52
+LOD: updated 1 chunks | queue: 166
+Chunks: loaded 1 | queue: 0 | total: 995
 LOD: updated 1 chunks | queue: 165
+CHUNK (8, 3) LOD0: total=9ms (verts=6ms, mesh=1ms, collision=2ms) FPS=52
 LOD: updated 1 chunks | queue: 164
+CHUNK (8, 2) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=52
 LOD: updated 1 chunks | queue: 163
+CHUNK (8, -1) LOD0: total=7ms (verts=5ms, mesh=1ms, collision=1ms) FPS=52
 LOD: updated 1 chunks | queue: 162
+CHUNK (7, 4) LOD0: total=9ms (verts=6ms, mesh=1ms, collision=2ms) FPS=52
 LOD: updated 1 chunks | queue: 161
+Player: Exited vehicle
+Warthog: Player exited at (139.5802, 11.22765, 35.03401)
 LOD: updated 1 chunks | queue: 160
+Warthog: Press E to enter
 LOD: updated 1 chunks | queue: 159
+CHUNK (5, 5) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=52
 LOD: updated 1 chunks | queue: 158
 LOD: updated 1 chunks | queue: 157
+TREE (5, 5) #0: raycast_y=11.7414245605469 local_pos=(-8.454414, 8.742175, 10.21775) chunk.pos.y=0.0 expected=11.8035825326733 global=(116.5456, 8.742175, 135.2177)
 LOD: updated 1 chunks | queue: 156
 LOD: updated 1 chunks | queue: 155
 LOD: updated 1 chunks | queue: 154
@@ -3007,455 +987,363 @@ LOD: updated 1 chunks | queue: 146
 LOD: updated 1 chunks | queue: 145
 LOD: updated 1 chunks | queue: 144
 LOD: updated 1 chunks | queue: 143
-LOD: updated 1 chunks | queue: 142
-LOD: updated 1 chunks | queue: 141
-LOD: updated 1 chunks | queue: 140
-LOD: updated 1 chunks | queue: 139
-LOD: updated 1 chunks | queue: 138
-LOD: updated 1 chunks | queue: 137
-LOD: updated 1 chunks | queue: 136
-LOD: updated 1 chunks | queue: 135
-LOD: updated 1 chunks | queue: 134
-LOD: updated 1 chunks | queue: 133
-LOD: updated 1 chunks | queue: 132
-LOD: updated 1 chunks | queue: 131
-LOD: updated 1 chunks | queue: 130
-LOD: updated 1 chunks | queue: 129
-LOD: updated 1 chunks | queue: 128
-LOD: updated 1 chunks | queue: 127
-LOD: updated 1 chunks | queue: 126
-TREE (7, 7) #0: raycast_y=11.5526428222656 local_pos=(10.26581, 8.555634, -7.961024) chunk.pos.y=0.0 expected=11.5689432135798 global=(185.2658, 8.555634, 167.039)
-TREE (7, 7) #1: raycast_y=11.9032592773438 local_pos=(1.930852, 8.90625, 7.704355) chunk.pos.y=0.0 expected=11.9037976767108 global=(176.9308, 8.90625, 182.7044)
-TREE (7, 7) #2: raycast_y=11.7469787597656 local_pos=(-1.334196, 8.749969, -3.485641) chunk.pos.y=0.0 expected=11.7435952606877 global=(173.6658, 8.749969, 171.5144)
-LOD: updated 1 chunks | queue: 125
-TREE (7, 6) #0: raycast_y=11.635009765625 local_pos=(-3.66296, 8.638, 5.476098) chunk.pos.y=0.0 expected=11.6346188321638 global=(171.337, 8.638, 155.4761)
-TREE (7, 6) #1: raycast_y=11.465576171875 local_pos=(-2.799734, 8.466052, -2.560849) chunk.pos.y=0.0 expected=11.4686424724741 global=(172.2003, 8.466052, 147.4391)
-TREE (7, 6) #2: raycast_y=11.656005859375 local_pos=(-9.628604, 8.656756, 0.101006) chunk.pos.y=0.0 expected=11.6715323341349 global=(165.3714, 8.656756, 150.101)
-PROPS (7, 6): 3ms FPS=60
-LOD: updated 1 chunks | queue: 124
+Chunks: loaded 1 | queue: 17 | total: 996
+LOD: updated 1 chunks | queue: 205
+Chunks: loaded 1 | queue: 16 | total: 997
+LOD: updated 1 chunks | queue: 204
+Chunks: loaded 1 | queue: 15 | total: 998
+LOD: updated 1 chunks | queue: 203
+Chunks: loaded 1 | queue: 14 | total: 999
+LOD: updated 1 chunks | queue: 202
+Chunks: loaded 1 | queue: 13 | total: 1000
+LOD: updated 1 chunks | queue: 201
+Chunks: loaded 1 | queue: 12 | total: 1001
+LOD: updated 1 chunks | queue: 200
+Chunks: loaded 1 | queue: 11 | total: 1002
+LOD: updated 1 chunks | queue: 199
+TREE (13, 2) #0: raycast_y=11.2786865234375 local_pos=(7.082935, 8.279162, 4.101375) chunk.pos.y=0.0 expected=11.3141694753602 global=(332.0829, 8.279162, 54.10138)
+Chunks: loaded 1 | queue: 10 | total: 1003
+LOD: updated 1 chunks | queue: 198
+Chunks: loaded 1 | queue: 9 | total: 1004 | FPS: 49 | Q:30%
+LOD: updated 1 chunks | queue: 197
+Chunks: loaded 1 | queue: 8 | total: 1005
+LOD: updated 1 chunks | queue: 196
+Chunks: loaded 1 | queue: 7 | total: 1006
+LOD: updated 1 chunks | queue: 195
+Chunks: loaded 1 | queue: 6 | total: 1007
+LOD: updated 1 chunks | queue: 194
+Chunks: loaded 1 | queue: 5 | total: 1008
+LOD: updated 1 chunks | queue: 193
+Chunks: loaded 1 | queue: 4 | total: 1009
+LOD: updated 1 chunks | queue: 192
+Chunks: loaded 1 | queue: 3 | total: 1010
+CHUNK (9, 2) LOD0: total=9ms (verts=6ms, mesh=1ms, collision=2ms) FPS=49
+LOD: updated 1 chunks | queue: 191
+Chunks: loaded 1 | queue: 2 | total: 1011
+LOD: updated 1 chunks | queue: 190
+Chunks: loaded 1 | queue: 1 | total: 1012
+LOD: updated 1 chunks | queue: 189
+Chunks: loaded 1 | queue: 0 | total: 1013
+CHUNK (8, 4) LOD0: total=8ms (verts=7ms, mesh=0ms, collision=1ms) FPS=49
+LOD: updated 1 chunks | queue: 188
+LOD: updated 1 chunks | queue: 187
+LOD: updated 1 chunks | queue: 186
+LOD: updated 1 chunks | queue: 185
+CHUNK (7, 5) LOD0: total=8ms (verts=7ms, mesh=0ms, collision=1ms) FPS=49
+LOD: updated 1 chunks | queue: 184
+LOD: updated 1 chunks | queue: 183
+PROPS (7, 5): 3ms FPS=49
+LOD: updated 1 chunks | queue: 182
+LOD: updated 1 chunks | queue: 181
+LOD: updated 1 chunks | queue: 180
+CHUNK (6, 5) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=49
+LOD: updated 1 chunks | queue: 179
+LOD: updated 1 chunks | queue: 178
+LOD: updated 1 chunks | queue: 177
+PROPS (6, -3): 3ms FPS=49
+LOD: updated 1 chunks | queue: 176
+LOD: updated 1 chunks | queue: 175
+LOD: updated 1 chunks | queue: 174
+CHUNK (5, 6) LOD0: total=8ms (verts=5ms, mesh=0ms, collision=3ms) FPS=49
+LOD: updated 1 chunks | queue: 173
+LOD: updated 1 chunks | queue: 172
+TREE (5, 6) #0: raycast_y=11.5193481445313 local_pos=(-0.543564, 8.522339, 0.431978) chunk.pos.y=0.0 expected=11.485293457794 global=(124.4564, 8.522339, 150.432)
+TREE (5, 6) #2: raycast_y=12.0698852539063 local_pos=(-9.32117, 9.070636, 0.487257) chunk.pos.y=0.0 expected=12.0989797891219 global=(115.6788, 9.070636, 150.4873)
+PROPS (5, 6): 4ms FPS=49
+LOD: updated 1 chunks | queue: 171
+LOD: updated 1 chunks | queue: 170
+LOD: updated 1 chunks | queue: 169
+LOD: updated 1 chunks | queue: 168
+LOD: updated 1 chunks | queue: 167
+LOD: updated 1 chunks | queue: 166
+LOD: updated 1 chunks | queue: 165
+RAYCAST MISS chunk (2, 9) at (59.4033393859863, 218.835049629211) ray_start.y=290.0 fallback_height=10.1137696616514 hits=0 misses=1
+PROPS (2, 9): 4ms FPS=46
+LOD: updated 1 chunks | queue: 164
+Chunks: loaded 1 | queue: 23 | total: 1014 | FPS: 46 | Q:30%
+LOD: updated 1 chunks | queue: 249
+Chunks: loaded 1 | queue: 22 | total: 1015
+LOD: updated 1 chunks | queue: 248
+Chunks: loaded 1 | queue: 21 | total: 1016
+LOD: updated 1 chunks | queue: 247
+Chunks: loaded 1 | queue: 20 | total: 1017
+LOD: updated 1 chunks | queue: 246
+Chunks: loaded 1 | queue: 19 | total: 1018
+LOD: updated 1 chunks | queue: 245
+Chunks: loaded 1 | queue: 18 | total: 1019
+LOD: updated 1 chunks | queue: 244
+Chunks: loaded 1 | queue: 17 | total: 1020
+LOD: updated 1 chunks | queue: 243
+Chunks: loaded 1 | queue: 16 | total: 1021
+LOD: updated 1 chunks | queue: 242
+Chunks: loaded 1 | queue: 15 | total: 1022
+LOD: updated 1 chunks | queue: 241
+Chunks: loaded 1 | queue: 14 | total: 1023
+LOD: updated 1 chunks | queue: 240
+Chunks: loaded 1 | queue: 13 | total: 1024 | FPS: 46 | Q:30%
+LOD: updated 1 chunks | queue: 239
+Chunks: loaded 1 | queue: 12 | total: 1025
+LOD: updated 1 chunks | queue: 238
+Chunks: loaded 1 | queue: 11 | total: 1026
+LOD: updated 1 chunks | queue: 237
+Chunks: loaded 1 | queue: 10 | total: 1027
+LOD: updated 1 chunks | queue: 236
+Chunks: loaded 1 | queue: 9 | total: 1028
+LOD: updated 1 chunks | queue: 235
+Chunks: loaded 1 | queue: 8 | total: 1029
+LOD: updated 1 chunks | queue: 234
+Chunks: loaded 1 | queue: 7 | total: 1030
+LOD: updated 1 chunks | queue: 233
+Chunks: loaded 1 | queue: 6 | total: 1031
+LOD: updated 1 chunks | queue: 232
+Chunks: loaded 1 | queue: 5 | total: 1032
+LOD: updated 1 chunks | queue: 231
+Chunks: loaded 1 | queue: 4 | total: 1033
+CHUNK (9, 3) LOD0: total=10ms (verts=7ms, mesh=1ms, collision=2ms) FPS=46
+LOD: updated 1 chunks | queue: 230
+Chunks: loaded 1 | queue: 3 | total: 1034 | FPS: 46 | Q:30%
+LOD: updated 1 chunks | queue: 229
+Chunks: loaded 1 | queue: 2 | total: 1035
+LOD: updated 1 chunks | queue: 228
+Chunks: loaded 1 | queue: 1 | total: 1036
+LOD: updated 1 chunks | queue: 227
+Chunks: loaded 1 | queue: 0 | total: 1037
+LOD: updated 1 chunks | queue: 226
+CHUNK (8, 5) LOD0: total=10ms (verts=7ms, mesh=1ms, collision=2ms) FPS=46
+LOD: updated 1 chunks | queue: 225
+LOD: updated 1 chunks | queue: 224
+LOD: updated 1 chunks | queue: 223
+LOD: updated 1 chunks | queue: 222
 LOD: updated 1 chunks | queue: 221
+CHUNK (7, 6) LOD0: total=9ms (verts=7ms, mesh=0ms, collision=2ms) FPS=46
 LOD: updated 1 chunks | queue: 220
 LOD: updated 1 chunks | queue: 219
+TREE (7, 6) #0: raycast_y=11.635009765625 local_pos=(-3.66296, 8.63576, 5.476098) chunk.pos.y=0.0 expected=11.6346188321638 global=(171.337, 8.63576, 155.4761)
+TREE (7, 6) #1: raycast_y=11.465576171875 local_pos=(-2.799734, 8.468567, -2.560849) chunk.pos.y=0.0 expected=11.4686424724741 global=(172.2003, 8.468567, 147.4391)
+TREE (7, 6) #2: raycast_y=11.656005859375 local_pos=(-9.628604, 8.656482, 0.101006) chunk.pos.y=0.0 expected=11.6715323341349 global=(165.3714, 8.656482, 150.101)
+PROPS (7, 6): 3ms FPS=46
 LOD: updated 1 chunks | queue: 218
 LOD: updated 1 chunks | queue: 217
-LOD: updated 1 chunks | queue: 216
-LOD: updated 1 chunks | queue: 215
-LOD: updated 1 chunks | queue: 214
-LOD: updated 1 chunks | queue: 213
-LOD: updated 1 chunks | queue: 212
-LOD: updated 1 chunks | queue: 211
-LOD: updated 1 chunks | queue: 210
-LOD: updated 1 chunks | queue: 209
-LOD: updated 1 chunks | queue: 208
-LOD: updated 1 chunks | queue: 207
-LOD: updated 1 chunks | queue: 206
-LOD: updated 1 chunks | queue: 205
-LOD: updated 1 chunks | queue: 204
-LOD: updated 1 chunks | queue: 203
-LOD: updated 1 chunks | queue: 202
-LOD: updated 1 chunks | queue: 201
-LOD: updated 1 chunks | queue: 200
-LOD: updated 1 chunks | queue: 199
-LOD: updated 1 chunks | queue: 198
-LOD: updated 1 chunks | queue: 197
-LOD: updated 1 chunks | queue: 196
-LOD: updated 1 chunks | queue: 195
-LOD: updated 1 chunks | queue: 194
-LOD: updated 1 chunks | queue: 193
-LOD: updated 1 chunks | queue: 192
-LOD: updated 1 chunks | queue: 191
-LOD: updated 1 chunks | queue: 190
-LOD: updated 1 chunks | queue: 189
-LOD: updated 1 chunks | queue: 188
-LOD: updated 1 chunks | queue: 187
-LOD: updated 1 chunks | queue: 186
-LOD: updated 1 chunks | queue: 185
-LOD: updated 1 chunks | queue: 184
-LOD: updated 1 chunks | queue: 183
-Chunks: loaded 1 | queue: 6 | total: 1069
-LOD: updated 1 chunks | queue: 233
-Chunks: loaded 1 | queue: 5 | total: 1070
-LOD: updated 1 chunks | queue: 232
-Chunks: loaded 1 | queue: 14 | total: 1071
-LOD: updated 1 chunks | queue: 289
-Chunks: loaded 1 | queue: 13 | total: 1072 | FPS: 59 | Q:30%
-LOD: updated 1 chunks | queue: 288
-Chunks: loaded 1 | queue: 12 | total: 1073
-LOD: updated 1 chunks | queue: 287
-Chunks: loaded 1 | queue: 11 | total: 1074
-LOD: updated 1 chunks | queue: 286
-Chunks: loaded 1 | queue: 10 | total: 1075
-LOD: updated 1 chunks | queue: 285
-Chunks: loaded 1 | queue: 9 | total: 1076
-LOD: updated 1 chunks | queue: 284
-Chunks: loaded 1 | queue: 8 | total: 1077
-LOD: updated 1 chunks | queue: 283
-Chunks: loaded 1 | queue: 7 | total: 1078
-LOD: updated 1 chunks | queue: 282
-Chunks: loaded 1 | queue: 6 | total: 1079
-LOD: updated 1 chunks | queue: 281
-Chunks: loaded 1 | queue: 5 | total: 1080
-LOD: updated 1 chunks | queue: 280
-Chunks: loaded 1 | queue: 4 | total: 1081
-LOD: updated 1 chunks | queue: 279
-Chunks: loaded 1 | queue: 3 | total: 1082 | FPS: 59 | Q:30%
-LOD: updated 1 chunks | queue: 278
-Chunks: loaded 1 | queue: 2 | total: 1083
-LOD: updated 1 chunks | queue: 277
-Chunks: loaded 1 | queue: 1 | total: 1084
-LOD: updated 1 chunks | queue: 276
-Chunks: loaded 1 | queue: 0 | total: 1085
-LOD: updated 1 chunks | queue: 275
-LOD: updated 1 chunks | queue: 274
-LOD: updated 1 chunks | queue: 273
-LOD: updated 1 chunks | queue: 272
-LOD: updated 1 chunks | queue: 271
-LOD: updated 1 chunks | queue: 270
-LOD: updated 1 chunks | queue: 269
-LOD: updated 1 chunks | queue: 268
-LOD: updated 1 chunks | queue: 267
-LOD: updated 1 chunks | queue: 266
-LOD: updated 1 chunks | queue: 265
-LOD: updated 1 chunks | queue: 264
-LOD: updated 1 chunks | queue: 263
-LOD: updated 1 chunks | queue: 262
-TREE (5, 7) #0: raycast_y=11.6002502441406 local_pos=(3.654359, 8.603241, -0.544917) chunk.pos.y=0.0 expected=11.5974626945283 global=(128.6544, 8.603241, 174.4551)
-TREE (5, 7) #1: raycast_y=12.1897277832031 local_pos=(-5.027276, 9.190204, -5.080029) chunk.pos.y=0.0 expected=12.1887321970931 global=(119.9727, 9.190204, 169.92)
-TREE (5, 7) #2: raycast_y=11.6228942871094 local_pos=(1.37764, 8.623645, 4.901195) chunk.pos.y=0.0 expected=11.6260869228391 global=(126.3776, 8.623645, 179.9012)
-PROPS (5, 7): 3ms FPS=59
-LOD: updated 1 chunks | queue: 261
-TREE (5, 6) #0: raycast_y=11.5193481445313 local_pos=(-0.543564, 8.520099, 0.431978) chunk.pos.y=0.0 expected=11.485293457794 global=(124.4564, 8.520099, 150.432)
-TREE (5, 6) #2: raycast_y=12.0698852539063 local_pos=(-9.32117, 9.070361, 0.487257) chunk.pos.y=0.0 expected=12.0989797891219 global=(115.6788, 9.070361, 150.4873)
-LOD: updated 1 chunks | queue: 260
-TREE (5, 4) #0: raycast_y=11.2345886230469 local_pos=(9.066233, 8.237579, -10.23142) chunk.pos.y=0.0 expected=11.2357848764254 global=(134.0662, 8.237579, 89.76858)
-LOD: updated 1 chunks | queue: 259
-LOD: updated 1 chunks | queue: 258
-LOD: updated 1 chunks | queue: 257
-LOD: updated 1 chunks | queue: 256
-LOD: updated 1 chunks | queue: 255
-LOD: updated 1 chunks | queue: 254
-LOD: updated 1 chunks | queue: 253
-Chunks: queued 88 for unload
-Chunks: loaded 1 | queue: 20 | total: 1086
-LOD: updated 1 chunks | queue: 321
-Chunks: unloaded 2 | queue: 86 | remaining: 1084
-Chunks: loaded 1 | queue: 19 | total: 1085
-LOD: updated 1 chunks | queue: 320
-Chunks: unloaded 2 | queue: 84 | remaining: 1083
-Chunks: loaded 1 | queue: 18 | total: 1084
-LOD: updated 1 chunks | queue: 319
-Chunks: unloaded 2 | queue: 82 | remaining: 1082
-Chunks: loaded 1 | queue: 17 | total: 1083
-LOD: updated 1 chunks | queue: 318
-Chunks: unloaded 2 | queue: 80 | remaining: 1081
-Chunks: loaded 1 | queue: 16 | total: 1082
-LOD: updated 1 chunks | queue: 317
-Chunks: unloaded 2 | queue: 78 | remaining: 1080
-Chunks: loaded 1 | queue: 15 | total: 1081
-LOD: updated 1 chunks | queue: 316
-Chunks: unloaded 2 | queue: 76 | remaining: 1079
-Chunks: loaded 1 | queue: 14 | total: 1080 | FPS: 55 | Q:30%
-LOD: updated 1 chunks | queue: 315
-Chunks: unloaded 2 | queue: 74 | remaining: 1078
-Chunks: loaded 1 | queue: 13 | total: 1079
-LOD: updated 1 chunks | queue: 314
-Chunks: unloaded 2 | queue: 72 | remaining: 1077
-Chunks: loaded 1 | queue: 12 | total: 1078
-LOD: updated 1 chunks | queue: 313
-Chunks: unloaded 2 | queue: 70 | remaining: 1076
-Chunks: loaded 1 | queue: 11 | total: 1077
-LOD: updated 1 chunks | queue: 312
-Chunks: unloaded 2 | queue: 68 | remaining: 1075
-Chunks: loaded 1 | queue: 10 | total: 1076
-LOD: updated 1 chunks | queue: 311
-Chunks: unloaded 2 | queue: 66 | remaining: 1074
-Chunks: loaded 1 | queue: 9 | total: 1075
-LOD: updated 1 chunks | queue: 310
-Chunks: unloaded 2 | queue: 64 | remaining: 1073
-Chunks: loaded 1 | queue: 8 | total: 1074
-LOD: updated 1 chunks | queue: 309
-Chunks: unloaded 2 | queue: 62 | remaining: 1072
-Chunks: loaded 1 | queue: 7 | total: 1073
-LOD: updated 1 chunks | queue: 308
-Chunks: unloaded 2 | queue: 60 | remaining: 1071
-Chunks: loaded 1 | queue: 6 | total: 1072
-LOD: updated 1 chunks | queue: 307
-Chunks: unloaded 2 | queue: 58 | remaining: 1070
-Chunks: loaded 1 | queue: 5 | total: 1071
-LOD: updated 1 chunks | queue: 306
-Chunks: unloaded 2 | queue: 56 | remaining: 1069
-Chunks: loaded 1 | queue: 4 | total: 1070 | FPS: 55 | Q:30%
-LOD: updated 1 chunks | queue: 305
-Chunks: unloaded 2 | queue: 54 | remaining: 1068
-Chunks: loaded 1 | queue: 3 | total: 1069
-LOD: updated 1 chunks | queue: 304
-Chunks: unloaded 2 | queue: 52 | remaining: 1067
-Chunks: loaded 1 | queue: 2 | total: 1068
-LOD: updated 1 chunks | queue: 303
-Chunks: unloaded 2 | queue: 50 | remaining: 1066
-Chunks: loaded 1 | queue: 1 | total: 1067
+Chunks: queued 67 for unload
+Chunks: loaded 1 | queue: 26 | total: 1038
 LOD: updated 1 chunks | queue: 302
-Chunks: unloaded 2 | queue: 48 | remaining: 1065
-Chunks: loaded 1 | queue: 0 | total: 1066
+Chunks: unloaded 2 | queue: 65 | remaining: 1036
+Chunks: loaded 1 | queue: 25 | total: 1037
 LOD: updated 1 chunks | queue: 301
-Chunks: unloaded 2 | queue: 46 | remaining: 1064
+Chunks: unloaded 2 | queue: 63 | remaining: 1035
+Chunks: loaded 1 | queue: 24 | total: 1036
 LOD: updated 1 chunks | queue: 300
-Chunks: unloaded 2 | queue: 44 | remaining: 1062
+Chunks: unloaded 2 | queue: 61 | remaining: 1034
+Chunks: loaded 1 | queue: 23 | total: 1035
 LOD: updated 1 chunks | queue: 299
-Chunks: unloaded 2 | queue: 42 | remaining: 1060
+Chunks: unloaded 2 | queue: 59 | remaining: 1033
+Chunks: loaded 1 | queue: 22 | total: 1034
 LOD: updated 1 chunks | queue: 298
-Chunks: unloaded 2 | queue: 40 | remaining: 1058
+Chunks: unloaded 2 | queue: 57 | remaining: 1032
+Chunks: loaded 1 | queue: 21 | total: 1033
 LOD: updated 1 chunks | queue: 297
-Chunks: unloaded 2 | queue: 38 | remaining: 1056
+Chunks: unloaded 2 | queue: 55 | remaining: 1031
+Chunks: loaded 1 | queue: 20 | total: 1032 | FPS: 43 | Q:30%
 LOD: updated 1 chunks | queue: 296
-Chunks: unloaded 2 | queue: 36 | remaining: 1054
+Chunks: unloaded 2 | queue: 53 | remaining: 1030
+Chunks: loaded 1 | queue: 19 | total: 1031
 LOD: updated 1 chunks | queue: 295
-Chunks: unloaded 2 | queue: 34 | remaining: 1052
+Chunks: unloaded 2 | queue: 51 | remaining: 1029
+Chunks: loaded 1 | queue: 18 | total: 1030
 LOD: updated 1 chunks | queue: 294
-Chunks: unloaded 2 | queue: 32 | remaining: 1050
-LOD: updated 1 chunks | queue: 293
-Chunks: unloaded 2 | queue: 30 | remaining: 1048
-LOD: updated 1 chunks | queue: 292
-Chunks: unloaded 2 | queue: 28 | remaining: 1046
-LOD: updated 1 chunks | queue: 291
-Chunks: unloaded 2 | queue: 26 | remaining: 1044
-LOD: updated 1 chunks | queue: 290
-Chunks: unloaded 2 | queue: 24 | remaining: 1042
-TREE (5, 5) #0: raycast_y=11.7414245605469 local_pos=(-8.454414, 8.744415, 10.21775) chunk.pos.y=0.0 expected=11.8035825326733 global=(116.5456, 8.744415, 135.2177)
-LOD: updated 1 chunks | queue: 289
-Chunks: unloaded 2 | queue: 22 | remaining: 1040
-LOD: updated 1 chunks | queue: 288
-Chunks: unloaded 2 | queue: 20 | remaining: 1038
-LOD: updated 1 chunks | queue: 287
-Chunks: unloaded 2 | queue: 18 | remaining: 1036
-Chunks: loaded 1 | queue: 26 | total: 1037
-LOD: updated 1 chunks | queue: 357
-Chunks: unloaded 2 | queue: 16 | remaining: 1035
-Chunks: loaded 1 | queue: 25 | total: 1036
-LOD: updated 1 chunks | queue: 356
-Chunks: unloaded 2 | queue: 14 | remaining: 1034
-Chunks: loaded 1 | queue: 24 | total: 1035
-LOD: updated 1 chunks | queue: 355
-Chunks: unloaded 2 | queue: 12 | remaining: 1033
-Chunks: loaded 1 | queue: 23 | total: 1034
-LOD: updated 1 chunks | queue: 354
-Chunks: unloaded 2 | queue: 10 | remaining: 1032
-Chunks: loaded 1 | queue: 22 | total: 1033
-LOD: updated 1 chunks | queue: 353
-Chunks: unloaded 2 | queue: 7 | remaining: 1031
-Chunks: loaded 1 | queue: 21 | total: 1032 | FPS: 55 | Q:30%
-LOD: updated 1 chunks | queue: 352
-Chunks: unloaded 2 | queue: 5 | remaining: 1030
-Chunks: loaded 1 | queue: 20 | total: 1031
-LOD: updated 1 chunks | queue: 351
-Chunks: unloaded 2 | queue: 3 | remaining: 1029
-Chunks: loaded 1 | queue: 19 | total: 1030
-LOD: updated 1 chunks | queue: 350
-Chunks: unloaded 2 | queue: 1 | remaining: 1028
-Chunks: loaded 1 | queue: 18 | total: 1029
-LOD: updated 1 chunks | queue: 349
-Chunks: unloaded 1 | queue: 0 | remaining: 1028
+Chunks: unloaded 2 | queue: 49 | remaining: 1028
 Chunks: loaded 1 | queue: 17 | total: 1029
-LOD: updated 1 chunks | queue: 348
-Chunks: loaded 1 | queue: 16 | total: 1030
-LOD: updated 1 chunks | queue: 347
-Chunks: loaded 1 | queue: 15 | total: 1031
-LOD: updated 1 chunks | queue: 346
-Chunks: loaded 1 | queue: 14 | total: 1032
-LOD: updated 1 chunks | queue: 345
-Chunks: loaded 1 | queue: 13 | total: 1033
-LOD: updated 1 chunks | queue: 344
-Chunks: loaded 1 | queue: 12 | total: 1034
-LOD: updated 1 chunks | queue: 343
-Chunks: loaded 1 | queue: 11 | total: 1035 | FPS: 50 | Q:30%
-LOD: updated 1 chunks | queue: 342
-Chunks: loaded 1 | queue: 10 | total: 1036
-LOD: updated 1 chunks | queue: 341
-Chunks: loaded 1 | queue: 9 | total: 1037
-LOD: updated 1 chunks | queue: 340
-Chunks: loaded 1 | queue: 8 | total: 1038
-LOD: updated 1 chunks | queue: 339
-Chunks: loaded 1 | queue: 7 | total: 1039
-LOD: updated 1 chunks | queue: 338
-Chunks: loaded 1 | queue: 6 | total: 1040
-LOD: updated 1 chunks | queue: 337
-Chunks: loaded 1 | queue: 5 | total: 1041
-LOD: updated 1 chunks | queue: 336
-Chunks: loaded 1 | queue: 4 | total: 1042
-LOD: updated 1 chunks | queue: 335
-Chunks: loaded 1 | queue: 3 | total: 1043
-LOD: updated 1 chunks | queue: 334
-Chunks: loaded 1 | queue: 2 | total: 1044
-LOD: updated 1 chunks | queue: 333
-Chunks: loaded 1 | queue: 1 | total: 1045 | FPS: 50 | Q:30%
-LOD: updated 1 chunks | queue: 332
-Chunks: loaded 1 | queue: 0 | total: 1046
+LOD: updated 1 chunks | queue: 293
+Chunks: unloaded 2 | queue: 47 | remaining: 1027
+Chunks: loaded 1 | queue: 16 | total: 1028
+LOD: updated 1 chunks | queue: 292
+Chunks: unloaded 2 | queue: 45 | remaining: 1026
+Chunks: loaded 1 | queue: 15 | total: 1027
+LOD: updated 1 chunks | queue: 291
+Chunks: unloaded 2 | queue: 43 | remaining: 1025
+Chunks: loaded 1 | queue: 14 | total: 1026
+LOD: updated 1 chunks | queue: 290
+Chunks: unloaded 2 | queue: 41 | remaining: 1024
+Chunks: loaded 1 | queue: 13 | total: 1025
+LOD: updated 1 chunks | queue: 289
+Chunks: unloaded 2 | queue: 39 | remaining: 1023
+Chunks: loaded 1 | queue: 12 | total: 1024
+LOD: updated 1 chunks | queue: 288
+Chunks: unloaded 2 | queue: 37 | remaining: 1022
+Chunks: loaded 1 | queue: 11 | total: 1023
+LOD: updated 1 chunks | queue: 287
+Chunks: unloaded 2 | queue: 35 | remaining: 1021
+Chunks: loaded 1 | queue: 10 | total: 1022 | FPS: 43 | Q:30%
+LOD: updated 1 chunks | queue: 286
+Chunks: unloaded 2 | queue: 33 | remaining: 1020
+Chunks: loaded 1 | queue: 9 | total: 1021
+LOD: updated 1 chunks | queue: 285
+Chunks: unloaded 2 | queue: 31 | remaining: 1019
+Chunks: loaded 1 | queue: 8 | total: 1020
+LOD: updated 1 chunks | queue: 284
+Chunks: unloaded 2 | queue: 29 | remaining: 1018
+Chunks: loaded 1 | queue: 7 | total: 1019
+LOD: updated 1 chunks | queue: 283
+Chunks: unloaded 2 | queue: 27 | remaining: 1017
+Chunks: loaded 1 | queue: 6 | total: 1018
+LOD: updated 1 chunks | queue: 282
+Chunks: unloaded 2 | queue: 25 | remaining: 1016
+Chunks: loaded 1 | queue: 5 | total: 1017
+LOD: updated 1 chunks | queue: 281
+Chunks: unloaded 2 | queue: 23 | remaining: 1015
+Chunks: loaded 1 | queue: 4 | total: 1016
+LOD: updated 1 chunks | queue: 280
+Chunks: unloaded 2 | queue: 21 | remaining: 1014
+Chunks: loaded 1 | queue: 3 | total: 1015
+LOD: updated 1 chunks | queue: 279
+Chunks: unloaded 2 | queue: 19 | remaining: 1013
+Chunks: loaded 1 | queue: 2 | total: 1014
+CHUNK (9, 4) LOD0: total=9ms (verts=7ms, mesh=0ms, collision=2ms) FPS=43
+LOD: updated 1 chunks | queue: 278
+Chunks: unloaded 2 | queue: 17 | remaining: 1012
+Chunks: loaded 1 | queue: 1 | total: 1013
+LOD: updated 1 chunks | queue: 277
+Chunks: unloaded 2 | queue: 15 | remaining: 1011
+Chunks: loaded 1 | queue: 0 | total: 1012 | FPS: 43 | Q:30%
+LOD: updated 1 chunks | queue: 276
+Chunks: unloaded 2 | queue: 13 | remaining: 1010
+LOD: updated 1 chunks | queue: 275
+Chunks: unloaded 2 | queue: 11 | remaining: 1008
+CHUNK (8, 6) LOD0: total=10ms (verts=7ms, mesh=1ms, collision=2ms) FPS=43
+LOD: updated 1 chunks | queue: 274
+Chunks: unloaded 2 | queue: 9 | remaining: 1006
+LOD: updated 1 chunks | queue: 273
+Chunks: unloaded 2 | queue: 7 | remaining: 1004
+LOD: updated 1 chunks | queue: 272
+Chunks: unloaded 2 | queue: 5 | remaining: 1002
+LOD: updated 1 chunks | queue: 271
+Chunks: unloaded 2 | queue: 3 | remaining: 1000
+LOD: updated 1 chunks | queue: 270
+Chunks: unloaded 2 | queue: 1 | remaining: 998
+CHUNK (7, 7) LOD0: total=10ms (verts=7ms, mesh=1ms, collision=2ms) FPS=43
+LOD: updated 1 chunks | queue: 269
+Chunks: unloaded 1 | queue: 0 | remaining: 997
+LOD: updated 1 chunks | queue: 268
+TREE (7, 7) #0: raycast_y=11.5526428222656 local_pos=(10.26581, 8.553393, -7.961024) chunk.pos.y=0.0 expected=11.5689432135798 global=(185.2658, 8.553393, 167.039)
+TREE (7, 7) #1: raycast_y=11.9032592773438 local_pos=(1.930852, 8.90625, 7.704355) chunk.pos.y=0.0 expected=11.9037976767108 global=(176.9308, 8.90625, 182.7044)
+TREE (7, 7) #2: raycast_y=11.7469787597656 local_pos=(-1.334196, 8.747455, -3.485641) chunk.pos.y=0.0 expected=11.7435952606877 global=(173.6658, 8.747455, 171.5144)
+PROPS (7, 7): 6ms FPS=43
+LOD: updated 1 chunks | queue: 267
+LOD: updated 1 chunks | queue: 266
+LOD: updated 1 chunks | queue: 265
+LOD: updated 1 chunks | queue: 264
+CHUNK (6, 7) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=43
+LOD: updated 1 chunks | queue: 263
+LOD: updated 1 chunks | queue: 262
+TREE (6, 7) #0: raycast_y=11.5129699707031 local_pos=(-1.891897, 8.513446, 9.92391) chunk.pos.y=0.0 expected=11.50191468039 global=(148.1081, 8.513446, 184.9239)
+TREE (6, 7) #1: raycast_y=11.1934509277344 local_pos=(2.923385, 8.196442, -4.232576) chunk.pos.y=0.0 expected=11.1866871424872 global=(152.9234, 8.196442, 170.7674)
+PROPS (6, 7): 4ms FPS=43
+LOD: updated 1 chunks | queue: 261
+LOD: updated 1 chunks | queue: 260
+LOD: updated 1 chunks | queue: 259
+CHUNK (5, 8) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=43
+LOD: updated 1 chunks | queue: 258
+Chunks: loaded 1 | queue: 28 | total: 998
 LOD: updated 1 chunks | queue: 331
+Chunks: loaded 1 | queue: 27 | total: 999
 LOD: updated 1 chunks | queue: 330
+Chunks: loaded 1 | queue: 26 | total: 1000
 LOD: updated 1 chunks | queue: 329
+Chunks: loaded 1 | queue: 25 | total: 1001
 LOD: updated 1 chunks | queue: 328
+Chunks: loaded 1 | queue: 24 | total: 1002
 LOD: updated 1 chunks | queue: 327
+Chunks: loaded 1 | queue: 23 | total: 1003
 LOD: updated 1 chunks | queue: 326
+Chunks: loaded 1 | queue: 22 | total: 1004
 LOD: updated 1 chunks | queue: 325
-TREE (4, 5) #0: raycast_y=12.0941772460938 local_pos=(2.193991, 9.097168, 1.36772) chunk.pos.y=0.0 expected=12.1210077133114 global=(102.194, 9.097168, 126.3677)
-TREE (4, 5) #1: raycast_y=12.2994079589844 local_pos=(-3.946092, 9.299884, 7.703533) chunk.pos.y=0.0 expected=12.2939147740303 global=(96.05391, 9.299884, 132.7035)
-TREE (4, 5) #2: raycast_y=12.0192260742188 local_pos=(-3.827417, 9.022217, -1.705756) chunk.pos.y=0.0 expected=11.9923578052201 global=(96.17258, 9.022217, 123.2942)
-PROPS (4, 5): 3ms FPS=50
+Chunks: loaded 1 | queue: 21 | total: 1005
 LOD: updated 1 chunks | queue: 324
-Chunks: loaded 1 | queue: 28 | total: 1047
-LOD: updated 1 chunks | queue: 386
-Chunks: loaded 1 | queue: 27 | total: 1048
-LOD: updated 1 chunks | queue: 385
-Chunks: loaded 1 | queue: 26 | total: 1049
-LOD: updated 1 chunks | queue: 384
-Chunks: loaded 1 | queue: 25 | total: 1050
-LOD: updated 1 chunks | queue: 383
-Chunks: loaded 1 | queue: 24 | total: 1051
-LOD: updated 1 chunks | queue: 382
-Chunks: loaded 1 | queue: 23 | total: 1052
-LOD: updated 1 chunks | queue: 381
-Chunks: loaded 1 | queue: 22 | total: 1053
-LOD: updated 1 chunks | queue: 380
-Chunks: loaded 1 | queue: 21 | total: 1054
-LOD: updated 1 chunks | queue: 379
-Chunks: loaded 1 | queue: 20 | total: 1055 | FPS: 50 | Q:30%
-LOD: updated 1 chunks | queue: 378
-Chunks: loaded 1 | queue: 19 | total: 1056
-LOD: updated 1 chunks | queue: 377
-Chunks: loaded 1 | queue: 18 | total: 1057
-LOD: updated 1 chunks | queue: 376
-Chunks: loaded 1 | queue: 17 | total: 1058
-LOD: updated 1 chunks | queue: 375
-Chunks: loaded 1 | queue: 16 | total: 1059
-LOD: updated 1 chunks | queue: 374
-Chunks: loaded 1 | queue: 15 | total: 1060
-LOD: updated 1 chunks | queue: 373
-Chunks: loaded 1 | queue: 14 | total: 1061
-LOD: updated 1 chunks | queue: 372
-Chunks: loaded 1 | queue: 13 | total: 1062
-LOD: updated 1 chunks | queue: 371
-Chunks: loaded 1 | queue: 12 | total: 1063
-LOD: updated 1 chunks | queue: 370
-Chunks: loaded 1 | queue: 11 | total: 1064
-LOD: updated 1 chunks | queue: 369
-Chunks: loaded 1 | queue: 10 | total: 1065 | FPS: 50 | Q:30%
-LOD: updated 1 chunks | queue: 368
-Chunks: loaded 1 | queue: 9 | total: 1066
-LOD: updated 1 chunks | queue: 367
-Chunks: loaded 1 | queue: 8 | total: 1067
-LOD: updated 1 chunks | queue: 366
-Chunks: loaded 1 | queue: 7 | total: 1068
-LOD: updated 1 chunks | queue: 365
-Chunks: loaded 1 | queue: 6 | total: 1069
-LOD: updated 1 chunks | queue: 364
-Chunks: loaded 1 | queue: 5 | total: 1070
-LOD: updated 1 chunks | queue: 363
-Chunks: loaded 1 | queue: 4 | total: 1071
-LOD: updated 1 chunks | queue: 362
-Chunks: loaded 1 | queue: 3 | total: 1072
-LOD: updated 1 chunks | queue: 361
-Chunks: loaded 1 | queue: 2 | total: 1073
-LOD: updated 1 chunks | queue: 360
-Chunks: loaded 1 | queue: 1 | total: 1074
-LOD: updated 1 chunks | queue: 359
-Chunks: loaded 1 | queue: 0 | total: 1075 | FPS: 51 | Q:30%
-LOD: updated 1 chunks | queue: 358
-LOD: updated 1 chunks | queue: 357
-LOD: updated 1 chunks | queue: 356
-LOD: updated 1 chunks | queue: 355
-LOD: updated 1 chunks | queue: 354
-LOD: updated 1 chunks | queue: 353
-LOD: updated 1 chunks | queue: 352
-LOD: updated 1 chunks | queue: 351
-LOD: updated 1 chunks | queue: 350
-LOD: updated 1 chunks | queue: 349
-LOD: updated 1 chunks | queue: 348
-LOD: updated 1 chunks | queue: 347
-LOD: updated 1 chunks | queue: 346
-LOD: updated 1 chunks | queue: 345
-LOD: updated 1 chunks | queue: 344
-LOD: updated 1 chunks | queue: 343
-LOD: updated 1 chunks | queue: 342
-LOD: updated 1 chunks | queue: 341
-LOD: updated 1 chunks | queue: 340
-LOD: updated 1 chunks | queue: 339
-LOD: updated 1 chunks | queue: 338
-LOD: updated 1 chunks | queue: 337
-LOD: updated 1 chunks | queue: 336
-LOD: updated 1 chunks | queue: 335
-LOD: updated 1 chunks | queue: 334
-LOD: updated 1 chunks | queue: 333
-LOD: updated 1 chunks | queue: 332
-LOD: updated 1 chunks | queue: 331
-LOD: updated 1 chunks | queue: 330
-LOD: updated 1 chunks | queue: 329
-LOD: updated 1 chunks | queue: 328
-LOD: updated 1 chunks | queue: 327
-LOD: updated 1 chunks | queue: 326
-LOD: updated 1 chunks | queue: 325
-LOD: updated 1 chunks | queue: 324
+Chunks: loaded 1 | queue: 20 | total: 1006
 LOD: updated 1 chunks | queue: 323
+Chunks: loaded 1 | queue: 19 | total: 1007 | FPS: 42 | Q:30%
 LOD: updated 1 chunks | queue: 322
+Chunks: loaded 1 | queue: 18 | total: 1008
 LOD: updated 1 chunks | queue: 321
-TREE (3, 7) #2: raycast_y=11.1618347167969 local_pos=(-8.25763, 8.162311, 7.207741) chunk.pos.y=0.0 expected=11.1760040753707 global=(66.74237, 8.162311, 182.2077)
+Chunks: loaded 1 | queue: 17 | total: 1009
 LOD: updated 1 chunks | queue: 320
+Chunks: loaded 1 | queue: 16 | total: 1010
 LOD: updated 1 chunks | queue: 319
-TREE (3, 4) #0: raycast_y=11.282958984375 local_pos=(-5.76935, 8.28595, -2.488566) chunk.pos.y=0.0 expected=11.3195689651348 global=(69.23065, 8.28595, 97.51144)
-TREE (3, 4) #1: raycast_y=11.4696044921875 local_pos=(-0.755272, 8.470355, 8.752575) chunk.pos.y=0.0 expected=11.5097935528325 global=(74.24473, 8.470355, 108.7526)
-TREE (3, 4) #2: raycast_y=11.4658508300781 local_pos=(-2.389726, 8.466327, 2.951614) chunk.pos.y=0.0 expected=11.4589495319273 global=(72.61028, 8.466327, 102.9516)
-PROPS (3, 4): 3ms FPS=51
+TREE (12, 8) #1: raycast_y=11.2735900878906 local_pos=(4.726455, 8.276581, -7.434605) chunk.pos.y=0.0 expected=11.2726361091332 global=(304.7264, 8.276581, 192.5654)
+Chunks: loaded 1 | queue: 15 | total: 1011
 LOD: updated 1 chunks | queue: 318
+Chunks: loaded 1 | queue: 14 | total: 1012
 LOD: updated 1 chunks | queue: 317
+Chunks: loaded 1 | queue: 13 | total: 1013
 LOD: updated 1 chunks | queue: 316
+Chunks: loaded 1 | queue: 12 | total: 1014
 LOD: updated 1 chunks | queue: 315
+Chunks: loaded 1 | queue: 11 | total: 1015
 LOD: updated 1 chunks | queue: 314
+Chunks: loaded 1 | queue: 10 | total: 1016
 LOD: updated 1 chunks | queue: 313
+Chunks: loaded 1 | queue: 9 | total: 1017 | FPS: 42 | Q:30%
 LOD: updated 1 chunks | queue: 312
+Chunks: loaded 1 | queue: 8 | total: 1018
 LOD: updated 1 chunks | queue: 311
-PROPS (-2, 9): 3ms FPS=51
+PROPS (9, 1): 3ms FPS=42
+Chunks: loaded 1 | queue: 7 | total: 1019
 LOD: updated 1 chunks | queue: 310
-RAYCAST MISS chunk (-5, -2) at (-118.98802947998, -42.7461719512939) ray_start.y=290.0 fallback_height=5.49929317717082 hits=0 misses=1
+Chunks: loaded 1 | queue: 6 | total: 1020
 LOD: updated 1 chunks | queue: 309
+Chunks: loaded 1 | queue: 5 | total: 1021
 LOD: updated 1 chunks | queue: 308
+Chunks: loaded 1 | queue: 4 | total: 1022
 LOD: updated 1 chunks | queue: 307
+Chunks: loaded 1 | queue: 3 | total: 1023
 LOD: updated 1 chunks | queue: 306
+Chunks: loaded 1 | queue: 2 | total: 1024
 LOD: updated 1 chunks | queue: 305
+Chunks: loaded 1 | queue: 1 | total: 1025
 LOD: updated 1 chunks | queue: 304
+PROPS (7, 0): 3ms FPS=42
+Chunks: loaded 1 | queue: 0 | total: 1026
 LOD: updated 1 chunks | queue: 303
 LOD: updated 1 chunks | queue: 302
 LOD: updated 1 chunks | queue: 301
 LOD: updated 1 chunks | queue: 300
 LOD: updated 1 chunks | queue: 299
+PROPS (6, 12): 3ms FPS=42
 LOD: updated 1 chunks | queue: 298
 LOD: updated 1 chunks | queue: 297
 LOD: updated 1 chunks | queue: 296
+CHUNK (5, 9) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=42
 LOD: updated 1 chunks | queue: 295
 LOD: updated 1 chunks | queue: 294
+TREE (5, 9) #0: raycast_y=12.0606689453125 local_pos=(-7.65064, 9.061419, -1.55094) chunk.pos.y=0.0 expected=12.0630468954802 global=(117.3494, 9.061419, 223.4491)
+TREE (5, 9) #1: raycast_y=12.1004028320313 local_pos=(7.90044, 9.100879, 8.62973) chunk.pos.y=0.0 expected=12.0866718751443 global=(132.9004, 9.100879, 233.6297)
+TREE (5, 9) #2: raycast_y=12.2302551269531 local_pos=(-0.034282, 9.233246, 2.463253) chunk.pos.y=0.0 expected=12.2699349947307 global=(124.9657, 9.233246, 227.4633)
+PROPS (5, 9): 4ms FPS=42
 LOD: updated 1 chunks | queue: 293
+PROPS (5, -1): 5ms FPS=42
 LOD: updated 1 chunks | queue: 292
 LOD: updated 1 chunks | queue: 291
 LOD: updated 1 chunks | queue: 290
+CHUNK (4, 8) LOD0: total=10ms (verts=6ms, mesh=1ms, collision=3ms) FPS=41
 LOD: updated 1 chunks | queue: 289
 LOD: updated 1 chunks | queue: 288
 LOD: updated 1 chunks | queue: 287
 LOD: updated 1 chunks | queue: 286
-TREE (4, 7) #1: raycast_y=11.4239501953125 local_pos=(-1.334186, 8.424701, -1.125425) chunk.pos.y=0.0 expected=11.4289480327383 global=(98.66582, 8.424701, 173.8746)
-TREE (4, 7) #2: raycast_y=11.342529296875 local_pos=(-0.554107, 8.343005, 4.398265) chunk.pos.y=0.0 expected=11.3413126912447 global=(99.44589, 8.343005, 179.3983)
 LOD: updated 1 chunks | queue: 285
 LOD: updated 1 chunks | queue: 284
+CHUNK (3, 8) LOD0: total=11ms (verts=8ms, mesh=0ms, collision=3ms) FPS=41
 LOD: updated 1 chunks | queue: 283
 LOD: updated 1 chunks | queue: 282
 LOD: updated 1 chunks | queue: 281
 LOD: updated 1 chunks | queue: 280
+CHUNK (2, 7) LOD0: total=10ms (verts=8ms, mesh=0ms, collision=2ms) FPS=41
 LOD: updated 1 chunks | queue: 279
 LOD: updated 1 chunks | queue: 278
 LOD: updated 1 chunks | queue: 277
 LOD: updated 1 chunks | queue: 276
-TREE (-1, 9) #0: raycast_y=11.44873046875 local_pos=(5.73637, 8.449206, -7.435891) chunk.pos.y=0.0 expected=11.4729097124581 global=(-19.26363, 8.449206, 217.5641)
-TREE (-1, 9) #1: raycast_y=11.3526306152344 local_pos=(-3.23932, 8.353381, -6.629576) chunk.pos.y=0.0 expected=11.3605653711714 global=(-28.23932, 8.353381, 218.3704)
 LOD: updated 1 chunks | queue: 275
 LOD: updated 1 chunks | queue: 274
-RAYCAST MISS chunk (-6, -1) at (-146.898506164551, -19.805627822876) ray_start.y=290.0 fallback_height=5.67800261091272 hits=0 misses=1
+CHUNK (1, 5) LOD0: total=10ms (verts=6ms, mesh=1ms, collision=3ms) FPS=41
 LOD: updated 1 chunks | queue: 273
 LOD: updated 1 chunks | queue: 272
 LOD: updated 1 chunks | queue: 271
@@ -3476,21 +1364,26 @@ LOD: updated 1 chunks | queue: 257
 LOD: updated 1 chunks | queue: 256
 LOD: updated 1 chunks | queue: 255
 LOD: updated 1 chunks | queue: 254
+CHUNK (4, 7) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=41
 LOD: updated 1 chunks | queue: 253
-CHUNK (0, 9) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=55
 LOD: updated 1 chunks | queue: 252
+TREE (4, 7) #1: raycast_y=11.4239501953125 local_pos=(-1.334186, 8.424426, -1.125425) chunk.pos.y=0.0 expected=11.4289480327383 global=(98.66582, 8.424426, 173.8746)
+TREE (4, 7) #2: raycast_y=11.342529296875 local_pos=(-0.554107, 8.34552, 4.398265) chunk.pos.y=0.0 expected=11.3413126912447 global=(99.44589, 8.34552, 179.3983)
+PROPS (4, 7): 5ms FPS=41
 LOD: updated 1 chunks | queue: 251
 LOD: updated 1 chunks | queue: 250
 LOD: updated 1 chunks | queue: 249
 LOD: updated 1 chunks | queue: 248
+CHUNK (3, 7) LOD0: total=9ms (verts=5ms, mesh=1ms, collision=3ms) FPS=41
 LOD: updated 1 chunks | queue: 247
-RAYCAST MISS chunk (-6, 9) at (-152.316682815552, 222.964287757874) ray_start.y=290.0 fallback_height=7.65878267893299 hits=0 misses=1
+TREE (3, 11) #1: raycast_y=12.052734375 local_pos=(-10.09772, 9.053485, -8.985985) chunk.pos.y=0.0 expected=12.0450226237852 global=(64.90228, 9.053485, 266.014)
+TREE (3, 11) #2: raycast_y=12.0616149902344 local_pos=(-9.146338, 9.062091, -5.982514) chunk.pos.y=0.0 expected=12.0980927417567 global=(65.85366, 9.062091, 269.0175)
 LOD: updated 1 chunks | queue: 246
-RAYCAST MISS chunk (-6, 0) at (-156.80205488205, 1.41358852386475) ray_start.y=290.0 fallback_height=6.17973449180504 hits=0 misses=1
 LOD: updated 1 chunks | queue: 245
 LOD: updated 1 chunks | queue: 244
 LOD: updated 1 chunks | queue: 243
 LOD: updated 1 chunks | queue: 242
+CHUNK (2, 6) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=44
 LOD: updated 1 chunks | queue: 241
 LOD: updated 1 chunks | queue: 240
 LOD: updated 1 chunks | queue: 239
@@ -3503,6 +1396,7 @@ LOD: updated 1 chunks | queue: 233
 LOD: updated 1 chunks | queue: 232
 LOD: updated 1 chunks | queue: 231
 LOD: updated 1 chunks | queue: 230
+PROPS (0, 10): 4ms FPS=44
 LOD: updated 1 chunks | queue: 229
 LOD: updated 1 chunks | queue: 228
 LOD: updated 1 chunks | queue: 227
@@ -3518,38 +1412,50 @@ LOD: updated 1 chunks | queue: 218
 LOD: updated 1 chunks | queue: 217
 LOD: updated 1 chunks | queue: 216
 LOD: updated 1 chunks | queue: 215
+CHUNK (6, 6) LOD0: total=9ms (verts=7ms, mesh=0ms, collision=2ms) FPS=44
 LOD: updated 1 chunks | queue: 214
 LOD: updated 1 chunks | queue: 213
+TREE (6, 6) #0: raycast_y=11.1770324707031 local_pos=(2.749207, 8.177783, 2.874964) chunk.pos.y=0.0 expected=11.1727343647683 global=(152.7492, 8.177783, 152.875)
+TREE (6, 6) #1: raycast_y=11.197998046875 local_pos=(2.136347, 8.200989, 2.084479) chunk.pos.y=0.0 expected=11.1917227648842 global=(152.1364, 8.200989, 152.0845)
+TREE (6, 6) #2: raycast_y=11.1552429199219 local_pos=(-7.799556, 8.155719, -1.580759) chunk.pos.y=0.0 expected=11.1551565195824 global=(142.2004, 8.155719, 148.4192)
+PROPS (6, 6): 5ms FPS=44
 LOD: updated 1 chunks | queue: 212
 LOD: updated 1 chunks | queue: 211
 LOD: updated 1 chunks | queue: 210
 LOD: updated 1 chunks | queue: 209
+CHUNK (5, 7) LOD0: total=9ms (verts=7ms, mesh=0ms, collision=2ms) FPS=44
 LOD: updated 1 chunks | queue: 208
 LOD: updated 1 chunks | queue: 207
+TREE (5, 7) #0: raycast_y=11.6002502441406 local_pos=(3.654359, 8.603241, -0.544917) chunk.pos.y=0.0 expected=11.5974626945283 global=(128.6544, 8.603241, 174.4551)
+TREE (5, 7) #1: raycast_y=12.1897277832031 local_pos=(-5.027276, 9.190204, -5.080029) chunk.pos.y=0.0 expected=12.1887321970931 global=(119.9727, 9.190204, 169.92)
+TREE (5, 7) #2: raycast_y=11.6228942871094 local_pos=(1.37764, 8.623645, 4.901195) chunk.pos.y=0.0 expected=11.6260869228391 global=(126.3776, 8.623645, 179.9012)
+PROPS (5, 7): 4ms FPS=44
 LOD: updated 1 chunks | queue: 206
+PROPS (5, -3): 5ms FPS=44
 LOD: updated 1 chunks | queue: 205
 LOD: updated 1 chunks | queue: 204
 LOD: updated 1 chunks | queue: 203
-RAYCAST MISS chunk (0, 12) at (-8.32626342773438, 293.591700553894) ray_start.y=290.0 fallback_height=10.9803256445112 hits=0 misses=1
-CHUNK (0, 8) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=55
+CHUNK (4, 6) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=44
 LOD: updated 1 chunks | queue: 202
 LOD: updated 1 chunks | queue: 201
+PROPS (4, 6): 3ms FPS=44
 LOD: updated 1 chunks | queue: 200
+PROPS (4, -2): 3ms FPS=46
 LOD: updated 1 chunks | queue: 199
 LOD: updated 1 chunks | queue: 198
 LOD: updated 1 chunks | queue: 197
+CHUNK (3, 6) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=46
 LOD: updated 1 chunks | queue: 196
+TREE (3, 10) #0: raycast_y=12.4456787109375 local_pos=(-7.982951, 9.446429, 10.1918) chunk.pos.y=0.0 expected=12.4483315410002 global=(67.01705, 9.446429, 260.1918)
 LOD: updated 1 chunks | queue: 195
 LOD: updated 1 chunks | queue: 194
-RAYCAST MISS chunk (-3, 11) at (-70.1086330413818, 284.44539642334) ray_start.y=290.0 fallback_height=9.60435755244334 hits=9 misses=1
 LOD: updated 1 chunks | queue: 193
 LOD: updated 1 chunks | queue: 192
 LOD: updated 1 chunks | queue: 191
+CHUNK (2, 5) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=46
 LOD: updated 1 chunks | queue: 190
-RAYCAST MISS chunk (-5, 10) at (-134.782294273376, 244.118715286255) ray_start.y=290.0 fallback_height=7.38703499070176 hits=0 misses=1
 LOD: updated 1 chunks | queue: 189
 LOD: updated 1 chunks | queue: 188
-RAYCAST MISS chunk (-6, 8) at (-158.287599563599, 200.118520736694) ray_start.y=290.0 fallback_height=7.11750354299129 hits=0 misses=1
 LOD: updated 1 chunks | queue: 187
 LOD: updated 1 chunks | queue: 186
 LOD: updated 1 chunks | queue: 185
@@ -3572,23 +1478,19 @@ LOD: updated 1 chunks | queue: 169
 LOD: updated 1 chunks | queue: 168
 LOD: updated 1 chunks | queue: 167
 LOD: updated 1 chunks | queue: 166
-RAYCAST MISS chunk (-2, 11) at (-44.967679977417, 266.874794006348) ray_start.y=290.0 fallback_height=10.5457321287898 hits=13 misses=1
 LOD: updated 1 chunks | queue: 165
 LOD: updated 1 chunks | queue: 164
 LOD: updated 1 chunks | queue: 163
 LOD: updated 1 chunks | queue: 162
 LOD: updated 1 chunks | queue: 161
-RAYCAST MISS chunk (-2, -3) at (-43.6548442840576, -79.3270406723022) ray_start.y=290.0 fallback_height=5.9820913936664 hits=49 misses=1
 LOD: updated 1 chunks | queue: 160
 LOD: updated 1 chunks | queue: 159
 LOD: updated 1 chunks | queue: 158
 LOD: updated 1 chunks | queue: 157
-RAYCAST MISS chunk (-4, 10) at (-107.659430980682, 254.860865592957) ray_start.y=290.0 fallback_height=7.59077317513809 hits=9 misses=1
+PROPS (0, 1): 4ms FPS=46
 LOD: updated 1 chunks | queue: 156
-RAYCAST MISS chunk (-4, -2) at (-96.4748096466064, -48.593825340271) ray_start.y=290.0 fallback_height=3.92511244071105 hits=27 misses=1
 LOD: updated 1 chunks | queue: 155
 LOD: updated 1 chunks | queue: 154
-RAYCAST MISS chunk (-5, 9) at (-118.331916809082, 224.767627716064) ray_start.y=290.0 fallback_height=7.5718877806804 hits=0 misses=1
 LOD: updated 1 chunks | queue: 153
 LOD: updated 1 chunks | queue: 152
 LOD: updated 1 chunks | queue: 151
@@ -3627,16 +1529,26 @@ LOD: updated 1 chunks | queue: 119
 LOD: updated 1 chunks | queue: 118
 LOD: updated 1 chunks | queue: 117
 LOD: updated 1 chunks | queue: 116
+PROPS (10, 6): 3ms FPS=45
 LOD: updated 1 chunks | queue: 115
+CHUNK (8, 1) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=45
 LOD: updated 1 chunks | queue: 114
 LOD: updated 1 chunks | queue: 113
+CHUNK (7, 3) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=45
 LOD: updated 1 chunks | queue: 112
+CHUNK (6, 4) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=45
 LOD: updated 1 chunks | queue: 111
 LOD: updated 1 chunks | queue: 110
 LOD: updated 1 chunks | queue: 109
+CHUNK (4, 5) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=45
 LOD: updated 1 chunks | queue: 108
-CHUNK (-2, 4) LOD0: total=6ms (verts=4ms, mesh=0ms, collision=2ms) FPS=51
+TREE (4, 9) #0: raycast_y=11.7892761230469 local_pos=(-9.672352, 8.792267, 4.159244) chunk.pos.y=0.0 expected=11.7740034420586 global=(90.32765, 8.792267, 229.1592)
+TREE (4, 9) #1: raycast_y=11.8377075195313 local_pos=(9.124374, 8.838183, -8.927811) chunk.pos.y=0.0 expected=11.7930587417444 global=(109.1244, 8.838183, 216.0722)
 LOD: updated 1 chunks | queue: 107
+TREE (4, 5) #0: raycast_y=12.0941772460938 local_pos=(2.193991, 9.097168, 1.36772) chunk.pos.y=0.0 expected=12.1210077133114 global=(102.194, 9.097168, 126.3677)
+TREE (4, 5) #1: raycast_y=12.2994079589844 local_pos=(-3.946092, 9.299884, 7.703533) chunk.pos.y=0.0 expected=12.2939147740303 global=(96.05391, 9.299884, 132.7035)
+TREE (4, 5) #2: raycast_y=12.0192260742188 local_pos=(-3.827417, 9.019977, -1.705756) chunk.pos.y=0.0 expected=11.9923578052201 global=(96.17258, 9.019977, 123.2942)
+PROPS (4, 5): 3ms FPS=45
 LOD: updated 1 chunks | queue: 106
 LOD: updated 1 chunks | queue: 105
 LOD: updated 1 chunks | queue: 104
@@ -3678,31 +1590,46 @@ LOD: updated 1 chunks | queue: 69
 LOD: updated 1 chunks | queue: 68
 LOD: updated 1 chunks | queue: 67
 LOD: updated 1 chunks | queue: 66
-CHUNK (1, 7) LOD0: total=6ms (verts=3ms, mesh=0ms, collision=3ms) FPS=53
 LOD: updated 1 chunks | queue: 65
 LOD: updated 1 chunks | queue: 64
+PROPS (10, 0): 3ms FPS=50
 LOD: updated 1 chunks | queue: 63
-CHUNK (0, 6) LOD0: total=6ms (verts=3ms, mesh=0ms, collision=3ms) FPS=53
+PROPS (10, -1): 3ms FPS=50
 LOD: updated 1 chunks | queue: 62
 LOD: updated 1 chunks | queue: 61
 LOD: updated 1 chunks | queue: 60
 LOD: updated 1 chunks | queue: 59
+PROPS (9, 6): 3ms FPS=50
 LOD: updated 1 chunks | queue: 58
+PROPS (9, 5): 3ms FPS=50
 LOD: updated 1 chunks | queue: 57
 LOD: updated 1 chunks | queue: 56
 LOD: updated 1 chunks | queue: 55
 LOD: updated 1 chunks | queue: 54
+TREE (8, 7) #1: raycast_y=11.1071472167969 local_pos=(-6.278641, 8.107898, -4.284442) chunk.pos.y=0.0 expected=11.1136277540167 global=(193.7214, 8.107898, 170.7156)
+TREE (8, 7) #2: raycast_y=11.1859436035156 local_pos=(-7.5899, 8.186419, -2.503922) chunk.pos.y=0.0 expected=11.1786720050447 global=(192.4101, 8.186419, 172.4961)
+PROPS (8, 7): 3ms FPS=50
 LOD: updated 1 chunks | queue: 53
+CHUNK (7, 1) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=53
 LOD: updated 1 chunks | queue: 52
 LOD: updated 1 chunks | queue: 51
+CHUNK (6, 3) LOD0: total=8ms (verts=5ms, mesh=0ms, collision=3ms) FPS=53
 LOD: updated 1 chunks | queue: 50
+TREE (6, 8) #1: raycast_y=11.9233703613281 local_pos=(-6.739422, 8.924121, 4.012529) chunk.pos.y=0.0 expected=11.9199882898551 global=(143.2606, 8.924121, 204.0125)
+TREE (6, 8) #2: raycast_y=11.7790222167969 local_pos=(-4.690557, 8.779498, -3.255495) chunk.pos.y=0.0 expected=11.6854030694833 global=(145.3094, 8.779498, 196.7445)
+CHUNK (6, 2) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=53
 LOD: updated 1 chunks | queue: 49
+CHUNK (6, 0) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=53
 LOD: updated 1 chunks | queue: 48
+CHUNK (6, -1) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=53
 LOD: updated 1 chunks | queue: 47
+CHUNK (5, 4) LOD0: total=8ms (verts=5ms, mesh=0ms, collision=3ms) FPS=53
 LOD: updated 1 chunks | queue: 46
+CHUNK (5, -2) LOD0: total=8ms (verts=5ms, mesh=0ms, collision=3ms) FPS=53
 LOD: updated 1 chunks | queue: 45
 LOD: updated 1 chunks | queue: 44
 LOD: updated 1 chunks | queue: 43
+CHUNK (3, 5) LOD0: total=8ms (verts=5ms, mesh=1ms, collision=2ms) FPS=53
 LOD: updated 1 chunks | queue: 42
 LOD: updated 1 chunks | queue: 41
 LOD: updated 1 chunks | queue: 40
@@ -3718,6 +1645,243 @@ LOD: updated 1 chunks | queue: 31
 LOD: updated 1 chunks | queue: 30
 LOD: updated 1 chunks | queue: 29
 LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
+LOD: updated 1 chunks | queue: 25
+LOD: updated 1 chunks | queue: 24
+LOD: updated 1 chunks | queue: 23
+LOD: updated 1 chunks | queue: 22
+LOD: updated 1 chunks | queue: 21
+LOD: updated 1 chunks | queue: 20
+LOD: updated 1 chunks | queue: 19
+LOD: updated 1 chunks | queue: 18
+LOD: updated 1 chunks | queue: 17
+LOD: updated 1 chunks | queue: 16
+LOD: updated 1 chunks | queue: 15
+LOD: updated 1 chunks | queue: 14
+LOD: updated 1 chunks | queue: 13
+LOD: updated 1 chunks | queue: 12
+LOD: updated 1 chunks | queue: 11
+LOD: updated 1 chunks | queue: 10
+LOD: updated 1 chunks | queue: 9
+LOD: updated 1 chunks | queue: 8
+LOD: updated 1 chunks | queue: 7
+LOD: updated 1 chunks | queue: 6
+LOD: updated 1 chunks | queue: 5
+LOD: updated 1 chunks | queue: 4
+LOD: updated 1 chunks | queue: 3
+LOD: updated 1 chunks | queue: 2
+LOD: updated 1 chunks | queue: 1
+LOD: updated 1 chunks | queue: 0
+Chunks: loaded 1 | queue: 17 | total: 1027 | FPS: 46 | Q:30%
+LOD: updated 1 chunks | queue: 84
+Chunks: loaded 1 | queue: 16 | total: 1028
+LOD: updated 1 chunks | queue: 83
+Chunks: loaded 1 | queue: 15 | total: 1029
+LOD: updated 1 chunks | queue: 82
+Chunks: loaded 1 | queue: 14 | total: 1030
+LOD: updated 1 chunks | queue: 81
+Chunks: loaded 1 | queue: 13 | total: 1031
+LOD: updated 1 chunks | queue: 80
+Chunks: loaded 1 | queue: 12 | total: 1032
+LOD: updated 1 chunks | queue: 79
+Chunks: loaded 1 | queue: 11 | total: 1033
+LOD: updated 1 chunks | queue: 78
+Chunks: loaded 1 | queue: 10 | total: 1034
+LOD: updated 1 chunks | queue: 77
+Chunks: loaded 1 | queue: 9 | total: 1035
+LOD: updated 1 chunks | queue: 76
+Chunks: loaded 1 | queue: 8 | total: 1036
+LOD: updated 1 chunks | queue: 75
+Chunks: loaded 1 | queue: 7 | total: 1037 | FPS: 46 | Q:30%
+LOD: updated 1 chunks | queue: 74
+Chunks: loaded 1 | queue: 6 | total: 1038
+LOD: updated 1 chunks | queue: 73
+Chunks: loaded 1 | queue: 5 | total: 1039
+LOD: updated 1 chunks | queue: 72
+TREE (13, 8) #0: raycast_y=11.6542358398438 local_pos=(-7.747393, 8.657227, 1.660841) chunk.pos.y=0.0 expected=11.6548561497909 global=(317.2526, 8.657227, 201.6608)
+Chunks: loaded 1 | queue: 4 | total: 1040
+LOD: updated 1 chunks | queue: 71
+Chunks: loaded 1 | queue: 3 | total: 1041
+LOD: updated 1 chunks | queue: 70
+PROPS (13, 6): 3ms FPS=46
+Chunks: loaded 1 | queue: 2 | total: 1042
+LOD: updated 1 chunks | queue: 69
+Chunks: loaded 1 | queue: 1 | total: 1043
+LOD: updated 1 chunks | queue: 68
+PROPS (12, 10): 3ms FPS=46
+Chunks: loaded 1 | queue: 0 | total: 1044
+LOD: updated 1 chunks | queue: 67
+TREE (12, 9) #0: raycast_y=11.3080749511719 local_pos=(8.794594, 8.308825, 8.337044) chunk.pos.y=0.0 expected=11.2596623109901 global=(308.7946, 8.308825, 233.337)
+TREE (12, 9) #1: raycast_y=11.3585510253906 local_pos=(8.431892, 8.359302, -10.32544) chunk.pos.y=0.0 expected=11.3442512443525 global=(308.4319, 8.359302, 214.6746)
+LOD: updated 1 chunks | queue: 66
+TREE (11, 11) #1: raycast_y=11.214111328125 local_pos=(-9.420372, 8.214862, 9.621805) chunk.pos.y=0.0 expected=11.2118598107311 global=(265.5796, 8.214862, 284.6218)
+TREE (11, 11) #2: raycast_y=11.348876953125 local_pos=(-3.805206, 8.349353, 7.720337) chunk.pos.y=0.0 expected=11.3754653224807 global=(271.1948, 8.349353, 282.7203)
+PROPS (11, 11): 4ms FPS=46
+LOD: updated 1 chunks | queue: 65
+PROPS (11, 10): 3ms FPS=46
+LOD: updated 1 chunks | queue: 64
+CHUNK (10, 5) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=46
+LOD: updated 1 chunks | queue: 63
+TREE (10, 11) #1: raycast_y=11.3560180664063 local_pos=(7.887939, 8.356769, 4.300512) chunk.pos.y=0.0 expected=11.2841153216555 global=(257.8879, 8.356769, 279.3005)
+LOD: updated 1 chunks | queue: 62
+LOD: updated 1 chunks | queue: 61
+LOD: updated 1 chunks | queue: 60
+CHUNK (9, 7) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=46
+LOD: updated 1 chunks | queue: 59
+CHUNK (9, 6) LOD0: total=9ms (verts=6ms, mesh=1ms, collision=2ms) FPS=46
+LOD: updated 1 chunks | queue: 58
+CHUNK (9, 5) LOD0: total=10ms (verts=7ms, mesh=1ms, collision=2ms) FPS=46
+LOD: updated 1 chunks | queue: 57
+LOD: updated 1 chunks | queue: 56
+LOD: updated 1 chunks | queue: 55
+LOD: updated 1 chunks | queue: 54
+CHUNK (8, 8) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=46
+LOD: updated 1 chunks | queue: 53
+TREE (8, 12) #1: raycast_y=11.81982421875 local_pos=(-5.9797, 8.8203, -9.046286) chunk.pos.y=0.0 expected=11.8318215720255 global=(194.0203, 8.8203, 290.9537)
+CHUNK (8, 7) LOD0: total=12ms (verts=10ms, mesh=0ms, collision=2ms) FPS=39
+LOD: updated 1 chunks | queue: 52
+LOD: updated 1 chunks | queue: 51
+TREE (8, 7) #1: raycast_y=11.1122131347656 local_pos=(-6.278641, 8.112689, -4.284442) chunk.pos.y=0.0 expected=11.1136277540167 global=(193.7214, 8.112689, 170.7156)
+TREE (8, 7) #2: raycast_y=11.1757507324219 local_pos=(-7.5899, 8.178741, -2.503922) chunk.pos.y=0.0 expected=11.1786720050447 global=(192.4101, 8.178741, 172.4961)
+PROPS (8, 7): 5ms FPS=39
+LOD: updated 1 chunks | queue: 50
+CHUNK (7, 8) LOD0: total=11ms (verts=8ms, mesh=1ms, collision=2ms) FPS=39
+LOD: updated 1 chunks | queue: 49
+LOD: updated 1 chunks | queue: 48
+LOD: updated 1 chunks | queue: 47
+CHUNK (6, 9) LOD0: total=11ms (verts=7ms, mesh=1ms, collision=3ms) FPS=39
+LOD: updated 1 chunks | queue: 46
+CHUNK (6, 8) LOD0: total=11ms (verts=9ms, mesh=0ms, collision=2ms) FPS=39
+LOD: updated 1 chunks | queue: 45
+TREE (6, 9) #0: raycast_y=12.3801879882813 local_pos=(-7.218734, 9.380664, -0.797266) chunk.pos.y=0.0 expected=12.3402016401595 global=(142.7813, 9.380664, 224.2027)
+LOD: updated 1 chunks | queue: 44
+LOD: updated 1 chunks | queue: 43
+PROPS (6, -1): 3ms FPS=39
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+LOD: updated 1 chunks | queue: 37
+LOD: updated 1 chunks | queue: 36
+LOD: updated 1 chunks | queue: 35
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+LOD: updated 1 chunks | queue: 31
+LOD: updated 1 chunks | queue: 30
+LOD: updated 1 chunks | queue: 29
+LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
+LOD: updated 1 chunks | queue: 25
+LOD: updated 1 chunks | queue: 24
+LOD: updated 1 chunks | queue: 23
+LOD: updated 1 chunks | queue: 22
+LOD: updated 1 chunks | queue: 21
+LOD: updated 1 chunks | queue: 20
+LOD: updated 1 chunks | queue: 19
+LOD: updated 1 chunks | queue: 18
+LOD: updated 1 chunks | queue: 17
+LOD: updated 1 chunks | queue: 16
+LOD: updated 1 chunks | queue: 15
+LOD: updated 1 chunks | queue: 14
+LOD: updated 1 chunks | queue: 13
+LOD: updated 1 chunks | queue: 12
+LOD: updated 1 chunks | queue: 11
+LOD: updated 1 chunks | queue: 10
+LOD: updated 1 chunks | queue: 9
+LOD: updated 1 chunks | queue: 8
+LOD: updated 1 chunks | queue: 7
+LOD: updated 1 chunks | queue: 6
+LOD: updated 1 chunks | queue: 5
+LOD: updated 1 chunks | queue: 4
+LOD: updated 1 chunks | queue: 3
+LOD: updated 1 chunks | queue: 2
+LOD: updated 1 chunks | queue: 1
+LOD: updated 1 chunks | queue: 0
+Chunks: loaded 1 | queue: 22 | total: 1045
+LOD: updated 1 chunks | queue: 72
+Chunks: loaded 1 | queue: 21 | total: 1046
+LOD: updated 1 chunks | queue: 71
+Chunks: loaded 1 | queue: 20 | total: 1047 | FPS: 61 | Q:30%
+LOD: updated 1 chunks | queue: 70
+Chunks: loaded 1 | queue: 19 | total: 1048
+LOD: updated 1 chunks | queue: 69
+Chunks: loaded 1 | queue: 18 | total: 1049
+LOD: updated 1 chunks | queue: 68
+Chunks: loaded 1 | queue: 17 | total: 1050
+LOD: updated 1 chunks | queue: 67
+Chunks: loaded 1 | queue: 16 | total: 1051
+LOD: updated 1 chunks | queue: 66
+Chunks: loaded 1 | queue: 15 | total: 1052
+LOD: updated 1 chunks | queue: 65
+Chunks: loaded 1 | queue: 14 | total: 1053
+LOD: updated 1 chunks | queue: 64
+TREE (13, 9) #0: raycast_y=11.4187927246094 local_pos=(-6.425999, 8.419543, -5.242928) chunk.pos.y=0.0 expected=11.4054301166141 global=(318.574, 8.419543, 219.7571)
+TREE (13, 9) #1: raycast_y=11.4037170410156 local_pos=(-8.889091, 8.406708, -9.055517) chunk.pos.y=0.0 expected=11.3971187289732 global=(316.1109, 8.406708, 215.9445)
+Chunks: loaded 1 | queue: 13 | total: 1054
+LOD: updated 1 chunks | queue: 63
+Chunks: loaded 1 | queue: 12 | total: 1055
+LOD: updated 1 chunks | queue: 62
+Chunks: loaded 1 | queue: 11 | total: 1056
+LOD: updated 1 chunks | queue: 61
+Chunks: loaded 1 | queue: 10 | total: 1057 | FPS: 61 | Q:30%
+LOD: updated 1 chunks | queue: 60
+Chunks: loaded 1 | queue: 9 | total: 1058
+LOD: updated 1 chunks | queue: 59
+Chunks: loaded 1 | queue: 8 | total: 1059
+LOD: updated 1 chunks | queue: 58
+Chunks: loaded 1 | queue: 7 | total: 1060
+CHUNK (10, 6) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=61
+LOD: updated 1 chunks | queue: 57
+Chunks: loaded 1 | queue: 6 | total: 1061
+LOD: updated 1 chunks | queue: 56
+Chunks: loaded 1 | queue: 5 | total: 1062
+LOD: updated 1 chunks | queue: 55
+Chunks: loaded 1 | queue: 4 | total: 1063
+LOD: updated 1 chunks | queue: 54
+Chunks: loaded 1 | queue: 3 | total: 1064
+CHUNK (9, 8) LOD0: total=8ms (verts=6ms, mesh=0ms, collision=2ms) FPS=61
+LOD: updated 1 chunks | queue: 53
+Chunks: loaded 1 | queue: 2 | total: 1065
+LOD: updated 1 chunks | queue: 52
+Chunks: loaded 1 | queue: 1 | total: 1066
+LOD: updated 1 chunks | queue: 51
+Chunks: loaded 1 | queue: 0 | total: 1067 | FPS: 61 | Q:30%
+LOD: updated 1 chunks | queue: 50
+LOD: updated 1 chunks | queue: 49
+CHUNK (8, 9) LOD0: total=9ms (verts=6ms, mesh=0ms, collision=3ms) FPS=61
+LOD: updated 1 chunks | queue: 48
+LOD: updated 1 chunks | queue: 47
+LOD: updated 1 chunks | queue: 46
+LOD: updated 1 chunks | queue: 45
+LOD: updated 1 chunks | queue: 44
+LOD: updated 1 chunks | queue: 43
+CHUNK (7, 9) LOD0: total=7ms (verts=5ms, mesh=0ms, collision=2ms) FPS=61
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+PROPS (7, 9): 3ms FPS=61
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+LOD: updated 1 chunks | queue: 37
+CHUNK (6, 10) LOD0: total=10ms (verts=7ms, mesh=0ms, collision=3ms) FPS=61
+LOD: updated 1 chunks | queue: 36
+LOD: updated 1 chunks | queue: 35
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+LOD: updated 1 chunks | queue: 31
+LOD: updated 1 chunks | queue: 30
+CHUNK (4, 9) LOD0: total=8ms (verts=4ms, mesh=1ms, collision=3ms) FPS=61
+LOD: updated 1 chunks | queue: 29
+LOD: updated 1 chunks | queue: 28
+TREE (4, 9) #0: raycast_y=11.7677612304688 local_pos=(-9.672352, 8.770752, 4.159244) chunk.pos.y=0.0 expected=11.7740034420586 global=(90.32765, 8.770752, 229.1592)
+TREE (4, 9) #1: raycast_y=11.8181762695313 local_pos=(9.124374, 8.818652, -8.927811) chunk.pos.y=0.0 expected=11.7930587417444 global=(109.1244, 8.818652, 216.0722)
+TREE (4, 9) #2: raycast_y=11.6923828125 local_pos=(2.506498, 8.693133, -6.099978) chunk.pos.y=0.0 expected=11.681959925055 global=(102.5065, 8.693133, 218.9)
+PROPS (4, 9): 3ms FPS=61
 LOD: updated 1 chunks | queue: 27
 LOD: updated 1 chunks | queue: 26
 LOD: updated 1 chunks | queue: 25
