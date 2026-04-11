@@ -63,6 +63,14 @@ func _ready():
 	# Set up wheel references if not assigned
 	setup_wheels()
 
+	# If no wheels found the asset pack is missing - freeze physics to prevent engine crash
+	var has_wheels = (front_left_wheel != null or front_right_wheel != null
+					or rear_left_wheel != null or rear_right_wheel != null)
+	if not has_wheels:
+		freeze = true
+		print("Warthog: No wheels found (halo_warthog asset pack missing) - physics frozen")
+		return
+
 	# Create interaction area for entering vehicle
 	setup_interaction_area()
 
