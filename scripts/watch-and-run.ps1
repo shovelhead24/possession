@@ -142,13 +142,46 @@ if (-not $diagOk) {
 }
 
 Write-Host "Watching for new commits every $pollSeconds seconds. Close this window to stop."
+Write-Host "Press L to push the current log so Claude can read it."
 Write-Host ""
 
+# ------------------------------------------------------------------ #
+#  PUSH LOG TO REPO                                                   #
+# ------------------------------------------------------------------ #
+function Push-Log {
+    $godotLog = "$env:APPDATA\Godot\app_userdata\HaloTest\logs\godot.log"
+    if (-not (Test-Path $godotLog)) {
+        Write-Host "$(Get-Date -Format HH:mm:ss) No Godot log found yet." -ForegroundColor Yellow
+        return
+    }
+    Write-Host "$(Get-Date -Format HH:mm:ss) Pushing log to repo..." -ForegroundColor Cyan
+    Copy-Item -Path $godotLog -Destination $logFile -Force
+    git -C $projectPath add "logs/godot_latest.log" 2>$null
+    $msg = "log: laptop push $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    git -C $projectPath commit -m $msg 2>$null
+    git -C $projectPath push --quiet origin main 2>$null
+    Write-Host "$(Get-Date -Format HH:mm:ss) Log pushed - Claude can now read logs/godot_latest.log" -ForegroundColor Green
+}
+
+# ------------------------------------------------------------------ #
+#  POLL LOOP - checks for keypresses every 0.5s between git polls    #
+# ------------------------------------------------------------------ #
 $godotProcess = Start-Godot $null
 $lastHash = git -C $projectPath rev-parse HEAD 2>$null
 
 while ($true) {
-    Start-Sleep -Seconds $pollSeconds
+    # Wait $pollSeconds but stay responsive to keypresses
+    $waited = 0
+    while ($waited -lt $pollSeconds) {
+        Start-Sleep -Milliseconds 500
+        $waited += 0.5
+        if ($host.UI.RawUI.KeyAvailable) {
+            $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+            if ($key.Character -eq 'l' -or $key.Character -eq 'L') {
+                Push-Log
+            }
+        }
+    }
 
     git -C $projectPath fetch --quiet origin main 2>$null
     $remoteHash = git -C $projectPath rev-parse origin/main 2>$null
