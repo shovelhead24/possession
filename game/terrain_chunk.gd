@@ -876,18 +876,13 @@ func create_terrain_material() -> Material:
 	var snow_tex  = _tex_snow
 	var stone_tex = _tex_stone
 	var sand_tex  = _tex_sand
-	var chalk_tex: ImageTexture = null  # chalk texture not present
-
 	if shader and grass_tex and snow_tex:
 		# Use shader material with textures
 		var mat = ShaderMaterial.new()
 		mat.shader = shader
 		mat.set_shader_parameter("grass_texture", grass_tex)
 		mat.set_shader_parameter("snow_texture", snow_tex)
-		if grass_tex:
-			mat.set_shader_parameter("stone_texture", grass_tex)  # Use grass texture instead of stone
-		if chalk_tex:
-			mat.set_shader_parameter("chalk_texture", chalk_tex)
+		mat.set_shader_parameter("stone_texture", stone_tex if stone_tex else grass_tex)
 		if sand_tex:
 			mat.set_shader_parameter("sand_texture", sand_tex)
 
