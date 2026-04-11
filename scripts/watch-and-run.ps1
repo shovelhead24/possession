@@ -197,11 +197,12 @@ git -C $projectPath fetch origin main 2>$null
 $startRemote = git -C $projectPath rev-parse origin/main 2>$null
 $startLocal  = git -C $projectPath rev-parse HEAD 2>$null
 if ($startRemote -and $startRemote -ne $startLocal) {
-    Write-Host "$(Get-Date -Format HH:mm:ss) Behind origin — pulling now..." -ForegroundColor Cyan
+    Write-Host "$(Get-Date -Format HH:mm:ss) Behind origin - pulling now..." -ForegroundColor Cyan
     git -C $projectPath pull origin main 2>$null
     Write-Host "$(Get-Date -Format HH:mm:ss) Pulled." -ForegroundColor Green
 } else {
-    Write-Host "$(Get-Date -Format HH:mm:ss) Already up to date ($(($startLocal).Substring(0,8)))." -ForegroundColor Green
+    $localShort = $startLocal.Substring(0,8)
+    Write-Host "$(Get-Date -Format HH:mm:ss) Already up to date ($localShort)." -ForegroundColor Green
 }
 
 $godotProcess = Start-Godot $null
