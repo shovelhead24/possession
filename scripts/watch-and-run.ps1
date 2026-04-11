@@ -121,10 +121,9 @@ function Start-Godot {
     Write-Host "$(Get-Date -Format HH:mm:ss) Launching Godot..."
     Write-Host "  Path: $gamePath"
 
-    # ArgumentList as array handles spaces in path correctly
-    return Start-Process -FilePath $godotExe `
-        -ArgumentList @("--path", $gamePath, "--verbose") `
-        -PassThru
+    # Quotes must be embedded in the string so Windows passes the path as one token
+    $args = '--path "' + $gamePath + '" --verbose'
+    return Start-Process -FilePath $godotExe -ArgumentList $args -PassThru
 }
 
 # ------------------------------------------------------------------ #
