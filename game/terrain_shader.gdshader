@@ -6,9 +6,6 @@ uniform sampler2D snow_texture : source_color, filter_linear_mipmap, repeat_enab
 uniform sampler2D stone_texture : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D sand_texture : source_color, filter_linear_mipmap, repeat_enable;
 
-// Macro scale — how large each "region variation" patch is in world units.
-// Smaller = more variation, larger = broader swaths of colour.
-uniform float macro_scale : hint_range(0.001, 0.02) = 0.006;
 
 // Texture tiling
 uniform float texture_scale : hint_range(0.01, 1.0) = 0.05;
@@ -139,35 +136,28 @@ void fragment() {
 	blend_weights = pow(blend_weights, vec3(4.0));
 	blend_weights /= (blend_weights.x + blend_weights.y + blend_weights.z);
 
-	// Macro UV — same texture sampled at a much larger scale.
-	// Multiplying detail × macro breaks regular tiling perception almost for free.
-	vec2 macro_uv = world_position.xz * macro_scale;
+	// Hash-based regional brightness variation — breaks tiling perception with
+	// zero extra texture fetches. Each cell is ~80 world units wide.
+	vec2 region_cell = floor(world_position.xz * 0.012);
+	float rv = hash(region_cell) * 0.28 + 0.86;  // 0.86–1.14 range
 
-	// Hash-based region brightness variation so adjacent macro patches aren't
-	// perfectly uniform — gives the organic "Halo CE ground" feel.
-	// Each cell is ~1/macro_scale world units wide.
-	vec2 region_cell = floor(world_position.xz * macro_scale * 4.0);
-	float region_var = hash(region_cell) * 0.25 + 0.88;  // 0.88–1.13 range
+	// Sub-region hash at a different frequency adds a second layer of variation
+	vec2 sub_cell = floor(world_position.xz * 0.035);
+	float sv2 = hash(sub_cell + vec2(7.3, 2.9)) * 0.12 + 0.94;  // 0.94–1.06 range
 
-	// Detail × macro multiply — compensate darkening with *2 then clamp
-	vec3 grass_macro = texture(grass_texture, macro_uv).rgb;
-	vec3 grass = clamp(texture(grass_texture, tex_uv).rgb * grass_macro * 2.0 * region_var, 0.0, 1.0);
+	float var = rv * sv2;  // Combined variation multiplier
 
-	vec3 snow_macro = texture(snow_texture, macro_uv * 0.7).rgb;
-	vec3 snow = clamp(texture(snow_texture, tex_uv).rgb * snow_macro * 2.0, 0.0, 1.0);
+	// Sample base textures (single fetch each — no extra samples)
+	vec3 grass = clamp(texture(grass_texture, tex_uv).rgb * var, 0.0, 1.0);
+	vec3 snow  = texture(snow_texture, tex_uv).rgb;
+	vec3 sand  = clamp(texture(sand_texture, tex_uv).rgb * var, 0.0, 1.0);
 
-	vec3 sand_macro = texture(sand_texture, macro_uv * 1.3).rgb;
-	vec3 sand = clamp(texture(sand_texture, tex_uv).rgb * sand_macro * 2.0, 0.0, 1.0);
-
-	// Triplanar stone sampling for cliffs (stone used for all cliff heights)
+	// Triplanar stone sampling for cliffs
 	vec3 stone_x = texture(stone_texture, world_position.zy * cliff_texture_scale).rgb;
 	vec3 stone_y = texture(stone_texture, cliff_uv).rgb;
 	vec3 stone_z = texture(stone_texture, world_position.xy * cliff_texture_scale).rgb;
-	vec3 stone = stone_x * blend_weights.x + stone_y * blend_weights.y + stone_z * blend_weights.z;
-	// Macro variation on stone too
-	vec3 stone_macro = texture(stone_texture, macro_uv * 0.5).rgb;
-	stone = clamp(stone * stone_macro * 2.0 * region_var, 0.0, 1.0);
-	vec3 chalk = stone * vec3(1.1, 1.08, 1.0);  // Slightly warmer tint for high-altitude rock
+	vec3 stone = clamp((stone_x * blend_weights.x + stone_y * blend_weights.y + stone_z * blend_weights.z) * var, 0.0, 1.0);
+	vec3 chalk = stone * vec3(1.1, 1.08, 1.0);  // Warmer tint for high-altitude rock
 
 	// Calculate slope (1.0 = flat, 0.0 = vertical)
 	float slope = dot(normalize(world_normal), vec3(0.0, 1.0, 0.0));
