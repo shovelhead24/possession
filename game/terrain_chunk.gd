@@ -16,7 +16,7 @@ var terrain_manager: Node  # Reference to TerrainManager
 var current_lod: int = 0  # 0 = highest detail, higher = lower detail
 var lod_resolutions: Array = [16, 8, 4, 2]  # Resolution at each LOD level
 var has_collision: bool = true  # Only LOD 0-1 have collision
-var skirt_depth: float = 20.0  # How far skirts drop below terrain to hide seams
+var skirt_depth: float = 20.0  # Overridden per-LOD in generate_terrain()
 
 # Track if we have borrowed trees/grass from the pool
 var has_borrowed_trees: bool = false
@@ -151,6 +151,10 @@ func get_height_at_world_pos(world_x: float, world_z: float) -> float:
 
 func generate_terrain():
 	var start_time = Time.get_ticks_msec()
+
+	# Skirt must be deep enough to cover height mismatches between adjacent chunks.
+	# Coarser LODs have larger height steps between chunks, so scale accordingly.
+	skirt_depth = 30.0 + current_lod * 40.0  # LOD0=30 LOD1=70 LOD2=110 LOD3=150
 
 	# Create mesh instance
 	mesh_instance = MeshInstance3D.new()

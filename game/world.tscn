@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://baveer3oax27d"]
+[gd_scene load_steps=18 format=3 uid="uid://baveer3oax27d"]
 
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_f3sb7"]
 [ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_fj7yv"]
@@ -23,6 +23,13 @@ albedo_color = Color(0.38014632, 0.6847695, 0.3898171, 1)
 [sub_resource type="Environment" id="Environment_tlwt5"]
 background_mode = 1
 background_color = Color(0.02, 0.04, 0.10, 1)
+
+[sub_resource type="Environment" id="Environment_weapon"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
+ambient_light_source = 2
+ambient_light_color = Color(0.6, 0.6, 0.65, 1)
+ambient_light_energy = 1.0
 
 [node name="World" type="Node3D"]
 
@@ -68,10 +75,14 @@ mouse_filter = 2
 stretch = true
 
 [node name="SubViewport" type="SubViewport" parent="Player/WeaponViewport/SubViewportContainer"]
+own_world_3d = true
 transparent_bg = true
 handle_input_locally = false
 size = Vector2i(1366, 768)
 render_target_update_mode = 4
+
+[node name="WeaponWorldEnvironment" type="WorldEnvironment" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
+environment = SubResource("Environment_weapon")
 
 [node name="WeaponCamera" type="Camera3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
 cull_mask = 2
