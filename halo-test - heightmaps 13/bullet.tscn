@@ -1,0 +1,20 @@
+[gd_scene load_steps=5 format=3 uid="uid://dxwy2ko15us40"]
+
+[ext_resource type="Script" uid="uid://dr3pj4ow0h5lp" path="res://bullet.gd" id="1_v7oki"]
+[ext_resource type="AudioStream" uid="uid://dcwd7r1yeos5c" path="res://bullet-gunshot-impact-390253.mp3" id="2_v8qja"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_v7oki"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_v8qja"]
+
+[node name="Bullet" type="Area3D"]
+script = ExtResource("1_v7oki")
+impact_sound = ExtResource("2_v8qja")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
+shape = SubResource("SphereShape3D_v7oki")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0)
+mesh = SubResource("SphereMesh_v8qja")

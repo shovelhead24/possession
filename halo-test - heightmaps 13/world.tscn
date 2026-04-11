@@ -1,0 +1,134 @@
+[gd_scene load_steps=19 format=3 uid="uid://baveer3oax27d"]
+
+[ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_f3sb7"]
+[ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_fj7yv"]
+[ext_resource type="Script" uid="uid://dlvw61juy2b56" path="res://terrain_manager.gd" id="3_tlwt5"]
+[ext_resource type="Script" uid="uid://cn551j47wpnnm" path="res://day_night_cycle.gd" id="4_aqk2v"]
+[ext_resource type="PackedScene" uid="uid://c11xpbdax3vl4" path="res://halo_-_carbine/scene.gltf" id="5_carbine"]
+[ext_resource type="PackedScene" uid="uid://bxpvnpcqydlw6" path="res://halo_railgun_redesigned/scene.gltf" id="6_railgun"]
+[ext_resource type="AudioStream" uid="uid://du8skrifkyur" path="res://quake railgun sound effect.mp3" id="7_railgun_sound"]
+[ext_resource type="PackedScene" path="res://fp_arms/scene.gltf" id="8_fp_arms"]
+[ext_resource type="Script" path="res://fp_arms_controller.gd" id="9_fp_arms_ctrl"]
+[ext_resource type="PackedScene" uid="uid://b6djpqa2ixj86" path="res://enemy/scene.gltf" id="10_enemy"]
+[ext_resource type="Script" path="res://enemy_controller.gd" id="11_enemy_ctrl"]
+[ext_resource type="PackedScene" uid="uid://cwarthog123" path="res://warthog.tscn" id="12_warthog"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gv5m4"]
+albedo_color = Color(0.38014632, 0.6847695, 0.3898171, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_f3sb7"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fj7yv"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_f3sb7"]
+
+[sub_resource type="Sky" id="Sky_fj7yv"]
+sky_material = SubResource("ProceduralSkyMaterial_f3sb7")
+
+[sub_resource type="Environment" id="Environment_tlwt5"]
+background_mode = 2
+sky = SubResource("Sky_fj7yv")
+
+[node name="World" type="Node3D"]
+
+[node name="CSGBox3D" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
+use_collision = true
+size = Vector3(50, 1, 50)
+material = SubResource("StandardMaterial3D_gv5m4")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 47, 0)
+script = ExtResource("1_f3sb7")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
+mesh = SubResource("CapsuleMesh_f3sb7")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("CapsuleShape3D_fj7yv")
+
+[node name="Head" type="Node3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="Camera3D" type="Camera3D" parent="Player/Head"]
+
+[node name="Plasma_rifle_sound" type="AudioStreamPlayer3D" parent="Player"]
+stream = ExtResource("2_fj7yv")
+max_distance = 20.0
+
+[node name="Railgun_sound" type="AudioStreamPlayer3D" parent="Player"]
+stream = ExtResource("7_railgun_sound")
+max_distance = 50.0
+
+[node name="WeaponViewport" type="CanvasLayer" parent="Player"]
+layer = 10
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="Player/WeaponViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="Player/WeaponViewport/SubViewportContainer"]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(3840, 2160)
+render_target_update_mode = 4
+
+[node name="WeaponCamera" type="Camera3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
+cull_mask = 2
+current = true
+near = 0.01
+
+[node name="WeaponHolder" type="Node3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.25, -0.5)
+
+[node name="FPArms" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("8_fp_arms")]
+transform = Transform3D(-0.18099334836006, 0.0, 0.0105832144618, 0.0, 0.18130250275135, 0.0, -0.0105832144618, 0.0, -0.18099334836006, -0.29000002145767, 0.19000002741814, 0.44999980926514)
+script = ExtResource("9_fp_arms_ctrl")
+
+[node name="Carbine" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("5_carbine")]
+transform = Transform3D(0.03492816910148, -0.00105113256723, -0.00197918131016, 0.00105652993079, 0.03498397767544, 0.00006561513146, -0.00197630538605, 0.00012522521138, -0.03494392335415, -0.25700005888939, 0.18000002205372, 0.31000000238419)
+
+[node name="Railgun" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("6_railgun")]
+transform = Transform3D(0.00000000037749, 0.00000000075498, 0.00500000733882, 0.00000000043711, 0.00500000733882, -0.00000000075498, 0.00500000733882, -0.00000000043711, -0.00000000037749, -0.24999988079071, 0.22999995946884, 0.28999817371368)
+visible = false
+
+[node name="WeaponLight" type="DirectionalLight3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
+transform = Transform3D(0.8, 0.2, 0.4, 0, 0.9, -0.3, -0.4, 0.2, 0.8, 0, 2, 1)
+light_energy = 0.8
+light_cull_mask = 2
+
+[node name="CSGBox3D2" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.784, 20, 2.134)
+use_collision = true
+
+[node name="CSGBox3D3" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.784, 20, -1.068)
+use_collision = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.8980276, 0.14540626, 0.415215, 0, -0.943801, 0.33051446, 0.43993917, -0.2968111, -0.8475593, -3.011, 30, -0.39)
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_tlwt5")
+
+[node name="TerrainManager" type="Node3D" parent="."]
+script = ExtResource("3_tlwt5")
+use_heightmap = false
+use_custom_terrain = false
+terrain_width = 500.0
+terrain_depth = 500.0
+terrain_height = 45.0
+water_level = 40.0
+biome_type = 4
+
+[node name="DayNightCycle" type="Node3D" parent="."]
+script = ExtResource("4_aqk2v")
+
+[node name="Warthog" parent="." instance=ExtResource("12_warthog")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 47, 0)

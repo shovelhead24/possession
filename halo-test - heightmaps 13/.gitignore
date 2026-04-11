@@ -1,0 +1,32 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Large 3D asset packs — stored locally only, not tracked in git
+# Copy these manually after cloning (one-time setup on each machine)
+custom_halo_classic_ring/
+enemy/
+fp_arms/
+fps_arms/
+grass_pack_of_9_vars_lowpoly_game_ready/
+halo_-_carbine/
+halo_railgun_redesigned/
+halo_warthog/
+low_poly_red_spruce_tree_custom_textures/
+realistic_fir_trees_pack_lods_gameready/
+realistic_trees_collection/
+skybox/
+tall_coniferous_fir_variant_low_poly/
+
+# Large binary terrain assets
+*.exr
+*.avif
+
+# Editor temp files
+*.tmp
+
+# macOS artifacts
+.DS_Store
+
+# Personal/local notes (not for repo)
+Chatgpt conversation original history.md

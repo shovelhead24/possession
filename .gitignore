@@ -1,0 +1,11 @@
+# macOS artifacts
+.DS_Store
+
+# Godot exports / binaries
+*.exe
+*.x86_64
+*.pck
+*.apk
+
+# Old prototype folder - too large and superseded by game/
+# Uncomment to exclude: halo-test - trees 7/
