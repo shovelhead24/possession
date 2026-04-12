@@ -211,7 +211,7 @@ static func get_biome_traits(biome: BiomeType) -> NoiseTraits:
 			traits.detail_freq = 0.010          # Surface detail
 
 			traits.continental_weight = 0.30
-			traits.mountain_weight = 0.40       # Mountains dominate shape
+			traits.mountain_weight = 0.50       # Mountains dominate shape
 			traits.hill_weight = 0.22           # Clear foothills between valleys and peaks
 			traits.detail_weight = 0.08
 

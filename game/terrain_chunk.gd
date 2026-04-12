@@ -505,7 +505,7 @@ func generate_terrain():
 		terrain_manager.add_chunk_time(total_time)
 
 	var fps = Performance.get_monitor(Performance.TIME_FPS)
-	if total_time > 5:  # Only log if took more than 5ms
+	if false:  # Debug logging disabled
 		print("CHUNK ", chunk_coords, " LOD", current_lod, ": total=", total_time, "ms (verts=", vertex_time, "ms, mesh=", mesh_time, "ms, collision=", collision_time, "ms) FPS=", int(fps))
 
 	# Water is now handled by TerrainManager as a single global plane
@@ -539,7 +539,7 @@ static func _ensure_structure_mats() -> void:
 
 func maybe_spawn_structure() -> void:
 	# Only LOD0-2 — LOD3 chunks are tiny silhouettes at 1400m+, not worth nodes
-	if current_lod >= 3:
+	if current_lod >= 2:
 		return
 
 	# ~2% of chunks get a structure — deterministic, no StaticBody3D (pure visual)
@@ -735,7 +735,7 @@ func generate_props():
 					var expected_terrain = get_height_at_world_pos(world_x, world_z)
 					# Also check global position after placement
 					var global_pos = tree.global_position if tree.is_inside_tree() else Vector3.ZERO
-					print("TREE ", chunk_coords, " #", tree_index, ": raycast_y=", y, " local_pos=", tree.position, " chunk.pos.y=", position.y, " expected=", expected_terrain, " global=", global_pos)
+					pass  # Debug logging disabled
 			else:
 				tree.visible = false
 
@@ -766,7 +766,7 @@ func generate_props():
 
 				# More grass in grassy areas (lower density threshold)
 				var grass_density = (forest_noise.get_noise_2d(world_x * 0.5, world_z * 0.5) + 1.0) * 0.5
-				var should_place_grass = grass_density > 0.3  # More liberal placement
+				var should_place_grass = grass_density > 0.15  # More liberal placement
 
 				var min_height_above_water = absolute_water_height + 1.0
 				var max_grass_height = height_scale * biome_height_mult * 0.6
@@ -818,7 +818,7 @@ func generate_props():
 
 	var props_time = Time.get_ticks_msec() - props_start
 	var fps = Performance.get_monitor(Performance.TIME_FPS)
-	if props_time > 2:  # Only log if took more than 2ms
+	if false:  # Debug logging disabled
 		print("PROPS ", chunk_coords, ": ", props_time, "ms FPS=", int(fps))
 
 func return_trees_to_pool():
@@ -1056,8 +1056,7 @@ func get_mesh_surface_height(world_x: float, world_z: float) -> float:
 				var now = Time.get_ticks_msec()
 				if now - _last_raycast_log_time > 1000:  # Log at most once per second
 					_last_raycast_log_time = now
-					var fallback_height = get_height_at_world_pos(world_x, world_z)
-					print("RAYCAST MISS chunk ", chunk_coords, " at (", world_x, ", ", world_z, ") ray_start.y=", ray_start.y, " fallback_height=", fallback_height, " hits=", _raycast_hits, " misses=", _raycast_misses)
+					pass  # Debug logging disabled
 
 	# Fallback: manually interpolate from mesh vertices
 	# Find which grid cell we're in

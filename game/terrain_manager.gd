@@ -5,8 +5,8 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 
 @export_group("Chunk Settings")
 @export var chunk_size: float = 100.0  # 4x larger — same polygon count, 4x render distance per chunk
-@export var view_distance: int = 20   # 20 * 100m = 2000m render distance
-@export var unload_distance: int = 24  # Must be > view_distance
+@export var view_distance: int = 16   # 16 * 100m = 1600m render distance
+@export var unload_distance: int = 20  # Must be > view_distance
 
 @export_group("LOD Settings")
 @export var lod_distances: Array[float] = [3.0, 7.0, 13.0, 20.0]  # LOD0=300m LOD1=700m LOD2=1300m LOD3=2000m
@@ -1132,7 +1132,17 @@ func get_noise_height_at_position(world_pos: Vector3) -> float:
 		height = lerp(height, target_height, erosion_factor * 0.7)  # 70% max erosion
 
 	# Scale to world height with biome height multiplier
-	return height * terrain_height * traits.height_multiplier
+	var final_height = height * terrain_height * traits.height_multiplier
+
+	# Localized mountain amplifier: boost the prominent peak at (-1137, 431) above 600m for snow
+	# Peak height ~122m → target ~620m so snow cap appears. Wide Gaussian for natural blending.
+	var peak_dx = world_pos.x - (-1137.0)
+	var peak_dz = world_pos.z - 431.0
+	var peak_sigma = 700.0  # ~700m influence radius — wide enough to look like a real mountain
+	var peak_boost = exp(-(peak_dx * peak_dx + peak_dz * peak_dz) / (2.0 * peak_sigma * peak_sigma)) * 4.0
+	final_height *= (1.0 + peak_boost)
+
+	return final_height
 
 # GDScript smoothstep helper
 func smoothstep_gd(edge0: float, edge1: float, x: float) -> float:

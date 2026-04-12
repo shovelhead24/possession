@@ -192,7 +192,7 @@ void fragment() {
 	// Stone starts appearing stone_blend_range meters below snow
 	float stone_start = snow_start_height - stone_blend_range;
 	float stone_end = snow_start_height;
-	float stone_blend = smoothstep(grass_min_height + 20.0, stone_start, vertex_height) * (1.0 - height_snow_blend);
+	float stone_blend = smoothstep(stone_start - 30.0, stone_start, vertex_height) * (1.0 - height_snow_blend);
 
 	// Choose between stone (lower) and chalk (higher altitude cliffs)
 	float cliff_height_factor = smoothstep(stone_start, snow_start_height, vertex_height);
