@@ -7,7 +7,7 @@ const JUMP_VELOCITY = 8.0
 const SENSITIVITY = 0.003
 const STICK_SENSITIVITY = 2.5  # Radians/sec at full stick deflection
 
-var fly_mode = true  # Start in fly mode to debug spawn
+var fly_mode = false  # Walk mode by default
 var current_speed: float = 0.0  # Tracked for HUD display
 var hud_instance: Node = null  # Reference to HUD for updates
 
@@ -165,12 +165,14 @@ func _input(event):
 		fly_mode = !fly_mode
 		print("Fly mode: ", "ON" if fly_mode else "OFF")
 
-	# Weapon switching with Q key or scroll wheel
+	# Weapon switching with Q key, scroll wheel, or controller (Triangle/Y = button 3)
 	if event is InputEventKey and event.pressed and event.keycode == KEY_Q:
 		switch_weapon()
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			switch_weapon()
+	if event.is_action_pressed("switch_weapon"):
+		switch_weapon()
 
 	# Biome switching with number keys 1-7
 	if event is InputEventKey and event.pressed:
@@ -295,6 +297,13 @@ func _input(event):
 						print("Full Transform3D: Transform3D(", t.basis.x.x, ", ", t.basis.x.y, ", ", t.basis.x.z, ", ", t.basis.y.x, ", ", t.basis.y.y, ", ", t.basis.y.z, ", ", t.basis.z.x, ", ", t.basis.z.y, ", ", t.basis.z.z, ", ", t.origin.x, ", ", t.origin.y, ", ", t.origin.z, ")")
 
 func _physics_process(delta):
+	# Gamepad right-stick look — active always (including while in vehicle)
+	var look_input = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	if look_input.length() > 0.0:
+		rotate_y(-look_input.x * STICK_SENSITIVITY * delta)
+		head.rotate_x(-look_input.y * STICK_SENSITIVITY * delta)
+		head.rotation.x = clamp(head.rotation.x, -1.5, 1.5)
+
 	# Skip player movement when in a vehicle
 	if in_vehicle:
 		return
@@ -339,7 +348,7 @@ func _physics_process(delta):
 			velocity.y -= gravity * delta
 
 		# Handle jump
-		if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+		if Input.is_action_just_pressed("jump") and is_on_floor():
 			velocity.y = JUMP_VELOCITY
 
 		# Get input direction
@@ -354,13 +363,6 @@ func _physics_process(delta):
 			velocity.z = move_toward(velocity.z, 0, SPEED)
 
 	move_and_slide()
-
-	# Gamepad right-stick look
-	var look_input = Input.get_vector("look_left", "look_right", "look_up", "look_down")
-	if look_input.length() > 0.0:
-		rotate_y(-look_input.x * STICK_SENSITIVITY * delta)
-		head.rotate_x(-look_input.y * STICK_SENSITIVITY * delta)
-		head.rotation.x = clamp(head.rotation.x, -1.5, 1.5)
 
 	# Track current speed for HUD display
 	current_speed = velocity.length()
