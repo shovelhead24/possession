@@ -84,6 +84,10 @@ var in_vehicle: bool = false
 var current_vehicle: Node3D = null
 var _weapon_switch_timer: float = 0.0  # Debounce: prevents double-switch on same press
 
+# Zoom — R3 cycles through magnification steps
+const ZOOM_FOVS: Array = [75.0, 50.0, 25.0, 7.5]  # 1× 1.5× 3× 10×
+var _zoom_index: int = 0
+
 func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	# Auto-release mouse when window loses focus, re-capture on click
@@ -180,6 +184,12 @@ func _input(event):
 	# D-pad Up / R key — git pull latest commits then reload scene
 	if event.is_action_pressed("reload_scene"):
 		_pull_and_reload()
+
+	# Zoom — R3 cycles 1× → 1.5× → 3× → 10× → back to 1×
+	if event.is_action_pressed("zoom"):
+		_zoom_index = (_zoom_index + 1) % ZOOM_FOVS.size()
+		if camera:
+			camera.fov = ZOOM_FOVS[_zoom_index]
 
 	# Toggle fly mode — F key or D-pad Right
 	if event.is_action_pressed("toggle_fly"):

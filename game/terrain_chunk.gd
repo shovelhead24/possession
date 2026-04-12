@@ -14,7 +14,7 @@ var terrain_manager: Node  # Reference to TerrainManager
 
 # LOD system
 var current_lod: int = 0  # 0 = highest detail, higher = lower detail
-var lod_resolutions: Array = [16, 8, 4, 2]  # Resolution at each LOD level
+var lod_resolutions: Array = [16, 6, 3, 2]  # LOD0=fine LOD1=medium LOD2=coarse LOD3=minimal
 var has_collision: bool = true  # Only LOD 0-1 have collision
 var skirt_depth: float = 20.0  # Overridden per-LOD in generate_terrain()
 
@@ -538,17 +538,20 @@ static func _ensure_structure_mats() -> void:
 		_structure_mats.append(mat)
 
 func maybe_spawn_structure() -> void:
-	# Deterministic per-chunk RNG — ~4% of chunks get a structure
-	var rng = RandomNumberGenerator.new()
-	rng.seed = (chunk_coords.x * 73856093) ^ (chunk_coords.y * 19349663) ^ 0xBEEFCAFE
-	if rng.randf() > 0.04:
+	# Only LOD0-2 — LOD3 chunks are tiny silhouettes at 1400m+, not worth nodes
+	if current_lod >= 3:
 		return
 
-	# Don't place near world origin (the hand-placed gateway is there)
+	# ~2% of chunks get a structure — deterministic, no StaticBody3D (pure visual)
+	var rng = RandomNumberGenerator.new()
+	rng.seed = (chunk_coords.x * 73856093) ^ (chunk_coords.y * 19349663) ^ 0xBEEFCAFE
+	if rng.randf() > 0.02:
+		return
+
+	# Don't place at world origin (hand-placed gateway lives there)
 	if chunk_coords.x == 0 and chunk_coords.y == 0:
 		return
 
-	# Random position within inner 70% of chunk to avoid edge overlap
 	var half = chunk_size / 2.0
 	var local_x = rng.randf_range(-half * 0.7, half * 0.7)
 	var local_z = rng.randf_range(-half * 0.7, half * 0.7)
@@ -556,7 +559,6 @@ func maybe_spawn_structure() -> void:
 	var world_z = position.z + local_z
 	var ground_y = get_height_at_world_pos(world_x, world_z)
 
-	# Skip underwater placements
 	var abs_water = 0.0
 	if terrain_manager and "absolute_water_height" in terrain_manager:
 		abs_water = terrain_manager.absolute_water_height
@@ -566,41 +568,29 @@ func maybe_spawn_structure() -> void:
 	_ensure_structure_mats()
 	var mat = _structure_mats[clamp(current_lod, 0, _structure_mats.size() - 1)]
 
-	# Randomise monolith dimensions — smaller variants at higher density
-	var scale_mult = rng.randf_range(0.5, 2.0)
-	var mono_w = rng.randf_range(22.0, 42.0) * scale_mult
-	var mono_h = rng.randf_range(70.0, 180.0) * scale_mult
-	var mono_d = rng.randf_range(22.0, 42.0) * scale_mult
-	var gap    = rng.randf_range(35.0, 80.0) * scale_mult
+	# Uniform size so scale is consistent across LOD rings
+	const MONO_W = 30.0
+	const MONO_H = 120.0
+	const MONO_D = 30.0
+	const GAP    = 60.0
 
-	# Gateway rotation — random cardinal-ish angle
 	var rot_y = rng.randf() * TAU
-	var half_span = (gap + mono_w) * 0.5
-
-	# Sink base 40m into terrain so monolith grows out of the ground
-	var center_y = ground_y - 40.0 + mono_h * 0.5
+	var half_span = (GAP + MONO_W) * 0.5
+	var center_y  = ground_y - 30.0 + MONO_H * 0.5  # Sink 30m into ground
 
 	for side in [-1.0, 1.0]:
 		var offset = Vector3(side * half_span, 0.0, 0.0).rotated(Vector3.UP, rot_y)
-		var body = StaticBody3D.new()
-		body.position = Vector3(local_x + offset.x, center_y, local_z + offset.z)
+		# Plain Node3D — no physics body, no collision (pure visual, zero physics overhead)
+		var anchor = Node3D.new()
+		anchor.position = Vector3(local_x + offset.x, center_y, local_z + offset.z)
 
 		var mi = MeshInstance3D.new()
 		var bm = BoxMesh.new()
-		bm.size = Vector3(mono_w, mono_h, mono_d)
+		bm.size = Vector3(MONO_W, MONO_H, MONO_D)
 		mi.mesh = bm
 		mi.material_override = mat
-		body.add_child(mi)
-
-		# Collision only on close-up LODs — no point colliding with distant silhouettes
-		if current_lod <= 1:
-			var col = CollisionShape3D.new()
-			var bs = BoxShape3D.new()
-			bs.size = bm.size
-			col.shape = bs
-			body.add_child(col)
-
-		add_child(body)
+		anchor.add_child(mi)
+		add_child(anchor)
 
 func generate_props():
 	var props_start = Time.get_ticks_msec()
