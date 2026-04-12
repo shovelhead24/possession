@@ -519,16 +519,23 @@ func generate_terrain():
 		props_pending = true
 		props_generated = false
 
-static var _structure_mat: StandardMaterial3D = null
+# Per-LOD debug colours: LOD0=white, LOD1=blue, LOD2=green, LOD3=red
+static var _structure_mats: Array = []
 
-static func _get_structure_mat() -> StandardMaterial3D:
-	if _structure_mat:
-		return _structure_mat
-	_structure_mat = StandardMaterial3D.new()
-	_structure_mat.albedo_color = Color(0.70, 0.68, 0.65)
-	_structure_mat.roughness = 0.88
-	_structure_mat.metallic = 0.0
-	return _structure_mat
+static func _ensure_structure_mats() -> void:
+	if not _structure_mats.is_empty():
+		return
+	var colors = [
+		Color(0.95, 0.93, 0.90),  # LOD0: white/cream
+		Color(0.25, 0.45, 0.95),  # LOD1: blue
+		Color(0.20, 0.82, 0.30),  # LOD2: green
+		Color(0.92, 0.22, 0.22),  # LOD3: red
+	]
+	for c in colors:
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = c
+		mat.roughness = 0.85
+		_structure_mats.append(mat)
 
 func maybe_spawn_structure() -> void:
 	# Deterministic per-chunk RNG — ~4% of chunks get a structure
@@ -556,7 +563,8 @@ func maybe_spawn_structure() -> void:
 	if ground_y < abs_water + 8.0:
 		return
 
-	var mat = _get_structure_mat()
+	_ensure_structure_mats()
+	var mat = _structure_mats[clamp(current_lod, 0, _structure_mats.size() - 1)]
 
 	# Randomise monolith dimensions — smaller variants at higher density
 	var scale_mult = rng.randf_range(0.5, 2.0)

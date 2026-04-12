@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
 const SPEED = 10.0  # 50% reduced from 20.0
-const FLY_SPEED = 50.0
+const FLY_SPEED = 100.0
 const FLY_SPRINT_SPEED = 200.0  # Sprint speed while flying (Ctrl key)
 const JUMP_VELOCITY = 8.0
 const SENSITIVITY = 0.003
@@ -181,8 +181,8 @@ func _input(event):
 	if event.is_action_pressed("reload_scene"):
 		_pull_and_reload()
 
-	# Toggle fly mode with F key
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F:
+	# Toggle fly mode — F key or D-pad Right
+	if event.is_action_pressed("toggle_fly"):
 		fly_mode = !fly_mode
 		print("Fly mode: ", "ON" if fly_mode else "OFF")
 
@@ -525,8 +525,8 @@ func _pull_and_reload():
 	var exit = OS.execute("git", ["-C", parent_dir, "pull", "--ff-only", "origin", "main"], output, true)
 	for line in output:
 		print("git: ", line)
-	print("=== RELOAD: git exit code ", exit, " — reloading scene ===")
-	get_tree().reload_current_scene()
+	print("=== RELOAD: git exit code ", exit, " — quitting so watcher relaunches ===")
+	get_tree().quit()  # Watcher detects exit and relaunches Godot with new code
 
 func switch_weapon():
 	if _weapon_switch_timer > 0.0:
