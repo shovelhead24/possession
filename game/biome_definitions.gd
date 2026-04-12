@@ -236,7 +236,7 @@ static func get_biome_traits(biome: BiomeType) -> NoiseTraits:
 			traits.tree_min_height = 0.04
 			traits.tree_max_height = 0.5
 
-			traits.water_level = 0.18  # 18% above base (base 0.02 → water at 0.20)
+			traits.water_level = 0.08  # 8% = 32m with terrain_height=400 — well below flat plains
 
 		BiomeType.ROCKY_BADLANDS:
 			# Eroded, sparse, dramatic rock formations

@@ -154,7 +154,7 @@ func generate_terrain():
 
 	# Skirt must be deep enough to cover height mismatches between adjacent chunks.
 	# Coarser LODs have larger height steps between chunks, so scale accordingly.
-	skirt_depth = 30.0 + current_lod * 40.0  # LOD0=30 LOD1=70 LOD2=110 LOD3=150
+	skirt_depth = 80.0 + current_lod * 100.0  # LOD0=80 LOD1=180 LOD2=280 LOD3=380 (scaled for 100m chunks)
 
 	# Create mesh instance
 	mesh_instance = MeshInstance3D.new()

@@ -4,9 +4,9 @@ class_name TerrainManager
 const BiomeDefs = preload("res://biome_definitions.gd")
 
 @export_group("Chunk Settings")
-@export var chunk_size: float = 25.0
-@export var view_distance: int = 16  # Reduced for better performance
-@export var unload_distance: int = 20  # Must be > view_distance
+@export var chunk_size: float = 100.0  # 4x larger — same polygon count, 4x render distance per chunk
+@export var view_distance: int = 12   # 12 * 100m = 1200m render distance (was 16 * 25m = 400m)
+@export var unload_distance: int = 15  # Must be > view_distance
 
 @export_group("LOD Settings")
 @export var lod_distances: Array[float] = [4.0, 8.0, 12.0, 16.0]  # Distance thresholds for each LOD level
