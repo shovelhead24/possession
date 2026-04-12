@@ -27,6 +27,11 @@ background_color = Color(0.02, 0.04, 0.10, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.38, 0.42, 0.52, 1)
 ambient_light_energy = 0.7
+fog_enabled = true
+fog_color = Color(0.52, 0.62, 0.78, 1)
+fog_density = 0.0003
+fog_depth_begin = 700.0
+fog_depth_end = 1700.0
 
 [sub_resource type="Environment" id="Environment_weapon"]
 background_mode = 1
