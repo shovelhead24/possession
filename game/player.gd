@@ -82,6 +82,7 @@ var rail_beams: Array = []  # Active rail beams
 # Vehicle state
 var in_vehicle: bool = false
 var current_vehicle: Node3D = null
+var _weapon_switch_timer: float = 0.0  # Debounce: prevents double-switch on same press
 
 func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -140,10 +141,12 @@ func _set_layer_recursive(node: Node, layer: int):
 	for child in node.get_children():
 		_set_layer_recursive(child, layer)
 
-func _process(_delta):
+func _process(delta):
 	# Sync weapon camera with main camera rotation every frame
 	if weapon_camera and camera:
 		weapon_camera.global_transform = camera.global_transform
+	if _weapon_switch_timer > 0.0:
+		_weapon_switch_timer -= delta
 
 func _input(event):
 	# Mouse look
@@ -165,9 +168,7 @@ func _input(event):
 		fly_mode = !fly_mode
 		print("Fly mode: ", "ON" if fly_mode else "OFF")
 
-	# Weapon switching with Q key, scroll wheel, or controller (Triangle/Y = button 3)
-	if event is InputEventKey and event.pressed and event.keycode == KEY_Q:
-		switch_weapon()
+	# Weapon switching — all paths go through switch_weapon() which has a debounce guard
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP or event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			switch_weapon()
@@ -498,6 +499,9 @@ Tree Pool: %d/%d
 	]
 
 func switch_weapon():
+	if _weapon_switch_timer > 0.0:
+		return
+	_weapon_switch_timer = 0.4
 	if current_weapon == WeaponType.CARBINE:
 		current_weapon = WeaponType.RAILGUN
 		if carbine_model:

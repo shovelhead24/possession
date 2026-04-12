@@ -575,7 +575,7 @@ func generate_props():
 	thicket_noise.frequency = 0.025  # Medium scale ~40m thickets
 
 	# Calculate max trees based on density - higher density = more potential trees
-	var base_tree_count = int(tree_density * 20)  # Max ~20 trees per chunk on potato hardware
+	var base_tree_count = int(tree_density * 30)  # Max ~30 trees per chunk
 
 	# Apply quality multiplier from adaptive quality system
 	var max_tree_count = base_tree_count
@@ -666,7 +666,7 @@ func generate_props():
 			tree_index += 1
 
 		# Borrow and place grass from pool
-		var base_grass_count = int(tree_density * 45)  # Max ~45 grass per chunk on potato hardware
+		var base_grass_count = int(tree_density * 70)  # Max ~70 grass per chunk
 		var max_grass_count = base_grass_count
 		if terrain_manager and terrain_manager.has_method("get_quality_tree_count"):
 			max_grass_count = terrain_manager.get_quality_tree_count(base_grass_count)

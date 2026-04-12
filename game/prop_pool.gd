@@ -41,14 +41,14 @@ var borrowed_trees: Dictionary = {}
 var borrowed_grass: Dictionary = {}
 
 # Pool configuration - Trees (tuned for Intel UHD / potato hardware)
-@export var initial_pool_size: int = 60   # Sync seed — enough for first few visible chunks
+@export var initial_pool_size: int = 90   # Sync seed — enough for first few visible chunks
 @export var pool_grow_size: int = 30      # Grow in batches
-@export var max_pool_size: int = 300      # Hard cap; shadows disabled so 300 is fine at 38+ FPS
+@export var max_pool_size: int = 400      # Hard cap
 
 # Pool configuration - Grass
-@export var initial_grass_pool_size: int = 0   # Fully async — grass is less urgent than trees
-@export var grass_grow_size: int = 50
-@export var max_grass_pool_size: int = 500
+@export var initial_grass_pool_size: int = 150  # Seed enough for first visible chunks
+@export var grass_grow_size: int = 60
+@export var max_grass_pool_size: int = 800
 
 var total_trees_created: int = 0
 var total_grass_created: int = 0
@@ -68,8 +68,9 @@ func _ready():
 	calculate_tree_pivot_offsets()
 	# Seed pool synchronously with a small number to give early chunks something to borrow
 	grow_pool_sync(initial_pool_size)
+	grow_grass_sync(initial_grass_pool_size)
 	# Grow the rest async across many frames (avoids giant startup freeze)
-	print("PropPool: Seeded with ", total_trees_created, " trees (rest grows async as needed)")
+	print("PropPool: Seeded with ", total_trees_created, " trees, ", total_grass_created, " grass (rest grows async as needed)")
 
 func _process(_delta):
 	# Async tree pool growth - create a few trees per frame if needed
@@ -409,6 +410,20 @@ func grow_pool_sync(count: int):
 		total_trees_created += 1
 
 	print("PropPool: grow_pool_sync finished, total_trees_created=", total_trees_created)
+
+# Synchronous grass pool growth - used at startup to seed initial grass
+func grow_grass_sync(count: int):
+	if grass_variant_names.is_empty() or total_grass_created >= max_grass_pool_size:
+		return
+	var to_create = mini(count, max_grass_pool_size - total_grass_created)
+	print("PropPool: grow_grass_sync creating ", to_create, " grass...")
+	for i in range(to_create):
+		var grass = create_grass_instance(i % grass_variant_names.size())
+		grass.visible = false
+		add_child(grass)
+		available_grass.append(grass)
+		total_grass_created += 1
+	print("PropPool: grow_grass_sync finished, total_grass_created=", total_grass_created)
 
 # Async pool growth - queue trees to be created over multiple frames
 func grow_pool_async(count: int):

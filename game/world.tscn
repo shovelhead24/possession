@@ -136,4 +136,4 @@ biome_type = 4
 script = ExtResource("4_aqk2v")
 
 [node name="Warthog" parent="." instance=ExtResource("12_warthog")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 47, 0)
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 5, 47, 0)
