@@ -1,5 +1,6 @@
-[gd_scene load_steps=18 format=3 uid="uid://baveer3oax27d"]
+[gd_scene load_steps=19 format=3 uid="uid://baveer3oax27d"]
 
+[ext_resource type="Script" path="res://ancient_structures.gd" id="13_ancient"]
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_f3sb7"]
 [ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_fj7yv"]
 [ext_resource type="Script" uid="uid://dlvw61juy2b56" path="res://terrain_manager.gd" id="3_tlwt5"]
@@ -134,6 +135,9 @@ biome_type = 4
 
 [node name="DayNightCycle" type="Node3D" parent="."]
 script = ExtResource("4_aqk2v")
+
+[node name="AncientStructures" type="Node3D" parent="."]
+script = ExtResource("13_ancient")
 
 [node name="Warthog" parent="." instance=ExtResource("12_warthog")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 5, 47, 0)

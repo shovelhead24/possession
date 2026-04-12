@@ -163,6 +163,10 @@ func _input(event):
 	if event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
+	# D-pad Up / R key — git pull latest commits then reload scene
+	if event.is_action_pressed("reload_scene"):
+		_pull_and_reload()
+
 	# Toggle fly mode with F key
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F:
 		fly_mode = !fly_mode
@@ -497,6 +501,18 @@ Tree Pool: %d/%d
 		pool_available,
 		pool_borrowed
 	]
+
+func _pull_and_reload():
+	print("=== RELOAD: pulling latest commits... ===")
+	# git pull from the project root (one level up from res://)
+	var project_dir = ProjectSettings.globalize_path("res://").rstrip("/")
+	var parent_dir = project_dir.get_base_dir()  # repo root is parent of game/
+	var output = []
+	var exit = OS.execute("git", ["-C", parent_dir, "pull", "--ff-only", "origin", "main"], output, true)
+	for line in output:
+		print("git: ", line)
+	print("=== RELOAD: git exit code ", exit, " — reloading scene ===")
+	get_tree().reload_current_scene()
 
 func switch_weapon():
 	if _weapon_switch_timer > 0.0:
