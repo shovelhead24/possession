@@ -7,14 +7,14 @@
 ---
 
 ### Phase 1 — Editor Mode Infrastructure
-*Enter/exit an editor mode from the running game. Freeze player input, show cursor, display a minimal HUD.*
+*Tab toggles an overhead isometric editor camera. Player freezes, cursor appears, HUD shows cursor world XZ + zoom. Full camera navigation (pan/orbit/zoom) but no brushes yet.*
 
-**Plans:**
-- 1.1 Editor mode toggle (keybind, freeze player, release mouse)
-- 1.2 Editor HUD — brush info overlay (radius, strength, mode name)
-- 1.3 Terrain raycast cursor — 3D ring showing brush position on terrain surface
+**Plans:** 3 plans
+- [ ] 01-01-PLAN.md — Editor mode toggle, EditorController autoload, camera handoff, player freeze signal
+- [ ] 01-02-PLAN.md — Editor camera controls (WASD pan, Q/E altitude, 1/2 zoom, Shift/Ctrl+drag) and player marker mesh
+- [ ] 01-03-PLAN.md — Editor HUD overlay (cursor XZ + zoom label) and crosshair hide
 
-**UAT:** Press key → player freezes, cursor appears, ring follows terrain surface. Press key again → back to play.
+**UAT:** Press Tab → player freezes, overhead camera, orange marker at player, HUD shows live X/Z/zoom. WASD/QE/12 navigate, Shift-drag orbits, Ctrl-drag pans. Tab again → back to play.
 
 ---
 
