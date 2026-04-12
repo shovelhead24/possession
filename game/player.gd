@@ -86,6 +86,9 @@ var _weapon_switch_timer: float = 0.0  # Debounce: prevents double-switch on sam
 
 func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# Auto-release mouse when window loses focus, re-capture on click
+	get_viewport().get_window().focus_exited.connect(_on_window_focus_lost)
+	get_viewport().get_window().focus_entered.connect(_on_window_focus_gained)
 
 	# Allow climbing steeper slopes (default is ~45 degrees / 0.785 radians)
 	floor_max_angle = deg_to_rad(70.0)  # Can climb up to 70 degree slopes
@@ -129,6 +132,12 @@ func _ready():
 	if not bullet_scene:
 		bullet_scene = preload("res://bullet.tscn")
 
+func _on_window_focus_lost():
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _on_window_focus_gained():
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
 func _on_viewport_size_changed():
 	if weapon_viewport:
 		weapon_viewport.size = get_viewport().size
@@ -159,9 +168,14 @@ func _input(event):
 	if event.is_action_pressed("shoot") and can_shoot:
 		shoot()
 	
-	# Release mouse
+	# Release mouse (Escape)
 	if event.is_action_pressed("ui_cancel"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+	# Re-capture mouse on left click when window is focused but mouse is free
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	# D-pad Up / R key — git pull latest commits then reload scene
 	if event.is_action_pressed("reload_scene"):
