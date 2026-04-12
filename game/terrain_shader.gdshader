@@ -198,12 +198,8 @@ void fragment() {
 	float cliff_height_factor = smoothstep(stone_start, snow_start_height, vertex_height);
 	vec3 cliff_color = mix(stone, chalk, cliff_height_factor);
 
-	// Reduce snow on steep slopes — but at very high altitude allow snow on all faces
-	float slope_factor = smoothstep(slope_snow_threshold, slope_snow_threshold + 0.3, slope);
-	// At peak altitudes snow covers even steep cliffs (avalanche faces, cornices)
-	float altitude_override = smoothstep(snow_start_height, snow_full_height + 50.0, vertex_height);
-	float effective_slope_factor = mix(slope_factor, 1.0, altitude_override);
-	float final_snow_blend = height_snow_blend * effective_slope_factor;
+	// Snow blend: purely height-based, slope suppression disabled
+	float final_snow_blend = height_snow_blend;
 
 	// Build terrain color: sand (beach) / grass -> stone zone -> snow, with cliff overlay
 	vec3 base_color = grass;
@@ -217,9 +213,8 @@ void fragment() {
 	// Blend to snow at high altitudes (>= 600m)
 	base_color = mix(base_color, snow, final_snow_blend);
 
-	// Apply cliff texture on steep slopes — but let snow dominate at high altitude
-	float cliff_blend_reduced = cliff_blend * (1.0 - altitude_override * 0.85);
-	vec3 terrain_color = mix(base_color, cliff_color, cliff_blend_reduced);
+	// Apply cliff texture on steep slopes
+	vec3 terrain_color = mix(base_color, cliff_color, cliff_blend);
 
 	// Apply vertex color tinting for biome variation
 	if (use_vertex_color_tint) {
