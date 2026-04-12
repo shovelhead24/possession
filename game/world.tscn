@@ -24,6 +24,9 @@ albedo_color = Color(0.38014632, 0.6847695, 0.3898171, 1)
 [sub_resource type="Environment" id="Environment_tlwt5"]
 background_mode = 1
 background_color = Color(0.02, 0.04, 0.10, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.38, 0.42, 0.52, 1)
+ambient_light_energy = 0.7
 
 [sub_resource type="Environment" id="Environment_weapon"]
 background_mode = 1

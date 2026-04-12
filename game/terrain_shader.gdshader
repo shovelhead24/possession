@@ -137,13 +137,13 @@ void fragment() {
 	blend_weights /= (blend_weights.x + blend_weights.y + blend_weights.z);
 
 	// Hash-based regional brightness variation — breaks tiling perception with
-	// zero extra texture fetches. Each cell is ~80 world units wide.
-	vec2 region_cell = floor(world_position.xz * 0.012);
-	float rv = hash(region_cell) * 0.28 + 0.86;  // 0.86–1.14 range
+	// zero extra texture fetches. ~250m cells, deliberately not a multiple of 100m chunks.
+	vec2 region_cell = floor(world_position.xz * 0.004);
+	float rv = hash(region_cell) * 0.14 + 0.93;  // 0.93–1.07 (subtle)
 
-	// Sub-region hash at a different frequency adds a second layer of variation
-	vec2 sub_cell = floor(world_position.xz * 0.035);
-	float sv2 = hash(sub_cell + vec2(7.3, 2.9)) * 0.12 + 0.94;  // 0.94–1.06 range
+	// Sub-region at ~110m — incommensurate with 100m chunk size to avoid alignment
+	vec2 sub_cell = floor(world_position.xz * 0.009);
+	float sv2 = hash(sub_cell + vec2(7.3, 2.9)) * 0.07 + 0.965;  // 0.965–1.035
 
 	float var = rv * sv2;  // Combined variation multiplier
 

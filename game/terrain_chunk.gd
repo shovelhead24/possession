@@ -510,11 +510,89 @@ func generate_terrain():
 
 	# Water is now handled by TerrainManager as a single global plane
 
+	# Structures spawn at every LOD so they're visible at max range
+	maybe_spawn_structure()
+
 	# Only generate props for LOD 0-1 (close chunks)
 	# Defer prop generation to next frame to prevent hitching
 	if current_lod <= 1:
 		props_pending = true
 		props_generated = false
+
+static var _structure_mat: StandardMaterial3D = null
+
+static func _get_structure_mat() -> StandardMaterial3D:
+	if _structure_mat:
+		return _structure_mat
+	_structure_mat = StandardMaterial3D.new()
+	_structure_mat.albedo_color = Color(0.70, 0.68, 0.65)
+	_structure_mat.roughness = 0.88
+	_structure_mat.metallic = 0.0
+	return _structure_mat
+
+func maybe_spawn_structure() -> void:
+	# Deterministic per-chunk RNG — ~4% of chunks get a structure
+	var rng = RandomNumberGenerator.new()
+	rng.seed = (chunk_coords.x * 73856093) ^ (chunk_coords.y * 19349663) ^ 0xBEEFCAFE
+	if rng.randf() > 0.04:
+		return
+
+	# Don't place near world origin (the hand-placed gateway is there)
+	if chunk_coords.x == 0 and chunk_coords.y == 0:
+		return
+
+	# Random position within inner 70% of chunk to avoid edge overlap
+	var half = chunk_size / 2.0
+	var local_x = rng.randf_range(-half * 0.7, half * 0.7)
+	var local_z = rng.randf_range(-half * 0.7, half * 0.7)
+	var world_x = position.x + local_x
+	var world_z = position.z + local_z
+	var ground_y = get_height_at_world_pos(world_x, world_z)
+
+	# Skip underwater placements
+	var abs_water = 0.0
+	if terrain_manager and "absolute_water_height" in terrain_manager:
+		abs_water = terrain_manager.absolute_water_height
+	if ground_y < abs_water + 8.0:
+		return
+
+	var mat = _get_structure_mat()
+
+	# Randomise monolith dimensions — smaller variants at higher density
+	var scale_mult = rng.randf_range(0.5, 2.0)
+	var mono_w = rng.randf_range(22.0, 42.0) * scale_mult
+	var mono_h = rng.randf_range(70.0, 180.0) * scale_mult
+	var mono_d = rng.randf_range(22.0, 42.0) * scale_mult
+	var gap    = rng.randf_range(35.0, 80.0) * scale_mult
+
+	# Gateway rotation — random cardinal-ish angle
+	var rot_y = rng.randf() * TAU
+	var half_span = (gap + mono_w) * 0.5
+
+	# Sink base 40m into terrain so monolith grows out of the ground
+	var center_y = ground_y - 40.0 + mono_h * 0.5
+
+	for side in [-1.0, 1.0]:
+		var offset = Vector3(side * half_span, 0.0, 0.0).rotated(Vector3.UP, rot_y)
+		var body = StaticBody3D.new()
+		body.position = Vector3(local_x + offset.x, center_y, local_z + offset.z)
+
+		var mi = MeshInstance3D.new()
+		var bm = BoxMesh.new()
+		bm.size = Vector3(mono_w, mono_h, mono_d)
+		mi.mesh = bm
+		mi.material_override = mat
+		body.add_child(mi)
+
+		# Collision only on close-up LODs — no point colliding with distant silhouettes
+		if current_lod <= 1:
+			var col = CollisionShape3D.new()
+			var bs = BoxShape3D.new()
+			bs.size = bm.size
+			col.shape = bs
+			body.add_child(col)
+
+		add_child(body)
 
 func generate_props():
 	var props_start = Time.get_ticks_msec()
@@ -904,7 +982,7 @@ func create_terrain_material() -> Material:
 		mat.set_shader_parameter("beach_slope_min", 0.85)
 
 		mat.set_shader_parameter("use_vertex_color_tint", true)
-		mat.set_shader_parameter("vertex_color_strength", 0.4)
+		mat.set_shader_parameter("vertex_color_strength", 0.08)  # Low — chunk seams amplify tiny height diffs
 
 		# Pass terrain height info
 		if terrain_manager:
