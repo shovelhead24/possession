@@ -8,8 +8,6 @@ Unrecognized output string "misc2" in mapping:
 Unrecognized output string "misc2" in mapping:
 030000007e0500006920000000000000,Nintendo Switch 2 Pro Controller,a:b0,b:b1,back:b14,dpdown:b8,dpleft:b10,dpright:b9,dpup:b11,guide:b16,leftshoulder:b12,leftstick:b15,lefttrigger:b13,leftx:a0,lefty:a1~,misc1:b17,misc2:b20,paddle1:b18,paddle2:b19,rightshoulder:b4,rightstick:b7,righttrigger:b5,rightx:a2,righty:a3~,start:b6,x:b2,y:b3,platform:Windows,
 Native OpenGL API detected: 3.3: Intel - Intel(R) UHD Graphics
-SDL: Gamepad DualSense Wireless Controller connected
-SDL: Gamepad XInput Controller connected
 SDL: Init OK!
 Using "winink" pen tablet driver...
 Shader 'CanvasSdfShaderGLES3' SHA256: 40c856f97ed9b9a1228861e55e1f799133f969d3b56a29ac4ea5b8f8d86aa4c9
@@ -295,7 +293,7 @@ Chunks: loaded 10 | queue: 771 | total: 61
 Chunks: loaded 10 | queue: 753 | total: 71
 Chunks: loaded 10 | queue: 740 | total: 81
 Chunks: loaded 10 | queue: 727 | total: 91
-Chunks: loaded 10 | queue: 714 | total: 101 | FPS: 1 | Q:89%
+Chunks: loaded 10 | queue: 714 | total: 101 | FPS: 1 | Q:91%
 Chunks: loaded 10 | queue: 702 | total: 111
 Chunks: loaded 10 | queue: 692 | total: 121
 Chunks: loaded 10 | queue: 682 | total: 131
@@ -305,7 +303,7 @@ Chunks: loaded 10 | queue: 652 | total: 161
 Chunks: loaded 10 | queue: 642 | total: 171
 Chunks: loaded 10 | queue: 632 | total: 181
 Chunks: loaded 10 | queue: 622 | total: 191
-Chunks: loaded 10 | queue: 612 | total: 201 | FPS: 1 | Q:88%
+Chunks: loaded 10 | queue: 612 | total: 201 | FPS: 1 | Q:91%
 Chunks: loaded 10 | queue: 602 | total: 211
 Chunks: loaded 10 | queue: 592 | total: 221
 Chunks: loaded 10 | queue: 582 | total: 231
@@ -315,7 +313,7 @@ Chunks: loaded 10 | queue: 552 | total: 261
 Chunks: loaded 10 | queue: 542 | total: 271
 Chunks: loaded 10 | queue: 532 | total: 281
 Chunks: loaded 10 | queue: 522 | total: 291
-Chunks: loaded 10 | queue: 512 | total: 301 | FPS: 25 | Q:88%
+Chunks: loaded 10 | queue: 512 | total: 301 | FPS: 1 | Q:91%
 Chunks: loaded 10 | queue: 502 | total: 311
 Chunks: loaded 10 | queue: 492 | total: 321
 Chunks: loaded 10 | queue: 482 | total: 331
@@ -325,17 +323,17 @@ Chunks: loaded 10 | queue: 452 | total: 361
 Chunks: loaded 10 | queue: 442 | total: 371
 Chunks: loaded 10 | queue: 432 | total: 381
 Chunks: loaded 10 | queue: 422 | total: 391
-Chunks: loaded 10 | queue: 412 | total: 401 | FPS: 25 | Q:87%
+Chunks: loaded 10 | queue: 412 | total: 401 | FPS: 33 | Q:90%
 Chunks: loaded 10 | queue: 402 | total: 411
-Chunks: loaded 10 | queue: 419 | total: 421
-Chunks: loaded 10 | queue: 409 | total: 431
-Chunks: loaded 10 | queue: 399 | total: 441
+Chunks: loaded 10 | queue: 392 | total: 421
+Chunks: loaded 10 | queue: 382 | total: 431
+Chunks: loaded 10 | queue: 372 | total: 441
 Chunks: loaded 10 | queue: 389 | total: 451
 Chunks: loaded 10 | queue: 379 | total: 461
 Chunks: loaded 10 | queue: 369 | total: 471
 Chunks: loaded 10 | queue: 359 | total: 481
 Chunks: loaded 10 | queue: 349 | total: 491
-Chunks: loaded 10 | queue: 339 | total: 501 | FPS: 25 | Q:82%
+Chunks: loaded 10 | queue: 339 | total: 501 | FPS: 33 | Q:87%
 Chunks: loaded 10 | queue: 329 | total: 511
 Chunks: loaded 10 | queue: 319 | total: 521
 Chunks: loaded 10 | queue: 309 | total: 531
@@ -345,20 +343,17 @@ Chunks: loaded 10 | queue: 279 | total: 561
 Chunks: loaded 10 | queue: 269 | total: 571
 Chunks: loaded 10 | queue: 259 | total: 581
 Chunks: loaded 10 | queue: 249 | total: 591
-Chunks: loaded 10 | queue: 239 | total: 601 | FPS: 25 | Q:79%
+Chunks: loaded 10 | queue: 239 | total: 601 | FPS: 33 | Q:87%
 Chunks: loaded 10 | queue: 229 | total: 611
 Chunks: loaded 10 | queue: 219 | total: 621
 Chunks: loaded 10 | queue: 209 | total: 631
 Chunks: loaded 10 | queue: 199 | total: 641
-LOD: updated 1 chunks | queue: 26
 Chunks: loaded 10 | queue: 189 | total: 651
 Chunks: loaded 10 | queue: 179 | total: 661
-LOD: updated 1 chunks | queue: 25
 Chunks: loaded 10 | queue: 169 | total: 671
 Chunks: loaded 10 | queue: 159 | total: 681
 Chunks: loaded 10 | queue: 149 | total: 691
-LOD: updated 1 chunks | queue: 24
-Chunks: loaded 10 | queue: 139 | total: 701 | FPS: 25 | Q:75%
+Chunks: loaded 10 | queue: 139 | total: 701 | FPS: 33 | Q:87%
 Chunks: loaded 10 | queue: 129 | total: 711
 Chunks: loaded 10 | queue: 119 | total: 721
 Chunks: loaded 10 | queue: 109 | total: 731
@@ -368,13 +363,31 @@ Chunks: loaded 10 | queue: 79 | total: 761
 Chunks: loaded 10 | queue: 69 | total: 771
 Chunks: loaded 10 | queue: 59 | total: 781
 Chunks: loaded 10 | queue: 49 | total: 791
-Chunks: loaded 10 | queue: 39 | total: 801 | FPS: 47 | Q:68%
+Chunks: loaded 10 | queue: 39 | total: 801 | FPS: 33 | Q:80%
 Chunks: loaded 10 | queue: 29 | total: 811
 Chunks: loaded 10 | queue: 19 | total: 821
 Chunks: loaded 10 | queue: 9 | total: 831
 Chunks: loaded 9 | queue: 0 | total: 840
 TerrainManager: Initial load complete, switching to sequential loading
 TerrainManager: Adaptive quality enabled=true budget=8.0ms
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+LOD: updated 1 chunks | queue: 37
+LOD: updated 1 chunks | queue: 36
+LOD: updated 1 chunks | queue: 35
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+LOD: updated 1 chunks | queue: 31
+LOD: updated 1 chunks | queue: 30
+LOD: updated 1 chunks | queue: 29
+LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
+LOD: updated 1 chunks | queue: 25
+LOD: updated 1 chunks | queue: 24
 LOD: updated 1 chunks | queue: 23
 LOD: updated 1 chunks | queue: 22
 LOD: updated 1 chunks | queue: 21
@@ -400,51 +413,50 @@ LOD: updated 1 chunks | queue: 2
 LOD: updated 1 chunks | queue: 1
 LOD: updated 1 chunks | queue: 0
 Chunks: loaded 1 | queue: 22 | total: 841
-LOD: updated 1 chunks | queue: 47
-Chunks: loaded 1 | queue: 21 | total: 842
 LOD: updated 1 chunks | queue: 46
-Chunks: loaded 1 | queue: 20 | total: 843
+Chunks: loaded 1 | queue: 21 | total: 842
 LOD: updated 1 chunks | queue: 45
-Chunks: loaded 1 | queue: 19 | total: 844
+Chunks: loaded 1 | queue: 20 | total: 843
 LOD: updated 1 chunks | queue: 44
-Chunks: loaded 1 | queue: 18 | total: 845
+Chunks: loaded 1 | queue: 19 | total: 844
 LOD: updated 1 chunks | queue: 43
-Chunks: loaded 1 | queue: 17 | total: 846 | FPS: 55 | Q:30%
+Chunks: loaded 1 | queue: 18 | total: 845
 LOD: updated 1 chunks | queue: 42
-Chunks: loaded 1 | queue: 16 | total: 847
+Chunks: loaded 1 | queue: 17 | total: 846 | FPS: 60 | Q:48%
 LOD: updated 1 chunks | queue: 41
-Chunks: loaded 1 | queue: 15 | total: 848
+Chunks: loaded 1 | queue: 16 | total: 847
 LOD: updated 1 chunks | queue: 40
-Chunks: loaded 1 | queue: 14 | total: 849
+Chunks: loaded 1 | queue: 15 | total: 848
 LOD: updated 1 chunks | queue: 39
-Chunks: loaded 1 | queue: 13 | total: 850
+Chunks: loaded 1 | queue: 14 | total: 849
 LOD: updated 1 chunks | queue: 38
-Chunks: loaded 1 | queue: 12 | total: 851
+Chunks: loaded 1 | queue: 13 | total: 850
 LOD: updated 1 chunks | queue: 37
-Chunks: loaded 1 | queue: 11 | total: 852
+Chunks: loaded 1 | queue: 12 | total: 851
 LOD: updated 1 chunks | queue: 36
-Chunks: loaded 1 | queue: 10 | total: 853
+Chunks: loaded 1 | queue: 11 | total: 852
 LOD: updated 1 chunks | queue: 35
-Chunks: loaded 1 | queue: 9 | total: 854
+Chunks: loaded 1 | queue: 10 | total: 853
 LOD: updated 1 chunks | queue: 34
-Chunks: loaded 1 | queue: 8 | total: 855
+Chunks: loaded 1 | queue: 9 | total: 854
 LOD: updated 1 chunks | queue: 33
-Chunks: loaded 1 | queue: 7 | total: 856 | FPS: 56 | Q:30%
+Chunks: loaded 1 | queue: 8 | total: 855
 LOD: updated 1 chunks | queue: 32
-Chunks: loaded 1 | queue: 6 | total: 857
+Chunks: loaded 1 | queue: 7 | total: 856 | FPS: 60 | Q:48%
 LOD: updated 1 chunks | queue: 31
-Chunks: loaded 1 | queue: 5 | total: 858
+Chunks: loaded 1 | queue: 6 | total: 857
 LOD: updated 1 chunks | queue: 30
-Chunks: loaded 1 | queue: 4 | total: 859
+Chunks: loaded 1 | queue: 5 | total: 858
 LOD: updated 1 chunks | queue: 29
-Chunks: loaded 1 | queue: 3 | total: 860
+Chunks: loaded 1 | queue: 4 | total: 859
 LOD: updated 1 chunks | queue: 28
-Chunks: loaded 1 | queue: 2 | total: 861
+Chunks: loaded 1 | queue: 3 | total: 860
 LOD: updated 1 chunks | queue: 27
-Chunks: loaded 1 | queue: 1 | total: 862
+Chunks: loaded 1 | queue: 2 | total: 861
 LOD: updated 1 chunks | queue: 26
-Chunks: loaded 1 | queue: 0 | total: 863
+Chunks: loaded 1 | queue: 1 | total: 862
 LOD: updated 1 chunks | queue: 25
+Chunks: loaded 1 | queue: 0 | total: 863
 LOD: updated 1 chunks | queue: 24
 LOD: updated 1 chunks | queue: 23
 LOD: updated 1 chunks | queue: 22
@@ -471,14 +483,11 @@ LOD: updated 1 chunks | queue: 2
 LOD: updated 1 chunks | queue: 1
 LOD: updated 1 chunks | queue: 0
 Player: Exited vehicle
-Warthog: Player exited at (1.257473, 239.1232, 0.791648)
+Warthog: Player exited at (0.613292, 233.7429, 0.668117)
 Warthog: Press E to enter
 Warthog: Press E to enter
+Fly mode: ON
 Chunks: loaded 1 | queue: 0 | total: 864
-LOD: updated 1 chunks | queue: 37
-LOD: updated 1 chunks | queue: 36
-LOD: updated 1 chunks | queue: 35
-LOD: updated 1 chunks | queue: 34
 LOD: updated 1 chunks | queue: 33
 LOD: updated 1 chunks | queue: 32
 LOD: updated 1 chunks | queue: 31
@@ -513,132 +522,51 @@ LOD: updated 1 chunks | queue: 3
 LOD: updated 1 chunks | queue: 2
 LOD: updated 1 chunks | queue: 1
 LOD: updated 1 chunks | queue: 0
-Fly mode: ON
-Switched to: RAILGUN
-Switched to: CARBINE
 Chunks: loaded 1 | queue: 22 | total: 865
-LOD: updated 1 chunks | queue: 79
-Chunks: loaded 1 | queue: 21 | total: 866 | FPS: 47 | Q:30%
-LOD: updated 1 chunks | queue: 78
+LOD: updated 1 chunks | queue: 81
+Chunks: loaded 1 | queue: 21 | total: 866 | FPS: 53 | Q:30%
+LOD: updated 1 chunks | queue: 80
 Chunks: loaded 1 | queue: 20 | total: 867
-LOD: updated 1 chunks | queue: 77
+LOD: updated 1 chunks | queue: 79
 Chunks: loaded 1 | queue: 19 | total: 868
-LOD: updated 1 chunks | queue: 76
+LOD: updated 1 chunks | queue: 78
 Chunks: loaded 1 | queue: 18 | total: 869
-LOD: updated 1 chunks | queue: 75
+LOD: updated 1 chunks | queue: 77
 Chunks: loaded 1 | queue: 17 | total: 870
-LOD: updated 1 chunks | queue: 74
+LOD: updated 1 chunks | queue: 76
 Chunks: loaded 1 | queue: 16 | total: 871
-LOD: updated 1 chunks | queue: 73
+LOD: updated 1 chunks | queue: 75
 Chunks: loaded 1 | queue: 15 | total: 872
-LOD: updated 1 chunks | queue: 72
+LOD: updated 1 chunks | queue: 74
 Chunks: loaded 1 | queue: 14 | total: 873
-LOD: updated 1 chunks | queue: 71
+LOD: updated 1 chunks | queue: 73
 Chunks: loaded 1 | queue: 13 | total: 874
-LOD: updated 1 chunks | queue: 70
+LOD: updated 1 chunks | queue: 72
 Chunks: loaded 1 | queue: 12 | total: 875
-LOD: updated 1 chunks | queue: 69
-Chunks: loaded 1 | queue: 11 | total: 876 | FPS: 47 | Q:30%
-LOD: updated 1 chunks | queue: 68
+LOD: updated 1 chunks | queue: 71
+Chunks: loaded 1 | queue: 11 | total: 876 | FPS: 53 | Q:30%
+LOD: updated 1 chunks | queue: 70
 Chunks: loaded 1 | queue: 10 | total: 877
-LOD: updated 1 chunks | queue: 67
+LOD: updated 1 chunks | queue: 69
 Chunks: loaded 1 | queue: 9 | total: 878
-LOD: updated 1 chunks | queue: 66
+LOD: updated 1 chunks | queue: 68
 Chunks: loaded 1 | queue: 8 | total: 879
-LOD: updated 1 chunks | queue: 65
+LOD: updated 1 chunks | queue: 67
 Chunks: loaded 1 | queue: 7 | total: 880
-LOD: updated 1 chunks | queue: 64
+LOD: updated 1 chunks | queue: 66
 Chunks: loaded 1 | queue: 6 | total: 881
-LOD: updated 1 chunks | queue: 63
+LOD: updated 1 chunks | queue: 65
 Chunks: loaded 1 | queue: 5 | total: 882
-LOD: updated 1 chunks | queue: 62
+LOD: updated 1 chunks | queue: 64
 Chunks: loaded 1 | queue: 4 | total: 883
-LOD: updated 1 chunks | queue: 61
+LOD: updated 1 chunks | queue: 63
 Chunks: loaded 1 | queue: 3 | total: 884
-LOD: updated 1 chunks | queue: 60
+LOD: updated 1 chunks | queue: 62
 Chunks: loaded 1 | queue: 2 | total: 885
-LOD: updated 1 chunks | queue: 59
-Chunks: loaded 1 | queue: 1 | total: 886 | FPS: 44 | Q:30%
-LOD: updated 1 chunks | queue: 58
+LOD: updated 1 chunks | queue: 61
+Chunks: loaded 1 | queue: 1 | total: 886 | FPS: 53 | Q:30%
+LOD: updated 1 chunks | queue: 60
 Chunks: loaded 1 | queue: 0 | total: 887
-LOD: updated 1 chunks | queue: 57
-LOD: updated 1 chunks | queue: 56
-LOD: updated 1 chunks | queue: 55
-LOD: updated 1 chunks | queue: 54
-LOD: updated 1 chunks | queue: 53
-LOD: updated 1 chunks | queue: 52
-LOD: updated 1 chunks | queue: 51
-LOD: updated 1 chunks | queue: 50
-LOD: updated 1 chunks | queue: 49
-LOD: updated 1 chunks | queue: 48
-LOD: updated 1 chunks | queue: 47
-LOD: updated 1 chunks | queue: 46
-LOD: updated 1 chunks | queue: 45
-LOD: updated 1 chunks | queue: 44
-Chunks: loaded 1 | queue: 19 | total: 888
-LOD: updated 1 chunks | queue: 103
-Chunks: loaded 1 | queue: 18 | total: 889
-LOD: updated 1 chunks | queue: 102
-Chunks: loaded 1 | queue: 17 | total: 890
-LOD: updated 1 chunks | queue: 101
-Chunks: loaded 1 | queue: 16 | total: 891
-LOD: updated 1 chunks | queue: 100
-Chunks: loaded 1 | queue: 15 | total: 892
-LOD: updated 1 chunks | queue: 99
-Chunks: loaded 1 | queue: 14 | total: 893
-LOD: updated 1 chunks | queue: 98
-Chunks: loaded 1 | queue: 13 | total: 894
-LOD: updated 1 chunks | queue: 97
-Chunks: loaded 1 | queue: 12 | total: 895
-LOD: updated 1 chunks | queue: 96
-Chunks: loaded 1 | queue: 11 | total: 896 | FPS: 44 | Q:30%
-LOD: updated 1 chunks | queue: 95
-Chunks: loaded 1 | queue: 10 | total: 897
-LOD: updated 1 chunks | queue: 94
-Chunks: loaded 1 | queue: 9 | total: 898
-LOD: updated 1 chunks | queue: 93
-Chunks: loaded 1 | queue: 8 | total: 899
-LOD: updated 1 chunks | queue: 92
-Chunks: loaded 1 | queue: 7 | total: 900
-LOD: updated 1 chunks | queue: 91
-Chunks: loaded 1 | queue: 6 | total: 901
-LOD: updated 1 chunks | queue: 90
-Chunks: loaded 1 | queue: 5 | total: 902
-LOD: updated 1 chunks | queue: 89
-Chunks: loaded 1 | queue: 4 | total: 903
-LOD: updated 1 chunks | queue: 88
-Chunks: loaded 1 | queue: 3 | total: 904
-LOD: updated 1 chunks | queue: 87
-Chunks: loaded 1 | queue: 2 | total: 905
-LOD: updated 1 chunks | queue: 86
-Chunks: loaded 1 | queue: 1 | total: 906 | FPS: 44 | Q:30%
-LOD: updated 1 chunks | queue: 85
-Chunks: loaded 1 | queue: 0 | total: 907
-LOD: updated 1 chunks | queue: 84
-LOD: updated 1 chunks | queue: 83
-LOD: updated 1 chunks | queue: 82
-LOD: updated 1 chunks | queue: 81
-LOD: updated 1 chunks | queue: 80
-LOD: updated 1 chunks | queue: 79
-LOD: updated 1 chunks | queue: 78
-LOD: updated 1 chunks | queue: 77
-LOD: updated 1 chunks | queue: 76
-LOD: updated 1 chunks | queue: 75
-LOD: updated 1 chunks | queue: 74
-LOD: updated 1 chunks | queue: 73
-LOD: updated 1 chunks | queue: 72
-LOD: updated 1 chunks | queue: 71
-LOD: updated 1 chunks | queue: 70
-LOD: updated 1 chunks | queue: 69
-LOD: updated 1 chunks | queue: 68
-LOD: updated 1 chunks | queue: 67
-LOD: updated 1 chunks | queue: 66
-LOD: updated 1 chunks | queue: 65
-LOD: updated 1 chunks | queue: 64
-LOD: updated 1 chunks | queue: 63
-LOD: updated 1 chunks | queue: 62
-LOD: updated 1 chunks | queue: 61
-LOD: updated 1 chunks | queue: 60
 LOD: updated 1 chunks | queue: 59
 LOD: updated 1 chunks | queue: 58
 LOD: updated 1 chunks | queue: 57
@@ -653,52 +581,83 @@ LOD: updated 1 chunks | queue: 49
 LOD: updated 1 chunks | queue: 48
 LOD: updated 1 chunks | queue: 47
 LOD: updated 1 chunks | queue: 46
-Chunks: loaded 1 | queue: 22 | total: 908
+LOD: updated 1 chunks | queue: 45
+LOD: updated 1 chunks | queue: 44
+LOD: updated 1 chunks | queue: 43
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+LOD: updated 1 chunks | queue: 37
+LOD: updated 1 chunks | queue: 36
+LOD: updated 1 chunks | queue: 35
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+LOD: updated 1 chunks | queue: 31
+LOD: updated 1 chunks | queue: 30
+Chunks: loaded 1 | queue: 29 | total: 888
+LOD: updated 1 chunks | queue: 123
+Chunks: loaded 1 | queue: 28 | total: 889
+LOD: updated 1 chunks | queue: 122
+Chunks: loaded 1 | queue: 27 | total: 890
+LOD: updated 1 chunks | queue: 121
+Chunks: loaded 1 | queue: 26 | total: 891
+LOD: updated 1 chunks | queue: 120
+Chunks: loaded 1 | queue: 25 | total: 892
+LOD: updated 1 chunks | queue: 119
+Chunks: loaded 1 | queue: 24 | total: 893
+LOD: updated 1 chunks | queue: 118
+Chunks: loaded 1 | queue: 23 | total: 894
+LOD: updated 1 chunks | queue: 117
+Chunks: loaded 1 | queue: 22 | total: 895
+LOD: updated 1 chunks | queue: 116
+Chunks: loaded 1 | queue: 21 | total: 896 | FPS: 47 | Q:30%
+LOD: updated 1 chunks | queue: 115
+Chunks: loaded 1 | queue: 20 | total: 897
 LOD: updated 1 chunks | queue: 114
-Chunks: loaded 1 | queue: 21 | total: 909
+Chunks: loaded 1 | queue: 19 | total: 898
 LOD: updated 1 chunks | queue: 113
-Chunks: loaded 1 | queue: 20 | total: 910
+Chunks: loaded 1 | queue: 18 | total: 899
 LOD: updated 1 chunks | queue: 112
-Switched to: RAILGUN
-Chunks: loaded 1 | queue: 19 | total: 911
+Chunks: loaded 1 | queue: 17 | total: 900
 LOD: updated 1 chunks | queue: 111
-Chunks: loaded 1 | queue: 18 | total: 912
+Chunks: loaded 1 | queue: 16 | total: 901
 LOD: updated 1 chunks | queue: 110
-Chunks: loaded 1 | queue: 17 | total: 913
+Chunks: loaded 1 | queue: 15 | total: 902
 LOD: updated 1 chunks | queue: 109
-Chunks: loaded 1 | queue: 16 | total: 914
+Chunks: loaded 1 | queue: 14 | total: 903
 LOD: updated 1 chunks | queue: 108
-Chunks: loaded 1 | queue: 15 | total: 915
+Chunks: loaded 1 | queue: 13 | total: 904
 LOD: updated 1 chunks | queue: 107
-Chunks: loaded 1 | queue: 14 | total: 916 | FPS: 44 | Q:30%
+Chunks: loaded 1 | queue: 12 | total: 905
 LOD: updated 1 chunks | queue: 106
-Chunks: loaded 1 | queue: 13 | total: 917
+Chunks: loaded 1 | queue: 11 | total: 906 | FPS: 47 | Q:30%
 LOD: updated 1 chunks | queue: 105
-Chunks: loaded 1 | queue: 12 | total: 918
+Chunks: loaded 1 | queue: 10 | total: 907
 LOD: updated 1 chunks | queue: 104
-Chunks: loaded 1 | queue: 11 | total: 919
+Chunks: loaded 1 | queue: 9 | total: 908
 LOD: updated 1 chunks | queue: 103
-Chunks: loaded 1 | queue: 10 | total: 920
+Chunks: loaded 1 | queue: 8 | total: 909
 LOD: updated 1 chunks | queue: 102
-Chunks: loaded 1 | queue: 9 | total: 921
+Chunks: loaded 1 | queue: 7 | total: 910
 LOD: updated 1 chunks | queue: 101
-Chunks: loaded 1 | queue: 8 | total: 922
+Chunks: loaded 1 | queue: 6 | total: 911
 LOD: updated 1 chunks | queue: 100
-Chunks: loaded 1 | queue: 7 | total: 923
+Chunks: loaded 1 | queue: 5 | total: 912
 LOD: updated 1 chunks | queue: 99
-Chunks: loaded 1 | queue: 6 | total: 924
+Chunks: loaded 1 | queue: 4 | total: 913
 LOD: updated 1 chunks | queue: 98
-Chunks: loaded 1 | queue: 5 | total: 925
+Chunks: loaded 1 | queue: 3 | total: 914
 LOD: updated 1 chunks | queue: 97
-Chunks: loaded 1 | queue: 4 | total: 926 | FPS: 42 | Q:30%
+Chunks: loaded 1 | queue: 2 | total: 915
 LOD: updated 1 chunks | queue: 96
-Chunks: loaded 1 | queue: 3 | total: 927
+Chunks: loaded 1 | queue: 1 | total: 916 | FPS: 47 | Q:30%
 LOD: updated 1 chunks | queue: 95
-Chunks: loaded 1 | queue: 2 | total: 928
+Chunks: loaded 1 | queue: 0 | total: 917
 LOD: updated 1 chunks | queue: 94
-Chunks: loaded 1 | queue: 1 | total: 929
 LOD: updated 1 chunks | queue: 93
-Chunks: loaded 1 | queue: 0 | total: 930
 LOD: updated 1 chunks | queue: 92
 LOD: updated 1 chunks | queue: 91
 LOD: updated 1 chunks | queue: 90
@@ -792,131 +751,487 @@ LOD: updated 1 chunks | queue: 3
 LOD: updated 1 chunks | queue: 2
 LOD: updated 1 chunks | queue: 1
 LOD: updated 1 chunks | queue: 0
-Switched to: CARBINE
-Fly mode: OFF
-Fly mode: ON
-Fly mode: OFF
-Fly mode: ON
-Fly mode: OFF
-Fly mode: ON
-Fly mode: OFF
-Fly mode: ON
-Fly mode: OFF
-Fly mode: ON
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Chunks: loaded 1 | queue: 7 | total: 931
-LOD: updated 1 chunks | queue: 34
-Chunks: loaded 1 | queue: 6 | total: 932
-LOD: updated 1 chunks | queue: 33
-Chunks: loaded 1 | queue: 5 | total: 933
-LOD: updated 1 chunks | queue: 32
-Chunks: loaded 1 | queue: 4 | total: 934
-LOD: updated 1 chunks | queue: 31
-Chunks: loaded 1 | queue: 3 | total: 935
-LOD: updated 1 chunks | queue: 30
-Chunks: loaded 1 | queue: 2 | total: 936 | FPS: 45 | Q:30%
-LOD: updated 1 chunks | queue: 29
-Chunks: loaded 1 | queue: 1 | total: 937
-LOD: updated 1 chunks | queue: 28
-Chunks: loaded 1 | queue: 0 | total: 938
-LOD: updated 1 chunks | queue: 27
-LOD: updated 1 chunks | queue: 26
-LOD: updated 1 chunks | queue: 25
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
-Chunks: loaded 1 | queue: 21 | total: 939
+Chunks: loaded 1 | queue: 31 | total: 918
+LOD: updated 1 chunks | queue: 95
+Chunks: loaded 1 | queue: 30 | total: 919
+LOD: updated 1 chunks | queue: 94
+Chunks: loaded 1 | queue: 29 | total: 920
+LOD: updated 1 chunks | queue: 93
+Chunks: loaded 1 | queue: 28 | total: 921
+LOD: updated 1 chunks | queue: 92
+Chunks: loaded 1 | queue: 27 | total: 922
+LOD: updated 1 chunks | queue: 91
+Chunks: loaded 1 | queue: 26 | total: 923
+LOD: updated 1 chunks | queue: 90
+Chunks: loaded 1 | queue: 25 | total: 924
+LOD: updated 1 chunks | queue: 89
+Chunks: loaded 1 | queue: 24 | total: 925
+LOD: updated 1 chunks | queue: 88
+Chunks: loaded 1 | queue: 23 | total: 926 | FPS: 53 | Q:30%
+LOD: updated 1 chunks | queue: 87
+Chunks: loaded 1 | queue: 22 | total: 927
+LOD: updated 1 chunks | queue: 86
+Chunks: loaded 1 | queue: 21 | total: 928
+LOD: updated 1 chunks | queue: 85
+Chunks: loaded 1 | queue: 20 | total: 929
+LOD: updated 1 chunks | queue: 84
+Chunks: loaded 1 | queue: 19 | total: 930
+LOD: updated 1 chunks | queue: 83
+Chunks: loaded 1 | queue: 18 | total: 931
+LOD: updated 1 chunks | queue: 82
+Chunks: loaded 1 | queue: 17 | total: 932
 LOD: updated 1 chunks | queue: 81
-Chunks: loaded 1 | queue: 20 | total: 940
+Chunks: loaded 1 | queue: 16 | total: 933
 LOD: updated 1 chunks | queue: 80
-Chunks: loaded 1 | queue: 19 | total: 941
+Chunks: loaded 1 | queue: 15 | total: 934
 LOD: updated 1 chunks | queue: 79
-Chunks: loaded 1 | queue: 18 | total: 942
+Chunks: loaded 1 | queue: 14 | total: 935
 LOD: updated 1 chunks | queue: 78
-Chunks: loaded 1 | queue: 17 | total: 943
+Chunks: loaded 1 | queue: 13 | total: 936 | FPS: 53 | Q:30%
 LOD: updated 1 chunks | queue: 77
-Chunks: loaded 1 | queue: 16 | total: 944
+Chunks: loaded 1 | queue: 12 | total: 937
 LOD: updated 1 chunks | queue: 76
-Chunks: loaded 1 | queue: 15 | total: 945
+Chunks: loaded 1 | queue: 11 | total: 938
 LOD: updated 1 chunks | queue: 75
-Chunks: loaded 1 | queue: 14 | total: 946 | FPS: 48 | Q:30%
+Chunks: loaded 1 | queue: 10 | total: 939
 LOD: updated 1 chunks | queue: 74
-Chunks: loaded 1 | queue: 13 | total: 947
+Chunks: loaded 1 | queue: 9 | total: 940
 LOD: updated 1 chunks | queue: 73
-Chunks: loaded 1 | queue: 12 | total: 948
+Chunks: loaded 1 | queue: 8 | total: 941
 LOD: updated 1 chunks | queue: 72
-Chunks: loaded 1 | queue: 11 | total: 949
+Chunks: loaded 1 | queue: 7 | total: 942
 LOD: updated 1 chunks | queue: 71
-Chunks: loaded 1 | queue: 10 | total: 950
+Chunks: loaded 1 | queue: 6 | total: 943
 LOD: updated 1 chunks | queue: 70
-Chunks: loaded 1 | queue: 9 | total: 951
+Chunks: loaded 1 | queue: 5 | total: 944
 LOD: updated 1 chunks | queue: 69
-Chunks: loaded 1 | queue: 8 | total: 952
+Chunks: loaded 1 | queue: 4 | total: 945
 LOD: updated 1 chunks | queue: 68
-Chunks: loaded 1 | queue: 7 | total: 953
+Chunks: loaded 1 | queue: 3 | total: 946 | FPS: 48 | Q:30%
 LOD: updated 1 chunks | queue: 67
-Chunks: loaded 1 | queue: 6 | total: 954
+Chunks: loaded 1 | queue: 2 | total: 947
 LOD: updated 1 chunks | queue: 66
-Chunks: loaded 1 | queue: 5 | total: 955
+Chunks: loaded 1 | queue: 1 | total: 948
 LOD: updated 1 chunks | queue: 65
-Chunks: loaded 1 | queue: 4 | total: 956 | FPS: 48 | Q:30%
+Chunks: loaded 1 | queue: 0 | total: 949
 LOD: updated 1 chunks | queue: 64
-Chunks: loaded 1 | queue: 3 | total: 957
 LOD: updated 1 chunks | queue: 63
-Chunks: loaded 1 | queue: 2 | total: 958
 LOD: updated 1 chunks | queue: 62
-Chunks: loaded 1 | queue: 1 | total: 959
 LOD: updated 1 chunks | queue: 61
-Chunks: loaded 1 | queue: 0 | total: 960
+LOD: updated 1 chunks | queue: 60
+LOD: updated 1 chunks | queue: 59
+LOD: updated 1 chunks | queue: 58
+LOD: updated 1 chunks | queue: 57
+LOD: updated 1 chunks | queue: 56
+LOD: updated 1 chunks | queue: 55
+LOD: updated 1 chunks | queue: 54
+LOD: updated 1 chunks | queue: 53
+LOD: updated 1 chunks | queue: 52
+LOD: updated 1 chunks | queue: 51
+LOD: updated 1 chunks | queue: 50
+LOD: updated 1 chunks | queue: 49
+LOD: updated 1 chunks | queue: 48
+LOD: updated 1 chunks | queue: 47
+LOD: updated 1 chunks | queue: 46
+LOD: updated 1 chunks | queue: 45
+LOD: updated 1 chunks | queue: 44
+LOD: updated 1 chunks | queue: 43
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+Chunks: queued 20 for unload
+Chunks: loaded 1 | queue: 31 | total: 950
+LOD: updated 1 chunks | queue: 133
+Chunks: unloaded 2 | queue: 18 | remaining: 948
+Chunks: loaded 1 | queue: 30 | total: 949
+LOD: updated 1 chunks | queue: 132
+Chunks: unloaded 2 | queue: 16 | remaining: 947
+Chunks: loaded 1 | queue: 29 | total: 948
+LOD: updated 1 chunks | queue: 131
+Chunks: unloaded 2 | queue: 14 | remaining: 946
+Chunks: loaded 1 | queue: 28 | total: 947
+LOD: updated 1 chunks | queue: 130
+Chunks: unloaded 2 | queue: 12 | remaining: 945
+Chunks: loaded 1 | queue: 27 | total: 946
+LOD: updated 1 chunks | queue: 129
+Chunks: unloaded 2 | queue: 10 | remaining: 944
+Chunks: loaded 1 | queue: 26 | total: 945
+LOD: updated 1 chunks | queue: 128
+Chunks: unloaded 2 | queue: 8 | remaining: 943
+Chunks: loaded 1 | queue: 25 | total: 944 | FPS: 48 | Q:30%
+LOD: updated 1 chunks | queue: 127
+Chunks: unloaded 2 | queue: 6 | remaining: 942
+Chunks: loaded 1 | queue: 24 | total: 943
+LOD: updated 1 chunks | queue: 126
+Chunks: unloaded 2 | queue: 4 | remaining: 941
+Chunks: loaded 1 | queue: 23 | total: 942
+LOD: updated 1 chunks | queue: 125
+Chunks: unloaded 2 | queue: 2 | remaining: 940
+Chunks: loaded 1 | queue: 22 | total: 941
+LOD: updated 1 chunks | queue: 124
+Chunks: unloaded 2 | queue: 0 | remaining: 939
+Chunks: loaded 1 | queue: 21 | total: 940
+LOD: updated 1 chunks | queue: 123
+Chunks: loaded 1 | queue: 20 | total: 941
+LOD: updated 1 chunks | queue: 122
+Chunks: loaded 1 | queue: 19 | total: 942
+LOD: updated 1 chunks | queue: 121
+Chunks: loaded 1 | queue: 18 | total: 943
+LOD: updated 1 chunks | queue: 120
+Chunks: loaded 1 | queue: 17 | total: 944
+LOD: updated 1 chunks | queue: 119
+Chunks: loaded 1 | queue: 16 | total: 945
+LOD: updated 1 chunks | queue: 118
+Chunks: loaded 1 | queue: 15 | total: 946 | FPS: 48 | Q:30%
+LOD: updated 1 chunks | queue: 117
+Chunks: loaded 1 | queue: 14 | total: 947
+LOD: updated 1 chunks | queue: 116
+Chunks: loaded 1 | queue: 13 | total: 948
+LOD: updated 1 chunks | queue: 115
+Chunks: loaded 1 | queue: 12 | total: 949
+LOD: updated 1 chunks | queue: 114
+Chunks: loaded 1 | queue: 11 | total: 950
+LOD: updated 1 chunks | queue: 113
+Chunks: loaded 1 | queue: 10 | total: 951
+LOD: updated 1 chunks | queue: 112
+Chunks: loaded 1 | queue: 9 | total: 952
+LOD: updated 1 chunks | queue: 111
+Chunks: loaded 1 | queue: 8 | total: 953
+LOD: updated 1 chunks | queue: 110
+Chunks: loaded 1 | queue: 7 | total: 954
+LOD: updated 1 chunks | queue: 109
+Chunks: loaded 1 | queue: 6 | total: 955
+LOD: updated 1 chunks | queue: 108
+Chunks: loaded 1 | queue: 5 | total: 956 | FPS: 49 | Q:30%
+LOD: updated 1 chunks | queue: 107
+Chunks: loaded 1 | queue: 4 | total: 957
+LOD: updated 1 chunks | queue: 106
+Chunks: loaded 1 | queue: 3 | total: 958
+LOD: updated 1 chunks | queue: 105
+Chunks: loaded 1 | queue: 2 | total: 959
+LOD: updated 1 chunks | queue: 104
+Chunks: loaded 1 | queue: 1 | total: 960
+LOD: updated 1 chunks | queue: 103
+Chunks: loaded 1 | queue: 0 | total: 961
+LOD: updated 1 chunks | queue: 102
+LOD: updated 1 chunks | queue: 101
+LOD: updated 1 chunks | queue: 100
+Chunks: loaded 1 | queue: 15 | total: 962
+LOD: updated 1 chunks | queue: 148
+Chunks: loaded 1 | queue: 14 | total: 963
+LOD: updated 1 chunks | queue: 147
+Chunks: loaded 1 | queue: 13 | total: 964
+LOD: updated 1 chunks | queue: 146
+Chunks: loaded 1 | queue: 12 | total: 965
+LOD: updated 1 chunks | queue: 145
+Chunks: loaded 1 | queue: 11 | total: 966 | FPS: 49 | Q:30%
+LOD: updated 1 chunks | queue: 144
+Chunks: loaded 1 | queue: 10 | total: 967
+LOD: updated 1 chunks | queue: 143
+Chunks: loaded 1 | queue: 9 | total: 968
+LOD: updated 1 chunks | queue: 142
+Chunks: loaded 1 | queue: 8 | total: 969
+LOD: updated 1 chunks | queue: 141
+Chunks: loaded 1 | queue: 7 | total: 970
+LOD: updated 1 chunks | queue: 140
+Chunks: loaded 1 | queue: 6 | total: 971
+LOD: updated 1 chunks | queue: 139
+Chunks: loaded 1 | queue: 5 | total: 972
+LOD: updated 1 chunks | queue: 138
+Chunks: loaded 1 | queue: 4 | total: 973
+LOD: updated 1 chunks | queue: 137
+Chunks: loaded 1 | queue: 3 | total: 974
+LOD: updated 1 chunks | queue: 136
+Chunks: loaded 1 | queue: 2 | total: 975
+LOD: updated 1 chunks | queue: 135
+Chunks: loaded 1 | queue: 1 | total: 976 | FPS: 49 | Q:30%
+LOD: updated 1 chunks | queue: 134
+Chunks: loaded 1 | queue: 0 | total: 977
+LOD: updated 1 chunks | queue: 133
+LOD: updated 1 chunks | queue: 132
+LOD: updated 1 chunks | queue: 131
+LOD: updated 1 chunks | queue: 130
+LOD: updated 1 chunks | queue: 129
+LOD: updated 1 chunks | queue: 128
+LOD: updated 1 chunks | queue: 127
+LOD: updated 1 chunks | queue: 126
+LOD: updated 1 chunks | queue: 125
+LOD: updated 1 chunks | queue: 124
+LOD: updated 1 chunks | queue: 123
+LOD: updated 1 chunks | queue: 122
+Chunks: loaded 1 | queue: 22 | total: 978
+LOD: updated 1 chunks | queue: 187
+Chunks: loaded 1 | queue: 21 | total: 979
+LOD: updated 1 chunks | queue: 186
+Chunks: loaded 1 | queue: 20 | total: 980
+LOD: updated 1 chunks | queue: 185
+Chunks: loaded 1 | queue: 19 | total: 981
+LOD: updated 1 chunks | queue: 184
+Chunks: loaded 1 | queue: 18 | total: 982
+LOD: updated 1 chunks | queue: 183
+Chunks: loaded 1 | queue: 17 | total: 983
+LOD: updated 1 chunks | queue: 182
+Chunks: loaded 1 | queue: 16 | total: 984
+LOD: updated 1 chunks | queue: 181
+Chunks: loaded 1 | queue: 15 | total: 985
+LOD: updated 1 chunks | queue: 180
+Chunks: loaded 1 | queue: 14 | total: 986 | FPS: 51 | Q:30%
+LOD: updated 1 chunks | queue: 179
+Chunks: loaded 1 | queue: 13 | total: 987
+LOD: updated 1 chunks | queue: 178
+Chunks: loaded 1 | queue: 12 | total: 988
+LOD: updated 1 chunks | queue: 177
+Chunks: loaded 1 | queue: 11 | total: 989
+LOD: updated 1 chunks | queue: 176
+Chunks: loaded 1 | queue: 10 | total: 990
+LOD: updated 1 chunks | queue: 175
+Chunks: loaded 1 | queue: 9 | total: 991
+LOD: updated 1 chunks | queue: 174
+Chunks: loaded 1 | queue: 8 | total: 992
+LOD: updated 1 chunks | queue: 173
+Chunks: loaded 1 | queue: 7 | total: 993
+LOD: updated 1 chunks | queue: 172
+Chunks: loaded 1 | queue: 6 | total: 994
+LOD: updated 1 chunks | queue: 171
+Chunks: loaded 1 | queue: 5 | total: 995
+LOD: updated 1 chunks | queue: 170
+Chunks: loaded 1 | queue: 4 | total: 996 | FPS: 51 | Q:30%
+LOD: updated 1 chunks | queue: 169
+Chunks: loaded 1 | queue: 3 | total: 997
+LOD: updated 1 chunks | queue: 168
+Chunks: loaded 1 | queue: 2 | total: 998
+LOD: updated 1 chunks | queue: 167
+Chunks: loaded 1 | queue: 1 | total: 999
+LOD: updated 1 chunks | queue: 166
+Chunks: loaded 1 | queue: 0 | total: 1000
+LOD: updated 1 chunks | queue: 165
+LOD: updated 1 chunks | queue: 164
+LOD: updated 1 chunks | queue: 163
+LOD: updated 1 chunks | queue: 162
+LOD: updated 1 chunks | queue: 161
+LOD: updated 1 chunks | queue: 160
+LOD: updated 1 chunks | queue: 159
+LOD: updated 1 chunks | queue: 158
+LOD: updated 1 chunks | queue: 157
+LOD: updated 1 chunks | queue: 156
+LOD: updated 1 chunks | queue: 155
+LOD: updated 1 chunks | queue: 154
+LOD: updated 1 chunks | queue: 153
+LOD: updated 1 chunks | queue: 152
+LOD: updated 1 chunks | queue: 151
+LOD: updated 1 chunks | queue: 150
+LOD: updated 1 chunks | queue: 149
+LOD: updated 1 chunks | queue: 148
+LOD: updated 1 chunks | queue: 147
+LOD: updated 1 chunks | queue: 146
+LOD: updated 1 chunks | queue: 145
+LOD: updated 1 chunks | queue: 144
+LOD: updated 1 chunks | queue: 143
+LOD: updated 1 chunks | queue: 142
+LOD: updated 1 chunks | queue: 141
+LOD: updated 1 chunks | queue: 140
+LOD: updated 1 chunks | queue: 139
+LOD: updated 1 chunks | queue: 138
+LOD: updated 1 chunks | queue: 137
+LOD: updated 1 chunks | queue: 136
+LOD: updated 1 chunks | queue: 135
+LOD: updated 1 chunks | queue: 134
+LOD: updated 1 chunks | queue: 133
+LOD: updated 1 chunks | queue: 132
+LOD: updated 1 chunks | queue: 131
+LOD: updated 1 chunks | queue: 130
+LOD: updated 1 chunks | queue: 129
+Chunks: loaded 1 | queue: 29 | total: 1001
+LOD: updated 1 chunks | queue: 217
+Chunks: loaded 1 | queue: 28 | total: 1002
+LOD: updated 1 chunks | queue: 216
+Chunks: loaded 1 | queue: 27 | total: 1003
+LOD: updated 1 chunks | queue: 215
+Chunks: loaded 1 | queue: 26 | total: 1004
+LOD: updated 1 chunks | queue: 214
+Chunks: loaded 1 | queue: 25 | total: 1005
+LOD: updated 1 chunks | queue: 213
+Chunks: loaded 1 | queue: 24 | total: 1006 | FPS: 50 | Q:30%
+LOD: updated 1 chunks | queue: 212
+Chunks: loaded 1 | queue: 23 | total: 1007
+LOD: updated 1 chunks | queue: 211
+Chunks: loaded 1 | queue: 22 | total: 1008
+LOD: updated 1 chunks | queue: 210
+Chunks: loaded 1 | queue: 21 | total: 1009
+LOD: updated 1 chunks | queue: 209
+Chunks: loaded 1 | queue: 20 | total: 1010
+LOD: updated 1 chunks | queue: 208
+Chunks: loaded 1 | queue: 19 | total: 1011
+LOD: updated 1 chunks | queue: 207
+Chunks: loaded 1 | queue: 18 | total: 1012
+LOD: updated 1 chunks | queue: 206
+Chunks: loaded 1 | queue: 17 | total: 1013
+LOD: updated 1 chunks | queue: 205
+Chunks: loaded 1 | queue: 16 | total: 1014
+LOD: updated 1 chunks | queue: 204
+Chunks: loaded 1 | queue: 15 | total: 1015
+LOD: updated 1 chunks | queue: 203
+Chunks: loaded 1 | queue: 14 | total: 1016 | FPS: 50 | Q:30%
+LOD: updated 1 chunks | queue: 202
+Chunks: loaded 1 | queue: 13 | total: 1017
+LOD: updated 1 chunks | queue: 201
+Chunks: loaded 1 | queue: 12 | total: 1018
+LOD: updated 1 chunks | queue: 200
+Chunks: loaded 1 | queue: 11 | total: 1019
+LOD: updated 1 chunks | queue: 199
+Chunks: loaded 1 | queue: 10 | total: 1020
+LOD: updated 1 chunks | queue: 198
+Chunks: loaded 1 | queue: 9 | total: 1021
+LOD: updated 1 chunks | queue: 197
+Chunks: loaded 1 | queue: 8 | total: 1022
+LOD: updated 1 chunks | queue: 196
+Chunks: loaded 1 | queue: 7 | total: 1023
+LOD: updated 1 chunks | queue: 195
+Chunks: loaded 1 | queue: 6 | total: 1024
+LOD: updated 1 chunks | queue: 194
+Chunks: loaded 1 | queue: 5 | total: 1025
+LOD: updated 1 chunks | queue: 193
+Chunks: loaded 1 | queue: 4 | total: 1026 | FPS: 50 | Q:30%
+LOD: updated 1 chunks | queue: 192
+Chunks: loaded 1 | queue: 3 | total: 1027
+LOD: updated 1 chunks | queue: 191
+Chunks: loaded 1 | queue: 2 | total: 1028
+LOD: updated 1 chunks | queue: 190
+Chunks: loaded 1 | queue: 1 | total: 1029
+LOD: updated 1 chunks | queue: 189
+Chunks: loaded 1 | queue: 0 | total: 1030
+LOD: updated 1 chunks | queue: 188
+LOD: updated 1 chunks | queue: 187
+LOD: updated 1 chunks | queue: 186
+LOD: updated 1 chunks | queue: 185
+LOD: updated 1 chunks | queue: 184
+LOD: updated 1 chunks | queue: 183
+LOD: updated 1 chunks | queue: 182
+LOD: updated 1 chunks | queue: 181
+LOD: updated 1 chunks | queue: 180
+LOD: updated 1 chunks | queue: 179
+LOD: updated 1 chunks | queue: 178
+LOD: updated 1 chunks | queue: 177
+LOD: updated 1 chunks | queue: 176
+LOD: updated 1 chunks | queue: 175
+LOD: updated 1 chunks | queue: 174
+LOD: updated 1 chunks | queue: 173
+LOD: updated 1 chunks | queue: 172
+LOD: updated 1 chunks | queue: 171
+LOD: updated 1 chunks | queue: 170
+LOD: updated 1 chunks | queue: 169
+LOD: updated 1 chunks | queue: 168
+LOD: updated 1 chunks | queue: 167
+LOD: updated 1 chunks | queue: 166
+LOD: updated 1 chunks | queue: 165
+LOD: updated 1 chunks | queue: 164
+LOD: updated 1 chunks | queue: 163
+LOD: updated 1 chunks | queue: 162
+LOD: updated 1 chunks | queue: 161
+LOD: updated 1 chunks | queue: 160
+LOD: updated 1 chunks | queue: 159
+Switched to: RAILGUN
+LOD: updated 1 chunks | queue: 158
+LOD: updated 1 chunks | queue: 157
+LOD: updated 1 chunks | queue: 156
+LOD: updated 1 chunks | queue: 155
+LOD: updated 1 chunks | queue: 154
+LOD: updated 1 chunks | queue: 153
+LOD: updated 1 chunks | queue: 152
+LOD: updated 1 chunks | queue: 151
+LOD: updated 1 chunks | queue: 150
+LOD: updated 1 chunks | queue: 149
+LOD: updated 1 chunks | queue: 148
+LOD: updated 1 chunks | queue: 147
+LOD: updated 1 chunks | queue: 146
+LOD: updated 1 chunks | queue: 145
+LOD: updated 1 chunks | queue: 144
+LOD: updated 1 chunks | queue: 143
+LOD: updated 1 chunks | queue: 142
+LOD: updated 1 chunks | queue: 141
+LOD: updated 1 chunks | queue: 140
+LOD: updated 1 chunks | queue: 139
+LOD: updated 1 chunks | queue: 138
+LOD: updated 1 chunks | queue: 137
+LOD: updated 1 chunks | queue: 136
+LOD: updated 1 chunks | queue: 135
+LOD: updated 1 chunks | queue: 134
+LOD: updated 1 chunks | queue: 133
+LOD: updated 1 chunks | queue: 132
+LOD: updated 1 chunks | queue: 131
+LOD: updated 1 chunks | queue: 130
+LOD: updated 1 chunks | queue: 129
+Switched to: CARBINE
+LOD: updated 1 chunks | queue: 128
+LOD: updated 1 chunks | queue: 127
+LOD: updated 1 chunks | queue: 126
+LOD: updated 1 chunks | queue: 125
+LOD: updated 1 chunks | queue: 124
+LOD: updated 1 chunks | queue: 123
+LOD: updated 1 chunks | queue: 122
+LOD: updated 1 chunks | queue: 121
+LOD: updated 1 chunks | queue: 120
+LOD: updated 1 chunks | queue: 119
+LOD: updated 1 chunks | queue: 118
+LOD: updated 1 chunks | queue: 117
+LOD: updated 1 chunks | queue: 116
+LOD: updated 1 chunks | queue: 115
+LOD: updated 1 chunks | queue: 114
+LOD: updated 1 chunks | queue: 113
+LOD: updated 1 chunks | queue: 112
+LOD: updated 1 chunks | queue: 111
+LOD: updated 1 chunks | queue: 110
+LOD: updated 1 chunks | queue: 109
+LOD: updated 1 chunks | queue: 108
+LOD: updated 1 chunks | queue: 107
+LOD: updated 1 chunks | queue: 106
+LOD: updated 1 chunks | queue: 105
+LOD: updated 1 chunks | queue: 104
+LOD: updated 1 chunks | queue: 103
+LOD: updated 1 chunks | queue: 102
+LOD: updated 1 chunks | queue: 101
+LOD: updated 1 chunks | queue: 100
+LOD: updated 1 chunks | queue: 99
+LOD: updated 1 chunks | queue: 98
+LOD: updated 1 chunks | queue: 97
+LOD: updated 1 chunks | queue: 96
+LOD: updated 1 chunks | queue: 95
+LOD: updated 1 chunks | queue: 94
+LOD: updated 1 chunks | queue: 93
+LOD: updated 1 chunks | queue: 92
+LOD: updated 1 chunks | queue: 91
+LOD: updated 1 chunks | queue: 90
+LOD: updated 1 chunks | queue: 89
+LOD: updated 1 chunks | queue: 88
+LOD: updated 1 chunks | queue: 87
+LOD: updated 1 chunks | queue: 86
+LOD: updated 1 chunks | queue: 85
+LOD: updated 1 chunks | queue: 84
+LOD: updated 1 chunks | queue: 83
+LOD: updated 1 chunks | queue: 82
+LOD: updated 1 chunks | queue: 81
+LOD: updated 1 chunks | queue: 80
+LOD: updated 1 chunks | queue: 79
+LOD: updated 1 chunks | queue: 78
+LOD: updated 1 chunks | queue: 77
+LOD: updated 1 chunks | queue: 76
+LOD: updated 1 chunks | queue: 75
+LOD: updated 1 chunks | queue: 74
+LOD: updated 1 chunks | queue: 73
+LOD: updated 1 chunks | queue: 72
+LOD: updated 1 chunks | queue: 71
+LOD: updated 1 chunks | queue: 70
+LOD: updated 1 chunks | queue: 69
+LOD: updated 1 chunks | queue: 68
+LOD: updated 1 chunks | queue: 67
+LOD: updated 1 chunks | queue: 66
+LOD: updated 1 chunks | queue: 65
+LOD: updated 1 chunks | queue: 64
+LOD: updated 1 chunks | queue: 63
+LOD: updated 1 chunks | queue: 62
+LOD: updated 1 chunks | queue: 61
 LOD: updated 1 chunks | queue: 60
 LOD: updated 1 chunks | queue: 59
 LOD: updated 1 chunks | queue: 58
@@ -969,7 +1284,6 @@ LOD: updated 1 chunks | queue: 12
 LOD: updated 1 chunks | queue: 11
 LOD: updated 1 chunks | queue: 10
 LOD: updated 1 chunks | queue: 9
-Fly mode: OFF
 LOD: updated 1 chunks | queue: 8
 LOD: updated 1 chunks | queue: 7
 LOD: updated 1 chunks | queue: 6
@@ -979,6 +1293,3 @@ LOD: updated 1 chunks | queue: 3
 LOD: updated 1 chunks | queue: 2
 LOD: updated 1 chunks | queue: 1
 LOD: updated 1 chunks | queue: 0
-XR: Clearing primary interface
-XR: Removed interface "Native mobile"
-XR: Removed interface "OpenXR"
