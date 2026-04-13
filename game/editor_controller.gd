@@ -36,6 +36,7 @@ var _orbit_pitch: float = -1.0
 var brush_radius: float = 15.0
 var brush_falloff: int = 0  # 0=Gaussian 1=Linear 2=Hard — matches TerrainManager.BrushFalloff
 var terrain_manager: Node = null
+var _frame_dirty: Dictionary = {}  # Vector2i -> true, deduped across one frame
 
 func _ready() -> void:
 	player_ref = get_node_or_null("../Player")
@@ -215,6 +216,7 @@ func _process(delta: float) -> void:
 	if player_ref and player_marker:
 		player_marker.global_position = player_ref.global_position
 	_tick_brush(delta)
+	_flush_dirty_chunks()
 
 func _tick_brush(delta: float) -> void:
 	if not is_editor_active:
@@ -239,9 +241,20 @@ func _tick_brush(delta: float) -> void:
 	if dirty.size() > 0:
 		_rebuild_dirty_chunks(dirty)
 
-func _rebuild_dirty_chunks(_dirty: Array) -> void:
-	# Implemented in Plan 02-03. Stub for now so Plan 02 lands independently.
-	pass
+func _rebuild_dirty_chunks(dirty: Array) -> void:
+	for c in dirty:
+		_frame_dirty[c] = true
+
+func _flush_dirty_chunks() -> void:
+	if _frame_dirty.is_empty() or terrain_manager == null:
+		return
+	for coord in _frame_dirty.keys():
+		if not terrain_manager.chunks.has(coord):
+			continue
+		var chunk = terrain_manager.chunks[coord]
+		if chunk and chunk.has_method("rebuild_mesh"):
+			chunk.rebuild_mesh()
+	_frame_dirty.clear()
 
 func _handle_keyboard(delta: float) -> void:
 	var pan_speed: float = BASE_PAN_SPEED * (_camera_altitude / 100.0)
