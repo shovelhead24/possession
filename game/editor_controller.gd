@@ -125,9 +125,15 @@ func _toggle() -> void:
 func enter_editor_mode() -> void:
 	is_editor_active = true
 	if player_ref:
-		_focus_point = player_ref.global_position
+		var p := player_ref.global_position
+		_focus_point = Vector3(p.x, 0.0, p.z)
 	else:
 		_focus_point = Vector3.ZERO
+	# Reset camera to a usable overhead angle each time editor is entered
+	_orbit_yaw = 0.0
+	_orbit_pitch = -1.2
+	_zoom_step = 3
+	_camera_altitude = ALTITUDE_STEPS[_zoom_step]
 	_update_camera_transform()
 	editor_camera.current = true
 	if player_marker:
