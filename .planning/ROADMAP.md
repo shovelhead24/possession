@@ -112,6 +112,14 @@
 
 ## Backlog (Future Milestones)
 
+### Phase 999.1 — Hide Play-Mode HUD in Editor Mode (BACKLOG)
+
+**Goal:** Hide the full play-mode HUD (CoordsLabel, SpeedLabel, DebugLabel, hud_instance) when entering editor mode. Extend `_on_editor_mode_changed` in `player.gd` to toggle `hud_instance.visible`, same pattern as the crosshair hide in Plan 01-03.
+**Requirements:** TBD
+**Plans:** 0 plans — promote with /gsd-review-backlog when ready
+
+---
+
 - Coastline / water placement editor
 - Enemy spawner placement in editor
 - Foliage density painting
