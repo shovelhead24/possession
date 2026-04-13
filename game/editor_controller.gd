@@ -23,6 +23,7 @@ var player_ref: Node3D = null
 var play_camera: Camera3D = null
 var editor_camera: Camera3D = null
 var player_marker: MeshInstance3D = null
+var _brush_cursor: MeshInstance3D = null
 var editor_hud_instance: CanvasLayer = null
 var _info_label: Label = null
 
@@ -46,6 +47,7 @@ func _ready() -> void:
 	editor_camera.fov = 50.0
 	add_child(editor_camera)
 	_create_player_marker()
+	_create_brush_cursor()
 	call_deferred("_spawn_editor_hud")
 	terrain_manager = get_node_or_null("../TerrainManager")
 
@@ -69,6 +71,42 @@ func _create_player_marker() -> void:
 	player_marker.material_override = mat
 	add_child(player_marker)
 	player_marker.visible = false
+
+func _create_brush_cursor() -> void:
+	_brush_cursor = MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 0.95
+	torus.outer_radius = 1.0
+	torus.rings = 48
+	torus.ring_segments = 8
+	_brush_cursor.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 0.6, 0.0, 1.0)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.no_depth_test = true
+	mat.render_priority = 1
+	_brush_cursor.material_override = mat
+	add_child(_brush_cursor)
+	_brush_cursor.visible = false
+
+func _update_brush_cursor() -> void:
+	if _brush_cursor == null:
+		return
+	if not is_editor_active:
+		_brush_cursor.visible = false
+		return
+	if Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_CTRL):
+		_brush_cursor.visible = false
+		return
+	var pos_v = _get_terrain_cursor_world_pos()
+	if pos_v == null:
+		_brush_cursor.visible = false
+		return
+	var pos: Vector3 = pos_v
+	_brush_cursor.visible = true
+	_brush_cursor.global_position = Vector3(pos.x, pos.y + 0.5, pos.z)
+	_brush_cursor.scale = Vector3(brush_radius, 1.0, brush_radius)
 
 func _unhandled_input(_event: InputEvent) -> void:
 	pass
@@ -161,6 +199,8 @@ func exit_editor_mode() -> void:
 	if player_hud:
 		player_hud.visible = true
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
+	if _brush_cursor:
+		_brush_cursor.visible = false
 	emit_signal("editor_mode_changed", false)
 
 func _get_player_hud() -> Node:
@@ -217,6 +257,7 @@ func _process(delta: float) -> void:
 		player_marker.global_position = player_ref.global_position
 	_tick_brush(delta)
 	_flush_dirty_chunks()
+	_update_brush_cursor()
 
 func _tick_brush(delta: float) -> void:
 	if not is_editor_active:
