@@ -21,11 +21,11 @@
 ### Phase 2 — Height Brush (Raise/Lower)
 *Paint height changes onto terrain in real time. Affects the procedural mesh.*
 
-**Plans:**
-- 2.1 Brush input — scroll to resize, hold key to strengthen, left/right click for raise/lower
-- 2.2 Height delta accumulation — store per-chunk height offsets that add to procedural heights
-- 2.3 Chunk rebuild on brush stroke — dirty-flag affected chunks, rebuild mesh only when needed
-- 2.4 Shader parameter propagation — rebuilt chunks pick up correct snow/grass thresholds
+**Plans:** 4 plans
+- [ ] 02-01-PLAN.md — Per-vertex height_offsets storage on TerrainChunk + apply_height_brush API on TerrainManager
+- [ ] 02-02-PLAN.md — Brush input (LMB/RMB, scroll radius, R boost, F falloff cycle) wired to apply_height_brush
+- [ ] 02-03-PLAN.md — TerrainChunk.rebuild_mesh + per-frame dirty-chunk rebuild in EditorController (visible paint result)
+- [ ] 02-04-PLAN.md — Brush cursor ring visual (TorusMesh under cursor, scales with radius)
 
 **UAT:** Paint raises a hill. Move away and return — hill persists. FPS stays 30+.
 
@@ -128,4 +128,4 @@
 - Quest / narrative system
 
 ---
-*Last updated: 2026-04-12*
+*Last updated: 2026-04-13*
