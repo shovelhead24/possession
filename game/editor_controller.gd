@@ -59,11 +59,16 @@ func _create_player_marker() -> void:
 	add_child(player_marker)
 	player_marker.visible = false
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("toggle_editor"):
-		_toggle()
+func _unhandled_input(_event: InputEvent) -> void:
+	pass
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var ek := event as InputEventKey
+		if ek.physical_keycode == KEY_TAB and ek.pressed and not ek.echo:
+			get_viewport().set_input_as_handled()
+			_toggle()
+			return
 	if not is_editor_active:
 		return
 	if event is InputEventMouseMotion:
