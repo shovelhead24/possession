@@ -15,6 +15,9 @@ var terrain_manager: Node  # Reference to TerrainManager
 # LOD system
 var current_lod: int = 0  # 0 = highest detail, higher = lower detail
 var lod_resolutions: Array = [16, 6, 3, 2]  # LOD0=fine LOD1=medium LOD2=coarse LOD3=minimal
+
+# Phase 2: Per-vertex height offsets for height brush editing
+var height_offsets: PackedFloat32Array = PackedFloat32Array()
 var has_collision: bool = true  # Only LOD 0-1 have collision
 var skirt_depth: float = 20.0  # Overridden per-LOD in generate_terrain()
 
@@ -98,6 +101,7 @@ func initialize(coords: Vector2i, world_noise: FastNoiseLite, lod: int = 0):
 	noise = world_noise
 	current_lod = clampi(lod, 0, lod_resolutions.size() - 1)
 	resolution = lod_resolutions[current_lod]
+	_ensure_offsets_sized()
 	position = Vector3(
 		coords.x * chunk_size,
 		0,
@@ -110,6 +114,7 @@ func set_lod(new_lod: int):
 	if new_lod == current_lod:
 		return
 
+	var old_res := resolution
 	current_lod = new_lod
 	resolution = lod_resolutions[current_lod]
 
@@ -132,25 +137,91 @@ func set_lod(new_lod: int):
 		if child.name == "Props" or child.name == "WaterPlane":
 			child.queue_free()
 
+	# Resample height offsets to new resolution before regenerating
+	_resample_offsets(old_res)
+
 	# Regenerate at new LOD
 	generate_terrain()
 
 # Use terrain manager's height function if available, otherwise use noise
 func get_height_at_world_pos(world_x: float, world_z: float) -> float:
+	var base: float = 0.0
 	if terrain_manager and terrain_manager.has_method("get_height_at_position"):
-		var world_pos = Vector3(world_x, 0, world_z)
-		return terrain_manager.get_height_at_position(world_pos)
+		base = terrain_manager.get_height_at_position(Vector3(world_x, 0, world_z))
 	else:
 		# Fallback to original noise-based height
 		if not noise:
 			return 0.0
-		var height = noise.get_noise_2d(world_x, world_z) * height_scale
-		height += noise.get_noise_2d(world_x * 2, world_z * 2) * height_scale * 0.5
-		height += noise.get_noise_2d(world_x * 4, world_z * 4) * height_scale * 0.25
-		return height
+		base = noise.get_noise_2d(world_x, world_z) * height_scale
+		base += noise.get_noise_2d(world_x * 2, world_z * 2) * height_scale * 0.5
+		base += noise.get_noise_2d(world_x * 4, world_z * 4) * height_scale * 0.25
+	# Apply per-vertex height offset (Phase 2 height brush)
+	var local_x: float = world_x - position.x
+	var local_z: float = world_z - position.z
+	base += _sample_offset(local_x, local_z)
+	return base
+
+# Ensure height_offsets is sized to match current resolution grid, filling with 0.0 if needed.
+func _ensure_offsets_sized() -> void:
+	var expected: int = (resolution + 1) * (resolution + 1)
+	if height_offsets.size() != expected:
+		height_offsets.resize(expected)
+		height_offsets.fill(0.0)
+
+# Bilinear sample of the height_offsets grid at local chunk coordinates.
+# local_x, local_z are in [-chunk_size/2, +chunk_size/2].
+func _sample_offset(local_x: float, local_z: float) -> float:
+	if height_offsets.is_empty():
+		return 0.0
+	var half: float = chunk_size / 2.0
+	# Convert local [-half, +half] to grid [0, resolution]
+	var gx: float = (local_x + half) / chunk_size * float(resolution)
+	var gz: float = (local_z + half) / chunk_size * float(resolution)
+	if gx < 0.0 or gz < 0.0 or gx > float(resolution) or gz > float(resolution):
+		return 0.0
+	var x0: int = int(floor(gx))
+	var z0: int = int(floor(gz))
+	var x1: int = min(x0 + 1, resolution)
+	var z1: int = min(z0 + 1, resolution)
+	var fx: float = gx - float(x0)
+	var fz: float = gz - float(z0)
+	var stride: int = resolution + 1
+	var h00: float = height_offsets[z0 * stride + x0]
+	var h10: float = height_offsets[z0 * stride + x1]
+	var h01: float = height_offsets[z1 * stride + x0]
+	var h11: float = height_offsets[z1 * stride + x1]
+	var h0: float = lerp(h00, h10, fx)
+	var h1: float = lerp(h01, h11, fx)
+	return lerp(h0, h1, fz)
+
+# Resample height_offsets from old_resolution grid to current resolution grid.
+# Called by set_lod() when resolution changes, so brush edits survive LOD transitions.
+func _resample_offsets(old_resolution: int) -> void:
+	if height_offsets.is_empty() or old_resolution == resolution:
+		_ensure_offsets_sized()
+		return
+	var old_stride: int = old_resolution + 1
+	var old_data: PackedFloat32Array = height_offsets.duplicate()
+	var new_size: int = (resolution + 1) * (resolution + 1)
+	var new_data: PackedFloat32Array = PackedFloat32Array()
+	new_data.resize(new_size)
+	for z in range(resolution + 1):
+		for x in range(resolution + 1):
+			var u: float = float(x) / float(resolution) * float(old_resolution)
+			var v: float = float(z) / float(resolution) * float(old_resolution)
+			var x0: int = int(floor(u)); var z0: int = int(floor(v))
+			var x1: int = min(x0 + 1, old_resolution); var z1: int = min(z0 + 1, old_resolution)
+			var fx: float = u - float(x0); var fz: float = v - float(z0)
+			var h00: float = old_data[z0 * old_stride + x0]
+			var h10: float = old_data[z0 * old_stride + x1]
+			var h01: float = old_data[z1 * old_stride + x0]
+			var h11: float = old_data[z1 * old_stride + x1]
+			new_data[z * (resolution + 1) + x] = lerp(lerp(h00, h10, fx), lerp(h01, h11, fx), fz)
+	height_offsets = new_data
 
 func generate_terrain():
 	var start_time = Time.get_ticks_msec()
+	_ensure_offsets_sized()
 
 	# Skirt must be deep enough to cover height mismatches between adjacent chunks.
 	# Coarser LODs have larger height steps between chunks, so scale accordingly.
