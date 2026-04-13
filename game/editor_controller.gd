@@ -165,7 +165,7 @@ func enter_editor_mode() -> void:
 	is_editor_active = true
 	if player_ref:
 		var p := player_ref.global_position
-		_focus_point = Vector3(p.x, 0.0, p.z)
+		_focus_point = Vector3(p.x, p.y - 1.5, p.z)
 	else:
 		_focus_point = Vector3.ZERO
 	# Reset camera to a usable overhead angle each time editor is entered
@@ -289,7 +289,13 @@ func _rebuild_dirty_chunks(dirty: Array) -> void:
 func _flush_dirty_chunks() -> void:
 	if _frame_dirty.is_empty() or terrain_manager == null:
 		return
+	# Expand dirty set to include 4 direct neighbors so shared edges stay stitched
+	var expanded: Dictionary = {}
 	for coord in _frame_dirty.keys():
+		expanded[coord] = true
+		for offset in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
+			expanded[coord + offset] = true
+	for coord in expanded.keys():
 		if not terrain_manager.chunks.has(coord):
 			continue
 		var chunk = terrain_manager.chunks[coord]
