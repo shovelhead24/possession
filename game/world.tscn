@@ -1,5 +1,6 @@
-[gd_scene load_steps=19 format=3 uid="uid://baveer3oax27d"]
+[gd_scene load_steps=20 format=3 uid="uid://baveer3oax27d"]
 
+[ext_resource type="Script" path="res://editor_controller.gd" id="14_editor_ctrl"]
 [ext_resource type="Script" path="res://ancient_structures.gd" id="13_ancient"]
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_f3sb7"]
 [ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_fj7yv"]
@@ -130,6 +131,9 @@ shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_tlwt5")
+
+[node name="EditorController" type="Node3D" parent="."]
+script = ExtResource("14_editor_ctrl")
 
 [node name="TerrainManager" type="Node3D" parent="."]
 script = ExtResource("3_tlwt5")

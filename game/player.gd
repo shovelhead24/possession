@@ -136,6 +136,18 @@ func _ready():
 	if not bullet_scene:
 		bullet_scene = preload("res://bullet.tscn")
 
+	var _ec := get_node_or_null("/root/World/EditorController")
+	if _ec:
+		_ec.editor_mode_changed.connect(_on_editor_mode_changed)
+
+func _on_editor_mode_changed(active: bool) -> void:
+	set_physics_process(not active)
+	set_process_input(not active)
+	if active:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
 func _on_window_focus_lost():
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
