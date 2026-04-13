@@ -219,6 +219,22 @@ func _resample_offsets(old_resolution: int) -> void:
 			new_data[z * (resolution + 1) + x] = lerp(lerp(h00, h10, fx), lerp(h01, h11, fx), fz)
 	height_offsets = new_data
 
+# Public rebuild used by the height brush. Tears down the previous mesh/collision
+# (mirroring set_lod() teardown) and re-runs generate_terrain() which re-applies
+# all shader params (D-10). Props are deliberately NOT touched — brush rebuilds
+# happen too frequently; prop repositioning is a Phase 3+ concern.
+func rebuild_mesh() -> void:
+	# Remove stale mesh instance created by previous generate_terrain()
+	if mesh_instance and is_instance_valid(mesh_instance):
+		mesh_instance.queue_free()
+		mesh_instance = null
+	# Remove stale collision body (generate_terrain recreates it for LOD0-1)
+	if collision_body and is_instance_valid(collision_body):
+		collision_body.queue_free()
+		collision_body = null
+	# Rebuild (generate_terrain recreates mesh, collision for LOD0-1, shader params)
+	generate_terrain()
+
 func generate_terrain():
 	var start_time = Time.get_ticks_msec()
 	_ensure_offsets_sized()
