@@ -10,6 +10,7 @@ key_files:
     - game/editor_controller.gd
 commits:
   - 0cb6de1  feat(02-04): add brush cursor ring — orange torus, scales with radius, hides on camera-drag
+  - 315b8d4  fix(02-04): camera focus uses player Y not sea level; expand dirty set to stitch chunk edges
 metrics:
   completed_date: "2026-04-13"
   tasks_completed: 1
@@ -30,10 +31,15 @@ Added to `game/editor_controller.gd`:
 - `_update_brush_cursor()` — called from `_process()` each frame. Hides when editor inactive, when Shift/Ctrl held (camera-drag mode), or when raycast misses. Otherwise positions at `hit.y + 0.5` and sets `scale = Vector3(brush_radius, 1.0, brush_radius)`.
 - `exit_editor_mode()` — hides cursor on exit.
 
-## Task 2 — UAT
+## UAT Fixes Applied
 
-Awaiting in-game verification after push.
+**Camera underground (FIXED):** Camera focus Y was hardcoded to 0 — wrong when terrain is above sea level. Fixed to use `player.y - 1.5` so the camera always orbits above the actual terrain surface.
+
+**Chunk edge seams (FIXED):** `_flush_dirty_chunks()` now expands the rebuild set to include 4 direct neighbors of each dirty chunk, so shared edge vertices on both sides of a boundary are always rebuilt together.
+
+**Warthog collision blocking brush raycast (OPEN):** Warthog `VehicleBody3D` likely shares collision layer 1 with terrain. If the warthog hull is between the camera and the ground, the raycast hits the vehicle instead of terrain. Needs dedicated brush raycast layer — deferred, investigate after camera fix lands.
 
 ## Known Limitations
 
 - Cursor floats 0.5 m above surface — may look slightly detached on steep slopes.
+- Warthog may intercept brush raycasts if parked between camera and terrain.
