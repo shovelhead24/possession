@@ -140,6 +140,10 @@ func enter_editor_mode() -> void:
 		player_marker.visible = true
 	if editor_hud_instance:
 		editor_hud_instance.visible = true
+	# Hide player HUD while editing
+	var player_hud := _get_player_hud()
+	if player_hud:
+		player_hud.visible = false
 	emit_signal("editor_mode_changed", true)
 
 func exit_editor_mode() -> void:
@@ -151,8 +155,20 @@ func exit_editor_mode() -> void:
 		player_marker.visible = false
 	if editor_hud_instance:
 		editor_hud_instance.visible = false
+	# Restore player HUD
+	var player_hud := _get_player_hud()
+	if player_hud:
+		player_hud.visible = true
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	emit_signal("editor_mode_changed", false)
+
+func _get_player_hud() -> Node:
+	if player_ref == null:
+		return null
+	# player.gd stores hud_instance as a property
+	if player_ref.get("hud_instance") != null:
+		return player_ref.hud_instance
+	return null
 
 func _get_terrain_cursor_world_pos() -> Variant:
 	var viewport := get_viewport()
