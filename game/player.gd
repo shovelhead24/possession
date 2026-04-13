@@ -147,6 +147,10 @@ func _on_editor_mode_changed(active: bool) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if hud_instance:
+		var _crosshair := hud_instance.get_node_or_null("Crosshair")
+		if _crosshair:
+			_crosshair.visible = not active
 
 func _on_window_focus_lost():
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

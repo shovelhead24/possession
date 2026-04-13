@@ -11,11 +11,15 @@ const PAN_MOUSE_SENSITIVITY: float = 0.3
 const PITCH_MIN: float = -1.5
 const PITCH_MAX: float = -0.1
 
+@export var editor_hud_scene: PackedScene = preload("res://editor_hud.tscn")
+
 var is_editor_active: bool = false
 var player_ref: Node3D = null
 var play_camera: Camera3D = null
 var editor_camera: Camera3D = null
 var player_marker: MeshInstance3D = null
+var editor_hud_instance: CanvasLayer = null
+var _info_label: Label = null
 
 var _focus_point: Vector3 = Vector3.ZERO
 var _camera_altitude: float = 150.0
@@ -32,6 +36,15 @@ func _ready() -> void:
 	editor_camera.fov = 50.0
 	add_child(editor_camera)
 	_create_player_marker()
+	call_deferred("_spawn_editor_hud")
+
+func _spawn_editor_hud() -> void:
+	if editor_hud_scene == null:
+		return
+	editor_hud_instance = editor_hud_scene.instantiate() as CanvasLayer
+	get_tree().current_scene.add_child(editor_hud_instance)
+	editor_hud_instance.visible = false
+	_info_label = editor_hud_instance.get_node_or_null("InfoLabel") as Label
 
 func _create_player_marker() -> void:
 	player_marker = MeshInstance3D.new()
@@ -90,6 +103,8 @@ func enter_editor_mode() -> void:
 	editor_camera.current = true
 	if player_marker:
 		player_marker.visible = true
+	if editor_hud_instance:
+		editor_hud_instance.visible = true
 	emit_signal("editor_mode_changed", true)
 
 func exit_editor_mode() -> void:
@@ -99,8 +114,35 @@ func exit_editor_mode() -> void:
 		play_camera.current = true
 	if player_marker:
 		player_marker.visible = false
+	if editor_hud_instance:
+		editor_hud_instance.visible = false
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	emit_signal("editor_mode_changed", false)
+
+func _get_terrain_cursor_world_pos() -> Variant:
+	var viewport := get_viewport()
+	if viewport == null:
+		return null
+	var mouse_pos := viewport.get_mouse_position()
+	var ray_origin := editor_camera.project_ray_origin(mouse_pos)
+	var ray_dir := editor_camera.project_ray_normal(mouse_pos)
+	var ray_end := ray_origin + ray_dir * 10000.0
+	var query := PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
+	query.collision_mask = 1
+	var result := get_world_3d().direct_space_state.intersect_ray(query)
+	if result.is_empty():
+		return null
+	return result["position"]
+
+func _update_hud() -> void:
+	if _info_label == null:
+		return
+	var pos := _get_terrain_cursor_world_pos()
+	if pos == null:
+		_info_label.text = "X: --  Z: --  Zoom: %d" % _zoom_step
+	else:
+		var p: Vector3 = pos
+		_info_label.text = "X: %d  Z: %d  Zoom: %d" % [int(p.x), int(p.z), _zoom_step]
 
 func _update_camera_transform() -> void:
 	var offset := Vector3(
@@ -118,6 +160,7 @@ func _process(delta: float) -> void:
 		_zoom_cooldown -= delta
 	_handle_keyboard(delta)
 	_update_camera_transform()
+	_update_hud()
 	if player_ref and player_marker:
 		player_marker.global_position = player_ref.global_position
 
