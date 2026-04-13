@@ -22,10 +22,10 @@
 *Paint height changes onto terrain in real time. Affects the procedural mesh.*
 
 **Plans:** 4 plans
-- [ ] 02-01-PLAN.md — Per-vertex height_offsets storage on TerrainChunk + apply_height_brush API on TerrainManager
-- [ ] 02-02-PLAN.md — Brush input (LMB/RMB, scroll radius, R boost, F falloff cycle) wired to apply_height_brush
-- [ ] 02-03-PLAN.md — TerrainChunk.rebuild_mesh + per-frame dirty-chunk rebuild in EditorController (visible paint result)
-- [ ] 02-04-PLAN.md — Brush cursor ring visual (TorusMesh under cursor, scales with radius)
+- [x] 02-01-PLAN.md — Per-vertex height_offsets storage on TerrainChunk + apply_height_brush API on TerrainManager
+- [x] 02-02-PLAN.md — Brush input (LMB/RMB, scroll radius, R boost, F falloff cycle) wired to apply_height_brush
+- [x] 02-03-PLAN.md — TerrainChunk.rebuild_mesh + per-frame dirty-chunk rebuild in EditorController (visible paint result)
+- [x] 02-04-PLAN.md — Brush cursor ring visual (TorusMesh under cursor, scales with radius)
 
 **UAT:** Paint raises a hill. Move away and return — hill persists. FPS stays 30+.
 
