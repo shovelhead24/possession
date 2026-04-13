@@ -3,12 +3,12 @@
 ## Current Status
 
 **Milestone:** 1 — Terrain Editor + World Shaping  
-**Phase:** Not started — ready to plan Phase 1  
-**Last action:** GSD initialized from session 1 context (2026-04-12)
+**Phase:** 1 complete — ready for Phase 2  
+**Last action:** Phase 1 (Editor Mode Infrastructure) — UAT passed 2026-04-13
 
 ## Active Work
 
-None — run `/gsd-plan-phase 1` to begin.
+Phase 1 complete. Run `/gsd-plan-phase 2` to begin Height Brush.
 
 ## Session 1 Summary
 
