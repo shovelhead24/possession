@@ -295,12 +295,17 @@ func _flush_dirty_chunks() -> void:
 		expanded[coord] = true
 		for offset in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
 			expanded[coord + offset] = true
+	var rebuilt: Array = []
+	var missing: Array = []
 	for coord in expanded.keys():
 		if not terrain_manager.chunks.has(coord):
+			missing.append(coord)
 			continue
 		var chunk = terrain_manager.chunks[coord]
 		if chunk and chunk.has_method("rebuild_mesh"):
 			chunk.rebuild_mesh()
+			rebuilt.append("%s(LOD%d)" % [coord, chunk.current_lod])
+	print("Brush rebuild: %s | missing: %s" % [rebuilt, missing])
 	_frame_dirty.clear()
 
 func _handle_keyboard(delta: float) -> void:
