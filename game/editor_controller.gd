@@ -137,7 +137,7 @@ func _get_terrain_cursor_world_pos() -> Variant:
 func _update_hud() -> void:
 	if _info_label == null:
 		return
-	var pos := _get_terrain_cursor_world_pos()
+	var pos: Variant = _get_terrain_cursor_world_pos()
 	if pos == null:
 		_info_label.text = "X: --  Z: --  Zoom: %d" % _zoom_step
 	else:
