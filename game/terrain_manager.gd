@@ -1148,3 +1148,60 @@ func get_noise_height_at_position(world_pos: Vector3) -> float:
 func smoothstep_gd(edge0: float, edge1: float, x: float) -> float:
 	var t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0)
 	return t * t * (3.0 - 2.0 * t)
+
+# --- Phase 2: Height Brush API ---
+enum BrushFalloff { GAUSSIAN = 0, LINEAR = 1, HARD = 2 }
+
+# Apply an additive height delta over a circular area. Mutates affected chunks'
+# height_offsets arrays in place but does NOT rebuild meshes (caller does that).
+# Returns an Array of Vector2i chunk coords that were modified (dirty set).
+func apply_height_brush(world_pos: Vector3, radius: float, strength: float, falloff: int = BrushFalloff.GAUSSIAN) -> Array:
+	var dirty: Array = []
+	if radius <= 0.0 or absf(strength) < 0.0001:
+		return dirty
+	var min_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x - radius, 0.0, world_pos.z - radius))
+	var max_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x + radius, 0.0, world_pos.z + radius))
+	for cz in range(min_coord.y, max_coord.y + 1):
+		for cx in range(min_coord.x, max_coord.x + 1):
+			var coord: Vector2i = Vector2i(cx, cz)
+			if not chunks.has(coord):
+				continue
+			var chunk = chunks[coord]
+			if chunk == null or not "height_offsets" in chunk:
+				continue
+			if chunk.height_offsets.is_empty():
+				chunk._ensure_offsets_sized()
+			var res: int = chunk.resolution
+			var stride: int = res + 1
+			var cs: float = chunk.chunk_size
+			var half: float = cs / 2.0
+			var touched: bool = false
+			for z in range(res + 1):
+				for x in range(res + 1):
+					var local_x: float = (float(x) / float(res)) * cs - half
+					var local_z: float = (float(z) / float(res)) * cs - half
+					var wx: float = chunk.position.x + local_x
+					var wz: float = chunk.position.z + local_z
+					var dx: float = wx - world_pos.x
+					var dz: float = wz - world_pos.z
+					var dist_sq: float = dx * dx + dz * dz
+					var r_sq: float = radius * radius
+					if dist_sq > r_sq:
+						continue
+					var dist: float = sqrt(dist_sq)
+					var weight: float = 0.0
+					match falloff:
+						BrushFalloff.GAUSSIAN:
+							var sigma: float = radius * 0.5
+							weight = exp(-dist_sq / (2.0 * sigma * sigma))
+						BrushFalloff.LINEAR:
+							weight = 1.0 - (dist / radius)
+						BrushFalloff.HARD:
+							weight = 1.0
+						_:
+							weight = 1.0
+					chunk.height_offsets[z * stride + x] += strength * weight
+					touched = true
+			if touched and not dirty.has(coord):
+				dirty.append(coord)
+	return dirty
