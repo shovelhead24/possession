@@ -114,7 +114,7 @@ func _unhandled_input(_event: InputEvent) -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var ek := event as InputEventKey
-		if ek.physical_keycode == KEY_TAB and ek.pressed and not ek.echo:
+		if ek.physical_keycode == KEY_F3 and ek.pressed and not ek.echo:
 			get_viewport().set_input_as_handled()
 			_toggle()
 			return
