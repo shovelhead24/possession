@@ -109,3 +109,13 @@ UAT surfaced two blocking issues:
 - `game/terrain_chunk.gd` — `func rebuild_mesh` present
 - `game/editor_controller.gd` — `_frame_dirty`, `_flush_dirty_chunks`, `chunk.rebuild_mesh()` all present
 - All 4 commits verified in git log
+
+## UAT Gap Notes (2026-04-13)
+
+Brush is working but three gaps noted for follow-up:
+
+- **Camera spawns under terrain** — Y=0 reset is wrong when terrain sits above sea level. Editor camera needs to raycast for ground height on entry, or use a configurable floor offset.
+- **No free-look in editor** — orbit-only camera is too restrictive; user needs to pan/tilt freely to aim the brush at arbitrary angles.
+- **Brush activation patchy** — raise/lower only triggers at certain cursor positions. Likely a raycast layer mask or collider coverage gap. Needs investigation.
+
+These are marked as follow-up items, not blockers for Phase 2 completion.
