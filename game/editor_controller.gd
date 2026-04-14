@@ -223,6 +223,11 @@ func _get_terrain_cursor_world_pos() -> Variant:
 	query.collision_mask = 1
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	if result.is_empty():
+		# LOD2/3 chunks have no collision body — fall back to a horizontal plane
+		# at the camera focus height so the brush works everywhere.
+		if ray_dir.y < -0.001:
+			var t := (_focus_point.y - ray_origin.y) / ray_dir.y
+			return ray_origin + ray_dir * t
 		return null
 	return result["position"]
 
