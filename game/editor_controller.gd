@@ -289,29 +289,18 @@ func _rebuild_dirty_chunks(dirty: Array) -> void:
 func _flush_dirty_chunks() -> void:
 	if _frame_dirty.is_empty() or terrain_manager == null:
 		return
-	# Expand dirty set to include 4 direct neighbors so shared edges stay stitched
-	var expanded: Dictionary = {}
+	# Only rebuild chunks that were actually painted — rebuilding unmodified
+	# neighbors from unchanged height_offsets creates seams with THEIR other
+	# neighbors that are outside the rebuild set.
+	var rebuilt: Array = []
 	for coord in _frame_dirty.keys():
-		expanded[coord] = true
-		for offset in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
-			expanded[coord + offset] = true
-	var painted: Array = []
-	var expanded_only: Array = []
-	var missing: Array = []
-	for coord in expanded.keys():
-		var was_painted: bool = _frame_dirty.has(coord)
 		if not terrain_manager.chunks.has(coord):
-			missing.append(coord)
 			continue
 		var chunk = terrain_manager.chunks[coord]
 		if chunk and chunk.has_method("rebuild_mesh"):
 			chunk.rebuild_mesh()
-			var tag: String = "%s(LOD%d)" % [coord, chunk.current_lod]
-			if was_painted:
-				painted.append(tag)
-			else:
-				expanded_only.append(tag)
-	print("Brush painted: %s | expanded: %s | missing: %s" % [painted, expanded_only, missing])
+			rebuilt.append("%s(LOD%d)" % [coord, chunk.current_lod])
+	_frame_dirty.clear()
 	_frame_dirty.clear()
 
 func _handle_keyboard(delta: float) -> void:
