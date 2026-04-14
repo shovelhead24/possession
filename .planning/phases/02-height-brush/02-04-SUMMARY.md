@@ -43,3 +43,13 @@ Added to `game/editor_controller.gd`:
 
 - Cursor floats 0.5 m above surface — may look slightly detached on steep slopes.
 - Warthog may intercept brush raycasts if parked between camera and terrain.
+
+## UAT Result: PASSED (seam fix outstanding)
+
+**Cursor ring:** visible, scales with radius, follows cursor. ✓
+**Camera:** spawns above terrain on F3 entry. ✓
+**HUD:** hidden in editor, restored on exit. ✓
+**Brush:** raises and lowers terrain. ✓
+**Keybind:** F3 (Tab was eaten by ui_focus_next). ✓
+
+**KNOWN BLOCKER — Edge seams:** After painting, chunk boundary seams are visible and do not self-heal. Neighbor chunks are being rebuilt (confirmed via logging) but the shared edge vertices don't match because unpainted neighbor chunks regenerate from unmodified height_offsets. Fix needed: propagate edge vertex offsets to neighbor chunks in apply_height_brush. Tracked as follow-up work.
