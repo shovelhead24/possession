@@ -1159,8 +1159,12 @@ func apply_height_brush(world_pos: Vector3, radius: float, strength: float, fall
 	var dirty: Array = []
 	if radius <= 0.0 or absf(strength) < 0.0001:
 		return dirty
-	var min_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x - radius, 0.0, world_pos.z - radius))
-	var max_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x + radius, 0.0, world_pos.z + radius))
+	# Chunks are centered on coords*chunk_size, but get_chunk_coords uses floor division
+	# which treats them as left-aligned. Expand the search box by half a chunk on each
+	# side so we never miss a chunk whose vertices fall inside the brush radius.
+	var half_cs: float = chunk_size * 0.5
+	var min_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x - radius - half_cs, 0.0, world_pos.z - radius - half_cs))
+	var max_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x + radius + half_cs, 0.0, world_pos.z + radius + half_cs))
 	for cz in range(min_coord.y, max_coord.y + 1):
 		for cx in range(min_coord.x, max_coord.x + 1):
 			var coord: Vector2i = Vector2i(cx, cz)
