@@ -183,6 +183,7 @@ function Push-Log {
     git -C $projectPath add "logs/godot_latest.log" 2>$null
     $msg = "log: laptop push $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
     git -C $projectPath commit -m $msg 2>$null
+    git -C $projectPath pull --rebase origin main 2>$null
     git -C $projectPath push --quiet origin main 2>$null
     Write-Host "$(Get-Date -Format HH:mm:ss) Log pushed - Claude can now read logs/godot_latest.log" -ForegroundColor Green
 }
@@ -198,7 +199,7 @@ $startRemote = git -C $projectPath rev-parse origin/main 2>$null
 $startLocal  = git -C $projectPath rev-parse HEAD 2>$null
 if ($startRemote -and $startRemote -ne $startLocal) {
     Write-Host "$(Get-Date -Format HH:mm:ss) Behind origin - pulling now..." -ForegroundColor Cyan
-    git -C $projectPath pull origin main 2>$null
+    git -C $projectPath pull --rebase origin main 2>$null
     Write-Host "$(Get-Date -Format HH:mm:ss) Pulled." -ForegroundColor Green
 } else {
     $localShort = $startLocal.Substring(0,8)
@@ -230,7 +231,7 @@ while ($true) {
 
     if ($remoteHash -and $remoteHash -ne $lastHash) {
         Write-Host "$(Get-Date -Format HH:mm:ss) New commits detected - pulling..."
-        git -C $projectPath pull origin main 2>$null
+        git -C $projectPath pull --rebase origin main 2>$null
         $lastHash = git -C $projectPath rev-parse HEAD 2>$null  # Use actual local state
         Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
         $godotProcess = Start-Godot $godotProcess
