@@ -16,8 +16,8 @@ const BRUSH_RADIUS_STEP: float = 2.0
 const BRUSH_STRENGTH_PER_SEC: float = 30.0
 const BRUSH_BOOST_MULT: float = 2.0
 const CTRL_DEADZONE: float = 0.15
-const CTRL_ORBIT_SPEED: float = 2.0   # rad/sec at full stick deflection
-const CTRL_RADIUS_SPEED: float = 30.0 # units/sec while bumper held
+const CTRL_CURSOR_SPEED: float = 900.0 # px/sec at full stick deflection
+const CTRL_RADIUS_SPEED: float = 30.0  # units/sec while bumper held
 const CTRL_TRIGGER_THRESHOLD: float = 0.1
 
 enum BrushMode { RAISE_LOWER = 0, SMOOTH = 1, FLATTEN = 2 }
@@ -48,6 +48,7 @@ var _flatten_target_offset: float = 0.0    # height_offset sampled on first LMB 
 var _flatten_lmb_was_pressed: bool = false  # true while LMB held in flatten mode
 var terrain_manager: Node = null
 var _frame_dirty: Dictionary = {}  # Vector2i -> true, deduped across one frame
+var _ctrl_cursor_pos: Vector2 = Vector2.ZERO  # virtual cursor driven by right stick
 
 func _ready() -> void:
 	player_ref = get_node_or_null("../Player")
@@ -102,12 +103,11 @@ func _create_brush_cursor() -> void:
 	_brush_cursor.visible = false
 
 func _get_brush_world_pos() -> Variant:
-	# Controller: raycast from screen centre so the brush tracks the camera aim point.
-	# Mouse: use normal cursor raycast.
-	var use_center: bool = Input.get_connected_joypads().size() > 0
+	# Controller: raycast from the virtual cursor driven by the right stick.
+	# Mouse: use the actual mouse position.
 	var screen_pos: Vector2
-	if use_center:
-		screen_pos = get_viewport().get_visible_rect().size * 0.5
+	if Input.get_connected_joypads().size() > 0:
+		screen_pos = _ctrl_cursor_pos
 	else:
 		screen_pos = get_viewport().get_mouse_position()
 	var ray_origin := editor_camera.project_ray_origin(screen_pos)
@@ -239,7 +239,8 @@ func enter_editor_mode() -> void:
 		_focus_point = Vector3(p.x, p.y - 1.5, p.z)
 	else:
 		_focus_point = Vector3.ZERO
-	# Reset camera to a usable overhead angle each time editor is entered
+	# Reset camera and controller cursor each time editor is entered
+	_ctrl_cursor_pos = get_viewport().get_visible_rect().size * 0.5
 	_orbit_yaw = 0.0
 	_orbit_pitch = -1.2
 	_zoom_step = 3
@@ -448,13 +449,14 @@ func _handle_keyboard(delta: float) -> void:
 		_focus_point += right * ls_x * pan_speed * delta
 	if abs(ls_y) > CTRL_DEADZONE:
 		_focus_point -= forward * ls_y * pan_speed * delta
-	# Right stick: orbit
+	# Right stick: move virtual cursor
 	var rs_x: float = Input.get_joy_axis(0, JOY_AXIS_RIGHT_X)
 	var rs_y: float = Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y)
+	var vp_size: Vector2 = get_viewport().get_visible_rect().size
 	if abs(rs_x) > CTRL_DEADZONE:
-		_orbit_yaw += rs_x * CTRL_ORBIT_SPEED * delta
+		_ctrl_cursor_pos.x = clamp(_ctrl_cursor_pos.x + rs_x * CTRL_CURSOR_SPEED * delta, 0.0, vp_size.x)
 	if abs(rs_y) > CTRL_DEADZONE:
-		_orbit_pitch = clamp(_orbit_pitch + rs_y * CTRL_ORBIT_SPEED * delta, PITCH_MIN, PITCH_MAX)
+		_ctrl_cursor_pos.y = clamp(_ctrl_cursor_pos.y + rs_y * CTRL_CURSOR_SPEED * delta, 0.0, vp_size.y)
 	# Bumpers: brush radius (continuous while held)
 	if Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_SHOULDER):
 		brush_radius = clamp(brush_radius + CTRL_RADIUS_SPEED * delta, BRUSH_RADIUS_MIN, BRUSH_RADIUS_MAX)
