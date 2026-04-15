@@ -40,6 +40,8 @@ var _orbit_pitch: float = -1.0
 var brush_radius: float = 15.0
 var brush_falloff: int = 0  # 0=Gaussian 1=Linear 2=Hard — matches TerrainManager.BrushFalloff
 var brush_mode: int = BrushMode.RAISE_LOWER
+var _flatten_target_offset: float = 0.0    # height_offset sampled on first LMB press
+var _flatten_lmb_was_pressed: bool = false  # true while LMB held in flatten mode
 var terrain_manager: Node = null
 var _frame_dirty: Dictionary = {}  # Vector2i -> true, deduped across one frame
 
@@ -209,6 +211,7 @@ func exit_editor_mode() -> void:
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 	if _brush_cursor:
 		_brush_cursor.visible = false
+	_flatten_lmb_was_pressed = false
 	emit_signal("editor_mode_changed", false)
 
 func _get_player_hud() -> Node:
@@ -312,9 +315,21 @@ func _tick_brush(delta: float) -> void:
 			if dirty.size() > 0:
 				_rebuild_dirty_chunks(dirty)
 		BrushMode.FLATTEN:
-			# Flatten logic added in Plan 03.
-			# Stub: do nothing yet so mode cycling doesn't break anything.
-			pass
+			# Only fires on LMB — flatten has no directional opposite
+			if not lmb:
+				# LMB released: clear the stored target so next press resamples
+				_flatten_lmb_was_pressed = false
+				return
+			if not _flatten_lmb_was_pressed:
+				# First press this stroke: sample the target height offset at cursor
+				_flatten_target_offset = terrain_manager.sample_height_offset(world_pos)
+				_flatten_lmb_was_pressed = true
+			# Continuous flatten while LMB held — same lerp-weight pattern as smooth
+			var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
+			var strength: float = 5.0 * boost * delta
+			var dirty: Array = terrain_manager.apply_flatten_brush(world_pos, brush_radius, _flatten_target_offset, strength)
+			if dirty.size() > 0:
+				_rebuild_dirty_chunks(dirty)
 
 func _rebuild_dirty_chunks(dirty: Array) -> void:
 	for c in dirty:
