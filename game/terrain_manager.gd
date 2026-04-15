@@ -1300,23 +1300,25 @@ func apply_smooth_brush(world_pos: Vector3, radius: float, strength: float) -> A
 # Sample the current height offset at a world position (for flatten target capture).
 # Returns the bilinear-interpolated height_offset at world_pos, or 0.0 if no chunk.
 func sample_height_offset(world_pos: Vector3) -> float:
-	# Use round() not floor() — chunks are centered at coord*chunk_size, so floor() misassigns
-	# the far half of each chunk's zone (local_x/z exceeds ±half_cs → _sample_offset returns 0).
 	var coord: Vector2i = Vector2i(
 		int(round(world_pos.x / chunk_size)),
 		int(round(world_pos.z / chunk_size))
 	)
 	if not chunks.has(coord):
+		print("FLATTEN-DBG: no chunk at coord ", coord, " (world ", world_pos.x, ",", world_pos.z, " cs=", chunk_size, ")")
 		return 0.0
 	var chunk = chunks[coord]
 	if chunk == null or not "height_offsets" in chunk:
+		print("FLATTEN-DBG: chunk null or no height_offsets at ", coord)
 		return 0.0
 	if chunk.height_offsets.is_empty():
+		print("FLATTEN-DBG: height_offsets empty at ", coord)
 		return 0.0
-	# chunk.position is the world-space center of the chunk (Godot sets this in initialize())
 	var local_x: float = world_pos.x - chunk.position.x
 	var local_z: float = world_pos.z - chunk.position.z
-	return chunk._sample_offset(local_x, local_z)
+	var result: float = chunk._sample_offset(local_x, local_z)
+	print("FLATTEN-DBG: coord=", coord, " local=(", local_x, ",", local_z, ") sampled=", result, " offsets_nonzero=", chunk.height_offsets.count(0.0) < chunk.height_offsets.size())
+	return result
 
 # Flatten brush: pull height offsets toward a fixed target_offset.
 # target_offset: the height_offset value sampled at first LMB press (NOT world Y).

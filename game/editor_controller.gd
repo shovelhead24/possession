@@ -324,6 +324,7 @@ func _tick_brush(delta: float) -> void:
 				# First press this stroke: sample the target height offset at cursor
 				_flatten_target_offset = terrain_manager.sample_height_offset(world_pos)
 				_flatten_lmb_was_pressed = true
+				print("FLATTEN-DBG: world_pos=", world_pos, " target=", _flatten_target_offset)
 			# Continuous flatten while LMB held — same lerp-weight pattern as smooth
 			var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
 			var strength: float = 5.0 * boost * delta
