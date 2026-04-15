@@ -6,6 +6,21 @@ uniform sampler2D snow_texture : source_color, filter_linear_mipmap, repeat_enab
 uniform sampler2D stone_texture : source_color, filter_linear_mipmap, repeat_enable;
 uniform sampler2D sand_texture : source_color, filter_linear_mipmap, repeat_enable;
 
+// Normal maps
+uniform sampler2D grass_normal : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D snow_normal : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D stone_normal : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D sand_normal : source_color, filter_linear_mipmap, repeat_enable;
+
+// Normal map strengths
+uniform float grass_normal_strength : hint_range(0.0, 2.0) = 0.5;
+uniform float snow_normal_strength : hint_range(0.0, 2.0) = 0.3;
+uniform float stone_normal_strength : hint_range(0.0, 2.0) = 1.0;
+uniform float sand_normal_strength : hint_range(0.0, 2.0) = 0.4;
+
+// PBR improvements
+uniform float specular_intensity : hint_range(0.0, 1.0) = 0.2;
+uniform float metallic_variation : hint_range(0.0, 1.0) = 0.1;
 
 // Texture tiling
 uniform float texture_scale : hint_range(0.01, 1.0) = 0.05;
@@ -136,6 +151,18 @@ void fragment() {
 	blend_weights = pow(blend_weights, vec3(4.0));
 	blend_weights /= (blend_weights.x + blend_weights.y + blend_weights.z);
 
+	// Sample normal maps
+	vec3 grass_nrm = texture(grass_normal, tex_uv).rgb * 2.0 - 1.0;
+	vec3 snow_nrm = texture(snow_normal, tex_uv).rgb * 2.0 - 1.0;
+	vec3 sand_nrm = texture(sand_normal, tex_uv).rgb * 2.0 - 1.0;
+
+	// Triplanar normal sampling for stone
+	vec3 stone_nrm_x = texture(stone_normal, world_position.zy * cliff_texture_scale).rgb * 2.0 - 1.0;
+	vec3 stone_nrm_y = texture(stone_normal, cliff_uv).rgb * 2.0 - 1.0;
+	vec3 stone_nrm_z = texture(stone_normal, world_position.xy * cliff_texture_scale).rgb * 2.0 - 1.0;
+	vec3 stone_nrm = stone_nrm_x * blend_weights.x + stone_nrm_y * blend_weights.y + stone_nrm_z * blend_weights.z;
+	vec3 chalk_nrm = stone_nrm;  // Same normal map for chalk
+
 	// Hash-based regional brightness variation — breaks tiling perception with
 	// zero extra texture fetches. ~250m cells, deliberately not a multiple of 100m chunks.
 	vec2 region_cell = floor(world_position.xz * 0.004);
@@ -221,6 +248,19 @@ void fragment() {
 		terrain_color = mix(terrain_color, terrain_color * COLOR.rgb * 2.0, vertex_color_strength);
 	}
 
+	// Blend normal maps based on texture blending
+	vec3 blended_normal = grass_nrm * grass_normal_strength;
+	blended_normal = mix(blended_normal, sand_nrm * sand_normal_strength, beach_blend);
+	blended_normal = mix(blended_normal, stone_nrm * stone_normal_strength, stone_blend);
+	blended_normal = mix(blended_normal, snow_nrm * snow_normal_strength, final_snow_blend);
+	
+	// Apply cliff normal
+	vec3 cliff_normal = mix(stone_nrm, chalk_nrm, cliff_height_factor) * stone_normal_strength;
+	blended_normal = mix(blended_normal, cliff_normal, cliff_blend);
+	
+	// Normalize the final normal
+	blended_normal = normalize(blended_normal);
+
 	// Underwater caustics and god rays effect
 	float depth_below_water = water_height - vertex_height;
 	if (depth_below_water > 0.0) {
@@ -256,9 +296,38 @@ void fragment() {
 		METALLIC = 0.0;
 		SPECULAR = 0.0;  // No specular from sun
 	} else {
-		// Above water - normal terrain rendering
+		// Above water - normal terrain rendering with improved PBR
 		ALBEDO = terrain_color;
-		ROUGHNESS = mix(0.85, 0.95, max(final_snow_blend, cliff_blend * 0.3));
-		METALLIC = 0.0;
+		
+		// Set NORMAL for normal mapping
+		NORMAL_MAP = blended_normal;
+		NORMAL_MAP_DEPTH = 1.0;
+		
+		// Improved ROUGHNESS values based on material type
+		float grass_roughness = 0.85;
+		float sand_roughness = 0.9;
+		float stone_roughness = 0.8;
+		float snow_roughness = 0.7;
+		float cliff_roughness = 0.75;
+		
+		// Blend roughness based on texture blending
+		float base_roughness = grass_roughness;
+		base_roughness = mix(base_roughness, sand_roughness, beach_blend);
+		base_roughness = mix(base_roughness, stone_roughness, stone_blend);
+		base_roughness = mix(base_roughness, snow_roughness, final_snow_blend);
+		base_roughness = mix(base_roughness, cliff_roughness, cliff_blend);
+		
+		ROUGHNESS = base_roughness;
+		
+		// Add metallic variation for wet/icy surfaces
+		float metallic = 0.0;
+		// Add some metallic to snow and water edges
+		metallic += final_snow_blend * metallic_variation * 0.5;
+		// Add metallic to cliff faces that might be wet
+		metallic += cliff_blend * metallic_variation * 0.3;
+		METALLIC = clamp(metallic, 0.0, 0.3);
+		
+		// Add specular highlights
+		SPECULAR = specular_intensity;
 	}
 }

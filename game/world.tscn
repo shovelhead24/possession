@@ -27,7 +27,7 @@ background_mode = 1
 background_color = Color(0.02, 0.04, 0.10, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.38, 0.42, 0.52, 1)
-ambient_light_energy = 0.7
+ambient_light_energy = 0.4
 fog_enabled = true
 fog_color = Color(0.52, 0.62, 0.78, 1)
 fog_density = 0.0002
@@ -127,7 +127,11 @@ use_collision = true
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.8980276, 0.14540626, 0.415215, 0, -0.943801, 0.33051446, 0.43993917, -0.2968111, -0.8475593, -3.011, 30, -0.39)
+light_energy = 1.4
 shadow_enabled = true
+shadow_bias = 0.1
+shadow_normal_bias = 1.0
+shadow_max_distance = 2000.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_tlwt5")

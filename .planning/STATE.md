@@ -3,13 +3,15 @@
 ## Current Status
 
 **Milestone:** 1 — Terrain Editor + World Shaping  
-**Phase:** 1 complete — ready for Phase 2  
-**Last action:** Phase 1 (Editor Mode Infrastructure) — UAT passed 2026-04-13
 
+
+
+
+**Last action:** Phase 3 (Smooth/Flatten Brushes) completed 2026-04-15
 ## Active Work
 
-Phase 1 complete. Run `/gsd-plan-phase 2` to begin Height Brush.
 
+Phase 3 complete. Lighting issues identified - Phase 5 (Terrain Lighting Fix) planned to address poor mountain lighting.
 ## Session 1 Summary
 
 Completed in pre-GSD session:
@@ -27,23 +29,24 @@ Completed in pre-GSD session:
 - Gaussian mountain amplifier at (-1137, 431) → ~620m peak
 - Green valleys (stone blend formula fix)
 - Debug print removal (perf)
+## Phase 3 Summary (Smooth/Flatten Brushes)
+
+Completed 2026-04-15:
+- Brush mode scaffolding with M-key cycling and HUD display
+- Smooth brush with two-pass Gaussian algorithm
+- Flatten brush with first-press height sampling
+- All three brush modes (Raise/Lower, Smooth, Flatten) fully operational
 - Snow attempt — height threshold correct (Y:633 confirmed), bug unresolved
 
-## Known Issues
+**Lighting Issue Identified:** Terrain appears flat, lacks depth perception. Normal mapping and PBR improvements needed. Planned for Phase 5.
+## Next Phase
 
-| Issue | Status | Notes |
-|---|---|---|
-| Snow not showing on peak | Open | Peak reaches Y:633, thresholds 600/650m, slope suppression disabled. Cliff blend suspected. Deferred to Phase 8. |
+**Phase 5: Terrain Lighting Fix** - Address poor mountain lighting by:
+1. Adding normal mapping to terrain shader
+2. Improving PBR workflow with specular highlights
+3. Optimizing directional light and shadow settings
+4. Adjusting ambient lighting to reduce washout
+5. Improving day/night cycle lighting transitions
 
 ## Commit Log (Pre-GSD)
 
-```
-108d4ea Disable slope suppression on snow — pure height-based blending
-ec9f229 Snow on steep peaks: override slope suppression at high altitude
-cf96283 Peak amplifier, green valleys, perf fixes, grass density
-5ada086 Perf fix, uniform structures, zoom R3, LOD tuning
-0fe15f6 LOD debug colours, fly controls, quit-to-reload, render distance 2500m
-```
-
----
-*Last updated: 2026-04-12*
