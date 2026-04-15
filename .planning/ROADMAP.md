@@ -36,9 +36,9 @@
 
 **Plans:** 4 plans
 - [x] 03-01-PLAN.md — BrushMode enum, M key cycling, ModeLabel in HUD (amber, below InfoLabel)
-- [ ] 03-02-PLAN.md — Smooth brush: apply_smooth_brush (2-pass Gaussian average), wired into _tick_brush
-- [ ] 03-03-PLAN.md — Flatten brush: sample_height_offset + apply_flatten_brush, first-press target capture
-- [ ] 03-04-PLAN.md — UAT checkpoint
+- [x] 03-02-PLAN.md — Smooth brush: apply_smooth_brush (2-pass Gaussian average), wired into _tick_brush
+- [x] 03-03-PLAN.md — Flatten brush: sample_height_offset + apply_flatten_brush, first-press target capture
+- [x] 03-04-PLAN.md — UAT checkpoint
 
 **UAT:** Smooth removes spiky artifacts from aggressive raise. Flatten produces a driveable surface.
 
