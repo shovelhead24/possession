@@ -34,11 +34,11 @@
 ### Phase 3 — Smooth + Flatten Brushes
 *Secondary brush modes for terrain cleanup and road-building.*
 
-**Plans:**
-- 3.1 Brush mode selector (cycle with key or number keys)
-- 3.2 Smooth brush — Gaussian-weighted average of nearby height offsets
-- 3.3 Flatten brush — sample height at click, level surrounding area to that height
-- 3.4 Visual mode indicator in HUD
+**Plans:** 4 plans
+- [x] 03-01-PLAN.md — BrushMode enum, M key cycling, ModeLabel in HUD (amber, below InfoLabel)
+- [ ] 03-02-PLAN.md — Smooth brush: apply_smooth_brush (2-pass Gaussian average), wired into _tick_brush
+- [ ] 03-03-PLAN.md — Flatten brush: sample_height_offset + apply_flatten_brush, first-press target capture
+- [ ] 03-04-PLAN.md — UAT checkpoint
 
 **UAT:** Smooth removes spiky artifacts from aggressive raise. Flatten produces a driveable surface.
 
@@ -128,4 +128,4 @@
 - Quest / narrative system
 
 ---
-*Last updated: 2026-04-13*
+*Last updated: 2026-04-14*
