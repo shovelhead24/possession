@@ -291,12 +291,30 @@ func _tick_brush(delta: float) -> void:
 	if pos_v == null:
 		return
 	var world_pos: Vector3 = pos_v
-	var direction: float = 1.0 if lmb else -1.0
-	var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
-	var strength: float = direction * BRUSH_STRENGTH_PER_SEC * boost * delta
-	var dirty: Array = terrain_manager.apply_height_brush(world_pos, brush_radius, strength, brush_falloff)
-	if dirty.size() > 0:
-		_rebuild_dirty_chunks(dirty)
+
+	match brush_mode:
+		BrushMode.RAISE_LOWER:
+			var direction: float = 1.0 if lmb else -1.0
+			var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
+			var strength: float = direction * BRUSH_STRENGTH_PER_SEC * boost * delta
+			var dirty: Array = terrain_manager.apply_height_brush(world_pos, brush_radius, strength, brush_falloff)
+			if dirty.size() > 0:
+				_rebuild_dirty_chunks(dirty)
+		BrushMode.SMOOTH:
+			# Only fires on LMB — smooth has no directional opposite
+			if not lmb:
+				return
+			# strength is a lerp weight per frame; 3.0 * delta gives ~0.05 at 60fps
+			# which is a gentle nudge. Boost doubles the convergence rate.
+			var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
+			var strength: float = 3.0 * boost * delta
+			var dirty: Array = terrain_manager.apply_smooth_brush(world_pos, brush_radius, strength)
+			if dirty.size() > 0:
+				_rebuild_dirty_chunks(dirty)
+		BrushMode.FLATTEN:
+			# Flatten logic added in Plan 03.
+			# Stub: do nothing yet so mode cycling doesn't break anything.
+			pass
 
 func _rebuild_dirty_chunks(dirty: Array) -> void:
 	for c in dirty:
