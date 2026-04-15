@@ -1300,7 +1300,12 @@ func apply_smooth_brush(world_pos: Vector3, radius: float, strength: float) -> A
 # Sample the current height offset at a world position (for flatten target capture).
 # Returns the bilinear-interpolated height_offset at world_pos, or 0.0 if no chunk.
 func sample_height_offset(world_pos: Vector3) -> float:
-	var coord: Vector2i = get_chunk_coords(world_pos)
+	# Use round() not floor() — chunks are centered at coord*chunk_size, so floor() misassigns
+	# the far half of each chunk's zone (local_x/z exceeds ±half_cs → _sample_offset returns 0).
+	var coord: Vector2i = Vector2i(
+		int(round(world_pos.x / chunk_size)),
+		int(round(world_pos.z / chunk_size))
+	)
 	if not chunks.has(coord):
 		return 0.0
 	var chunk = chunks[coord]
