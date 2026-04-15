@@ -56,6 +56,7 @@ func _ready() -> void:
 	player_ref = get_node_or_null("../Player")
 	if player_ref:
 		play_camera = player_ref.get_node_or_null("Head/Camera3D")
+	terrain_manager = get_node_or_null("../TerrainManager")
 	editor_camera = Camera3D.new()
 	editor_camera.fov = 50.0
 	add_child(editor_camera)
