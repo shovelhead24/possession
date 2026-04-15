@@ -154,7 +154,7 @@ Write-Host "=== ASSET IMPORT ===" -ForegroundColor Cyan
 Write-Host "Importing resources (this takes ~30-60s on first run, fast after)..." -ForegroundColor Yellow
 $importArgs = '--headless --editor --quit --path "' + $gamePath + '"'
 $importProc = Start-Process -FilePath $godotExe -ArgumentList $importArgs -PassThru -NoNewWindow 2>$null
-# Wait up to 120 seconds — kill if it hangs (headless editor can hang on some machines)
+# Wait up to 120 seconds - kill if it hangs (headless editor can hang on some machines)
 $importProc.WaitForExit(120000) | Out-Null
 if (-not $importProc.HasExited) {
     $importProc.Kill()
