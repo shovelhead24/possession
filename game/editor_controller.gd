@@ -16,8 +16,6 @@ const BRUSH_RADIUS_STEP: float = 2.0
 const BRUSH_STRENGTH_PER_SEC: float = 30.0
 const BRUSH_BOOST_MULT: float = 2.0
 
-enum BrushMode { RAISE_LOWER = 0, SMOOTH = 1, FLATTEN = 2 }
-
 @export var editor_hud_scene: PackedScene = preload("res://editor_hud.tscn")
 
 var is_editor_active: bool = false
@@ -28,7 +26,6 @@ var player_marker: MeshInstance3D = null
 var _brush_cursor: MeshInstance3D = null
 var editor_hud_instance: CanvasLayer = null
 var _info_label: Label = null
-var _mode_label: Label = null
 
 var _focus_point: Vector3 = Vector3.ZERO
 var _camera_altitude: float = 150.0
@@ -39,7 +36,6 @@ var _orbit_pitch: float = -1.0
 
 var brush_radius: float = 15.0
 var brush_falloff: int = 0  # 0=Gaussian 1=Linear 2=Hard — matches TerrainManager.BrushFalloff
-var brush_mode: int = BrushMode.RAISE_LOWER
 var terrain_manager: Node = null
 var _frame_dirty: Dictionary = {}  # Vector2i -> true, deduped across one frame
 
@@ -62,7 +58,6 @@ func _spawn_editor_hud() -> void:
 	get_tree().current_scene.add_child(editor_hud_instance)
 	editor_hud_instance.visible = false
 	_info_label = editor_hud_instance.get_node_or_null("InfoLabel") as Label
-	_mode_label = editor_hud_instance.get_node_or_null("ModeLabel") as Label
 
 func _create_player_marker() -> void:
 	player_marker = MeshInstance3D.new()
@@ -159,9 +154,6 @@ func _input(event: InputEvent) -> void:
 		if ek2.physical_keycode == KEY_F and ek2.pressed and not ek2.echo:
 			brush_falloff = (brush_falloff + 1) % 3
 			get_viewport().set_input_as_handled()
-		if ek2.physical_keycode == KEY_M and ek2.pressed and not ek2.echo:
-			brush_mode = (brush_mode + 1) % 3
-			get_viewport().set_input_as_handled()
 
 func _toggle() -> void:
 	if is_editor_active:
@@ -248,9 +240,6 @@ func _update_hud() -> void:
 	else:
 		var p: Vector3 = pos
 		_info_label.text = "X: %d  Z: %d  Zoom: %d" % [int(p.x), int(p.z), _zoom_step]
-	if _mode_label != null:
-		var mode_names: Array = ["[Raise/Lower]", "[Smooth]", "[Flatten]"]
-		_mode_label.text = mode_names[brush_mode]
 
 func _update_camera_transform() -> void:
 	var offset := Vector3(
