@@ -50,6 +50,7 @@ var terrain_manager: Node = null
 var _frame_dirty: Dictionary = {}  # Vector2i -> true, deduped across one frame
 var _ctrl_cursor_pos: Vector2 = Vector2.ZERO  # virtual cursor driven by right stick
 var _ctrl_free_cursor: bool = false           # R3 toggles: false=centered+orbit, true=free cursor
+var _pause_menu: CanvasLayer = null
 
 func _ready() -> void:
 	player_ref = get_node_or_null("../Player")
@@ -61,7 +62,14 @@ func _ready() -> void:
 	_create_player_marker()
 	_create_brush_cursor()
 	call_deferred("_spawn_editor_hud")
-	terrain_manager = get_node_or_null("../TerrainManager")
+	call_deferred("_spawn_pause_menu")
+
+func _spawn_pause_menu() -> void:
+	var PauseMenu = load("res://pause_menu.gd")
+	if PauseMenu == null:
+		return
+	_pause_menu = PauseMenu.new()
+	get_tree().current_scene.add_child(_pause_menu)
 
 func _spawn_editor_hud() -> void:
 	if editor_hud_scene == null:
@@ -148,15 +156,28 @@ func _unhandled_input(_event: InputEvent) -> void:
 	pass
 
 func _input(event: InputEvent) -> void:
+	# Esc / Start → pause menu (global, works from anywhere)
 	if event is InputEventKey:
 		var ek := event as InputEventKey
-		if ek.physical_keycode == KEY_F3 and ek.pressed and not ek.echo:
+		if ek.physical_keycode == KEY_ESCAPE and ek.pressed and not ek.echo:
 			get_viewport().set_input_as_handled()
-			_toggle()
+			if _pause_menu:
+				_pause_menu.toggle()
 			return
 	if event is InputEventJoypadButton:
 		var jb := event as InputEventJoypadButton
 		if jb.pressed and jb.button_index == JOY_BUTTON_START:
+			get_viewport().set_input_as_handled()
+			if _pause_menu:
+				_pause_menu.toggle()
+			return
+	# Block all editor input while the pause menu is open
+	if _pause_menu and _pause_menu.is_open:
+		return
+	# F3 → toggle editor
+	if event is InputEventKey:
+		var ek := event as InputEventKey
+		if ek.physical_keycode == KEY_F3 and ek.pressed and not ek.echo:
 			get_viewport().set_input_as_handled()
 			_toggle()
 			return

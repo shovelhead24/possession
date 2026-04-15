@@ -260,7 +260,19 @@ while ($true) {
     }
 
     if ($godotProcess -and $godotProcess.HasExited) {
-        Write-Host "$(Get-Date -Format HH:mm:ss) Godot exited (code $($godotProcess.ExitCode)). Relaunching..."
+        Write-Host "$(Get-Date -Format HH:mm:ss) Godot exited (code $($godotProcess.ExitCode)) — pushing log..." -ForegroundColor Cyan
+        Push-Log
+        $lastHash = git -C $projectPath rev-parse HEAD 2>$null
+
+        $quitFlag = "$projectPath\logs\quit_requested"
+        if (Test-Path $quitFlag) {
+            Remove-Item $quitFlag -Force 2>$null
+            Write-Host "$(Get-Date -Format HH:mm:ss) Clean quit — log pushed. Press any key to close watcher." -ForegroundColor Yellow
+            $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") | Out-Null
+            break
+        }
+
+        Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
         $godotProcess = Start-Godot $null
     }
 }
