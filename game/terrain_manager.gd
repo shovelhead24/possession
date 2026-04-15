@@ -1296,3 +1296,69 @@ func apply_smooth_brush(world_pos: Vector3, radius: float, strength: float) -> A
 				dirty.append(coord)
 
 	return dirty
+
+# Sample the current height offset at a world position (for flatten target capture).
+# Returns the bilinear-interpolated height_offset at world_pos, or 0.0 if no chunk.
+func sample_height_offset(world_pos: Vector3) -> float:
+	var coord: Vector2i = get_chunk_coords(world_pos)
+	if not chunks.has(coord):
+		return 0.0
+	var chunk = chunks[coord]
+	if chunk == null or not "height_offsets" in chunk:
+		return 0.0
+	if chunk.height_offsets.is_empty():
+		return 0.0
+	# chunk.position is the world-space center of the chunk (Godot sets this in initialize())
+	var local_x: float = world_pos.x - chunk.position.x
+	var local_z: float = world_pos.z - chunk.position.z
+	return chunk._sample_offset(local_x, local_z)
+
+# Flatten brush: pull height offsets toward a fixed target_offset.
+# target_offset: the height_offset value sampled at first LMB press (NOT world Y).
+# strength: per-frame lerp weight (caller passes delta-scaled value).
+# Returns dirty Array[Vector2i].
+func apply_flatten_brush(world_pos: Vector3, radius: float, target_offset: float, strength: float) -> Array:
+	var dirty: Array = []
+	if radius <= 0.0 or absf(strength) < 0.0001:
+		return dirty
+
+	var half_cs: float = chunk_size * 0.5
+	var min_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x - radius - half_cs, 0.0, world_pos.z - radius - half_cs))
+	var max_coord: Vector2i = get_chunk_coords(Vector3(world_pos.x + radius + half_cs, 0.0, world_pos.z + radius + half_cs))
+
+	var sigma: float = radius * 0.5
+
+	for cz in range(min_coord.y, max_coord.y + 1):
+		for cx in range(min_coord.x, max_coord.x + 1):
+			var coord: Vector2i = Vector2i(cx, cz)
+			if not chunks.has(coord):
+				continue
+			var chunk = chunks[coord]
+			if chunk == null or not "height_offsets" in chunk:
+				continue
+			if chunk.height_offsets.is_empty():
+				chunk._ensure_offsets_sized()
+			var res: int = chunk.resolution
+			var stride: int = res + 1
+			var cs: float = chunk.chunk_size
+			var half: float = cs / 2.0
+			var touched: bool = false
+			for z in range(res + 1):
+				for x in range(res + 1):
+					var local_x: float = (float(x) / float(res)) * cs - half
+					var local_z: float = (float(z) / float(res)) * cs - half
+					var wx: float = chunk.position.x + local_x
+					var wz: float = chunk.position.z + local_z
+					var dx: float = wx - world_pos.x
+					var dz: float = wz - world_pos.z
+					var dist_sq: float = dx * dx + dz * dz
+					if dist_sq > radius * radius:
+						continue
+					var w: float = exp(-dist_sq / (2.0 * sigma * sigma))
+					var idx: int = z * stride + x
+					chunk.height_offsets[idx] = lerp(chunk.height_offsets[idx], target_offset, strength * w)
+					touched = true
+			if touched and not dirty.has(coord):
+				dirty.append(coord)
+
+	return dirty
