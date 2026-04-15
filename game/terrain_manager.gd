@@ -1299,32 +1299,26 @@ func apply_smooth_brush(world_pos: Vector3, radius: float, strength: float) -> A
 
 # Sample the current height offset at a world position (for flatten target capture).
 # Returns the bilinear-interpolated height_offset at world_pos, or 0.0 if no chunk.
-func sample_height_offset(world_pos: Vector3) -> float:
+# Sample the full world Y at a position (base noise + brush offset).
+# Used by flatten to capture the target height on first LMB press.
+func sample_world_height(world_pos: Vector3) -> float:
 	var coord: Vector2i = Vector2i(
 		int(round(world_pos.x / chunk_size)),
 		int(round(world_pos.z / chunk_size))
 	)
 	if not chunks.has(coord):
-		print("FLATTEN-DBG: no chunk at coord ", coord, " (world ", world_pos.x, ",", world_pos.z, " cs=", chunk_size, ")")
 		return 0.0
 	var chunk = chunks[coord]
-	if chunk == null or not "height_offsets" in chunk:
-		print("FLATTEN-DBG: chunk null or no height_offsets at ", coord)
+	if chunk == null:
 		return 0.0
-	if chunk.height_offsets.is_empty():
-		print("FLATTEN-DBG: height_offsets empty at ", coord)
-		return 0.0
-	var local_x: float = world_pos.x - chunk.position.x
-	var local_z: float = world_pos.z - chunk.position.z
-	var result: float = chunk._sample_offset(local_x, local_z)
-	print("FLATTEN-DBG: coord=", coord, " local=(", local_x, ",", local_z, ") sampled=", result, " offsets_nonzero=", chunk.height_offsets.count(0.0) < chunk.height_offsets.size())
-	return result
+	return chunk.get_height_at_world_pos(world_pos.x, world_pos.z)
 
-# Flatten brush: pull height offsets toward a fixed target_offset.
-# target_offset: the height_offset value sampled at first LMB press (NOT world Y).
-# strength: per-frame lerp weight (caller passes delta-scaled value).
+# Flatten brush: drive each vertex to target_world_y by adjusting its height_offset.
+# target_world_y: world Y sampled at first LMB press (noise base + offset at cursor).
+# For each vertex: required_offset = target_world_y - base_noise(vertex).
+# strength: per-frame lerp weight.
 # Returns dirty Array[Vector2i].
-func apply_flatten_brush(world_pos: Vector3, radius: float, target_offset: float, strength: float) -> Array:
+func apply_flatten_brush(world_pos: Vector3, radius: float, target_world_y: float, strength: float) -> Array:
 	var dirty: Array = []
 	if radius <= 0.0 or absf(strength) < 0.0001:
 		return dirty
@@ -1363,7 +1357,9 @@ func apply_flatten_brush(world_pos: Vector3, radius: float, target_offset: float
 						continue
 					var w: float = exp(-dist_sq / (2.0 * sigma * sigma))
 					var idx: int = z * stride + x
-					chunk.height_offsets[idx] = lerp(chunk.height_offsets[idx], target_offset, strength * w)
+					var base_y: float = get_height_at_position(Vector3(wx, 0.0, wz))
+					var target_off: float = target_world_y - base_y
+					chunk.height_offsets[idx] = lerp(chunk.height_offsets[idx], target_off, strength * w)
 					touched = true
 			if touched and not dirty.has(coord):
 				dirty.append(coord)
