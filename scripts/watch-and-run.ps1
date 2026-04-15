@@ -230,9 +230,18 @@ while ($true) {
     $remoteHash = git -C $projectPath rev-parse origin/main 2>$null
 
     if ($remoteHash -and $remoteHash -ne $lastHash) {
-        Write-Host "$(Get-Date -Format HH:mm:ss) New commits detected - pulling..."
+        Write-Host "$(Get-Date -Format HH:mm:ss) New commits detected - pulling..." -ForegroundColor Cyan
+        $prevHash = $lastHash
         git -C $projectPath pull --rebase origin main 2>$null
-        $lastHash = git -C $projectPath rev-parse HEAD 2>$null  # Use actual local state
+        $lastHash = git -C $projectPath rev-parse HEAD 2>$null
+        # Show what arrived (last 5 new commits)
+        $newCommits = git -C $projectPath log --oneline "$prevHash..HEAD" 2>$null | Select-Object -First 5
+        if ($newCommits) {
+            Write-Host "  Pulled commits:" -ForegroundColor Cyan
+            foreach ($c in $newCommits) {
+                Write-Host "    $c" -ForegroundColor White
+            }
+        }
         Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
         $godotProcess = Start-Godot $godotProcess
     }
