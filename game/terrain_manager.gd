@@ -14,11 +14,11 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 
 @export_group("Terrain Generation")
 @export var world_seed: int = 12345
-@export var use_heightmap: bool = true
+@export var use_heightmap: bool = false
 @export var heightmap_path: String = "res://Rugged Terrain with Rocky Peaks Height Map EXR.exr"
 @export var terrain_width: float = 1000.0  # World size of the heightmap
 @export var terrain_depth: float = 1000.0
-@export var terrain_height: float = 100.0  # Max terrain height in world units (reduced for flatter terrain)
+@export var terrain_height: float = 400.0  # Max terrain height in world units (increased for rolling hills)
 @export var use_custom_terrain: bool = false  # Use handcrafted terrain (two hills, canyon, river)
 
 @export_group("Ring Dimensions")
@@ -30,7 +30,7 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 @export var use_continental_coastline: bool = false  # Use FBM for consistent coastlines (experimental)
 
 @export_group("Biome Settings")
-@export_enum("Ring Edge Mountains", "Rolling Plains", "Dense Forest", "Highland Plateau", "River Valley", "Rocky Badlands", "Coastal Lowlands") var biome_type: int = 6
+@export_enum("Ring Edge Mountains", "Rolling Plains", "Dense Forest", "Highland Plateau", "River Valley", "Rocky Badlands", "Coastal Lowlands") var biome_type: int = 1
 @export var water_level: float = 0.06  # Global water level (0-1 fraction of terrain_height) - water at ~48m
 @export var use_global_water: bool = true  # Use single water level for all biomes
 @export var enable_biome_blending: bool = false  # Blend between biomes based on position
@@ -105,8 +105,6 @@ const TerrainChunk = preload("res://terrain_chunk.gd")
 const PropPoolClass = preload("res://prop_pool.gd")
 
 func _ready():
-	print("TerrainManager: Initializing...")
-
 	# Create prop pool for efficient tree/decorator management
 	prop_pool = PropPoolClass.new()
 	prop_pool.name = "PropPool"
@@ -115,7 +113,6 @@ func _ready():
 	# Setup terrain generation method
 	if use_heightmap and not heightmap_path.is_empty():
 		if not load_heightmap():
-			print("Failed to load heightmap, falling back to noise generation")
 			setup_noise_generator()
 	else:
 		setup_noise_generator()
@@ -166,10 +163,6 @@ func setup_noise_generator():
 		water_level = current_biome_traits.water_level
 
 	var biome_name = BiomeDefs.get_biome_name(biome_enum)
-	print("TerrainManager: Biome = ", biome_name)
-	print("TerrainManager: Noise initialized with seed ", world_seed)
-	print("TerrainManager: Info opacity = ", current_biome_traits.info_opacity, ", Signal amp = ", current_biome_traits.signal_amplification)
-	print("TerrainManager: Ring dimensions = ", ring_width, "x", ring_length, " (edge zone: ", edge_mountain_zone, ")")
 
 	# Generate boundary walls
 	generate_boundary_walls()
@@ -256,7 +249,6 @@ func load_heightmap() -> bool:
 		push_error("Failed to load heightmap: " + heightmap_path)
 		return false
 	
-	print("Loaded heightmap: %dx%d" % [heightmap_image.get_width(), heightmap_image.get_height()])
 	return true
 
 func find_or_create_player():
@@ -273,8 +265,6 @@ func find_or_create_player():
 		player.position = Vector3.ZERO
 		get_parent().add_child(player)
 
-	print("TerrainManager: Player found at ", player.global_position)
-
 	if player:
 		# Spawn location depends on terrain mode
 		var spawn_x = 0.0
@@ -284,7 +274,6 @@ func find_or_create_player():
 			# Spawn on hill 1 (the left hill)
 			spawn_x = -80.0
 			spawn_z = 0.0
-			print("TerrainManager: Using custom terrain - spawning on Hill 1")
 		# else: default spawn at center
 
 		# Disable player physics while terrain loads (prevents falling)
@@ -296,17 +285,14 @@ func find_or_create_player():
 
 		# Calculate spawn chunk coords
 		var spawn_chunk_coords = get_chunk_coords(Vector3(spawn_x, 0, spawn_z))
-		print("TerrainManager: Need spawn chunk ", spawn_chunk_coords, " - creating synchronously...")
 
 		# Force create the spawn chunk immediately if it doesn't exist
 		if not spawn_chunk_coords in chunks:
 			create_chunk(spawn_chunk_coords, 0)  # LOD 0 for best collision
-			print("TerrainManager: Created spawn chunk synchronously")
 
 		# Now wait until the chunk's collision is actually ready
 		# The chunk should exist, but collision shape might need a physics frame to register
 		var spawn_chunk = chunks[spawn_chunk_coords]
-		print("TerrainManager: Spawn chunk exists, has_collision=", spawn_chunk.has_collision, " collision_body=", spawn_chunk.collision_body)
 
 		# Wait for collision body to be in the scene tree and have a valid shape
 		while not spawn_chunk.collision_body or not spawn_chunk.collision_body.is_inside_tree():
@@ -318,8 +304,6 @@ func find_or_create_player():
 			await get_tree().physics_frame
 			player.global_position = Vector3(spawn_x, 200, spawn_z)
 
-		print("TerrainManager: Collision body ready and in tree")
-
 		# Now spawn on terrain
 		var spawn_height = get_height_at_position(Vector3(spawn_x, 0, spawn_z)) + 2.0
 		player.global_position = Vector3(spawn_x, spawn_height, spawn_z)
@@ -328,8 +312,6 @@ func find_or_create_player():
 		if player is CharacterBody3D:
 			player.velocity = Vector3.ZERO  # Critical: reset velocity before enabling physics
 			player.set_physics_process(true)
-
-		print("TerrainManager: Spawned player at ", player.global_position, " (2m above terrain height ", spawn_height - 2.0, ")")
 
 func _process(delta):
 	# Reset per-frame counters
@@ -430,9 +412,6 @@ func switch_biome(new_biome: int):
 	if current_biome_traits.water_level >= 0:
 		water_level = current_biome_traits.water_level
 
-	var biome_name = BiomeDefs.get_biome_name(biome_enum)
-	print("Switched to biome: ", biome_name)
-
 	# Clear all existing chunks
 	for coord in chunks.keys():
 		var chunk = chunks[coord]
@@ -488,13 +467,10 @@ func generate_boundary_walls():
 		add_child(wall_body)
 		boundary_walls.append(wall_body)
 
-	print("TerrainManager: Generated boundary walls at Z = +/-", half_width)
-
 # Create a single global water plane at absolute height
 func create_global_water():
 	# Calculate absolute water height
 	absolute_water_height = water_level * terrain_height
-	print("TerrainManager: Creating global water at height ", absolute_water_height)
 
 	# Remove existing water plane if any
 	if water_plane and is_instance_valid(water_plane):
@@ -543,7 +519,6 @@ func create_global_water():
 	water_plane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	add_child(water_plane)
-	print("TerrainManager: Global water plane created at Y=", absolute_water_height)
 
 # Check if a world position is within the ring boundaries
 func is_within_ring_bounds(world_pos: Vector3) -> bool:
@@ -789,8 +764,6 @@ func process_chunk_queue():
 	if chunk_load_queue.is_empty():
 		if is_initial_load:
 			is_initial_load = false
-			print("TerrainManager: Initial load complete, switching to sequential loading")
-			print("TerrainManager: Adaptive quality enabled=", enable_adaptive_quality, " budget=", chunk_budget_ms, "ms")
 		return
 
 	# Process more chunks during initial load, fewer during gameplay
@@ -820,18 +793,6 @@ func process_chunk_queue():
 		# Create the chunk
 		create_chunk(coord, lod)
 		processed += 1
-
-	# Log progress periodically
-	if processed > 0:
-		chunk_log_counter += 1
-		if chunk_log_counter % 10 == 0:
-			var fps = Performance.get_monitor(Performance.TIME_FPS)
-			var quality_str = ""
-			if enable_adaptive_quality:
-				quality_str = " | Q:" + str(snapped(quality_multiplier * 100, 1)) + "%"
-			print("Chunks: loaded ", processed, " | queue: ", chunk_load_queue.size(), " | total: ", chunks.size(), " | FPS: ", int(fps), quality_str)
-		else:
-			print("Chunks: loaded ", processed, " | queue: ", chunk_load_queue.size(), " | total: ", chunks.size())
 
 # Process LOD update queue - spread LOD changes across frames
 func process_lod_queue():
@@ -869,9 +830,6 @@ func process_lod_queue():
 			chunk.set_lod(target_lod)
 			updated += 1
 
-	if updated > 0:
-		print("LOD: updated ", updated, " chunks | queue: ", lod_update_queue.size())
-
 # Queue distant chunks for unloading (doesn't unload immediately)
 func queue_distant_chunks_for_unload():
 	var player_chunk = get_chunk_coords(player.global_position)
@@ -884,9 +842,6 @@ func queue_distant_chunks_for_unload():
 		var distance = (coord - player_chunk).length()
 		if distance > unload_distance:
 			chunk_unload_queue.append(coord)
-
-	if chunk_unload_queue.size() > 0:
-		print("Chunks: queued ", chunk_unload_queue.size(), " for unload")
 
 # Process chunk unload queue - spread unloads across frames
 func process_unload_queue():
@@ -918,9 +873,6 @@ func process_unload_queue():
 		chunk.queue_free()
 		chunks.erase(coord)
 		unloaded += 1
-
-	if unloaded > 0:
-		print("Chunks: unloaded ", unloaded, " | queue: ", chunk_unload_queue.size(), " | remaining: ", chunks.size())
 
 # Legacy function - now redirects to queue system
 func update_chunks():

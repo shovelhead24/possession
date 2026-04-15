@@ -1014,6 +1014,9 @@ static var _tex_stone:  ImageTexture = null
 static var _tex_sand:   ImageTexture = null
 static var _tex_shader: Shader       = null
 static var _textures_loaded: bool    = false
+static var _tex_grass_normal: ImageTexture = null
+static var _tex_stone_normal: ImageTexture = null
+static var _tex_snow_normal: ImageTexture  = null
 
 static func _load_tex(path: String) -> ImageTexture:
 	var img = Image.new()
@@ -1029,6 +1032,9 @@ static func _ensure_textures_loaded() -> void:
 	_tex_snow   = _load_tex("res://snow.jpeg")
 	_tex_stone  = _load_tex("res://stone.jpg")
 	_tex_sand   = _load_tex("res://sand.jpg")
+	_tex_grass_normal = _load_tex("res://grass_normal.jpg")
+	_tex_stone_normal = _load_tex("res://stone_normal.jpg")
+	_tex_snow_normal  = _load_tex("res://snow_normal.jpg")  # optional — added later
 	if ResourceLoader.exists("res://terrain_shader.gdshader"):
 		_tex_shader = load("res://terrain_shader.gdshader")
 
@@ -1048,6 +1054,17 @@ func create_terrain_material() -> Material:
 		mat.set_shader_parameter("stone_texture", stone_tex if stone_tex else grass_tex)
 		if sand_tex:
 			mat.set_shader_parameter("sand_texture", sand_tex)
+
+		# Normal maps — fallback chain so missing textures don't break the shader
+		var gnorm = _tex_grass_normal
+		var snorm = _tex_stone_normal if _tex_stone_normal else gnorm
+		var wsnorm = _tex_snow_normal if _tex_snow_normal else snorm
+		if gnorm:
+			mat.set_shader_parameter("grass_normal", gnorm)
+			mat.set_shader_parameter("sand_normal", gnorm)
+		if snorm:
+			mat.set_shader_parameter("stone_normal", snorm)
+		mat.set_shader_parameter("snow_normal", wsnorm if wsnorm else gnorm)
 
 		mat.set_shader_parameter("texture_scale", 0.05)
 		mat.set_shader_parameter("cliff_texture_scale", 0.08)
