@@ -293,7 +293,7 @@ Chunks: loaded 10 | queue: 771 | total: 61
 Chunks: loaded 10 | queue: 753 | total: 71
 Chunks: loaded 10 | queue: 740 | total: 81
 Chunks: loaded 10 | queue: 727 | total: 91
-Chunks: loaded 10 | queue: 714 | total: 101 | FPS: 1 | Q:88%
+Chunks: loaded 10 | queue: 714 | total: 101 | FPS: 1 | Q:90%
 Chunks: loaded 10 | queue: 702 | total: 111
 Chunks: loaded 10 | queue: 692 | total: 121
 Chunks: loaded 10 | queue: 682 | total: 131
@@ -303,7 +303,7 @@ Chunks: loaded 10 | queue: 652 | total: 161
 Chunks: loaded 10 | queue: 642 | total: 171
 Chunks: loaded 10 | queue: 632 | total: 181
 Chunks: loaded 10 | queue: 622 | total: 191
-Chunks: loaded 10 | queue: 612 | total: 201 | FPS: 1 | Q:85%
+Chunks: loaded 10 | queue: 612 | total: 201 | FPS: 1 | Q:90%
 Chunks: loaded 10 | queue: 602 | total: 211
 Chunks: loaded 10 | queue: 592 | total: 221
 Chunks: loaded 10 | queue: 582 | total: 231
@@ -313,27 +313,27 @@ Chunks: loaded 10 | queue: 552 | total: 261
 Chunks: loaded 10 | queue: 542 | total: 271
 Chunks: loaded 10 | queue: 532 | total: 281
 Chunks: loaded 10 | queue: 522 | total: 291
-Chunks: loaded 10 | queue: 512 | total: 301 | FPS: 1 | Q:80%
+Chunks: loaded 10 | queue: 512 | total: 301 | FPS: 23 | Q:90%
 Chunks: loaded 10 | queue: 502 | total: 311
 Chunks: loaded 10 | queue: 492 | total: 321
 Chunks: loaded 10 | queue: 482 | total: 331
-Chunks: loaded 10 | queue: 499 | total: 341
-Chunks: loaded 10 | queue: 489 | total: 351
-Chunks: loaded 10 | queue: 479 | total: 361
-Chunks: loaded 10 | queue: 469 | total: 371
-Chunks: loaded 10 | queue: 459 | total: 381
-Chunks: loaded 10 | queue: 449 | total: 391
-Chunks: loaded 10 | queue: 439 | total: 401 | FPS: 29 | Q:75%
-Chunks: loaded 10 | queue: 429 | total: 411
-Chunks: loaded 10 | queue: 419 | total: 421
-Chunks: loaded 10 | queue: 409 | total: 431
-Chunks: loaded 10 | queue: 399 | total: 441
+Chunks: loaded 10 | queue: 472 | total: 341
+Chunks: loaded 10 | queue: 462 | total: 351
+Chunks: loaded 10 | queue: 452 | total: 361
+Chunks: loaded 10 | queue: 442 | total: 371
+Chunks: loaded 10 | queue: 432 | total: 381
+Chunks: loaded 10 | queue: 422 | total: 391
+Chunks: loaded 10 | queue: 412 | total: 401 | FPS: 23 | Q:90%
+Chunks: loaded 10 | queue: 402 | total: 411
+Chunks: loaded 10 | queue: 392 | total: 421
+Chunks: loaded 10 | queue: 382 | total: 431
+Chunks: loaded 10 | queue: 372 | total: 441
 Chunks: loaded 10 | queue: 389 | total: 451
 Chunks: loaded 10 | queue: 379 | total: 461
 Chunks: loaded 10 | queue: 369 | total: 471
 Chunks: loaded 10 | queue: 359 | total: 481
 Chunks: loaded 10 | queue: 349 | total: 491
-Chunks: loaded 10 | queue: 339 | total: 501 | FPS: 29 | Q:71%
+Chunks: loaded 10 | queue: 339 | total: 501 | FPS: 23 | Q:89%
 Chunks: loaded 10 | queue: 329 | total: 511
 Chunks: loaded 10 | queue: 319 | total: 521
 Chunks: loaded 10 | queue: 309 | total: 531
@@ -341,10 +341,9 @@ Chunks: loaded 10 | queue: 299 | total: 541
 Chunks: loaded 10 | queue: 289 | total: 551
 Chunks: loaded 10 | queue: 279 | total: 561
 Chunks: loaded 10 | queue: 269 | total: 571
-LOD: updated 1 chunks | queue: 26
 Chunks: loaded 10 | queue: 259 | total: 581
 Chunks: loaded 10 | queue: 249 | total: 591
-Chunks: loaded 10 | queue: 239 | total: 601 | FPS: 29 | Q:67%
+Chunks: loaded 10 | queue: 239 | total: 601 | FPS: 23 | Q:86%
 Chunks: loaded 10 | queue: 229 | total: 611
 Chunks: loaded 10 | queue: 219 | total: 621
 Chunks: loaded 10 | queue: 209 | total: 631
@@ -354,7 +353,8 @@ Chunks: loaded 10 | queue: 179 | total: 661
 Chunks: loaded 10 | queue: 169 | total: 671
 Chunks: loaded 10 | queue: 159 | total: 681
 Chunks: loaded 10 | queue: 149 | total: 691
-Chunks: loaded 10 | queue: 139 | total: 701 | FPS: 29 | Q:63%
+LOD: updated 1 chunks | queue: 35
+Chunks: loaded 10 | queue: 139 | total: 701 | FPS: 23 | Q:83%
 Chunks: loaded 10 | queue: 129 | total: 711
 Chunks: loaded 10 | queue: 119 | total: 721
 Chunks: loaded 10 | queue: 109 | total: 731
@@ -364,13 +364,22 @@ Chunks: loaded 10 | queue: 79 | total: 761
 Chunks: loaded 10 | queue: 69 | total: 771
 Chunks: loaded 10 | queue: 59 | total: 781
 Chunks: loaded 10 | queue: 49 | total: 791
-Chunks: loaded 10 | queue: 39 | total: 801 | FPS: 44 | Q:56%
+Chunks: loaded 10 | queue: 39 | total: 801 | FPS: 51 | Q:77%
 Chunks: loaded 10 | queue: 29 | total: 811
 Chunks: loaded 10 | queue: 19 | total: 821
 Chunks: loaded 10 | queue: 9 | total: 831
 Chunks: loaded 9 | queue: 0 | total: 840
 TerrainManager: Initial load complete, switching to sequential loading
 TerrainManager: Adaptive quality enabled=true budget=8.0ms
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+LOD: updated 1 chunks | queue: 31
+LOD: updated 1 chunks | queue: 30
+LOD: updated 1 chunks | queue: 29
+LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
 LOD: updated 1 chunks | queue: 25
 LOD: updated 1 chunks | queue: 24
 LOD: updated 1 chunks | queue: 23
@@ -397,399 +406,155 @@ LOD: updated 1 chunks | queue: 3
 LOD: updated 1 chunks | queue: 2
 LOD: updated 1 chunks | queue: 1
 LOD: updated 1 chunks | queue: 0
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 22 | total: 841
+Player: Exited vehicle
+Warthog: Player exited at (2.489846, 246.9451, 1.08864)
+Warthog: Press E to enter
+Fly mode: ON
+LOD: updated 1 chunks | queue: 12
+LOD: updated 1 chunks | queue: 11
+Chunks: loaded 1 | queue: 12 | total: 841
+LOD: updated 1 chunks | queue: 58
+Chunks: loaded 1 | queue: 11 | total: 842
+LOD: updated 1 chunks | queue: 57
+Chunks: loaded 1 | queue: 10 | total: 843
+LOD: updated 1 chunks | queue: 56
+Chunks: loaded 1 | queue: 9 | total: 844
+LOD: updated 1 chunks | queue: 55
+Chunks: loaded 1 | queue: 8 | total: 845
+LOD: updated 1 chunks | queue: 54
+Chunks: loaded 1 | queue: 7 | total: 846 | FPS: 46 | Q:30%
+LOD: updated 1 chunks | queue: 53
+Chunks: loaded 1 | queue: 6 | total: 847
+LOD: updated 1 chunks | queue: 52
+Chunks: loaded 1 | queue: 5 | total: 848
+LOD: updated 1 chunks | queue: 51
+Chunks: loaded 1 | queue: 4 | total: 849
+LOD: updated 1 chunks | queue: 50
+Chunks: loaded 1 | queue: 3 | total: 850
+LOD: updated 1 chunks | queue: 49
+Chunks: loaded 1 | queue: 2 | total: 851
+LOD: updated 1 chunks | queue: 48
+Chunks: loaded 1 | queue: 1 | total: 852
 LOD: updated 1 chunks | queue: 47
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 21 | total: 842
+Chunks: loaded 1 | queue: 0 | total: 853
 LOD: updated 1 chunks | queue: 46
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 20 | total: 843
 LOD: updated 1 chunks | queue: 45
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 19 | total: 844
 LOD: updated 1 chunks | queue: 44
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 18 | total: 845
 LOD: updated 1 chunks | queue: 43
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 17 | total: 846 | FPS: 38 | Q:30%
 LOD: updated 1 chunks | queue: 42
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 16 | total: 847
 LOD: updated 1 chunks | queue: 41
-Chunks: loaded 1 | queue: 15 | total: 848
 LOD: updated 1 chunks | queue: 40
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 14 | total: 849
 LOD: updated 1 chunks | queue: 39
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 13 | total: 850
 LOD: updated 1 chunks | queue: 38
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 12 | total: 851
 LOD: updated 1 chunks | queue: 37
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 11 | total: 852
 LOD: updated 1 chunks | queue: 36
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 10 | total: 853
 LOD: updated 1 chunks | queue: 35
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 9 | total: 854
 LOD: updated 1 chunks | queue: 34
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 8 | total: 855
 LOD: updated 1 chunks | queue: 33
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 7 | total: 856 | FPS: 24 | Q:30%
 LOD: updated 1 chunks | queue: 32
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 6 | total: 857
 LOD: updated 1 chunks | queue: 31
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 5 | total: 858
 LOD: updated 1 chunks | queue: 30
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 4 | total: 859
 LOD: updated 1 chunks | queue: 29
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 3 | total: 860
 LOD: updated 1 chunks | queue: 28
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 2 | total: 861
 LOD: updated 1 chunks | queue: 27
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 1 | total: 862
 LOD: updated 1 chunks | queue: 26
-Chunks: loaded 1 | queue: 0 | total: 863
 LOD: updated 1 chunks | queue: 25
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 24
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 23
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 22
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 21
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 20
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 19
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 18
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 17
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 16
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 15
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 14
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 13
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 12
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 11
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 10
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 9
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-LOD: updated 1 chunks | queue: 8
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-LOD: updated 1 chunks | queue: 7
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-LOD: updated 1 chunks | queue: 4
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-LOD: updated 1 chunks | queue: 1
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-LOD: updated 1 chunks | queue: 0
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Chunks: loaded 1 | queue: 0 | total: 864
+Chunks: loaded 1 | queue: 22 | total: 854
+LOD: updated 1 chunks | queue: 75
+Chunks: loaded 1 | queue: 21 | total: 855
+LOD: updated 1 chunks | queue: 74
+Chunks: loaded 1 | queue: 20 | total: 856 | FPS: 44 | Q:30%
+LOD: updated 1 chunks | queue: 73
+Chunks: loaded 1 | queue: 19 | total: 857
+LOD: updated 1 chunks | queue: 72
+Chunks: loaded 1 | queue: 18 | total: 858
+LOD: updated 1 chunks | queue: 71
+Chunks: loaded 1 | queue: 17 | total: 859
+LOD: updated 1 chunks | queue: 70
+Chunks: loaded 1 | queue: 16 | total: 860
+LOD: updated 1 chunks | queue: 69
+Chunks: loaded 1 | queue: 15 | total: 861
+LOD: updated 1 chunks | queue: 68
+Chunks: loaded 1 | queue: 14 | total: 862
+LOD: updated 1 chunks | queue: 67
+Chunks: loaded 1 | queue: 13 | total: 863
+LOD: updated 1 chunks | queue: 66
+Chunks: loaded 1 | queue: 12 | total: 864
+LOD: updated 1 chunks | queue: 65
+Chunks: loaded 1 | queue: 11 | total: 865
+LOD: updated 1 chunks | queue: 64
+Chunks: loaded 1 | queue: 10 | total: 866 | FPS: 44 | Q:30%
+LOD: updated 1 chunks | queue: 63
+Chunks: loaded 1 | queue: 9 | total: 867
+LOD: updated 1 chunks | queue: 62
+Chunks: loaded 1 | queue: 8 | total: 868
+LOD: updated 1 chunks | queue: 61
+Chunks: loaded 1 | queue: 7 | total: 869
+LOD: updated 1 chunks | queue: 60
+Chunks: loaded 1 | queue: 6 | total: 870
+LOD: updated 1 chunks | queue: 59
+Chunks: loaded 1 | queue: 5 | total: 871
+LOD: updated 1 chunks | queue: 58
+Chunks: loaded 1 | queue: 4 | total: 872
+LOD: updated 1 chunks | queue: 57
+Chunks: loaded 1 | queue: 3 | total: 873
+LOD: updated 1 chunks | queue: 56
+Chunks: loaded 1 | queue: 2 | total: 874
+LOD: updated 1 chunks | queue: 55
+Chunks: loaded 1 | queue: 1 | total: 875
+LOD: updated 1 chunks | queue: 54
+Chunks: loaded 1 | queue: 0 | total: 876 | FPS: 44 | Q:30%
+LOD: updated 1 chunks | queue: 53
+LOD: updated 1 chunks | queue: 52
+LOD: updated 1 chunks | queue: 51
+LOD: updated 1 chunks | queue: 50
+LOD: updated 1 chunks | queue: 49
+LOD: updated 1 chunks | queue: 48
+LOD: updated 1 chunks | queue: 47
+LOD: updated 1 chunks | queue: 46
+LOD: updated 1 chunks | queue: 45
+LOD: updated 1 chunks | queue: 44
+LOD: updated 1 chunks | queue: 43
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
 LOD: updated 1 chunks | queue: 37
 LOD: updated 1 chunks | queue: 36
 LOD: updated 1 chunks | queue: 35
 LOD: updated 1 chunks | queue: 34
 LOD: updated 1 chunks | queue: 33
 LOD: updated 1 chunks | queue: 32
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 31
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 30
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 29
 LOD: updated 1 chunks | queue: 28
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 27
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 26
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 25
 LOD: updated 1 chunks | queue: 24
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
 LOD: updated 1 chunks | queue: 23
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD1)"] | missing: []
 LOD: updated 1 chunks | queue: 22
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 21
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 20
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 19
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 18
 LOD: updated 1 chunks | queue: 17
 LOD: updated 1 chunks | queue: 16
@@ -804,131 +569,390 @@ LOD: updated 1 chunks | queue: 8
 LOD: updated 1 chunks | queue: 7
 LOD: updated 1 chunks | queue: 6
 LOD: updated 1 chunks | queue: 5
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 4
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 3
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 2
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 1
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
 LOD: updated 1 chunks | queue: 0
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -3)(LOD0)"] | expanded: ["(-1, -3)(LOD0)", "(-3, -3)(LOD0)", "(-2, -2)(LOD0)", "(-2, -4)(LOD1)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD0)"] | missing: []
-Brush painted: ["(-2, -2)(LOD0)"] | expanded: ["(-1, -2)(LOD0)", "(-3, -2)(LOD0)", "(-2, -1)(LOD0)", "(-2, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -2)(LOD0)"] | expanded: ["(0, -2)(LOD0)", "(-2, -2)(LOD0)", "(-1, -1)(LOD0)", "(-1, -3)(LOD0)"] | missing: []
-Brush painted: ["(0, -2)(LOD0)"] | expanded: ["(1, -2)(LOD0)", "(-1, -2)(LOD0)", "(0, -1)(LOD0)", "(0, -3)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, 0)(LOD0)"] | expanded: ["(0, 0)(LOD0)", "(-2, 0)(LOD0)", "(-1, 1)(LOD0)", "(-1, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(0, 0)(LOD0)"] | expanded: ["(1, 0)(LOD0)", "(-1, 0)(LOD0)", "(0, 1)(LOD0)", "(0, -1)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-2, -1)(LOD0)"] | expanded: ["(-1, -1)(LOD0)", "(-3, -1)(LOD0)", "(-2, 0)(LOD0)", "(-2, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(0, -1)(LOD0)"] | expanded: ["(1, -1)(LOD0)", "(-1, -1)(LOD0)", "(0, 0)(LOD0)", "(0, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
-Brush painted: ["(-1, -1)(LOD0)"] | expanded: ["(0, -1)(LOD0)", "(-2, -1)(LOD0)", "(-1, 0)(LOD0)", "(-1, -2)(LOD0)"] | missing: []
+Chunks: loaded 1 | queue: 29 | total: 877
+LOD: updated 1 chunks | queue: 86
+Chunks: loaded 1 | queue: 28 | total: 878
+LOD: updated 1 chunks | queue: 85
+Chunks: loaded 1 | queue: 27 | total: 879
+LOD: updated 1 chunks | queue: 84
+Chunks: loaded 1 | queue: 26 | total: 880
+LOD: updated 1 chunks | queue: 83
+Chunks: loaded 1 | queue: 25 | total: 881
+LOD: updated 1 chunks | queue: 82
+Chunks: loaded 1 | queue: 24 | total: 882
+LOD: updated 1 chunks | queue: 81
+Chunks: loaded 1 | queue: 23 | total: 883
+LOD: updated 1 chunks | queue: 80
+Chunks: loaded 1 | queue: 22 | total: 884
+LOD: updated 1 chunks | queue: 79
+Chunks: loaded 1 | queue: 21 | total: 885
+LOD: updated 1 chunks | queue: 78
+Chunks: loaded 1 | queue: 20 | total: 886 | FPS: 45 | Q:30%
+LOD: updated 1 chunks | queue: 77
+Chunks: loaded 1 | queue: 19 | total: 887
+LOD: updated 1 chunks | queue: 76
+Chunks: loaded 1 | queue: 18 | total: 888
+LOD: updated 1 chunks | queue: 75
+Chunks: loaded 1 | queue: 17 | total: 889
+LOD: updated 1 chunks | queue: 74
+Chunks: loaded 1 | queue: 16 | total: 890
+LOD: updated 1 chunks | queue: 73
+Chunks: loaded 1 | queue: 15 | total: 891
+LOD: updated 1 chunks | queue: 72
+Chunks: loaded 1 | queue: 14 | total: 892
+LOD: updated 1 chunks | queue: 71
+Chunks: loaded 1 | queue: 33 | total: 893
+LOD: updated 1 chunks | queue: 130
+Chunks: loaded 1 | queue: 32 | total: 894
+LOD: updated 1 chunks | queue: 129
+Chunks: loaded 1 | queue: 31 | total: 895
+LOD: updated 1 chunks | queue: 128
+Chunks: loaded 1 | queue: 30 | total: 896 | FPS: 40 | Q:30%
+LOD: updated 1 chunks | queue: 127
+Chunks: loaded 1 | queue: 29 | total: 897
+LOD: updated 1 chunks | queue: 126
+Chunks: loaded 1 | queue: 28 | total: 898
+LOD: updated 1 chunks | queue: 125
+Chunks: loaded 1 | queue: 27 | total: 899
+LOD: updated 1 chunks | queue: 124
+Chunks: loaded 1 | queue: 26 | total: 900
+LOD: updated 1 chunks | queue: 123
+Chunks: loaded 1 | queue: 25 | total: 901
+LOD: updated 1 chunks | queue: 122
+Chunks: loaded 1 | queue: 24 | total: 902
+LOD: updated 1 chunks | queue: 121
+Chunks: loaded 1 | queue: 23 | total: 903
+LOD: updated 1 chunks | queue: 120
+Chunks: loaded 1 | queue: 22 | total: 904
+LOD: updated 1 chunks | queue: 119
+Chunks: loaded 1 | queue: 21 | total: 905
+LOD: updated 1 chunks | queue: 118
+Chunks: loaded 1 | queue: 20 | total: 906 | FPS: 40 | Q:30%
+LOD: updated 1 chunks | queue: 117
+Chunks: loaded 1 | queue: 19 | total: 907
+LOD: updated 1 chunks | queue: 116
+Chunks: loaded 1 | queue: 18 | total: 908
+LOD: updated 1 chunks | queue: 115
+Chunks: loaded 1 | queue: 17 | total: 909
+LOD: updated 1 chunks | queue: 114
+Chunks: loaded 1 | queue: 16 | total: 910
+LOD: updated 1 chunks | queue: 113
+Chunks: loaded 1 | queue: 15 | total: 911
+LOD: updated 1 chunks | queue: 112
+Chunks: loaded 1 | queue: 14 | total: 912
+LOD: updated 1 chunks | queue: 111
+Chunks: loaded 1 | queue: 13 | total: 913
+LOD: updated 1 chunks | queue: 110
+Chunks: loaded 1 | queue: 11 | total: 914
+LOD: updated 1 chunks | queue: 109
+Chunks: loaded 1 | queue: 10 | total: 915
+LOD: updated 1 chunks | queue: 108
+Chunks: loaded 1 | queue: 9 | total: 916 | FPS: 40 | Q:30%
+LOD: updated 1 chunks | queue: 107
+Chunks: loaded 1 | queue: 8 | total: 917
+LOD: updated 1 chunks | queue: 106
+Chunks: loaded 1 | queue: 7 | total: 918
+LOD: updated 1 chunks | queue: 105
+Chunks: loaded 1 | queue: 6 | total: 919
+LOD: updated 1 chunks | queue: 104
+Chunks: loaded 1 | queue: 5 | total: 920
+LOD: updated 1 chunks | queue: 103
+Chunks: loaded 1 | queue: 4 | total: 921
+LOD: updated 1 chunks | queue: 102
+Chunks: loaded 1 | queue: 3 | total: 922
+LOD: updated 1 chunks | queue: 101
+Chunks: loaded 1 | queue: 2 | total: 923
+LOD: updated 1 chunks | queue: 100
+Chunks: loaded 1 | queue: 1 | total: 924
+LOD: updated 1 chunks | queue: 99
+Chunks: loaded 1 | queue: 0 | total: 925
+LOD: updated 1 chunks | queue: 98
+LOD: updated 1 chunks | queue: 97
+LOD: updated 1 chunks | queue: 96
+LOD: updated 1 chunks | queue: 95
+LOD: updated 1 chunks | queue: 94
+LOD: updated 1 chunks | queue: 93
+LOD: updated 1 chunks | queue: 92
+LOD: updated 1 chunks | queue: 91
+LOD: updated 1 chunks | queue: 90
+LOD: updated 1 chunks | queue: 89
+LOD: updated 1 chunks | queue: 88
+LOD: updated 1 chunks | queue: 87
+LOD: updated 1 chunks | queue: 86
+LOD: updated 1 chunks | queue: 85
+LOD: updated 1 chunks | queue: 84
+LOD: updated 1 chunks | queue: 83
+LOD: updated 1 chunks | queue: 82
+LOD: updated 1 chunks | queue: 81
+LOD: updated 1 chunks | queue: 80
+LOD: updated 1 chunks | queue: 79
+LOD: updated 1 chunks | queue: 78
+LOD: updated 1 chunks | queue: 77
+LOD: updated 1 chunks | queue: 76
+LOD: updated 1 chunks | queue: 75
+LOD: updated 1 chunks | queue: 74
+LOD: updated 1 chunks | queue: 73
+LOD: updated 1 chunks | queue: 72
+LOD: updated 1 chunks | queue: 71
+LOD: updated 1 chunks | queue: 70
+LOD: updated 1 chunks | queue: 69
+LOD: updated 1 chunks | queue: 68
+LOD: updated 1 chunks | queue: 67
+LOD: updated 1 chunks | queue: 66
+LOD: updated 1 chunks | queue: 65
+LOD: updated 1 chunks | queue: 64
+LOD: updated 1 chunks | queue: 63
+LOD: updated 1 chunks | queue: 62
+LOD: updated 1 chunks | queue: 61
+LOD: updated 1 chunks | queue: 60
+LOD: updated 1 chunks | queue: 59
+LOD: updated 1 chunks | queue: 58
+LOD: updated 1 chunks | queue: 57
+LOD: updated 1 chunks | queue: 56
+LOD: updated 1 chunks | queue: 55
+LOD: updated 1 chunks | queue: 54
+LOD: updated 1 chunks | queue: 53
+LOD: updated 1 chunks | queue: 52
+LOD: updated 1 chunks | queue: 51
+LOD: updated 1 chunks | queue: 50
+LOD: updated 1 chunks | queue: 49
+LOD: updated 1 chunks | queue: 48
+LOD: updated 1 chunks | queue: 47
+LOD: updated 1 chunks | queue: 46
+LOD: updated 1 chunks | queue: 45
+LOD: updated 1 chunks | queue: 44
+LOD: updated 1 chunks | queue: 43
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+LOD: updated 1 chunks | queue: 37
+LOD: updated 1 chunks | queue: 36
+LOD: updated 1 chunks | queue: 35
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+LOD: updated 1 chunks | queue: 31
+LOD: updated 1 chunks | queue: 30
+LOD: updated 1 chunks | queue: 29
+LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
+LOD: updated 1 chunks | queue: 25
+LOD: updated 1 chunks | queue: 24
+LOD: updated 1 chunks | queue: 23
+LOD: updated 1 chunks | queue: 22
+LOD: updated 1 chunks | queue: 21
+LOD: updated 1 chunks | queue: 20
+LOD: updated 1 chunks | queue: 19
+LOD: updated 1 chunks | queue: 18
+LOD: updated 1 chunks | queue: 17
+LOD: updated 1 chunks | queue: 16
+LOD: updated 1 chunks | queue: 15
+LOD: updated 1 chunks | queue: 14
+LOD: updated 1 chunks | queue: 13
+LOD: updated 1 chunks | queue: 12
+LOD: updated 1 chunks | queue: 11
+LOD: updated 1 chunks | queue: 10
+LOD: updated 1 chunks | queue: 9
+LOD: updated 1 chunks | queue: 8
+LOD: updated 1 chunks | queue: 7
+LOD: updated 1 chunks | queue: 6
+LOD: updated 1 chunks | queue: 5
+LOD: updated 1 chunks | queue: 4
+LOD: updated 1 chunks | queue: 3
+LOD: updated 1 chunks | queue: 2
+LOD: updated 1 chunks | queue: 1
+LOD: updated 1 chunks | queue: 0
+Fly mode: OFF
+Chunks: loaded 1 | queue: 23 | total: 926 | FPS: 57 | Q:30%
+LOD: updated 1 chunks | queue: 68
+Chunks: loaded 1 | queue: 22 | total: 927
+LOD: updated 1 chunks | queue: 67
+Chunks: loaded 1 | queue: 21 | total: 928
+LOD: updated 1 chunks | queue: 66
+Chunks: loaded 1 | queue: 20 | total: 929
+LOD: updated 1 chunks | queue: 65
+Chunks: loaded 1 | queue: 19 | total: 930
+LOD: updated 1 chunks | queue: 64
+Chunks: loaded 1 | queue: 18 | total: 931
+LOD: updated 1 chunks | queue: 63
+Chunks: loaded 1 | queue: 17 | total: 932
+LOD: updated 1 chunks | queue: 62
+Chunks: loaded 1 | queue: 16 | total: 933
+LOD: updated 1 chunks | queue: 61
+Chunks: loaded 1 | queue: 15 | total: 934
+LOD: updated 1 chunks | queue: 60
+Chunks: loaded 1 | queue: 14 | total: 935
+LOD: updated 1 chunks | queue: 59
+Chunks: loaded 1 | queue: 13 | total: 936 | FPS: 57 | Q:30%
+LOD: updated 1 chunks | queue: 58
+Chunks: loaded 1 | queue: 12 | total: 937
+LOD: updated 1 chunks | queue: 57
+Chunks: loaded 1 | queue: 11 | total: 938
+LOD: updated 1 chunks | queue: 56
+Chunks: loaded 1 | queue: 10 | total: 939
+LOD: updated 1 chunks | queue: 55
+Chunks: loaded 1 | queue: 9 | total: 940
+LOD: updated 1 chunks | queue: 54
+Chunks: loaded 1 | queue: 8 | total: 941
+LOD: updated 1 chunks | queue: 53
+Chunks: loaded 1 | queue: 7 | total: 942
+LOD: updated 1 chunks | queue: 52
+Chunks: loaded 1 | queue: 6 | total: 943
+LOD: updated 1 chunks | queue: 51
+Chunks: loaded 1 | queue: 5 | total: 944
+LOD: updated 1 chunks | queue: 50
+Chunks: loaded 1 | queue: 4 | total: 945
+LOD: updated 1 chunks | queue: 49
+Chunks: loaded 1 | queue: 3 | total: 946 | FPS: 48 | Q:30%
+LOD: updated 1 chunks | queue: 48
+Chunks: loaded 1 | queue: 2 | total: 947
+LOD: updated 1 chunks | queue: 47
+Chunks: loaded 1 | queue: 1 | total: 948
+LOD: updated 1 chunks | queue: 46
+Chunks: loaded 1 | queue: 0 | total: 949
+LOD: updated 1 chunks | queue: 45
+LOD: updated 1 chunks | queue: 44
+LOD: updated 1 chunks | queue: 43
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+LOD: updated 1 chunks | queue: 37
+LOD: updated 1 chunks | queue: 36
+LOD: updated 1 chunks | queue: 35
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+LOD: updated 1 chunks | queue: 31
+LOD: updated 1 chunks | queue: 30
+LOD: updated 1 chunks | queue: 29
+LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
+LOD: updated 1 chunks | queue: 25
+LOD: updated 1 chunks | queue: 24
+LOD: updated 1 chunks | queue: 23
+LOD: updated 1 chunks | queue: 22
+LOD: updated 1 chunks | queue: 21
+LOD: updated 1 chunks | queue: 20
+LOD: updated 1 chunks | queue: 19
+LOD: updated 1 chunks | queue: 18
+LOD: updated 1 chunks | queue: 17
+LOD: updated 1 chunks | queue: 16
+LOD: updated 1 chunks | queue: 15
+LOD: updated 1 chunks | queue: 14
+LOD: updated 1 chunks | queue: 13
+LOD: updated 1 chunks | queue: 12
+LOD: updated 1 chunks | queue: 11
+LOD: updated 1 chunks | queue: 10
+LOD: updated 1 chunks | queue: 9
+LOD: updated 1 chunks | queue: 8
+LOD: updated 1 chunks | queue: 7
+LOD: updated 1 chunks | queue: 6
+LOD: updated 1 chunks | queue: 5
+LOD: updated 1 chunks | queue: 4
+LOD: updated 1 chunks | queue: 3
+LOD: updated 1 chunks | queue: 2
+LOD: updated 1 chunks | queue: 1
+LOD: updated 1 chunks | queue: 0
+Chunks: loaded 1 | queue: 22 | total: 950
+LOD: updated 1 chunks | queue: 65
+Chunks: loaded 1 | queue: 21 | total: 951
+LOD: updated 1 chunks | queue: 64
+Chunks: loaded 1 | queue: 20 | total: 952
+LOD: updated 1 chunks | queue: 63
+Chunks: loaded 1 | queue: 19 | total: 953
+LOD: updated 1 chunks | queue: 62
+Chunks: loaded 1 | queue: 18 | total: 954
+LOD: updated 1 chunks | queue: 61
+Chunks: loaded 1 | queue: 17 | total: 955
+LOD: updated 1 chunks | queue: 60
+Chunks: loaded 1 | queue: 16 | total: 956 | FPS: 60 | Q:30%
+LOD: updated 1 chunks | queue: 59
+Chunks: loaded 1 | queue: 15 | total: 957
+LOD: updated 1 chunks | queue: 58
+Chunks: loaded 1 | queue: 14 | total: 958
+LOD: updated 1 chunks | queue: 57
+Chunks: loaded 1 | queue: 13 | total: 959
+LOD: updated 1 chunks | queue: 56
+Chunks: loaded 1 | queue: 12 | total: 960
+LOD: updated 1 chunks | queue: 55
+Chunks: loaded 1 | queue: 11 | total: 961
+LOD: updated 1 chunks | queue: 54
+Chunks: loaded 1 | queue: 10 | total: 962
+LOD: updated 1 chunks | queue: 53
+Chunks: loaded 1 | queue: 9 | total: 963
+LOD: updated 1 chunks | queue: 52
+Chunks: loaded 1 | queue: 8 | total: 964
+LOD: updated 1 chunks | queue: 51
+Chunks: loaded 1 | queue: 7 | total: 965
+LOD: updated 1 chunks | queue: 50
+Chunks: loaded 1 | queue: 6 | total: 966 | FPS: 60 | Q:30%
+LOD: updated 1 chunks | queue: 49
+Chunks: loaded 1 | queue: 5 | total: 967
+LOD: updated 1 chunks | queue: 48
+Chunks: loaded 1 | queue: 4 | total: 968
+LOD: updated 1 chunks | queue: 47
+Chunks: loaded 1 | queue: 3 | total: 969
+LOD: updated 1 chunks | queue: 46
+Chunks: loaded 1 | queue: 2 | total: 970
+LOD: updated 1 chunks | queue: 45
+Chunks: loaded 1 | queue: 1 | total: 971
+LOD: updated 1 chunks | queue: 44
+Chunks: loaded 1 | queue: 0 | total: 972
+LOD: updated 1 chunks | queue: 43
+LOD: updated 1 chunks | queue: 42
+LOD: updated 1 chunks | queue: 41
+LOD: updated 1 chunks | queue: 40
+LOD: updated 1 chunks | queue: 39
+LOD: updated 1 chunks | queue: 38
+LOD: updated 1 chunks | queue: 37
+LOD: updated 1 chunks | queue: 36
+LOD: updated 1 chunks | queue: 35
+LOD: updated 1 chunks | queue: 34
+LOD: updated 1 chunks | queue: 33
+LOD: updated 1 chunks | queue: 32
+Chunks: queued 4 for unload
+LOD: updated 1 chunks | queue: 31
+Chunks: unloaded 2 | queue: 2 | remaining: 970
+LOD: updated 1 chunks | queue: 30
+Chunks: unloaded 2 | queue: 0 | remaining: 968
+LOD: updated 1 chunks | queue: 29
+LOD: updated 1 chunks | queue: 28
+LOD: updated 1 chunks | queue: 27
+LOD: updated 1 chunks | queue: 26
+LOD: updated 1 chunks | queue: 25
+LOD: updated 1 chunks | queue: 24
+LOD: updated 1 chunks | queue: 23
+LOD: updated 1 chunks | queue: 22
+LOD: updated 1 chunks | queue: 21
+LOD: updated 1 chunks | queue: 20
+LOD: updated 1 chunks | queue: 19
+LOD: updated 1 chunks | queue: 18
+LOD: updated 1 chunks | queue: 17
+LOD: updated 1 chunks | queue: 16
+LOD: updated 1 chunks | queue: 15
+LOD: updated 1 chunks | queue: 14
+LOD: updated 1 chunks | queue: 13
+LOD: updated 1 chunks | queue: 12
+LOD: updated 1 chunks | queue: 11
+LOD: updated 1 chunks | queue: 10
+LOD: updated 1 chunks | queue: 9
+LOD: updated 1 chunks | queue: 8
+LOD: updated 1 chunks | queue: 7
+LOD: updated 1 chunks | queue: 6
+LOD: updated 1 chunks | queue: 5
+LOD: updated 1 chunks | queue: 4
+LOD: updated 1 chunks | queue: 3
+LOD: updated 1 chunks | queue: 2
+LOD: updated 1 chunks | queue: 1
+LOD: updated 1 chunks | queue: 0
