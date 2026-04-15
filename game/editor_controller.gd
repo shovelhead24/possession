@@ -15,6 +15,10 @@ const BRUSH_RADIUS_MAX: float = 120.0
 const BRUSH_RADIUS_STEP: float = 2.0
 const BRUSH_STRENGTH_PER_SEC: float = 30.0
 const BRUSH_BOOST_MULT: float = 2.0
+const CTRL_DEADZONE: float = 0.15
+const CTRL_ORBIT_SPEED: float = 2.0   # rad/sec at full stick deflection
+const CTRL_RADIUS_SPEED: float = 30.0 # units/sec while bumper held
+const CTRL_TRIGGER_THRESHOLD: float = 0.1
 
 enum BrushMode { RAISE_LOWER = 0, SMOOTH = 1, FLATTEN = 2 }
 
@@ -97,16 +101,39 @@ func _create_brush_cursor() -> void:
 	add_child(_brush_cursor)
 	_brush_cursor.visible = false
 
+func _get_brush_world_pos() -> Variant:
+	# Controller: raycast from screen centre so the brush tracks the camera aim point.
+	# Mouse: use normal cursor raycast.
+	var use_center: bool = Input.get_connected_joypads().size() > 0
+	var screen_pos: Vector2
+	if use_center:
+		screen_pos = get_viewport().get_visible_rect().size * 0.5
+	else:
+		screen_pos = get_viewport().get_mouse_position()
+	var ray_origin := editor_camera.project_ray_origin(screen_pos)
+	var ray_dir := editor_camera.project_ray_normal(screen_pos)
+	var ray_end := ray_origin + ray_dir * 10000.0
+	var query := PhysicsRayQueryParameters3D.create(ray_origin, ray_end)
+	query.collision_mask = 1
+	var result := get_world_3d().direct_space_state.intersect_ray(query)
+	if not result.is_empty():
+		return result["position"]
+	if ray_dir.y < -0.001:
+		var t := (_focus_point.y - ray_origin.y) / ray_dir.y
+		return ray_origin + ray_dir * t
+	return null
+
 func _update_brush_cursor() -> void:
 	if _brush_cursor == null:
 		return
 	if not is_editor_active:
 		_brush_cursor.visible = false
 		return
-	if Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_CTRL):
+	var controller_active: bool = Input.get_connected_joypads().size() > 0
+	if not controller_active and (Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_CTRL)):
 		_brush_cursor.visible = false
 		return
-	var pos_v = _get_terrain_cursor_world_pos()
+	var pos_v = _get_brush_world_pos()
 	if pos_v == null:
 		_brush_cursor.visible = false
 		return
@@ -122,6 +149,12 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey:
 		var ek := event as InputEventKey
 		if ek.physical_keycode == KEY_F3 and ek.pressed and not ek.echo:
+			get_viewport().set_input_as_handled()
+			_toggle()
+			return
+	if event is InputEventJoypadButton:
+		var jb := event as InputEventJoypadButton
+		if jb.pressed and jb.button_index == JOY_BUTTON_START:
 			get_viewport().set_input_as_handled()
 			_toggle()
 			return
@@ -164,6 +197,34 @@ func _input(event: InputEvent) -> void:
 		if ek2.physical_keycode == KEY_M and ek2.pressed and not ek2.echo:
 			brush_mode = (brush_mode + 1) % 3
 			get_viewport().set_input_as_handled()
+	if not is_editor_active:
+		return
+	if event is InputEventJoypadButton:
+		var jb2 := event as InputEventJoypadButton
+		if not jb2.pressed:
+			return
+		match jb2.button_index:
+			JOY_BUTTON_Y:  # cycle brush mode
+				brush_mode = (brush_mode + 1) % 3
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_DPAD_LEFT:  # cycle falloff
+				brush_falloff = (brush_falloff + 1) % 3
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_DPAD_RIGHT:  # cycle falloff reverse
+				brush_falloff = (brush_falloff + 2) % 3
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_DPAD_UP:  # zoom in
+				if _zoom_cooldown <= 0.0:
+					_zoom_step = max(_zoom_step - 1, 0)
+					_camera_altitude = ALTITUDE_STEPS[_zoom_step]
+					_zoom_cooldown = ZOOM_DEBOUNCE_SEC
+				get_viewport().set_input_as_handled()
+			JOY_BUTTON_DPAD_DOWN:  # zoom out
+				if _zoom_cooldown <= 0.0:
+					_zoom_step = min(_zoom_step + 1, ALTITUDE_STEPS.size() - 1)
+					_camera_altitude = ALTITUDE_STEPS[_zoom_step]
+					_zoom_cooldown = ZOOM_DEBOUNCE_SEC
+				get_viewport().set_input_as_handled()
 
 func _toggle() -> void:
 	if is_editor_active:
@@ -288,44 +349,41 @@ func _tick_brush(delta: float) -> void:
 		return
 	var lmb: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 	var rmb: bool = Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
-	if not lmb and not rmb:
+	var ctrl_apply: bool = Input.get_joy_axis(0, JOY_AXIS_TRIGGER_RIGHT) > CTRL_TRIGGER_THRESHOLD
+	var ctrl_lower: bool = Input.get_joy_axis(0, JOY_AXIS_TRIGGER_LEFT) > CTRL_TRIGGER_THRESHOLD
+	var apply: bool = lmb or ctrl_apply
+	var lower: bool = rmb or ctrl_lower
+	if not apply and not lower:
 		return
-	var pos_v = _get_terrain_cursor_world_pos()
+	var pos_v = _get_brush_world_pos()
 	if pos_v == null:
 		return
 	var world_pos: Vector3 = pos_v
 
 	match brush_mode:
 		BrushMode.RAISE_LOWER:
-			var direction: float = 1.0 if lmb else -1.0
-			var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
+			var direction: float = 1.0 if apply else -1.0
+			var boost: float = BRUSH_BOOST_MULT if (Input.is_key_pressed(KEY_R) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)) else 1.0
 			var strength: float = direction * BRUSH_STRENGTH_PER_SEC * boost * delta
 			var dirty: Array = terrain_manager.apply_height_brush(world_pos, brush_radius, strength, brush_falloff)
 			if dirty.size() > 0:
 				_rebuild_dirty_chunks(dirty)
 		BrushMode.SMOOTH:
-			# Only fires on LMB — smooth has no directional opposite
-			if not lmb:
+			if not apply:
 				return
-			# strength is a lerp weight per frame; 3.0 * delta gives ~0.05 at 60fps
-			# which is a gentle nudge. Boost doubles the convergence rate.
-			var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
+			var boost: float = BRUSH_BOOST_MULT if (Input.is_key_pressed(KEY_R) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)) else 1.0
 			var strength: float = 3.0 * boost * delta
 			var dirty: Array = terrain_manager.apply_smooth_brush(world_pos, brush_radius, strength)
 			if dirty.size() > 0:
 				_rebuild_dirty_chunks(dirty)
 		BrushMode.FLATTEN:
-			# Only fires on LMB — flatten has no directional opposite
-			if not lmb:
-				# LMB released: clear the stored target so next press resamples
+			if not apply:
 				_flatten_lmb_was_pressed = false
 				return
 			if not _flatten_lmb_was_pressed:
-				# First press this stroke: sample the full world Y at cursor (noise + offset)
 				_flatten_target_offset = terrain_manager.sample_world_height(world_pos)
 				_flatten_lmb_was_pressed = true
-			# Continuous flatten while LMB held — same lerp-weight pattern as smooth
-			var boost: float = BRUSH_BOOST_MULT if Input.is_key_pressed(KEY_R) else 1.0
+			var boost: float = BRUSH_BOOST_MULT if (Input.is_key_pressed(KEY_R) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)) else 1.0
 			var strength: float = 5.0 * boost * delta
 			var dirty: Array = terrain_manager.apply_flatten_brush(world_pos, brush_radius, _flatten_target_offset, strength)
 			if dirty.size() > 0:
@@ -381,3 +439,24 @@ func _handle_keyboard(delta: float) -> void:
 			_zoom_step = min(_zoom_step + 1, ALTITUDE_STEPS.size() - 1)
 			_camera_altitude = ALTITUDE_STEPS[_zoom_step]
 			_zoom_cooldown = ZOOM_DEBOUNCE_SEC
+
+	# --- Controller ---
+	# Left stick: pan
+	var ls_x: float = Input.get_joy_axis(0, JOY_AXIS_LEFT_X)
+	var ls_y: float = Input.get_joy_axis(0, JOY_AXIS_LEFT_Y)
+	if abs(ls_x) > CTRL_DEADZONE:
+		_focus_point += right * ls_x * pan_speed * delta
+	if abs(ls_y) > CTRL_DEADZONE:
+		_focus_point -= forward * ls_y * pan_speed * delta
+	# Right stick: orbit
+	var rs_x: float = Input.get_joy_axis(0, JOY_AXIS_RIGHT_X)
+	var rs_y: float = Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y)
+	if abs(rs_x) > CTRL_DEADZONE:
+		_orbit_yaw += rs_x * CTRL_ORBIT_SPEED * delta
+	if abs(rs_y) > CTRL_DEADZONE:
+		_orbit_pitch = clamp(_orbit_pitch + rs_y * CTRL_ORBIT_SPEED * delta, PITCH_MIN, PITCH_MAX)
+	# Bumpers: brush radius (continuous while held)
+	if Input.is_joy_button_pressed(0, JOY_BUTTON_RIGHT_SHOULDER):
+		brush_radius = clamp(brush_radius + CTRL_RADIUS_SPEED * delta, BRUSH_RADIUS_MIN, BRUSH_RADIUS_MAX)
+	if Input.is_joy_button_pressed(0, JOY_BUTTON_LEFT_SHOULDER):
+		brush_radius = clamp(brush_radius - CTRL_RADIUS_SPEED * delta, BRUSH_RADIUS_MIN, BRUSH_RADIUS_MAX)
