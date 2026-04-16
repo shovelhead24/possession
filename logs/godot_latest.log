@@ -8,6 +8,8 @@ Unrecognized output string "misc2" in mapping:
 Unrecognized output string "misc2" in mapping:
 030000007e0500006920000000000000,Nintendo Switch 2 Pro Controller,a:b0,b:b1,back:b14,dpdown:b8,dpleft:b10,dpright:b9,dpup:b11,guide:b16,leftshoulder:b12,leftstick:b15,lefttrigger:b13,leftx:a0,lefty:a1~,misc1:b17,misc2:b20,paddle1:b18,paddle2:b19,rightshoulder:b4,rightstick:b7,righttrigger:b5,rightx:a2,righty:a3~,start:b6,x:b2,y:b3,platform:Windows,
 Native OpenGL API detected: 3.3: Intel - Intel(R) UHD Graphics
+SDL: Gamepad DualSense Wireless Controller connected
+SDL: Gamepad XInput Controller connected
 SDL: Init OK!
 Using "winink" pen tablet driver...
 Shader 'CanvasSdfShaderGLES3' SHA256: 40c856f97ed9b9a1228861e55e1f799133f969d3b56a29ac4ea5b8f8d86aa4c9
@@ -135,7 +137,6 @@ WARNING: Can't change the size of a `SubViewport` with a `SubViewportContainer` 
    at: _internal_set_size (scene/main/viewport.cpp:5417)
    GDScript backtrace (most recent call first):
        [0] _ready (res://player.gd:108)
-TerrainManager: Initializing...
 PropPool: _ready() START
 Loading resource: res://realistic_fir_trees_pack_lods_gameready/scene.gltf
 Loading resource: res://.godot/imported/scene.gltf-752d9c9993c841e0b687908a375c24a2.scn
@@ -215,63 +216,52 @@ PropPool: grow_pool_sync finished, total_trees_created=90
 PropPool: grow_grass_sync creating 150 grass...
 PropPool: grow_grass_sync finished, total_grass_created=150
 PropPool: Seeded with 90 trees, 150 grass (rest grows async as needed)
-TerrainManager: Biome = River Valley
-TerrainManager: Noise initialized with seed 12345
-TerrainManager: Info opacity = 0.5, Signal amp = 0.6
-TerrainManager: Ring dimensions = 10000.0x100000.0 (edge zone: 500.0)
-TerrainManager: Generated boundary walls at Z = +/-5000.0
-TerrainManager: Creating global water at height 32.0
 Loading resource: res://water_shader.gdshader
-TerrainManager: Global water plane created at Y=32.0
-TerrainManager: Player found at (0.0, 47.0, 0.0)
-TerrainManager: Need spawn chunk (0, 0) - creating synchronously...
 WARNING: Loaded resource as image file, this will not work on export: 'res://grass.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1020)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1028)
-       [2] create_terrain_material (res://terrain_chunk.gd:1036)
-       [3] generate_terrain (res://terrain_chunk.gd:568)
-       [4] initialize (res://terrain_chunk.gd:110)
-       [5] create_chunk (res://terrain_manager.gd:940)
-       [6] find_or_create_player (res://terrain_manager.gd:303)
-       [7] _ready (res://terrain_manager.gd:127)
+       [0] _load_tex (res://terrain_chunk.gd:1033)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1041)
+       [2] create_terrain_material (res://terrain_chunk.gd:1052)
+       [3] generate_terrain (res://terrain_chunk.gd:575)
+       [4] initialize (res://terrain_chunk.gd:112)
+       [5] create_chunk (res://terrain_manager.gd:892)
+       [6] find_or_create_player (res://terrain_manager.gd:291)
+       [7] _ready (res://terrain_manager.gd:124)
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1020)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1029)
-       [2] create_terrain_material (res://terrain_chunk.gd:1036)
-       [3] generate_terrain (res://terrain_chunk.gd:568)
-       [4] initialize (res://terrain_chunk.gd:110)
-       [5] create_chunk (res://terrain_manager.gd:940)
-       [6] find_or_create_player (res://terrain_manager.gd:303)
-       [7] _ready (res://terrain_manager.gd:127)
+       [0] _load_tex (res://terrain_chunk.gd:1033)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1042)
+       [2] create_terrain_material (res://terrain_chunk.gd:1052)
+       [3] generate_terrain (res://terrain_chunk.gd:575)
+       [4] initialize (res://terrain_chunk.gd:112)
+       [5] create_chunk (res://terrain_manager.gd:892)
+       [6] find_or_create_player (res://terrain_manager.gd:291)
+       [7] _ready (res://terrain_manager.gd:124)
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1020)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1030)
-       [2] create_terrain_material (res://terrain_chunk.gd:1036)
-       [3] generate_terrain (res://terrain_chunk.gd:568)
-       [4] initialize (res://terrain_chunk.gd:110)
-       [5] create_chunk (res://terrain_manager.gd:940)
-       [6] find_or_create_player (res://terrain_manager.gd:303)
-       [7] _ready (res://terrain_manager.gd:127)
+       [0] _load_tex (res://terrain_chunk.gd:1033)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1043)
+       [2] create_terrain_material (res://terrain_chunk.gd:1052)
+       [3] generate_terrain (res://terrain_chunk.gd:575)
+       [4] initialize (res://terrain_chunk.gd:112)
+       [5] create_chunk (res://terrain_manager.gd:892)
+       [6] find_or_create_player (res://terrain_manager.gd:291)
+       [7] _ready (res://terrain_manager.gd:124)
 WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1020)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1031)
-       [2] create_terrain_material (res://terrain_chunk.gd:1036)
-       [3] generate_terrain (res://terrain_chunk.gd:568)
-       [4] initialize (res://terrain_chunk.gd:110)
-       [5] create_chunk (res://terrain_manager.gd:940)
-       [6] find_or_create_player (res://terrain_manager.gd:303)
-       [7] _ready (res://terrain_manager.gd:127)
+       [0] _load_tex (res://terrain_chunk.gd:1033)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1044)
+       [2] create_terrain_material (res://terrain_chunk.gd:1052)
+       [3] generate_terrain (res://terrain_chunk.gd:575)
+       [4] initialize (res://terrain_chunk.gd:112)
+       [5] create_chunk (res://terrain_manager.gd:892)
+       [6] find_or_create_player (res://terrain_manager.gd:291)
+       [7] _ready (res://terrain_manager.gd:124)
 Loading resource: res://terrain_shader.gdshader
-TerrainManager: Created spawn chunk synchronously
-TerrainManager: Spawn chunk exists, has_collision=true collision_body=@StaticBody3D@253:<StaticBody3D#170758513656>
 DayNightCycle: Using existing sun light: DirectionalLight3D
 Loading resource: res://sky_dome_shader.gdshader
 DayNightCycle: Sky dome created (GL Compat spatial shader)
@@ -279,127 +269,41 @@ Day/Night cycle started at time: 0.45
 Warthog: Found turret node
 Warthog: Ready!
 Loading resource: res://pause_menu.gd
-TerrainManager: Collision body ready and in tree
-TerrainManager: Spawned player at (0.0, 228.9864, 0.0) (2m above terrain height 226.986376678828)
-Chunks: loaded 10 | queue: 889 | total: 11
 Warthog: Positioned at height 255.37012559259
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
-Chunks: loaded 10 | queue: 786 | total: 21
-Chunks: loaded 10 | queue: 809 | total: 31
-Chunks: loaded 10 | queue: 799 | total: 41
-Chunks: loaded 10 | queue: 789 | total: 51
-Chunks: loaded 10 | queue: 771 | total: 61
-Chunks: loaded 10 | queue: 753 | total: 71
-Chunks: loaded 10 | queue: 740 | total: 81
-Chunks: loaded 10 | queue: 727 | total: 91
-Chunks: loaded 10 | queue: 714 | total: 101 | FPS: 1 | Q:90%
-Chunks: loaded 10 | queue: 702 | total: 111
-Chunks: loaded 10 | queue: 692 | total: 121
-Chunks: loaded 10 | queue: 682 | total: 131
-Chunks: loaded 10 | queue: 672 | total: 141
-Chunks: loaded 10 | queue: 662 | total: 151
-Chunks: loaded 10 | queue: 652 | total: 161
-Chunks: loaded 10 | queue: 642 | total: 171
-Chunks: loaded 10 | queue: 632 | total: 181
-Chunks: loaded 10 | queue: 622 | total: 191
-Chunks: loaded 10 | queue: 612 | total: 201 | FPS: 1 | Q:90%
-Chunks: loaded 10 | queue: 602 | total: 211
-Chunks: loaded 10 | queue: 592 | total: 221
-Chunks: loaded 10 | queue: 582 | total: 231
-Chunks: loaded 10 | queue: 572 | total: 241
-Chunks: loaded 10 | queue: 562 | total: 251
-Chunks: loaded 10 | queue: 552 | total: 261
-Chunks: loaded 10 | queue: 542 | total: 271
-Chunks: loaded 10 | queue: 532 | total: 281
-Chunks: loaded 10 | queue: 522 | total: 291
-Chunks: loaded 10 | queue: 512 | total: 301 | FPS: 1 | Q:90%
-Chunks: loaded 10 | queue: 502 | total: 311
-Chunks: loaded 10 | queue: 492 | total: 321
-Chunks: loaded 10 | queue: 482 | total: 331
-Chunks: loaded 10 | queue: 472 | total: 341
-Chunks: loaded 10 | queue: 462 | total: 351
-Chunks: loaded 10 | queue: 452 | total: 361
-Chunks: loaded 10 | queue: 442 | total: 371
-Chunks: loaded 10 | queue: 432 | total: 381
-Chunks: loaded 10 | queue: 422 | total: 391
-Chunks: loaded 10 | queue: 412 | total: 401 | FPS: 28 | Q:89%
-Chunks: loaded 10 | queue: 402 | total: 411
-Chunks: loaded 10 | queue: 392 | total: 421
-Chunks: loaded 10 | queue: 382 | total: 431
-Chunks: loaded 10 | queue: 399 | total: 441
-Chunks: loaded 10 | queue: 389 | total: 451
-Chunks: loaded 10 | queue: 379 | total: 461
-Chunks: loaded 10 | queue: 369 | total: 471
-Chunks: loaded 10 | queue: 359 | total: 481
-Chunks: loaded 10 | queue: 349 | total: 491
-Chunks: loaded 10 | queue: 339 | total: 501 | FPS: 28 | Q:86%
-Chunks: loaded 10 | queue: 329 | total: 511
-Chunks: loaded 10 | queue: 319 | total: 521
-Chunks: loaded 10 | queue: 309 | total: 531
-Chunks: loaded 10 | queue: 299 | total: 541
-Chunks: loaded 10 | queue: 289 | total: 551
-Chunks: loaded 10 | queue: 279 | total: 561
-Chunks: loaded 10 | queue: 269 | total: 571
-Chunks: loaded 10 | queue: 259 | total: 581
-Chunks: loaded 10 | queue: 249 | total: 591
-Chunks: loaded 10 | queue: 239 | total: 601 | FPS: 28 | Q:82%
-Chunks: loaded 10 | queue: 229 | total: 611
-Chunks: loaded 10 | queue: 219 | total: 621
-Chunks: loaded 10 | queue: 209 | total: 631
-Chunks: loaded 10 | queue: 199 | total: 641
-Chunks: loaded 10 | queue: 189 | total: 651
-Chunks: loaded 10 | queue: 179 | total: 661
-LOD: updated 1 chunks | queue: 27
-Chunks: loaded 10 | queue: 169 | total: 671
-LOD: updated 1 chunks | queue: 26
-Chunks: loaded 10 | queue: 159 | total: 681
-LOD: updated 1 chunks | queue: 25
-Chunks: loaded 10 | queue: 149 | total: 691
-Chunks: loaded 10 | queue: 139 | total: 701 | FPS: 28 | Q:78%
-Chunks: loaded 10 | queue: 129 | total: 711
 Player: Exited vehicle
-Warthog: Player exited at (3.999575, 251.5445, -0.363058)
+Warthog: Player exited at (2.491452, 246.9449, 1.082083)
 Warthog: Press E to enter
-Chunks: loaded 10 | queue: 119 | total: 721
-Chunks: loaded 10 | queue: 109 | total: 731
-Chunks: loaded 10 | queue: 99 | total: 741
-Chunks: loaded 10 | queue: 89 | total: 751
-Chunks: loaded 10 | queue: 79 | total: 761
-Chunks: loaded 10 | queue: 69 | total: 771
-Chunks: loaded 10 | queue: 59 | total: 781
-Chunks: loaded 10 | queue: 49 | total: 791
-Chunks: loaded 10 | queue: 39 | total: 801 | FPS: 45 | Q:70%
-Chunks: loaded 10 | queue: 29 | total: 811
-Chunks: loaded 10 | queue: 19 | total: 821
+Warthog: Press E to enter
+Warthog: Press E to enter
+Bullet hit: @StaticBody3D@253
+Bullet hit: @StaticBody3D@1732
+Bullet hit: @StaticBody3D@1680
+Bullet hit: @StaticBody3D@1677
+Bullet hit: @StaticBody3D@1680
+Bullet hit: @StaticBody3D@1732
 Fly mode: ON
-Chunks: loaded 10 | queue: 9 | total: 831
-Chunks: loaded 9 | queue: 0 | total: 840
-TerrainManager: Initial load complete, switching to sequential loading
-TerrainManager: Adaptive quality enabled=true budget=8.0ms
-LOD: updated 1 chunks | queue: 24
-LOD: updated 1 chunks | queue: 23
-LOD: updated 1 chunks | queue: 22
-LOD: updated 1 chunks | queue: 21
-LOD: updated 1 chunks | queue: 20
-LOD: updated 1 chunks | queue: 19
-LOD: updated 1 chunks | queue: 18
-LOD: updated 1 chunks | queue: 17
-LOD: updated 1 chunks | queue: 16
-LOD: updated 1 chunks | queue: 15
-LOD: updated 1 chunks | queue: 14
-LOD: updated 1 chunks | queue: 13
-LOD: updated 1 chunks | queue: 12
-LOD: updated 1 chunks | queue: 11
-LOD: updated 1 chunks | queue: 10
-LOD: updated 1 chunks | queue: 9
-LOD: updated 1 chunks | queue: 8
-LOD: updated 1 chunks | queue: 7
-LOD: updated 1 chunks | queue: 6
-LOD: updated 1 chunks | queue: 5
-LOD: updated 1 chunks | queue: 4
-LOD: updated 1 chunks | queue: 3
-LOD: updated 1 chunks | queue: 2
-LOD: updated 1 chunks | queue: 1
-LOD: updated 1 chunks | queue: 0
+Fly mode: OFF
+Fly mode: ON
+Fly mode: OFF
+Fly mode: ON
+Fly mode: OFF
+Fly mode: ON
+Fly mode: OFF
+Switched to: RAILGUN
+XR: Clearing primary interface
+XR: Removed interface "Native mobile"
+XR: Removed interface "OpenXR"
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2514)
+Leaked instance: SceneTreeTimer:9223372868585300378
+Leaked instance: SceneTreeTimer:9223372888113979808
+Leaked instance: SceneTreeTimer:9223372875195523496
+Leaked instance: SceneTreeTimer:9223372871873634734
+Leaked instance: SceneTreeTimer:9223372874054672816
+Leaked instance: SceneTreeTimer:9223372875564622264
+Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
+Orphan StringName: timeout (static: 1, total: 7)
+StringName: 1 unclaimed string names at exit.
