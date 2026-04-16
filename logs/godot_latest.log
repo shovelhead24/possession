@@ -136,7 +136,7 @@ FPArmsController: Skeleton found with 49 bones
 WARNING: Can't change the size of a `SubViewport` with a `SubViewportContainer` parent that has `stretch` enabled. Set `SubViewportContainer.stretch` to `false` to allow changing the size manually.
    at: _internal_set_size (scene/main/viewport.cpp:5417)
    GDScript backtrace (most recent call first):
-       [0] _ready (res://player.gd:108)
+       [0] _ready (res://player.gd:111)
 PropPool: _ready() START
 Loading resource: res://realistic_fir_trees_pack_lods_gameready/scene.gltf
 Loading resource: res://.godot/imported/scene.gltf-752d9c9993c841e0b687908a375c24a2.scn
@@ -225,9 +225,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://gra
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:892)
-       [6] find_or_create_player (res://terrain_manager.gd:291)
-       [7] _ready (res://terrain_manager.gd:124)
+       [5] create_chunk (res://terrain_manager.gd:914)
+       [6] find_or_create_player (res://terrain_manager.gd:300)
+       [7] _ready (res://terrain_manager.gd:133)
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
@@ -236,9 +236,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sno
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:892)
-       [6] find_or_create_player (res://terrain_manager.gd:291)
-       [7] _ready (res://terrain_manager.gd:124)
+       [5] create_chunk (res://terrain_manager.gd:914)
+       [6] find_or_create_player (res://terrain_manager.gd:300)
+       [7] _ready (res://terrain_manager.gd:133)
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
@@ -247,9 +247,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sto
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:892)
-       [6] find_or_create_player (res://terrain_manager.gd:291)
-       [7] _ready (res://terrain_manager.gd:124)
+       [5] create_chunk (res://terrain_manager.gd:914)
+       [6] find_or_create_player (res://terrain_manager.gd:300)
+       [7] _ready (res://terrain_manager.gd:133)
 WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
@@ -258,9 +258,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://san
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:892)
-       [6] find_or_create_player (res://terrain_manager.gd:291)
-       [7] _ready (res://terrain_manager.gd:124)
+       [5] create_chunk (res://terrain_manager.gd:914)
+       [6] find_or_create_player (res://terrain_manager.gd:300)
+       [7] _ready (res://terrain_manager.gd:133)
 Loading resource: res://terrain_shader.gdshader
 DayNightCycle: Using existing sun light: DirectionalLight3D
 Loading resource: res://sky_dome_shader.gdshader
@@ -269,24 +269,20 @@ Day/Night cycle started at time: 0.45
 Warthog: Found turret node
 Warthog: Ready!
 Loading resource: res://pause_menu.gd
-Warthog: Positioned at height 255.37012559259
+Warthog: Positioned at height 47.144140124321
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
-Loading resource: res://lighting_test.tscn
-Loading resource: res://lighting_test_controller.gd
-Loading resource: res://sky_dome_shader.gdshader
-Loading resource: res://water_shader.gdshader
-Stress test: 500
-Stress test: 2k
-Benchmark pass 1/8: baseline
-Benchmark pass 2/8: no_shadows
-Benchmark pass 3/8: shadow_100m
-Benchmark pass 4/8: shadow_1km
-Benchmark pass 5/8: stress_2k
-Benchmark pass 6/8: stress_10k
-Benchmark pass 7/8: stress_50k
-Benchmark pass 8/8: stress_100k
-Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T20-02-04.csv (20991 rows)
-Benchmark pass 1/8: baseline
-Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T20-10-25.csv (509 rows)
+Bullet hit: Warthog
+Fly mode: ON
+Player: Exited vehicle
+Warthog: Player exited at (6.787101, 48.50299, 0.285522)
+Warthog: Press E to enter
+Fly mode: OFF
+Fly mode: ON
+Fly mode: OFF
+Bullet hit: @StaticBody3D@1747
+Bullet hit: @StaticBody3D@1747
+Switched to: RAILGUN
+Bullet hit: @StaticBody3D@1747
+Railgun hit: @StaticBody3D@1747 for 100.0 damage
