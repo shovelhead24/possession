@@ -1317,3 +1317,40 @@ func apply_flatten_brush(world_pos: Vector3, radius: float, target_world_y: floa
 				dirty.append(coord)
 
 	return dirty
+
+func apply_grass_brush(world_pos: Vector3, radius: float, strength: float, erase: bool = false) -> Array:
+	var dirty: Array = []
+	if radius <= 0.0:
+		return dirty
+	var half_cs: float = chunk_size * 0.5
+	var min_coord := get_chunk_coords(Vector3(world_pos.x - radius - half_cs, 0.0, world_pos.z - radius - half_cs))
+	var max_coord := get_chunk_coords(Vector3(world_pos.x + radius + half_cs, 0.0, world_pos.z + radius + half_cs))
+	for cz in range(min_coord.y, max_coord.y + 1):
+		for cx in range(min_coord.x, max_coord.x + 1):
+			var coord := Vector2i(cx, cz)
+			if not chunks.has(coord):
+				continue
+			var chunk = chunks[coord]
+			if chunk == null:
+				continue
+			chunk._ensure_offsets_sized()
+			var res: int = chunk.resolution
+			var stride: int = res + 1
+			var cs: float = chunk.chunk_size
+			var half: float = cs / 2.0
+			var touched: bool = false
+			for z in range(res + 1):
+				for x in range(res + 1):
+					var wx: float = chunk.position.x + (float(x) / float(res)) * cs - half
+					var wz: float = chunk.position.z + (float(z) / float(res)) * cs - half
+					var dist_sq: float = (wx - world_pos.x) * (wx - world_pos.x) + (wz - world_pos.z) * (wz - world_pos.z)
+					if dist_sq > radius * radius:
+						continue
+					var w: float = exp(-dist_sq / (2.0 * (radius * 0.5) * (radius * 0.5)))
+					var idx: int = z * stride + x
+					var delta: float = strength * w * (-1.0 if erase else 1.0)
+					chunk.grass_weights[idx] = clamp(chunk.grass_weights[idx] + delta, 0.0, 1.0)
+					touched = true
+			if touched and not dirty.has(coord):
+				dirty.append(coord)
+	return dirty

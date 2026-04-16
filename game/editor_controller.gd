@@ -20,7 +20,7 @@ const CTRL_CURSOR_SPEED: float = 900.0 # px/sec at full stick deflection
 const CTRL_RADIUS_SPEED: float = 30.0  # units/sec while bumper held
 const CTRL_TRIGGER_THRESHOLD: float = 0.1
 
-enum BrushMode { RAISE_LOWER = 0, SMOOTH = 1, FLATTEN = 2 }
+enum BrushMode { RAISE_LOWER = 0, SMOOTH = 1, FLATTEN = 2, GRASS_PAINT = 3 }
 
 @export var editor_hud_scene: PackedScene = preload("res://editor_hud.tscn")
 
@@ -219,7 +219,7 @@ func _input(event: InputEvent) -> void:
 			brush_falloff = (brush_falloff + 1) % 3
 			get_viewport().set_input_as_handled()
 		if ek2.physical_keycode == KEY_M and ek2.pressed and not ek2.echo:
-			brush_mode = (brush_mode + 1) % 3
+			brush_mode = (brush_mode + 1) % 4
 			get_viewport().set_input_as_handled()
 	if not is_editor_active:
 		return
@@ -235,7 +235,7 @@ func _input(event: InputEvent) -> void:
 					_ctrl_cursor_pos = get_viewport().get_visible_rect().size * 0.5
 				get_viewport().set_input_as_handled()
 			JOY_BUTTON_Y:  # cycle brush mode
-				brush_mode = (brush_mode + 1) % 3
+				brush_mode = (brush_mode + 1) % 4
 				get_viewport().set_input_as_handled()
 			JOY_BUTTON_DPAD_LEFT:  # cycle falloff
 				brush_falloff = (brush_falloff + 1) % 3
@@ -344,7 +344,7 @@ func _update_hud() -> void:
 		var p: Vector3 = pos
 		_info_label.text = "X: %d  Z: %d  Zoom: %d" % [int(p.x), int(p.z), _zoom_step]
 	if _mode_label != null:
-		var mode_names: Array = ["[Raise/Lower]", "[Smooth]", "[Flatten]"]
+		var mode_names: Array = ["[Raise/Lower]", "[Smooth]", "[Flatten]", "[Grass Paint]"]
 		_mode_label.text = mode_names[brush_mode]
 
 func _update_camera_transform() -> void:
@@ -417,6 +417,12 @@ func _tick_brush(delta: float) -> void:
 			var boost: float = BRUSH_BOOST_MULT if (Input.is_key_pressed(KEY_R) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)) else 1.0
 			var strength: float = 5.0 * boost * delta
 			var dirty: Array = terrain_manager.apply_flatten_brush(world_pos, brush_radius, _flatten_target_offset, strength)
+			if dirty.size() > 0:
+				_rebuild_dirty_chunks(dirty)
+		BrushMode.GRASS_PAINT:
+			var boost: float = BRUSH_BOOST_MULT if (Input.is_key_pressed(KEY_R) or Input.is_joy_button_pressed(0, JOY_BUTTON_X)) else 1.0
+			var strength: float = 2.0 * boost * delta
+			var dirty: Array = terrain_manager.apply_grass_brush(world_pos, brush_radius, strength, lower)
 			if dirty.size() > 0:
 				_rebuild_dirty_chunks(dirty)
 

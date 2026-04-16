@@ -18,6 +18,7 @@ var lod_resolutions: Array = [16, 6, 3, 2]  # LOD0=fine LOD1=medium LOD2=coarse 
 
 # Phase 2: Per-vertex height offsets for height brush editing
 var height_offsets: PackedFloat32Array = PackedFloat32Array()
+var grass_weights: PackedFloat32Array = PackedFloat32Array()
 var has_collision: bool = true  # Only LOD 0-1 have collision
 var skirt_depth: float = 20.0  # Overridden per-LOD in generate_terrain()
 
@@ -161,12 +162,15 @@ func get_height_at_world_pos(world_x: float, world_z: float) -> float:
 	base += _sample_offset(local_x, local_z)
 	return base
 
-# Ensure height_offsets is sized to match current resolution grid, filling with 0.0 if needed.
+# Ensure height_offsets and grass_weights are sized to match current resolution grid.
 func _ensure_offsets_sized() -> void:
 	var expected: int = (resolution + 1) * (resolution + 1)
 	if height_offsets.size() != expected:
 		height_offsets.resize(expected)
 		height_offsets.fill(0.0)
+	if grass_weights.size() != expected:
+		grass_weights.resize(expected)
+		grass_weights.fill(0.0)
 
 # Bilinear sample of the height_offsets grid at local chunk coordinates.
 # local_x, local_z are in [-chunk_size/2, +chunk_size/2].
@@ -551,6 +555,7 @@ func generate_terrain():
 				var t = (normalized_height - 0.75) / 0.25
 				color = rock_color.lerp(snow_color, clamp(t, 0.0, 1.0))
 
+		color.a = grass_weights[i] if grass_weights.size() > i else 0.0
 		colors[i] = color
 	
 	arrays[Mesh.ARRAY_VERTEX] = vertices

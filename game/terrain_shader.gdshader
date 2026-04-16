@@ -227,6 +227,9 @@ void fragment() {
 		terrain_color = mix(terrain_color, terrain_color * COLOR.rgb * 2.0, vertex_color_strength);
 	}
 
+	// Grass paint override: COLOR.a = weight painted by editor grass brush
+	terrain_color = mix(terrain_color, grass, COLOR.a);
+
 	// Underwater caustics and god rays effect
 	float depth_below_water = water_height - vertex_height;
 	if (depth_below_water > 0.0) {
