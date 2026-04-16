@@ -131,7 +131,7 @@ light_energy = 1.4
 shadow_enabled = true
 shadow_bias = 0.1
 shadow_normal_bias = 1.0
-shadow_max_distance = 300.0
+directional_shadow_max_distance = 300.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_tlwt5")

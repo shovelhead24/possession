@@ -89,7 +89,7 @@ func _ready():
 func _build_camera():
 	camera = Camera3D.new()
 	camera.name = "TestCamera"
-	camera.position = Vector3(0, 60, 80)
+	camera.position = Vector3(0, 110, 80)
 	camera.current = true
 	add_child(camera)
 	pitch = -0.15
@@ -167,7 +167,7 @@ func _input(event):
 						terrain_material.set_shader_parameter("normal_map_strength", 0.8 if normals_enabled else 0.0)
 				KEY_M:
 					shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
-					sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+					sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
 				KEY_A:
 					ambient_idx = (ambient_idx + 1) % ambient_levels.size()
 					environment.ambient_light_energy = ambient_levels[ambient_idx]
@@ -195,7 +195,7 @@ func _input(event):
 					terrain_material.set_shader_parameter("normal_map_strength", 0.8 if normals_enabled else 0.0)
 			JOY_BUTTON_X:  # X = cycle shadow distance
 				shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
-				sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+				sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
 			JOY_BUTTON_DPAD_UP:  # DPad Up = ambient up
 				ambient_idx = (ambient_idx + 1) % ambient_levels.size()
 				environment.ambient_light_energy = ambient_levels[ambient_idx]
@@ -204,10 +204,10 @@ func _input(event):
 				environment.ambient_light_energy = ambient_levels[ambient_idx]
 			JOY_BUTTON_DPAD_LEFT:  # DPad Left = shadow dist down
 				shadow_dist_idx = (shadow_dist_idx - 1 + shadow_distances.size()) % shadow_distances.size()
-				sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+				sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
 			JOY_BUTTON_DPAD_RIGHT:  # DPad Right = shadow dist up
 				shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
-				sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+				sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
 			JOY_BUTTON_START:  # Start = benchmark
 				_toggle_benchmark()
 			JOY_BUTTON_BACK:  # Back = write CSV
@@ -225,7 +225,7 @@ func _build_lighting():
 	sun_light.shadow_enabled = true
 	sun_light.shadow_bias = 0.1
 	sun_light.shadow_normal_bias = 1.0
-	sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+	sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
 	add_child(sun_light)
 
 	world_env = WorldEnvironment.new()
@@ -338,19 +338,24 @@ func _build_test_geometry():
 
 	# -- Terrain texture planes --
 	# Each plane is positioned at a Y value that activates its shader zone
-	_add_plane(geo, "GrassPlane",  Vector3(-50, 50, 0),   40.0, terrain_material)
-	_add_plane(geo, "SandPlane",   Vector3(0, 49, 0),     40.0, terrain_material)
-	_add_plane(geo, "StonePlane",  Vector3(50, 150, 0),   40.0, terrain_material)
-	_add_plane(geo, "SnowPlane",   Vector3(-50, 310, 0),  40.0, terrain_material)
+	# Heights chosen to match terrain_shader.gdshader zone thresholds:
+	#   Sand/beach: water_height(48) to +beach_height_max(15) = Y 48-63
+	#   Grass: above beach, below stone_start(200)
+	#   Stone: stone_start(200) to snow_start(300)
+	#   Snow: above snow_full(360)
+	_add_plane(geo, "GrassPlane",  Vector3(-50, 100, 0),  40.0, terrain_material)
+	_add_plane(geo, "SandPlane",   Vector3(0, 52, 0),     40.0, terrain_material)
+	_add_plane(geo, "StonePlane",  Vector3(50, 250, 0),   40.0, terrain_material)
+	_add_plane(geo, "SnowPlane",   Vector3(-50, 380, 0),  40.0, terrain_material)
 
-	# -- Slope ramp (tests cliff blending) --
-	_add_slope_ramp(geo, Vector3(50, 50, -60), 40.0, 40.0, terrain_material)
+	# -- Slope ramp (tests cliff blending at stone zone height) --
+	_add_slope_ramp(geo, Vector3(50, 100, -60), 40.0, 40.0, terrain_material)
 
 	# -- Water plane --
 	_build_water_plane(geo, Vector3(0, 48, -60), 60.0)
 
 	# -- Monolith pair (same as ancient_structures.gd) --
-	_add_monolith_pair(geo, Vector3(0, 0, -150))
+	_add_monolith_pair(geo, Vector3(0, 35, -150))
 
 	# -- Distance posts (shadow/LOD reference markers) --
 	var post_distances = [100, 300, 500, 1000, 1500, 2000]
@@ -420,6 +425,8 @@ func _add_plane(parent: Node3D, label: String, pos: Vector3, size: float, mat: M
 	post_label.font_size = 96
 	post_label.position = pos + Vector3(0, 3, -size / 2.0 - 2)
 	post_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	post_label.outline_size = 12
+	post_label.outline_modulate = Color(0, 0, 0, 1)
 	parent.add_child(post_label)
 
 func _add_slope_ramp(parent: Node3D, pos: Vector3, width: float, length: float, mat: Material):
@@ -436,12 +443,13 @@ func _add_slope_ramp(parent: Node3D, pos: Vector3, width: float, length: float, 
 
 	st.set_normal(Vector3(0, 0.707, 0.707))
 	st.set_color(Color(0.5, 0.5, 0.5, 0.0))
+	# CCW winding so front face is visible from camera side
 	st.add_vertex(v0)
-	st.add_vertex(v1)
 	st.add_vertex(v2)
 	st.add_vertex(v1)
+	st.add_vertex(v1)
+	st.add_vertex(v2)
 	st.add_vertex(v3)
-	st.add_vertex(v2)
 
 	var mesh = st.commit()
 	var mi = MeshInstance3D.new()
@@ -457,6 +465,8 @@ func _add_slope_ramp(parent: Node3D, pos: Vector3, width: float, length: float, 
 	lbl.font_size = 96
 	lbl.position = pos + Vector3(0, 3, 5)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.outline_size = 12
+	lbl.outline_modulate = Color(0, 0, 0, 1)
 	parent.add_child(lbl)
 
 func _build_water_plane(parent: Node3D, pos: Vector3, size: float):
@@ -490,6 +500,8 @@ func _build_water_plane(parent: Node3D, pos: Vector3, size: float):
 	lbl.font_size = 96
 	lbl.position = pos + Vector3(0, 3, -size / 2.0 - 2)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.outline_size = 12
+	lbl.outline_modulate = Color(0, 0, 0, 1)
 	parent.add_child(lbl)
 
 func _add_monolith_pair(parent: Node3D, center: Vector3):
@@ -517,6 +529,8 @@ func _add_monolith_pair(parent: Node3D, center: Vector3):
 	lbl.font_size = 96
 	lbl.position = Vector3(center.x, center_y + mono_size.y * 0.5 + 5, center.z)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.outline_size = 12
+	lbl.outline_modulate = Color(0, 0, 0, 1)
 	parent.add_child(lbl)
 
 func _add_distance_post(parent: Node3D, distance: int):
@@ -537,6 +551,8 @@ func _add_distance_post(parent: Node3D, distance: int):
 	lbl.font_size = 128
 	lbl.position = mi.position + Vector3(0, 14, 0)
 	lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	lbl.outline_size = 12
+	lbl.outline_modulate = Color(0, 0, 0, 1)
 	parent.add_child(lbl)
 
 # ------------------------------------------------------------------ #
@@ -570,12 +586,51 @@ func _build_hud():
 
 	controls_label = Label.new()
 	controls_label.name = "ControlsLabel"
-	controls_label.position = Vector2(20, 600)
-	controls_label.add_theme_font_size_override("font_size", 14)
+	controls_label.position = Vector2(20, 620)
+	controls_label.add_theme_font_size_override("font_size", 13)
 	controls_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	controls_label.add_theme_stylebox_override("normal", label_bg)
 	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+B Bench | Shift+Q Log | Esc Exit\nPS: L1 Preset | R1 Shadows | Triangle Normals | Square ShadowDist | DPad U/D Ambient | DPad L/R ShadowDist | Options Bench | Create Log | Circle Exit"
 	hud.add_child(controls_label)
+
+	# UAT test checklist — right side of screen
+	var uat_label = Label.new()
+	uat_label.name = "UATLabel"
+	uat_label.anchor_right = 1.0
+	uat_label.position = Vector2(900, 20)
+	uat_label.add_theme_font_size_override("font_size", 14)
+	uat_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7))
+	uat_label.add_theme_stylebox_override("normal", label_bg)
+	uat_label.text = """--- UAT TEST FLOW ---
+1. TEXTURE ZONES (visual check):
+   Fly to each plane, confirm correct texture:
+   - Grass (Y=100): green, not sand
+   - Sand (Y=52): beach texture near water
+   - Stone (Y=250): grey rock texture
+   - Snow (Y=380): white snow texture
+   - Slope: cliff/triplanar stone on face
+
+2. LIGHTING PRESETS (Shift+L / L1):
+   Cycle all 5. For each, check:
+   - Shadows cast on ground? (Noon/Sunset/Dawn)
+   - Night: ambient only, no sun
+   - Colours change naturally?
+
+3. SHADOWS PERF (Shift+S / R1):
+   At Noon preset, toggle shadows:
+   - Note FPS with shadows ON
+   - Note FPS with shadows OFF
+   - Delta = shadow cost on your GPU
+
+4. SHADOW DISTANCE (Shift+M / DPad L/R):
+   Cycle 100/300/500/1000/2000m:
+   - Note FPS at each setting
+   - Find sweet spot for quality vs perf
+
+5. BENCHMARK (Shift+B / Options):
+   Run auto-flythrough, then Shift+Q to save CSV.
+   Check logs/ folder for results."""
+	hud.add_child(uat_label)
 
 func _update_hud():
 	var fps = Performance.get_monitor(Performance.TIME_FPS)
@@ -589,7 +644,7 @@ func _update_hud():
 		fps, frame_ms, objects, prims, mem,
 		p["name"],
 		"ON" if sun_light.shadow_enabled else "OFF",
-		int(sun_light.shadow_max_distance),
+		int(sun_light.directional_shadow_max_distance),
 		"ON" if normals_enabled else "OFF",
 		environment.ambient_light_energy,
 		sun_light.light_energy,
@@ -605,24 +660,24 @@ func _update_hud():
 func _setup_benchmark_path():
 	# Waypoints that cover each test surface
 	benchmark_waypoints = [
-		Vector3(-50, 60, 20),   # Looking at grass plane
-		Vector3(0, 58, 20),     # Looking at sand plane
-		Vector3(50, 160, 20),   # Looking at stone plane
-		Vector3(-50, 320, 20),  # Looking at snow plane
-		Vector3(50, 60, -40),   # Looking at slope ramp
-		Vector3(0, 55, -40),    # Looking at water
+		Vector3(-50, 110, 20),  # Looking at grass plane (Y=100)
+		Vector3(0, 62, 20),     # Looking at sand plane (Y=52)
+		Vector3(50, 260, 20),   # Looking at stone plane (Y=250)
+		Vector3(-50, 390, 20),  # Looking at snow plane (Y=380)
+		Vector3(50, 110, -40),  # Looking at slope ramp (Y=100)
+		Vector3(0, 55, -40),    # Looking at water (Y=48)
 		Vector3(0, 80, -100),   # Looking at monoliths
-		Vector3(0, 60, 80),     # Back to start — looking at everything
+		Vector3(0, 110, 80),    # Back to start — looking at everything
 	]
 	benchmark_look_targets = [
-		Vector3(-50, 50, 0),
-		Vector3(0, 49, 0),
-		Vector3(50, 150, 0),
-		Vector3(-50, 310, 0),
-		Vector3(50, 50, -60),
+		Vector3(-50, 100, 0),
+		Vector3(0, 52, 0),
+		Vector3(50, 250, 0),
+		Vector3(-50, 380, 0),
+		Vector3(50, 100, -60),
 		Vector3(0, 48, -60),
-		Vector3(0, 30, -150),
-		Vector3(0, 50, -50),
+		Vector3(0, 35, -150),
+		Vector3(0, 100, -50),
 	]
 
 func _toggle_benchmark():
@@ -687,7 +742,7 @@ func _log_frame():
 		look.x, look.y, look.z,
 		objects, prims,
 		"1" if sun_light.shadow_enabled else "0",
-		sun_light.shadow_max_distance,
+		sun_light.directional_shadow_max_distance,
 		environment.ambient_light_energy,
 		sun_light.light_energy,
 		p["name"],
