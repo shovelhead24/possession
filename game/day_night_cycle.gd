@@ -125,6 +125,8 @@ func update_sun():
 	# time=0.75 (sunset): sun at horizon (rotation.x = -180 deg)
 	var sun_angle = PI/2 - time_of_day * TAU
 	sun_light.rotation.x = sun_angle
+	# Azimuth — match the sky dome's visual sun position
+	sun_light.rotation.y = time_of_day * TAU + PI
 
 func update_lighting():
 	# Get sun's actual elevation angle in degrees (-90 to 90)

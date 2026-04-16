@@ -6,14 +6,15 @@ extends Node3D
 #   WASD + Mouse / Left Stick + Right Stick = fly camera
 #   Space / A button = ascend, C / LT = descend
 #   Ctrl / RT = sprint
-#   Shift+L / LB = cycle lighting preset
-#   Shift+S / RB = toggle shadows
-#   Shift+N / Y = toggle normal maps
+#   Shift+L / L1 = cycle lighting preset
+#   Shift+S / R1 = toggle shadows
+#   Shift+N / Triangle = toggle normal maps
 #   Shift+M / DPad Left-Right = cycle shadow_max_distance
 #   Shift+A / DPad Up-Down = cycle ambient energy
-#   Shift+B / Start = start/stop benchmark flythrough
-#   Shift+Q / Back = write CSV log to logs/
-#   F2, Escape / B = return to world.tscn
+#   Shift+G / Square = cycle geometry stress test
+#   Shift+B / Options = start/stop benchmark flythrough
+#   Shift+Q / Create = write CSV log to logs/
+#   F2, Escape / Circle = return to world.tscn
 
 # -- Camera --
 var camera: Camera3D
@@ -68,6 +69,15 @@ var stats_label: Label
 var controls_label: Label
 var preset_label: Label
 
+# -- Controller edge detection (DS4Windows may not deliver InputEventJoypadButton) --
+var _prev_joy := {}
+
+# -- Geometry stress test --
+var stress_node: Node3D = null
+var stress_level: int = 0
+var stress_levels := [0, 50, 200, 500, 1000]
+var stress_level_names := ["None", "Low (50)", "Med (200)", "High (500)", "Extreme (1k)"]
+
 # -- Sun color LUT (matching day_night_cycle.gd) --
 var sun_color_day := Color(1.0, 0.95, 0.8)
 var sun_color_sunset := Color(1.0, 0.6, 0.4)
@@ -100,11 +110,18 @@ func _unhandled_input(event):
 		pitch -= event.relative.y * mouse_sens
 		pitch = clampf(pitch, -PI / 2.0, PI / 2.0)
 
+func _joy_just_pressed(button: int) -> bool:
+	var pressed = Input.is_joy_button_pressed(0, button)
+	var was = _prev_joy.get(button, false)
+	_prev_joy[button] = pressed
+	return pressed and not was
+
 func _process(delta):
 	if not benchmark_active:
 		_process_free_camera(delta)
 	else:
 		_process_benchmark(delta)
+	_poll_controller()
 	_update_hud()
 	_log_frame()
 
@@ -173,6 +190,8 @@ func _input(event):
 					environment.ambient_light_energy = ambient_levels[ambient_idx]
 				KEY_B:
 					_toggle_benchmark()
+				KEY_G:
+					_cycle_stress_test()
 				KEY_Q:
 					_write_log()
 		else:
@@ -181,40 +200,39 @@ func _input(event):
 					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 					get_tree().change_scene_to_file("res://world.tscn")
 
-	# Controller buttons
-	if event is InputEventJoypadButton and event.pressed:
-		match event.button_index:
-			JOY_BUTTON_LEFT_SHOULDER:  # LB = cycle preset
-				current_preset = (current_preset + 1) % PRESETS.size()
-				apply_preset(current_preset)
-			JOY_BUTTON_RIGHT_SHOULDER:  # RB = toggle shadows
-				sun_light.shadow_enabled = not sun_light.shadow_enabled
-			JOY_BUTTON_Y:  # Y = toggle normals
-				normals_enabled = not normals_enabled
-				if terrain_material:
-					terrain_material.set_shader_parameter("normal_map_strength", 0.8 if normals_enabled else 0.0)
-			JOY_BUTTON_X:  # X = cycle shadow distance
-				shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
-				sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
-			JOY_BUTTON_DPAD_UP:  # DPad Up = ambient up
-				ambient_idx = (ambient_idx + 1) % ambient_levels.size()
-				environment.ambient_light_energy = ambient_levels[ambient_idx]
-			JOY_BUTTON_DPAD_DOWN:  # DPad Down = ambient down
-				ambient_idx = (ambient_idx - 1 + ambient_levels.size()) % ambient_levels.size()
-				environment.ambient_light_energy = ambient_levels[ambient_idx]
-			JOY_BUTTON_DPAD_LEFT:  # DPad Left = shadow dist down
-				shadow_dist_idx = (shadow_dist_idx - 1 + shadow_distances.size()) % shadow_distances.size()
-				sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
-			JOY_BUTTON_DPAD_RIGHT:  # DPad Right = shadow dist up
-				shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
-				sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
-			JOY_BUTTON_START:  # Start = benchmark
-				_toggle_benchmark()
-			JOY_BUTTON_BACK:  # Back = write CSV
-				_write_log()
-			JOY_BUTTON_B:  # B = exit to world
-				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-				get_tree().change_scene_to_file("res://world.tscn")
+func _poll_controller():
+	# Poll controller buttons with edge detection — more reliable than
+	# InputEventJoypadButton when using DS4Windows with PS5 controllers
+	if _joy_just_pressed(JOY_BUTTON_LEFT_SHOULDER):  # L1 = cycle preset
+		current_preset = (current_preset + 1) % PRESETS.size()
+		apply_preset(current_preset)
+	if _joy_just_pressed(JOY_BUTTON_RIGHT_SHOULDER):  # R1 = toggle shadows
+		sun_light.shadow_enabled = not sun_light.shadow_enabled
+	if _joy_just_pressed(JOY_BUTTON_Y):  # Triangle = toggle normals
+		normals_enabled = not normals_enabled
+		if terrain_material:
+			terrain_material.set_shader_parameter("normal_map_strength", 0.8 if normals_enabled else 0.0)
+	if _joy_just_pressed(JOY_BUTTON_X):  # Square = cycle stress test
+		_cycle_stress_test()
+	if _joy_just_pressed(JOY_BUTTON_DPAD_UP):  # DPad Up = ambient up
+		ambient_idx = (ambient_idx + 1) % ambient_levels.size()
+		environment.ambient_light_energy = ambient_levels[ambient_idx]
+	if _joy_just_pressed(JOY_BUTTON_DPAD_DOWN):  # DPad Down = ambient down
+		ambient_idx = (ambient_idx - 1 + ambient_levels.size()) % ambient_levels.size()
+		environment.ambient_light_energy = ambient_levels[ambient_idx]
+	if _joy_just_pressed(JOY_BUTTON_DPAD_LEFT):  # DPad Left = shadow dist down
+		shadow_dist_idx = (shadow_dist_idx - 1 + shadow_distances.size()) % shadow_distances.size()
+		sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
+	if _joy_just_pressed(JOY_BUTTON_DPAD_RIGHT):  # DPad Right = shadow dist up
+		shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
+		sun_light.directional_shadow_max_distance = shadow_distances[shadow_dist_idx]
+	if _joy_just_pressed(JOY_BUTTON_START):  # Options = benchmark
+		_toggle_benchmark()
+	if _joy_just_pressed(JOY_BUTTON_BACK):  # Create = write CSV
+		_write_log()
+	if _joy_just_pressed(JOY_BUTTON_B):  # Circle = exit to world
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		get_tree().change_scene_to_file("res://world.tscn")
 
 # ------------------------------------------------------------------ #
 #  LIGHTING                                                           #
@@ -248,6 +266,8 @@ func apply_preset(idx: int):
 	# Sun rotation (same formula as day_night_cycle.gd)
 	var sun_angle = PI / 2.0 - time_of_day * TAU
 	sun_light.rotation.x = sun_angle
+	# Azimuth — match sky dome visual sun position
+	sun_light.rotation.y = time_of_day * TAU + PI
 
 	# Sun energy and color
 	var sun_elevation = sin(time_of_day * TAU - PI / 2.0) * 90.0
@@ -362,6 +382,11 @@ func _build_test_geometry():
 	for d in post_distances:
 		_add_distance_post(geo, d)
 
+	# -- Stress test container (populated by _cycle_stress_test) --
+	stress_node = Node3D.new()
+	stress_node.name = "StressGeometry"
+	geo.add_child(stress_node)
+
 func _build_terrain_material():
 	TerrainChunk._ensure_textures_loaded()
 	var shader = TerrainChunk._tex_shader
@@ -406,20 +431,39 @@ func _build_terrain_material():
 	terrain_material.set_shader_parameter("use_vertex_color_tint", false)
 	terrain_material.set_shader_parameter("normal_map_strength", 0.8)
 
+func _make_plane_mesh(size: float, subdivisions: int = 4) -> ArrayMesh:
+	# SurfaceTool plane with vertex color alpha=0 to prevent terrain shader
+	# grass paint override (terrain_color = mix(terrain_color, grass, COLOR.a))
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	st.set_color(Color(0.5, 0.5, 0.5, 0.0))
+	var half = size / 2.0
+	var step = size / float(subdivisions)
+	for iz in range(subdivisions):
+		for ix in range(subdivisions):
+			var x0 = -half + ix * step
+			var x1 = x0 + step
+			var z0 = -half + iz * step
+			var z1 = z0 + step
+			st.add_vertex(Vector3(x0, 0, z0))
+			st.add_vertex(Vector3(x0, 0, z1))
+			st.add_vertex(Vector3(x1, 0, z0))
+			st.add_vertex(Vector3(x1, 0, z0))
+			st.add_vertex(Vector3(x0, 0, z1))
+			st.add_vertex(Vector3(x1, 0, z1))
+	return st.commit()
+
 func _add_plane(parent: Node3D, label: String, pos: Vector3, size: float, mat: Material):
 	var mi = MeshInstance3D.new()
 	mi.name = label
-	var plane = PlaneMesh.new()
-	plane.size = Vector2(size, size)
-	plane.subdivide_width = 4
-	plane.subdivide_depth = 4
-	mi.mesh = plane
+	mi.mesh = _make_plane_mesh(size)
 	if mat:
 		mi.material_override = mat
 	mi.position = pos
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(mi)
 
-	# Add label post
 	var post_label = Label3D.new()
 	post_label.text = label.replace("Plane", "")
 	post_label.font_size = 96
@@ -433,15 +477,18 @@ func _add_slope_ramp(parent: Node3D, pos: Vector3, width: float, length: float, 
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
-	# Ramp: flat at bottom, 45 degrees rise
+	# 70-degree slope — steep enough to trigger cliff texture
+	# (cliff_slope_start=0.55, cliff_slope_full=0.35; cos(70)=0.342 < 0.35 → full cliff)
 	var half_w = width / 2.0
-	# Bottom-left, bottom-right, top-left, top-right
+	var run = length * 0.4  # Horizontal extent
+	var rise = run * tan(deg_to_rad(70.0))  # Vertical rise
 	var v0 = Vector3(-half_w, 0, 0)
 	var v1 = Vector3(half_w, 0, 0)
-	var v2 = Vector3(-half_w, length, -length)
-	var v3 = Vector3(half_w, length, -length)
+	var v2 = Vector3(-half_w, rise, -run)
+	var v3 = Vector3(half_w, rise, -run)
 
-	st.set_normal(Vector3(0, 0.707, 0.707))
+	# Normal perpendicular to slope, facing camera (+Z side)
+	st.set_normal(Vector3(0, 0.342, 0.940))
 	st.set_color(Color(0.5, 0.5, 0.5, 0.0))
 	# CCW winding so front face is visible from camera side
 	st.add_vertex(v0)
@@ -556,6 +603,45 @@ func _add_distance_post(parent: Node3D, distance: int):
 	parent.add_child(lbl)
 
 # ------------------------------------------------------------------ #
+#  GEOMETRY STRESS TEST                                               #
+# ------------------------------------------------------------------ #
+func _cycle_stress_test():
+	stress_level = (stress_level + 1) % stress_levels.size()
+	_build_stress_geometry(stress_levels[stress_level])
+	print("Stress test: ", stress_level_names[stress_level])
+
+func _build_stress_geometry(count: int):
+	if not stress_node:
+		return
+	# Clear previous
+	for child in stress_node.get_children():
+		child.queue_free()
+	if count == 0:
+		return
+
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(0.6, 0.55, 0.5)
+	mat.roughness = 0.9
+
+	# Spread objects in a grid pattern around the test area
+	var cols = ceili(sqrt(float(count)))
+	var spacing = 8.0
+	var origin = Vector3(-cols * spacing / 2.0, 50, -cols * spacing / 2.0)
+
+	for i in range(count):
+		var mi = MeshInstance3D.new()
+		var box = BoxMesh.new()
+		# Mix of sizes for varied geometry
+		var h = 2.0 + fmod(float(i) * 7.3, 15.0)
+		box.size = Vector3(1.5, h, 1.5)
+		mi.mesh = box
+		mi.material_override = mat
+		var col = i % cols
+		var row = i / cols
+		mi.position = origin + Vector3(col * spacing, h / 2.0, row * spacing)
+		stress_node.add_child(mi)
+
+# ------------------------------------------------------------------ #
 #  HUD                                                                #
 # ------------------------------------------------------------------ #
 func _build_hud():
@@ -590,7 +676,7 @@ func _build_hud():
 	controls_label.add_theme_font_size_override("font_size", 13)
 	controls_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	controls_label.add_theme_stylebox_override("normal", label_bg)
-	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+B Bench | Shift+Q Log | Esc Exit\nPS: L1 Preset | R1 Shadows | Triangle Normals | Square ShadowDist | DPad U/D Ambient | DPad L/R ShadowDist | Options Bench | Create Log | Circle Exit"
+	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+G Stress | Shift+B Bench | Shift+Q Log | Esc Exit\nPS: L1 Preset | R1 Shadows | Triangle Normals | Square Stress | DPad U/D Ambient | DPad L/R ShadowDist | Options Bench | Create Log | Circle Exit"
 	hud.add_child(controls_label)
 
 	# UAT test checklist — right side of screen
@@ -627,7 +713,12 @@ func _build_hud():
    - Note FPS at each setting
    - Find sweet spot for quality vs perf
 
-5. BENCHMARK (Shift+B / Options):
+5. STRESS TEST (Shift+G / Square):
+   Cycle through geometry levels:
+   - Note FPS at each density level
+   - With shadows ON vs OFF at each level
+
+6. BENCHMARK (Shift+B / Options):
    Run auto-flythrough, then Shift+Q to save CSV.
    Check logs/ folder for results."""
 	hud.add_child(uat_label)
@@ -640,7 +731,7 @@ func _update_hud():
 	var mem = Performance.get_monitor(Performance.MEMORY_STATIC) / (1024.0 * 1024.0)
 
 	var p = PRESETS[current_preset]
-	stats_label.text = "FPS: %d\nFrame: %.1f ms\nObjects: %d\nPrimitives: %d\nMemory: %.0f MB\n---\nPRESET: %s\nShadows: %s (%dm)\nNormals: %s\nAmbient: %.2f\nSun: %.2f\n---\nCAM: %.0f, %.0f, %.0f\nBenchmark: %s" % [
+	stats_label.text = "FPS: %d\nFrame: %.1f ms\nObjects: %d\nPrimitives: %d\nMemory: %.0f MB\n---\nPRESET: %s\nShadows: %s (%dm)\nNormals: %s\nAmbient: %.2f\nSun: %.2f\nStress: %s\n---\nCAM: %.0f, %.0f, %.0f\nBenchmark: %s" % [
 		fps, frame_ms, objects, prims, mem,
 		p["name"],
 		"ON" if sun_light.shadow_enabled else "OFF",
@@ -648,6 +739,7 @@ func _update_hud():
 		"ON" if normals_enabled else "OFF",
 		environment.ambient_light_energy,
 		sun_light.light_energy,
+		stress_level_names[stress_level],
 		camera.position.x, camera.position.y, camera.position.z,
 		"RUNNING" if benchmark_active else "IDLE"
 	]
