@@ -118,15 +118,16 @@ func _process(delta):
 			sky_dome.global_position = camera.global_position
 
 func update_sun():
-	# Rotate sun based on time of day
-	# time=0.0 (midnight): sun below horizon (rotation.x = +90 deg)
-	# time=0.25 (sunrise): sun at horizon (rotation.x = 0 deg)
-	# time=0.5 (noon): sun overhead pointing down (rotation.x = -90 deg)
-	# time=0.75 (sunset): sun at horizon (rotation.x = -180 deg)
-	var sun_angle = PI/2 - time_of_day * TAU
-	sun_light.rotation.x = sun_angle
-	# Azimuth — match the sky dome's visual sun position
-	sun_light.rotation.y = time_of_day * TAU + PI
+	# Compute sun direction vector to match sky dome visual position exactly
+	var sun_elevation = sin(time_of_day * TAU - PI / 2.0) * 90.0
+	var sun_azimuth_deg = fmod(time_of_day * 360.0 + 180.0, 360.0)
+	var er = deg_to_rad(sun_elevation)
+	var ar = deg_to_rad(sun_azimuth_deg)
+	var sun_dir = Vector3(cos(er) * sin(ar), sin(er), cos(er) * cos(ar))
+	# Point light FROM the sun TOWARD the ground (light travels -sun_dir)
+	if sun_dir.length_squared() > 0.001:
+		var up = Vector3.FORWARD if abs(sun_dir.y) > 0.99 else Vector3.UP
+		sun_light.basis = Basis.looking_at(-sun_dir, up)
 
 func update_lighting():
 	# Get sun's actual elevation angle in degrees (-90 to 90)

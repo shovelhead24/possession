@@ -87,7 +87,7 @@ void fragment() {
 	// Stars — visible at night, faintly visible during day
 	float star_vis = clamp(1.0 - day * 0.85, 0.1, 1.0);
 	if (dir.y > -0.1 && star_vis > 0.01) {
-		sky += vec3(star_field(dir)) * star_vis * 1.2;
+		sky += vec3(star_field(dir)) * star_vis * 3.6;
 	}
 
 	// Halo ring horizon — a great circle passing through zenith.

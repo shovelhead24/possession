@@ -12,7 +12,9 @@ extends Node3D
 #   Shift+M / DPad Left-Right = cycle shadow_max_distance
 #   Shift+A / DPad Up-Down = cycle ambient energy
 #   Shift+G / Square = cycle geometry stress test
-#   Shift+B / Options = start/stop benchmark flythrough
+#   Shift+F / L3 = toggle flashlight
+#   Shift+T / R3 = toggle time flow (pause/play day cycle)
+#   Shift+B / Options = start/stop benchmark (tests all settings)
 #   Shift+Q / Create = write CSV log to logs/
 #   F2, Escape / Circle = return to world.tscn
 
@@ -75,8 +77,30 @@ var _prev_joy := {}
 # -- Geometry stress test --
 var stress_node: Node3D = null
 var stress_level: int = 0
-var stress_levels := [0, 50, 200, 500, 1000]
-var stress_level_names := ["None", "Low (50)", "Med (200)", "High (500)", "Extreme (1k)"]
+var stress_levels := [0, 500, 2000, 10000, 50000, 100000]
+var stress_level_names := ["None", "500", "2k", "10k", "50k", "100k"]
+var stress_materials: Array = []  # 4 StandardMaterial3D with terrain textures
+
+# -- Flashlight --
+var flashlight: SpotLight3D
+
+# -- Continuous day/night --
+var test_time: float = 0.5  # Current time of day (0-1)
+var time_speed: float = 0.02  # Full cycle in ~50 seconds
+var time_running: bool = true  # Auto-advance time
+
+# -- Benchmark passes --
+var benchmark_passes := [
+	{"label": "baseline", "shadows": true, "shadow_dist": 300.0, "stress": 0},
+	{"label": "no_shadows", "shadows": false, "shadow_dist": 300.0, "stress": 0},
+	{"label": "shadow_100m", "shadows": true, "shadow_dist": 100.0, "stress": 0},
+	{"label": "shadow_1km", "shadows": true, "shadow_dist": 1000.0, "stress": 0},
+	{"label": "stress_2k", "shadows": true, "shadow_dist": 300.0, "stress": 2},
+	{"label": "stress_10k", "shadows": true, "shadow_dist": 300.0, "stress": 3},
+	{"label": "stress_50k", "shadows": true, "shadow_dist": 300.0, "stress": 4},
+	{"label": "stress_100k", "shadows": true, "shadow_dist": 300.0, "stress": 5},
+]
+var benchmark_pass_idx: int = 0
 
 # -- Sun color LUT (matching day_night_cycle.gd) --
 var sun_color_day := Color(1.0, 0.95, 0.8)
@@ -86,9 +110,11 @@ var sun_color_night := Color(0.2, 0.3, 0.5)
 func _ready():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_build_camera()
+	_build_flashlight()
 	_build_lighting()
 	_build_sky_dome()
 	_build_test_geometry()
+	_build_stress_materials()
 	_build_hud()
 	_setup_benchmark_path()
 	apply_preset(current_preset)
@@ -104,6 +130,16 @@ func _build_camera():
 	add_child(camera)
 	pitch = -0.15
 
+func _build_flashlight():
+	flashlight = SpotLight3D.new()
+	flashlight.name = "Flashlight"
+	flashlight.light_energy = 4.0
+	flashlight.spot_range = 60.0
+	flashlight.spot_angle = 25.0
+	flashlight.shadow_enabled = true
+	flashlight.visible = false
+	camera.add_child(flashlight)
+
 func _unhandled_input(event):
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		yaw -= event.relative.x * mouse_sens
@@ -117,6 +153,12 @@ func _joy_just_pressed(button: int) -> bool:
 	return pressed and not was
 
 func _process(delta):
+	# Continuous day/night cycle
+	if time_running and not benchmark_active:
+		test_time += delta * time_speed
+		if test_time >= 1.0: test_time -= 1.0
+	_update_sun_from_time(test_time)
+
 	if not benchmark_active:
 		_process_free_camera(delta)
 	else:
@@ -192,6 +234,10 @@ func _input(event):
 					_toggle_benchmark()
 				KEY_G:
 					_cycle_stress_test()
+				KEY_F:
+					flashlight.visible = not flashlight.visible
+				KEY_T:
+					time_running = not time_running
 				KEY_Q:
 					_write_log()
 		else:
@@ -214,6 +260,10 @@ func _poll_controller():
 			terrain_material.set_shader_parameter("normal_map_strength", 0.8 if normals_enabled else 0.0)
 	if _joy_just_pressed(JOY_BUTTON_X):  # Square = cycle stress test
 		_cycle_stress_test()
+	if _joy_just_pressed(JOY_BUTTON_LEFT_STICK):  # L3 = flashlight
+		flashlight.visible = not flashlight.visible
+	if _joy_just_pressed(JOY_BUTTON_RIGHT_STICK):  # R3 = time pause/play
+		time_running = not time_running
 	if _joy_just_pressed(JOY_BUTTON_DPAD_UP):  # DPad Up = ambient up
 		ambient_idx = (ambient_idx + 1) % ambient_levels.size()
 		environment.ambient_light_energy = ambient_levels[ambient_idx]
@@ -261,52 +311,62 @@ func _build_lighting():
 
 func apply_preset(idx: int):
 	var p = PRESETS[idx]
-	var time_of_day: float = p["time"]
-
-	# Sun rotation (same formula as day_night_cycle.gd)
-	var sun_angle = PI / 2.0 - time_of_day * TAU
-	sun_light.rotation.x = sun_angle
-	# Azimuth — match sky dome visual sun position
-	sun_light.rotation.y = time_of_day * TAU + PI
-
-	# Sun energy and color
-	var sun_elevation = sin(time_of_day * TAU - PI / 2.0) * 90.0
+	test_time = p["time"]
+	time_running = false  # Pause on preset jump (Shift+T to resume)
+	_update_sun_from_time(test_time)
+	# Apply preset-specific overrides on top of computed values
 	sun_light.light_energy = p["sun_energy"]
+	sun_light.shadow_enabled = p["shadow"]
+	environment.ambient_light_energy = p["ambient"]
 
+func _update_sun_from_time(t: float):
+	# Compute sun direction to match sky dome visual — uses Basis instead of
+	# Euler angles to avoid rotation-order issues that caused 90/180° offsets
+	var sun_elevation = sin(t * TAU - PI / 2.0) * 90.0
+	var sun_azimuth_deg = fmod(t * 360.0 + 180.0, 360.0)
+	var er = deg_to_rad(sun_elevation)
+	var ar = deg_to_rad(sun_azimuth_deg)
+	var sun_dir = Vector3(cos(er) * sin(ar), sin(er), cos(er) * cos(ar))
+	if sun_dir.length_squared() > 0.001:
+		var up = Vector3.FORWARD if abs(sun_dir.y) > 0.99 else Vector3.UP
+		sun_light.basis = Basis.looking_at(-sun_dir, up)
+
+	# Sun energy and color (matches day_night_cycle.gd logic)
 	if sun_elevation > 30:
+		sun_light.light_energy = 1.0
 		sun_light.light_color = sun_color_day
 	elif sun_elevation > 10:
-		var t = (30.0 - sun_elevation) / 20.0
-		sun_light.light_color = sun_color_day.lerp(sun_color_sunset, t)
+		var blend = (30.0 - sun_elevation) / 20.0
+		sun_light.light_energy = lerp(1.0, 0.3, blend)
+		sun_light.light_color = sun_color_day.lerp(sun_color_sunset, blend)
 	elif sun_elevation > -5:
-		var t = (10.0 - sun_elevation) / 15.0
-		sun_light.light_color = sun_color_sunset.lerp(sun_color_night, t)
+		var blend = (10.0 - sun_elevation) / 15.0
+		sun_light.light_energy = lerp(0.3, 0.0, blend)
+		sun_light.light_color = sun_color_sunset.lerp(sun_color_night, blend)
 	else:
+		sun_light.light_energy = 0.0
 		sun_light.light_color = sun_color_night
 
-	sun_light.shadow_enabled = p["shadow"]
 	sun_light.visible = sun_elevation > -5
 
-	# Environment
-	environment.ambient_light_energy = p["ambient"]
+	# Fog
 	var fog_day = Color(0.52, 0.62, 0.78)
 	var fog_night = Color(0.05, 0.06, 0.10)
 	var fog_t = clampf(sun_elevation / 30.0, 0.0, 1.0)
 	environment.fog_light_color = fog_day.lerp(fog_night, 1.0 - fog_t)
 
-	# Push to sky dome
+	# Sky dome
 	if sky_material:
 		sky_material.set_shader_parameter("sun_elevation", sun_elevation)
-		var sun_azimuth = fmod(time_of_day * 360.0 + 180.0, 360.0)
-		sky_material.set_shader_parameter("sun_azimuth", sun_azimuth)
+		sky_material.set_shader_parameter("sun_azimuth", sun_azimuth_deg)
 		sky_material.set_shader_parameter("sun_color",
 			Vector3(sun_light.light_color.r, sun_light.light_color.g, sun_light.light_color.b))
 
-	# Push sun direction to water shader
+	# Water
 	if water_material:
-		var sun_dir = -sun_light.global_transform.basis.z
+		var water_sun = -sun_light.global_transform.basis.z
 		water_material.set_shader_parameter("sun_direction",
-			Vector3(sun_dir.x, sun_dir.y, sun_dir.z))
+			Vector3(water_sun.x, water_sun.y, water_sun.z))
 
 # ------------------------------------------------------------------ #
 #  SKY DOME                                                           #
@@ -446,12 +506,13 @@ func _make_plane_mesh(size: float, subdivisions: int = 4) -> ArrayMesh:
 			var x1 = x0 + step
 			var z0 = -half + iz * step
 			var z1 = z0 + step
+			# CCW winding as viewed from above (+Y) = front face up
 			st.add_vertex(Vector3(x0, 0, z0))
-			st.add_vertex(Vector3(x0, 0, z1))
-			st.add_vertex(Vector3(x1, 0, z0))
 			st.add_vertex(Vector3(x1, 0, z0))
 			st.add_vertex(Vector3(x0, 0, z1))
+			st.add_vertex(Vector3(x1, 0, z0))
 			st.add_vertex(Vector3(x1, 0, z1))
+			st.add_vertex(Vector3(x0, 0, z1))
 	return st.commit()
 
 func _add_plane(parent: Node3D, label: String, pos: Vector3, size: float, mat: Material):
@@ -605,6 +666,28 @@ func _add_distance_post(parent: Node3D, distance: int):
 # ------------------------------------------------------------------ #
 #  GEOMETRY STRESS TEST                                               #
 # ------------------------------------------------------------------ #
+func _build_stress_materials():
+	# 4 StandardMaterial3D with terrain textures + normals for stress objects
+	TerrainChunk._ensure_textures_loaded()
+	var tex_pairs = [
+		[TerrainChunk._tex_grass, TerrainChunk._tex_grass_normal],
+		[TerrainChunk._tex_sand, TerrainChunk._tex_grass_normal],
+		[TerrainChunk._tex_stone, TerrainChunk._tex_stone_normal],
+		[TerrainChunk._tex_snow, TerrainChunk._tex_snow_normal],
+	]
+	stress_materials.clear()
+	for pair in tex_pairs:
+		var mat = StandardMaterial3D.new()
+		if pair[0]:
+			mat.albedo_texture = pair[0]
+		else:
+			mat.albedo_color = Color(0.5, 0.5, 0.5)
+		if pair[1]:
+			mat.normal_enabled = true
+			mat.normal_texture = pair[1]
+		mat.roughness = 0.85
+		stress_materials.append(mat)
+
 func _cycle_stress_test():
 	stress_level = (stress_level + 1) % stress_levels.size()
 	_build_stress_geometry(stress_levels[stress_level])
@@ -619,27 +702,39 @@ func _build_stress_geometry(count: int):
 	if count == 0:
 		return
 
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.6, 0.55, 0.5)
-	mat.roughness = 0.9
+	# Use MultiMesh for efficiency at high counts
+	var box = BoxMesh.new()
+	box.size = Vector3(1.5, 4.0, 1.5)
 
-	# Spread objects in a grid pattern around the test area
+	var group_count = stress_materials.size() if stress_materials.size() > 0 else 1
+	var per_group = count / group_count
 	var cols = ceili(sqrt(float(count)))
-	var spacing = 8.0
-	var origin = Vector3(-cols * spacing / 2.0, 50, -cols * spacing / 2.0)
+	var spacing = 5.0
 
-	for i in range(count):
-		var mi = MeshInstance3D.new()
-		var box = BoxMesh.new()
-		# Mix of sizes for varied geometry
-		var h = 2.0 + fmod(float(i) * 7.3, 15.0)
-		box.size = Vector3(1.5, h, 1.5)
-		mi.mesh = box
-		mi.material_override = mat
-		var col = i % cols
-		var row = i / cols
-		mi.position = origin + Vector3(col * spacing, h / 2.0, row * spacing)
-		stress_node.add_child(mi)
+	for g in range(group_count):
+		var mm = MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = box
+		mm.instance_count = per_group
+
+		for i in range(per_group):
+			var global_i = g * per_group + i
+			var col = global_i % cols
+			var row = global_i / cols
+			var h = 2.0 + fmod(float(global_i) * 7.3, 12.0)
+			var pos = Vector3(
+				-cols * spacing / 2.0 + col * spacing,
+				50 + h / 2.0,
+				-cols * spacing / 2.0 + row * spacing
+			)
+			var basis = Basis().scaled(Vector3(1.0, h / 4.0, 1.0))
+			mm.set_instance_transform(i, Transform3D(basis, pos))
+
+		var mmi = MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		if g < stress_materials.size():
+			mmi.material_override = stress_materials[g]
+		stress_node.add_child(mmi)
 
 # ------------------------------------------------------------------ #
 #  HUD                                                                #
@@ -676,7 +771,7 @@ func _build_hud():
 	controls_label.add_theme_font_size_override("font_size", 13)
 	controls_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	controls_label.add_theme_stylebox_override("normal", label_bg)
-	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+G Stress | Shift+B Bench | Shift+Q Log | Esc Exit\nPS: L1 Preset | R1 Shadows | Triangle Normals | Square Stress | DPad U/D Ambient | DPad L/R ShadowDist | Options Bench | Create Log | Circle Exit"
+	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+G Stress | Shift+F Flash | Shift+T Time | Shift+B Bench | Shift+Q Log | Esc Exit\nPS: L1 Preset | R1 Shadows | Tri Normals | Sq Stress | DPad U/D Ambient | DPad L/R ShDist | L3 Flash | R3 Time | Opt Bench | Create Log | O Exit"
 	hud.add_child(controls_label)
 
 	# UAT test checklist — right side of screen
@@ -730,21 +825,27 @@ func _update_hud():
 	var prims = Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)
 	var mem = Performance.get_monitor(Performance.MEMORY_STATIC) / (1024.0 * 1024.0)
 
+	var time_h = int(test_time * 24)
+	var time_m = int((test_time * 24 - time_h) * 60)
 	var p = PRESETS[current_preset]
-	stats_label.text = "FPS: %d\nFrame: %.1f ms\nObjects: %d\nPrimitives: %d\nMemory: %.0f MB\n---\nPRESET: %s\nShadows: %s (%dm)\nNormals: %s\nAmbient: %.2f\nSun: %.2f\nStress: %s\n---\nCAM: %.0f, %.0f, %.0f\nBenchmark: %s" % [
+	var bench_status = "IDLE"
+	if benchmark_active:
+		bench_status = "PASS %d/%d: %s" % [benchmark_pass_idx + 1, benchmark_passes.size(), benchmark_passes[benchmark_pass_idx]["label"]]
+	stats_label.text = "FPS: %d\nFrame: %.1f ms\nObjects: %d\nPrimitives: %d\nMemory: %.0f MB\n---\nTime: %02d:%02d %s\nShadows: %s (%dm)\nNormals: %s\nAmbient: %.2f\nSun: %.2f\nFlashlight: %s\nStress: %s\n---\nCAM: %.0f, %.0f, %.0f\nBenchmark: %s" % [
 		fps, frame_ms, objects, prims, mem,
-		p["name"],
+		time_h, time_m, "PLAY" if time_running else "PAUSED",
 		"ON" if sun_light.shadow_enabled else "OFF",
 		int(sun_light.directional_shadow_max_distance),
 		"ON" if normals_enabled else "OFF",
 		environment.ambient_light_energy,
 		sun_light.light_energy,
+		"ON" if flashlight.visible else "OFF",
 		stress_level_names[stress_level],
 		camera.position.x, camera.position.y, camera.position.z,
-		"RUNNING" if benchmark_active else "IDLE"
+		bench_status
 	]
 
-	preset_label.text = p["name"]
+	preset_label.text = "%02d:%02d" % [time_h, time_m]
 
 # ------------------------------------------------------------------ #
 #  BENCHMARK                                                          #
@@ -775,17 +876,35 @@ func _setup_benchmark_path():
 func _toggle_benchmark():
 	benchmark_active = not benchmark_active
 	if benchmark_active:
+		benchmark_pass_idx = 0
 		benchmark_idx = 0
 		benchmark_t = 0.0
 		log_data.clear()
 		frame_count = 0
-		# Add CSV header
-		log_data.append("frame,timestamp_ms,fps,frame_time_ms,cam_x,cam_y,cam_z,look_x,look_y,look_z,objects,primitives,shadow_enabled,shadow_max_dist,ambient_energy,sun_energy,preset_name,normals_enabled")
+		log_data.append("frame,timestamp_ms,fps,frame_time_ms,cam_x,cam_y,cam_z,look_x,look_y,look_z,objects,primitives,shadow_enabled,shadow_max_dist,ambient_energy,sun_energy,normals_enabled,stress_level,pass_label")
+		_apply_benchmark_pass(0)
+
+func _apply_benchmark_pass(pass_idx: int):
+	var bp = benchmark_passes[pass_idx]
+	sun_light.shadow_enabled = bp["shadows"]
+	sun_light.directional_shadow_max_distance = bp["shadow_dist"]
+	var new_stress = bp["stress"]
+	if new_stress != stress_level:
+		stress_level = new_stress
+		_build_stress_geometry(stress_levels[stress_level])
+	print("Benchmark pass %d/%d: %s" % [pass_idx + 1, benchmark_passes.size(), bp["label"]])
 
 func _process_benchmark(delta):
 	if benchmark_idx >= benchmark_waypoints.size() - 1:
-		benchmark_active = false
-		_write_log()
+		# Advance to next pass
+		benchmark_pass_idx += 1
+		if benchmark_pass_idx >= benchmark_passes.size():
+			benchmark_active = false
+			_write_log()
+			return
+		_apply_benchmark_pass(benchmark_pass_idx)
+		benchmark_idx = 0
+		benchmark_t = 0.0
 		return
 
 	benchmark_t += delta * benchmark_speed
@@ -793,8 +912,14 @@ func _process_benchmark(delta):
 		benchmark_t = 0.0
 		benchmark_idx += 1
 		if benchmark_idx >= benchmark_waypoints.size() - 1:
-			benchmark_active = false
-			_write_log()
+			benchmark_pass_idx += 1
+			if benchmark_pass_idx >= benchmark_passes.size():
+				benchmark_active = false
+				_write_log()
+				return
+			_apply_benchmark_pass(benchmark_pass_idx)
+			benchmark_idx = 0
+			benchmark_t = 0.0
 			return
 
 	# Interpolate camera position and look-at
@@ -824,9 +949,9 @@ func _log_frame():
 	var objects = Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)
 	var prims = Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)
 	var look = -camera.global_transform.basis.z
-	var p = PRESETS[current_preset]
 
-	log_data.append("%d,%d,%.1f,%.2f,%.1f,%.1f,%.1f,%.2f,%.2f,%.2f,%d,%d,%s,%.0f,%.2f,%.2f,%s,%s" % [
+	var pass_label = benchmark_passes[benchmark_pass_idx]["label"] if benchmark_pass_idx < benchmark_passes.size() else "manual"
+	log_data.append("%d,%d,%.1f,%.2f,%.1f,%.1f,%.1f,%.2f,%.2f,%.2f,%d,%d,%s,%.0f,%.2f,%.2f,%s,%s,%s" % [
 		frame_count,
 		Time.get_ticks_msec(),
 		fps, frame_ms,
@@ -837,8 +962,9 @@ func _log_frame():
 		sun_light.directional_shadow_max_distance,
 		environment.ambient_light_energy,
 		sun_light.light_energy,
-		p["name"],
-		"1" if normals_enabled else "0"
+		"1" if normals_enabled else "0",
+		stress_level_names[stress_level],
+		pass_label
 	])
 
 func _write_log():
