@@ -964,5 +964,9 @@ func get_stats() -> Dictionary:
 		"available_grass": available_grass.size(),
 		"borrowed_grass": borrowed_grass.size(),
 		"total_grass": total_grass_created,
-		"max_grass": max_grass_pool_size
+		"max_grass": max_grass_pool_size,
+		# Aliases expected by player.gd HUD
+		"available": available_trees.size(),
+		"borrowed": borrowed_trees.size(),
+		"total": total_trees_created,
 	}

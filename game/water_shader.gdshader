@@ -37,13 +37,8 @@ uniform float god_ray_speed : hint_range(0.0, 2.0) = 0.15;
 uniform float caustic_highlight_intensity : hint_range(0.0, 5.0) = 2.5;
 uniform float caustic_highlight_threshold : hint_range(0.0, 1.0) = 0.5;
 
-// Volumetric god rays (looking through water from above)
-uniform float volumetric_ray_intensity : hint_range(0.0, 3.0) = 1.5;
-uniform float volumetric_ray_scale : hint_range(0.01, 0.1) = 0.03;
-uniform float max_volumetric_depth : hint_range(10.0, 100.0) = 50.0;
-
-// Depth texture for volumetric effects
-uniform sampler2D depth_texture : hint_depth_texture, filter_linear_mipmap;
+// Sun direction — updated by DayNightCycle each frame
+uniform vec3 sun_direction = vec3(0.3, 0.9, 0.2);
 
 // Noise for waves
 varying vec3 world_pos;
@@ -91,8 +86,7 @@ float caustic_pattern(vec2 uv, float time) {
 
 // God rays - volumetric light shafts coming down from surface
 float god_rays(vec2 uv, vec3 view_dir, vec3 normal, float time) {
-	// Sun direction (normalized) - high in the sky
-	vec3 sun_dir = normalize(vec3(0.3, 0.9, 0.2));
+	vec3 sun_dir = normalize(sun_direction);
 
 	// When looking toward sun, rays should be more visible
 	float sun_alignment = max(dot(view_dir, sun_dir), 0.0);
@@ -303,28 +297,9 @@ void fragment() {
 		float fresnel = pow(1.0 - max(dot(normal, view_dir), 0.0), fresnel_power);
 		fresnel = clamp(fresnel, 0.1, 0.95);
 
-		// === VOLUMETRIC GOD RAYS (depth-based) ===
-		// Sample depth buffer to get water depth at this pixel
-		float depth_raw = texture(depth_texture, SCREEN_UV).r;
-		vec4 upos = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, depth_raw, 1.0);
-		vec3 pixel_position = upos.xyz / upos.w;
-		float water_depth = VERTEX.z - pixel_position.z;  // Positive = underwater terrain behind water
-
-		// Calculate volumetric ray contribution based on depth
-		float depth_factor = clamp(water_depth / max_volumetric_depth, 0.0, 1.0);
-
-		// God ray spots pattern - use world position for consistency with seafloor
-		vec2 vol_ray_uv = world_pos.xz * volumetric_ray_scale;
-		float vol_rays = god_ray_spots(vol_ray_uv, TIME * 0.4);
-
-		// Volumetric contribution - stronger in shallow water, fades with depth
-		// Also fades with depth_factor so deep water doesn't show rays
-		float vol_strength = vol_rays * (1.0 - depth_factor * 0.7) * volumetric_ray_intensity;
-		vec3 volumetric_color = vec3(0.85, 0.92, 1.0) * vol_strength * (1.0 - fresnel * 0.5);
-
-		// Depth-based color (now influenced by volumetric rays)
-		vec3 water_color = mix(shallow_color.rgb, deep_color.rgb, depth_factor * 0.7);
-		water_color += volumetric_color;  // Add volumetric rays to water color
+		// Water color blend (no depth buffer in GL Compat — use fresnel as depth proxy)
+		float depth_approx = fresnel * 0.7;
+		vec3 water_color = mix(shallow_color.rgb, deep_color.rgb, depth_approx);
 
 		// Sky reflection approximation
 		vec3 sky_color = vec3(0.6, 0.75, 0.9);
@@ -336,7 +311,7 @@ void fragment() {
 		float glitter = smoothstep(glitter_threshold, 1.0, glitter_noise);
 
 		// Specular highlight (sun reflection)
-		vec3 sun_dir = normalize(vec3(0.3, 0.8, 0.2));
+		vec3 sun_dir = normalize(sun_direction);
 		vec3 half_vec = normalize(sun_dir + view_dir);
 		float spec = pow(max(dot(normal, half_vec), 0.0), specular_power);
 		spec *= specular_intensity;

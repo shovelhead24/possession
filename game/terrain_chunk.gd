@@ -25,6 +25,7 @@ var skirt_depth: float = 20.0  # Overridden per-LOD in generate_terrain()
 # Track if we have borrowed trees/grass from the pool
 var has_borrowed_trees: bool = false
 var has_borrowed_grass: bool = false
+var has_structure: bool = false
 
 # Deferred prop generation to prevent hitching
 var props_pending: bool = false  # True if we need to generate props
@@ -72,7 +73,7 @@ func update_tree_lods():
 	if not props_node:
 		return
 
-	var prop_pool = get_node_or_null("/root/World/PropPool")
+	var prop_pool = get_node_or_null("/root/World/TerrainManager/PropPool")
 	if not prop_pool or not prop_pool.has_method("set_tree_lod"):
 		return
 
@@ -133,10 +134,11 @@ func set_lod(new_lod: int):
 	props_pending = false
 	last_tree_lod = -1  # Reset tree LOD tracker
 
-	# Remove props and water
+	# Remove props, water, and structures
 	for child in get_children():
 		if child.name == "Props" or child.name == "WaterPlane":
 			child.queue_free()
+	has_structure = false
 
 	# Resample height offsets to new resolution before regenerating
 	_resample_offsets(old_res)
@@ -633,6 +635,8 @@ func maybe_spawn_structure() -> void:
 	# Only LOD0-2 — LOD3 chunks are tiny silhouettes at 1400m+, not worth nodes
 	if current_lod >= 2:
 		return
+	if has_structure:
+		return
 
 	# ~2% of chunks get a structure — deterministic, no StaticBody3D (pure visual)
 	var rng = RandomNumberGenerator.new()
@@ -683,6 +687,7 @@ func maybe_spawn_structure() -> void:
 		mi.material_override = mat
 		anchor.add_child(mi)
 		add_child(anchor)
+	has_structure = true
 
 func generate_props():
 	var props_start = Time.get_ticks_msec()
@@ -1075,8 +1080,8 @@ func create_terrain_material() -> Material:
 		mat.set_shader_parameter("cliff_texture_scale", 0.08)
 
 		# Height-based texture thresholds (absolute world Y coordinates)
-		mat.set_shader_parameter("snow_start_height", 600.0)  # Snow starts at y >= 600
-		mat.set_shader_parameter("snow_full_height", 650.0)   # Full snow at y >= 650
+		mat.set_shader_parameter("snow_start_height", 300.0)  # Snow starts at 75% of terrain_height
+		mat.set_shader_parameter("snow_full_height", 360.0)   # Full snow at 90%
 		mat.set_shader_parameter("stone_blend_range", 100.0)  # Stone zone 100m below snow
 
 		# Slope thresholds - less aggressive cliff detection for more grass

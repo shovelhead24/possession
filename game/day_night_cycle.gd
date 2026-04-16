@@ -10,6 +10,7 @@ var environment: Environment
 var world_env: WorldEnvironment
 var sky_shader_material: ShaderMaterial
 var sky_dome: MeshInstance3D = null
+var _water_material: ShaderMaterial = null
 
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
@@ -42,7 +43,6 @@ func _ready():
 	else:
 		print("DayNightCycle: Using existing sun light: ", sun_light.name)
 
-	sun_light.light_energy = 1.0
 	# Exclude weapon layer (layer 2) so the day/night sun doesn't dim weapon models.
 	# The dedicated WeaponLight inside the SubViewport handles weapon illumination.
 	sun_light.light_cull_mask = 0xFFFFFD  # all layers except layer 2
@@ -176,6 +176,21 @@ func update_lighting():
 	if environment:
 		environment.ambient_light_color  = ambient_color
 		environment.ambient_light_energy = 0.3 if sun_elevation > 0 else 0.15
+		# Update fog color for time of day
+		var fog_day = Color(0.52, 0.62, 0.78)
+		var fog_night = Color(0.05, 0.06, 0.10)
+		var fog_t = clampf(sun_elevation / 30.0, 0.0, 1.0)
+		environment.fog_light_color = fog_day.lerp(fog_night, 1.0 - fog_t)
+
+	# Push sun direction to water shader
+	if not _water_material:
+		var tm = get_node_or_null("/root/World/TerrainManager")
+		if tm and "water_plane" in tm and tm.water_plane:
+			_water_material = tm.water_plane.material_override as ShaderMaterial
+	if _water_material:
+		var sun_dir = -sun_light.global_transform.basis.z
+		_water_material.set_shader_parameter("sun_direction",
+			Vector3(sun_dir.x, sun_dir.y, sun_dir.z))
 
 	# Push sun position to sky dome shader
 	var sun_azimuth = fmod(time_of_day * 360.0 + 180.0, 360.0)

@@ -131,7 +131,7 @@ light_energy = 1.4
 shadow_enabled = true
 shadow_bias = 0.1
 shadow_normal_bias = 1.0
-shadow_max_distance = 2000.0
+shadow_max_distance = 300.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_tlwt5")
@@ -146,7 +146,7 @@ use_custom_terrain = false
 terrain_width = 500.0
 terrain_depth = 500.0
 terrain_height = 400.0
-water_level = 40.0
+water_level = 0.12
 biome_type = 4
 
 [node name="DayNightCycle" type="Node3D" parent="."]
