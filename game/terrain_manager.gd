@@ -33,7 +33,7 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 @export var use_structured_terrain: bool = true
 @export var plains_radius: float = 2000.0       # Flat grassland within this dist from origin
 @export var foothills_radius: float = 4000.0    # Rolling hills transition zone outer edge
-@export var plains_base_height: float = 42.0    # Base plains elevation (above 24m water)
+@export var plains_base_height: float = 50.0    # Base plains elevation (above 32m biome water)
 @export var plains_variation: float = 8.0       # Gentle noise amplitude on plains
 @export var mountain_boost: float = 1.55        # Push mountain peaks into snow zone (300m+)
 
@@ -776,16 +776,15 @@ func process_chunk_queue():
 		return
 
 	# Process more chunks during initial load, fewer during gameplay
-	var max_close = chunks_per_frame_initial if is_initial_load else chunks_per_frame_normal
-	var max_distant = chunks_per_frame_initial if is_initial_load else chunks_per_frame_distant
-	var processed_close = 0
-	var processed_distant = 0
+	# During gameplay allow more distant chunks (LOD3+) since they're trivially cheap
+	var chunks_to_process = chunks_per_frame_initial if is_initial_load else (chunks_per_frame_normal + chunks_per_frame_distant)
+	var processed = 0
 
 	var queue_start_size = chunk_load_queue.size()
-	while not chunk_load_queue.is_empty():
+	while not chunk_load_queue.is_empty() and processed < chunks_to_process:
 		# Check frame budget before processing (skip during initial load)
 		if not is_initial_load and enable_adaptive_quality and not has_chunk_budget():
-			break
+			break  # Over budget, wait until next frame
 
 		var item = chunk_load_queue.pop_back()  # O(1) instead of pop_front O(n)
 		var coord = item.coord
@@ -801,20 +800,9 @@ func process_chunk_queue():
 		if current_distance > view_distance:
 			continue
 
-		# LOD-aware batching: distant chunks are cheap, allow more per frame
-		var is_distant = lod >= 3
-		if is_distant:
-			if processed_distant >= max_distant:
-				continue  # Skip but keep processing queue for close chunks
-			processed_distant += 1
-		else:
-			if processed_close >= max_close:
-				if processed_distant >= max_distant:
-					break  # Both budgets exhausted
-				continue  # Skip close, keep looking for distant
-			processed_close += 1
-
+		# Create the chunk
 		create_chunk(coord, lod)
+		processed += 1
 
 # Process LOD update queue - spread LOD changes across frames
 func process_lod_queue():

@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://baveer3oax27d"]
+[gd_scene load_steps=19 format=3 uid="uid://baveer3oax27d"]
 
 [ext_resource type="Script" path="res://editor_controller.gd" id="14_editor_ctrl"]
 [ext_resource type="Script" path="res://ancient_structures.gd" id="13_ancient"]
@@ -14,9 +14,6 @@
 [ext_resource type="PackedScene" uid="uid://b6djpqa2ixj86" path="res://enemy/scene.gltf" id="10_enemy"]
 [ext_resource type="Script" path="res://enemy_controller.gd" id="11_enemy_ctrl"]
 [ext_resource type="PackedScene" uid="uid://cwarthog123" path="res://warthog.tscn" id="12_warthog"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gv5m4"]
-albedo_color = Color(0.38014632, 0.6847695, 0.3898171, 1)
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_f3sb7"]
 
@@ -42,12 +39,6 @@ ambient_light_color = Color(0.55, 0.57, 0.62, 1)
 ambient_light_energy = 0.5
 
 [node name="World" type="Node3D"]
-
-[node name="CSGBox3D" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
-use_collision = true
-size = Vector3(50, 1, 50)
-material = SubResource("StandardMaterial3D_gv5m4")
 
 [node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 47, 0)
@@ -116,14 +107,6 @@ visible = false
 [node name="WeaponLight" type="DirectionalLight3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
 transform = Transform3D(0.8, 0.2, 0.4, 0, 0.9, -0.3, -0.4, 0.2, 0.8, 0, 2, 1)
 light_energy = 1.4
-
-[node name="CSGBox3D2" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.784, 20, 2.134)
-use_collision = true
-
-[node name="CSGBox3D3" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.784, 20, -1.068)
-use_collision = true
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.8980276, 0.14540626, 0.415215, 0, -0.943801, 0.33051446, 0.43993917, -0.2968111, -0.8475593, -3.011, 30, -0.39)
