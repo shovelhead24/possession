@@ -14,7 +14,7 @@ var terrain_manager: Node  # Reference to TerrainManager
 
 # LOD system
 var current_lod: int = 0  # 0 = highest detail, higher = lower detail
-var lod_resolutions: Array = [16, 6, 3, 2]  # LOD0=fine LOD1=medium LOD2=coarse LOD3=minimal
+var lod_resolutions: Array = [16, 6, 3, 2, 1]  # LOD0=fine LOD1=medium LOD2=coarse LOD3=minimal LOD4=silhouette
 
 # Phase 2: Per-vertex height offsets for height brush editing
 var height_offsets: PackedFloat32Array = PackedFloat32Array()

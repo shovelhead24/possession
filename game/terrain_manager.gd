@@ -5,11 +5,11 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 
 @export_group("Chunk Settings")
 @export var chunk_size: float = 100.0  # 4x larger — same polygon count, 4x render distance per chunk
-@export var view_distance: int = 16   # 16 * 100m = 1600m render distance
-@export var unload_distance: int = 20  # Must be > view_distance
+@export var view_distance: int = 100   # 100 * 100m = 10,000m render distance (full ring width)
+@export var unload_distance: int = 110  # Must be > view_distance
 
 @export_group("LOD Settings")
-@export var lod_distances: Array[float] = [3.0, 7.0, 13.0, 20.0]  # LOD0=300m LOD1=700m LOD2=1300m LOD3=2000m
+@export var lod_distances: Array[float] = [3.0, 8.0, 20.0, 50.0, 100.0]  # LOD0=300m LOD1=800m LOD2=2km LOD3=5km LOD4=10km
 @export var lod_hysteresis: float = 1.0  # Buffer to prevent rapid LOD switching
 
 @export_group("Terrain Generation")
@@ -28,6 +28,14 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 @export var wall_height: float = 300.0  # Height of boundary walls (visible barrier) - must be above water
 @export var edge_mountain_zone: float = 500.0  # Distance from edge where mountains are forced
 @export var use_continental_coastline: bool = false  # Use FBM for consistent coastlines (experimental)
+
+@export_group("Structured Terrain")
+@export var use_structured_terrain: bool = true
+@export var plains_radius: float = 2000.0       # Flat grassland within this dist from origin
+@export var foothills_radius: float = 4000.0    # Rolling hills transition zone outer edge
+@export var plains_base_height: float = 42.0    # Base plains elevation (above 24m water)
+@export var plains_variation: float = 8.0       # Gentle noise amplitude on plains
+@export var mountain_boost: float = 1.55        # Push mountain peaks into snow zone (300m+)
 
 @export_group("Biome Settings")
 @export_enum("Ring Edge Mountains", "Rolling Plains", "Dense Forest", "Highland Plateau", "River Valley", "Rocky Badlands", "Coastal Lowlands") var biome_type: int = 1
@@ -67,8 +75,9 @@ var absolute_water_height: float = 0.0  # Calculated from water_level * terrain_
 # Chunk loading queue - prevents frame hitches by spreading load over time
 var chunk_load_queue: Array = []  # Array of {coord: Vector2i, lod: int, distance: float}
 var is_initial_load: bool = true  # True during first load, processes more chunks
-var chunks_per_frame_initial: int = 10  # Bulk load at start (reduced)
-var chunks_per_frame_normal: int = 1  # Sequential load during gameplay (1 to prevent hitching)
+var chunks_per_frame_initial: int = 50  # Bulk load at start (fast initial fill for 10km view)
+var chunks_per_frame_normal: int = 1  # Close chunks (LOD0-2) per frame during gameplay
+var chunks_per_frame_distant: int = 5  # Distant chunks (LOD3+) per frame — trivial geometry
 var chunk_log_counter: int = 0  # Counter for FPS logging
 
 # Chunk unloading queue - spreads unloading across frames like loading
@@ -767,14 +776,16 @@ func process_chunk_queue():
 		return
 
 	# Process more chunks during initial load, fewer during gameplay
-	var chunks_to_process = chunks_per_frame_initial if is_initial_load else chunks_per_frame_normal
-	var processed = 0
+	var max_close = chunks_per_frame_initial if is_initial_load else chunks_per_frame_normal
+	var max_distant = chunks_per_frame_initial if is_initial_load else chunks_per_frame_distant
+	var processed_close = 0
+	var processed_distant = 0
 
 	var queue_start_size = chunk_load_queue.size()
-	while not chunk_load_queue.is_empty() and processed < chunks_to_process:
+	while not chunk_load_queue.is_empty():
 		# Check frame budget before processing (skip during initial load)
 		if not is_initial_load and enable_adaptive_quality and not has_chunk_budget():
-			break  # Over budget, wait until next frame
+			break
 
 		var item = chunk_load_queue.pop_back()  # O(1) instead of pop_front O(n)
 		var coord = item.coord
@@ -790,9 +801,20 @@ func process_chunk_queue():
 		if current_distance > view_distance:
 			continue
 
-		# Create the chunk
+		# LOD-aware batching: distant chunks are cheap, allow more per frame
+		var is_distant = lod >= 3
+		if is_distant:
+			if processed_distant >= max_distant:
+				continue  # Skip but keep processing queue for close chunks
+			processed_distant += 1
+		else:
+			if processed_close >= max_close:
+				if processed_distant >= max_distant:
+					break  # Both budgets exhausted
+				continue  # Skip close, keep looking for distant
+			processed_close += 1
+
 		create_chunk(coord, lod)
-		processed += 1
 
 # Process LOD update queue - spread LOD changes across frames
 func process_lod_queue():
@@ -1086,13 +1108,50 @@ func get_noise_height_at_position(world_pos: Vector3) -> float:
 	# Scale to world height with biome height multiplier
 	var final_height = height * terrain_height * traits.height_multiplier
 
-	# Localized mountain amplifier: boost the prominent peak at (-1137, 431) above 600m for snow
-	# Peak height ~122m → target ~620m so snow cap appears. Wide Gaussian for natural blending.
-	var peak_dx = world_pos.x - (-1137.0)
-	var peak_dz = world_pos.z - 431.0
-	var peak_sigma = 700.0  # ~700m influence radius — wide enough to look like a real mountain
-	var peak_boost = exp(-(peak_dx * peak_dx + peak_dz * peak_dz) / (2.0 * peak_sigma * peak_sigma)) * 4.0
-	final_height *= (1.0 + peak_boost)
+	# --- Structured terrain: radial zone shaping + river carving ---
+	if use_structured_terrain:
+		var wx = world_pos.x
+		var wz = world_pos.z
+		var dist = sqrt(wx * wx + wz * wz)
+
+		# Zone factor: 0.0 = pure plains, 1.0 = full mountains
+		var zone_factor: float
+		if dist < plains_radius:
+			zone_factor = 0.0
+		elif dist < foothills_radius:
+			zone_factor = smoothstep_gd(plains_radius, foothills_radius, dist)
+		else:
+			zone_factor = 1.0
+
+		# Plains target: gentle undulation above water level
+		var plains_noise = (noise.get_noise_2d(x * 0.003, z * 0.003) + 1.0) * 0.5
+		var plains_target = plains_base_height + plains_noise * plains_variation
+
+		# Mountain target: boost noise height to push peaks into snow zone (300m+)
+		var mountain_target = final_height * mountain_boost
+
+		# Blend between plains and mountains
+		final_height = lerp(plains_target, mountain_target, zone_factor)
+
+		# River carving — suppress in mountain zone where water plane looks wrong
+		var river_suppress = smoothstep_gd(foothills_radius - 500.0, foothills_radius + 200.0, dist)
+		if river_suppress < 1.0:
+			var river_center_z = get_river_center_z(wx)
+			var river_dist = abs(wz - river_center_z)
+
+			# Width tapers: wide gentle river in plains → narrow gorge in foothills
+			var active_half_width = lerp(25.0, 8.0, zone_factor)
+			var active_bank_width = lerp(30.0, 12.0, zone_factor)
+
+			var river_factor = smoothstep_gd(
+				active_half_width + active_bank_width,
+				active_half_width,
+				river_dist)
+			river_factor *= (1.0 - river_suppress)
+
+			# River bottom sits below water plane so it fills with water
+			var river_bottom = absolute_water_height - 2.0
+			final_height = lerp(final_height, river_bottom, river_factor)
 
 	return final_height
 
@@ -1100,6 +1159,14 @@ func get_noise_height_at_position(world_pos: Vector3) -> float:
 func smoothstep_gd(edge0: float, edge1: float, x: float) -> float:
 	var t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0)
 	return t * t * (3.0 - 2.0 * t)
+
+# Returns the Z centerline of the river at a given world X position.
+# Three overlapping sine waves produce natural, non-repeating bends
+# staying within ~380m of Z=0 — well inside the 2km plains radius.
+func get_river_center_z(world_x: float) -> float:
+	return (200.0 * sin(world_x * 0.0008)
+		  + 120.0 * sin(world_x * 0.002 + 1.5)
+		  +  60.0 * sin(world_x * 0.005 + 3.0))
 
 # --- Phase 2: Height Brush API ---
 enum BrushFalloff { GAUSSIAN = 0, LINEAR = 1, HARD = 2 }
