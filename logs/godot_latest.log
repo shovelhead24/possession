@@ -273,15 +273,34 @@ Warthog: Positioned at height 255.37012559259
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
+Player: Exited vehicle
+Warthog: Player exited at (-22.60646, 195.8769, 13.61446)
+Warthog: Press E to enter
 Loading resource: res://lighting_test.tscn
 Loading resource: res://lighting_test_controller.gd
 Loading resource: res://sky_dome_shader.gdshader
 Loading resource: res://water_shader.gdshader
+Stress test: Low (50)
+Stress test: Med (200)
+Stress test: High (500)
+Stress test: Extreme (1k)
+Stress test: None
+Stress test: Low (50)
+Stress test: Med (200)
+Stress test: High (500)
+Stress test: Extreme (1k)
+Stress test: None
+Stress test: Low (50)
+Stress test: Med (200)
+Stress test: High (500)
+Stress test: Extreme (1k)
 No benchmark data to write.
 No benchmark data to write.
-No benchmark data to write.
-No benchmark data to write.
-No benchmark data to write.
-No benchmark data to write.
-Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T18-15-37.csv (2806 rows)
-Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T18-21-53.csv (2806 rows)
+Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T19-05-23.csv (2808 rows)
+Stress test: None
+Stress test: Low (50)
+Stress test: Med (200)
+Stress test: High (500)
+Stress test: Extreme (1k)
+Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T19-06-35.csv (2807 rows)
+Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T19-07-54.csv (2807 rows)
