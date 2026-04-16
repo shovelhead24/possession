@@ -22,8 +22,8 @@ uniform float max_terrain_height : hint_range(100.0, 1000.0) = 800.0;
 uniform float biome_height_mult : hint_range(0.1, 1.5) = 1.0;
 
 // Height-based blending thresholds (absolute world Y coordinates)
-uniform float snow_start_height : hint_range(0.0, 1000.0) = 600.0;  // Snow starts at 600m
-uniform float snow_full_height : hint_range(0.0, 1000.0) = 650.0;   // Full snow at 650m
+uniform float snow_start_height : hint_range(0.0, 1000.0) = 300.0;  // Snow starts at 75% of terrain_height
+uniform float snow_full_height : hint_range(0.0, 1000.0) = 360.0;   // Full snow at 90%
 uniform float grass_min_height : hint_range(-100.0, 500.0) = 11.0;  // Grass starts at water + 3m
 uniform float stone_blend_range : hint_range(10.0, 200.0) = 50.0;   // How wide the stone transition zone is
 
@@ -33,8 +33,8 @@ uniform float beach_slope_min : hint_range(0.0, 1.0) = 0.85;  // Min slope for b
 
 // Slope-based thresholds
 uniform float slope_snow_threshold : hint_range(0.0, 1.0) = 0.5;
-uniform float cliff_slope_start : hint_range(0.0, 1.0) = 0.7;  // Below this = cliff
-uniform float cliff_slope_full : hint_range(0.0, 1.0) = 0.5;   // Full cliff texture
+uniform float cliff_slope_start : hint_range(0.0, 1.0) = 0.55;  // Cliffs on steeper slopes (~55 degrees)
+uniform float cliff_slope_full : hint_range(0.0, 1.0) = 0.35;   // Full cliff at ~70 degrees
 
 // Use vertex colors for base tinting
 uniform bool use_vertex_color_tint = true;
