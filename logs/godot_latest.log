@@ -279,15 +279,6 @@ Loading resource: res://sky_dome_shader.gdshader
 Loading resource: res://water_shader.gdshader
 Stress test: 500
 Stress test: 2k
-Stress test: 10k
-Stress test: 50k
-Stress test: 100k
-Stress test: None
-Stress test: 500
-Stress test: 2k
-Stress test: 10k
-Stress test: 50k
-Stress test: 100k
 Benchmark pass 1/8: baseline
 Benchmark pass 2/8: no_shadows
 Benchmark pass 3/8: shadow_100m
@@ -296,5 +287,6 @@ Benchmark pass 5/8: stress_2k
 Benchmark pass 6/8: stress_10k
 Benchmark pass 7/8: stress_50k
 Benchmark pass 8/8: stress_100k
-Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T19-45-03.csv (19104 rows)
-Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T19-50-12.csv (19104 rows)
+Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T20-02-04.csv (20991 rows)
+Benchmark pass 1/8: baseline
+Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-16T20-10-25.csv (509 rows)
