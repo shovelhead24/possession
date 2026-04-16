@@ -37,6 +37,7 @@ var interaction_area: Area3D = null
 
 # References
 var terrain_manager: Node = null
+var _editor_active: bool = false
 
 @export var auto_enter: bool = true  # Spawn player in vehicle automatically
 
@@ -70,6 +71,11 @@ func _ready():
 		freeze = true
 		print("Warthog: No wheels found (halo_warthog asset pack missing) - physics frozen")
 		return
+
+	# Connect to editor mode signal to disable input while editing
+	var _ec = get_node_or_null("/root/World/EditorController")
+	if _ec:
+		_ec.editor_mode_changed.connect(_on_editor_mode_changed)
 
 	# Create interaction area for entering vehicle
 	setup_interaction_area()
@@ -155,7 +161,17 @@ func position_on_terrain():
 		global_position.y = terrain_height + 1.5  # Slight offset so wheels touch ground
 		print("Warthog: Positioned at height ", terrain_height)
 
+func _on_editor_mode_changed(active: bool) -> void:
+	_editor_active = active
+
 func _physics_process(delta):
+	# Skip all input when editor is active
+	if _editor_active:
+		# Still apply downforce so vehicle doesn't float away
+		if is_occupied and current_downforce > 0:
+			apply_central_force(Vector3.DOWN * current_downforce)
+		return
+
 	# Check for enter/exit input
 	if Input.is_action_just_pressed("interact"):  # E key
 		if is_occupied:

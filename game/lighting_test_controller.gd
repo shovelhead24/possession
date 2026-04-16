@@ -2,16 +2,18 @@ extends Node3D
 # Lighting Test Area — self-contained benchmarking scene for iterating
 # on lighting settings without the full world overhead.
 #
-# Keys:
-#   WASD + Mouse = fly camera
-#   L = cycle lighting preset (Noon/Sunset/Night/Dawn/HighSun)
-#   S = toggle shadows
-#   N = toggle normal maps
-#   M = cycle shadow_max_distance
-#   A = cycle ambient energy
-#   B = start/stop benchmark flythrough
-#   Q = write CSV log to logs/
-#   F2 / Escape = return to world.tscn
+# Keys (KB / Controller):
+#   WASD + Mouse / Left Stick + Right Stick = fly camera
+#   Space / A button = ascend, C / LT = descend
+#   Ctrl / RT = sprint
+#   Shift+L / LB = cycle lighting preset
+#   Shift+S / RB = toggle shadows
+#   Shift+N / Y = toggle normal maps
+#   Shift+M / DPad Left-Right = cycle shadow_max_distance
+#   Shift+A / DPad Up-Down = cycle ambient energy
+#   Shift+B / Start = start/stop benchmark flythrough
+#   Shift+Q / Back = write CSV log to logs/
+#   F2, Escape / B = return to world.tscn
 
 # -- Camera --
 var camera: Camera3D
@@ -19,6 +21,7 @@ var cam_speed: float = 20.0
 var mouse_sens: float = 0.003
 var pitch: float = 0.0
 var yaw: float = 0.0
+var stick_look_sens: float = 2.5  # Radians/sec at full stick deflection
 
 # -- Lighting --
 var sun_light: DirectionalLight3D
@@ -106,18 +109,41 @@ func _process(delta):
 	_log_frame()
 
 func _process_free_camera(delta):
+	# Controller right stick look
+	var rs_x = Input.get_joy_axis(0, JOY_AXIS_RIGHT_X)
+	var rs_y = Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y)
+	if abs(rs_x) > 0.15:
+		yaw -= rs_x * stick_look_sens * delta
+	if abs(rs_y) > 0.15:
+		pitch -= rs_y * stick_look_sens * delta
+		pitch = clampf(pitch, -PI / 2.0, PI / 2.0)
+
 	camera.rotation = Vector3(pitch, yaw, 0)
 
 	var dir := Vector3.ZERO
+	var shift_held = Input.is_key_pressed(KEY_SHIFT)
 	if Input.is_key_pressed(KEY_W): dir.z -= 1
-	if Input.is_key_pressed(KEY_S): dir.z += 1
-	if Input.is_key_pressed(KEY_A): dir.x -= 1
+	if Input.is_key_pressed(KEY_S) and not shift_held: dir.z += 1
+	if Input.is_key_pressed(KEY_A) and not shift_held: dir.x -= 1
 	if Input.is_key_pressed(KEY_D): dir.x += 1
 	if Input.is_key_pressed(KEY_SPACE): dir.y += 1
-	if Input.is_key_pressed(KEY_SHIFT): dir.y -= 1
+	if Input.is_key_pressed(KEY_C): dir.y -= 1
+
+	# Controller left stick
+	var ls_x = Input.get_joy_axis(0, JOY_AXIS_LEFT_X)
+	var ls_y = Input.get_joy_axis(0, JOY_AXIS_LEFT_Y)
+	if abs(ls_x) > 0.15: dir.x += ls_x
+	if abs(ls_y) > 0.15: dir.z += ls_y
+	# Controller: A = ascend, LT = descend
+	if Input.is_joy_button_pressed(0, JOY_BUTTON_A):
+		dir.y += 1
+	if Input.get_joy_axis(0, JOY_AXIS_TRIGGER_LEFT) > 0.3:
+		dir.y -= 1
 
 	var speed = cam_speed
 	if Input.is_key_pressed(KEY_CTRL):
+		speed *= 5.0
+	if Input.get_joy_axis(0, JOY_AXIS_TRIGGER_RIGHT) > 0.3:
 		speed *= 5.0
 
 	if dir.length() > 0:
@@ -126,28 +152,67 @@ func _process_free_camera(delta):
 		camera.position += move
 
 func _input(event):
+	# Keyboard toggles require Shift to avoid conflicting with WASD movement
 	if event is InputEventKey and event.pressed and not event.echo:
-		match event.keycode:
-			KEY_L:
+		if event.shift_pressed:
+			match event.keycode:
+				KEY_L:
+					current_preset = (current_preset + 1) % PRESETS.size()
+					apply_preset(current_preset)
+				KEY_S:
+					sun_light.shadow_enabled = not sun_light.shadow_enabled
+				KEY_N:
+					normals_enabled = not normals_enabled
+					if terrain_material:
+						terrain_material.set_shader_parameter("normal_map_strength", 0.8 if normals_enabled else 0.0)
+				KEY_M:
+					shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
+					sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+				KEY_A:
+					ambient_idx = (ambient_idx + 1) % ambient_levels.size()
+					environment.ambient_light_energy = ambient_levels[ambient_idx]
+				KEY_B:
+					_toggle_benchmark()
+				KEY_Q:
+					_write_log()
+		else:
+			match event.keycode:
+				KEY_F2, KEY_ESCAPE:
+					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+					get_tree().change_scene_to_file("res://world.tscn")
+
+	# Controller buttons
+	if event is InputEventJoypadButton and event.pressed:
+		match event.button_index:
+			JOY_BUTTON_LEFT_SHOULDER:  # LB = cycle preset
 				current_preset = (current_preset + 1) % PRESETS.size()
 				apply_preset(current_preset)
-			KEY_S:
+			JOY_BUTTON_RIGHT_SHOULDER:  # RB = toggle shadows
 				sun_light.shadow_enabled = not sun_light.shadow_enabled
-			KEY_N:
+			JOY_BUTTON_Y:  # Y = toggle normals
 				normals_enabled = not normals_enabled
 				if terrain_material:
 					terrain_material.set_shader_parameter("normal_map_strength", 0.8 if normals_enabled else 0.0)
-			KEY_M:
+			JOY_BUTTON_X:  # X = cycle shadow distance
 				shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
 				sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
-			KEY_A:
+			JOY_BUTTON_DPAD_UP:  # DPad Up = ambient up
 				ambient_idx = (ambient_idx + 1) % ambient_levels.size()
 				environment.ambient_light_energy = ambient_levels[ambient_idx]
-			KEY_B:
+			JOY_BUTTON_DPAD_DOWN:  # DPad Down = ambient down
+				ambient_idx = (ambient_idx - 1 + ambient_levels.size()) % ambient_levels.size()
+				environment.ambient_light_energy = ambient_levels[ambient_idx]
+			JOY_BUTTON_DPAD_LEFT:  # DPad Left = shadow dist down
+				shadow_dist_idx = (shadow_dist_idx - 1 + shadow_distances.size()) % shadow_distances.size()
+				sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+			JOY_BUTTON_DPAD_RIGHT:  # DPad Right = shadow dist up
+				shadow_dist_idx = (shadow_dist_idx + 1) % shadow_distances.size()
+				sun_light.shadow_max_distance = shadow_distances[shadow_dist_idx]
+			JOY_BUTTON_START:  # Start = benchmark
 				_toggle_benchmark()
-			KEY_Q:
+			JOY_BUTTON_BACK:  # Back = write CSV
 				_write_log()
-			KEY_F2, KEY_ESCAPE:
+			JOY_BUTTON_B:  # B = exit to world
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 				get_tree().change_scene_to_file("res://world.tscn")
 
@@ -257,6 +322,19 @@ func _build_test_geometry():
 	add_child(geo)
 
 	_build_terrain_material()
+
+	# -- Dark ground floor for visual reference and text readability --
+	var floor_mi = MeshInstance3D.new()
+	floor_mi.name = "GroundFloor"
+	var floor_plane = PlaneMesh.new()
+	floor_plane.size = Vector2(4000, 4000)
+	floor_mi.mesh = floor_plane
+	var floor_mat = StandardMaterial3D.new()
+	floor_mat.albedo_color = Color(0.12, 0.14, 0.12)
+	floor_mi.material_override = floor_mat
+	floor_mi.position = Vector3(0, 35, 0)
+	floor_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	geo.add_child(floor_mi)
 
 	# -- Terrain texture planes --
 	# Each plane is positioned at a Y value that activates its shader zone
@@ -470,11 +548,16 @@ func _build_hud():
 	hud.layer = 20
 	add_child(hud)
 
+	var label_bg = StyleBoxFlat.new()
+	label_bg.bg_color = Color(0, 0, 0, 0.6)
+	label_bg.set_content_margin_all(8)
+
 	stats_label = Label.new()
 	stats_label.name = "StatsLabel"
 	stats_label.position = Vector2(20, 20)
 	stats_label.add_theme_font_size_override("font_size", 18)
 	stats_label.add_theme_color_override("font_color", Color(0, 1, 0))
+	stats_label.add_theme_stylebox_override("normal", label_bg)
 	hud.add_child(stats_label)
 
 	preset_label = Label.new()
@@ -482,14 +565,16 @@ func _build_hud():
 	preset_label.position = Vector2(20, 350)
 	preset_label.add_theme_font_size_override("font_size", 24)
 	preset_label.add_theme_color_override("font_color", Color(1, 1, 0))
+	preset_label.add_theme_stylebox_override("normal", label_bg)
 	hud.add_child(preset_label)
 
 	controls_label = Label.new()
 	controls_label.name = "ControlsLabel"
 	controls_label.position = Vector2(20, 600)
 	controls_label.add_theme_font_size_override("font_size", 14)
-	controls_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	controls_label.text = "[L] Preset  [S] Shadows  [N] Normals  [M] Shadow Dist  [A] Ambient  [B] Benchmark  [Q] Log  [Esc] Exit"
+	controls_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	controls_label.add_theme_stylebox_override("normal", label_bg)
+	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+B Bench | Shift+Q Log | Esc Exit\nPS: L1 Preset | R1 Shadows | Triangle Normals | Square ShadowDist | DPad U/D Ambient | DPad L/R ShadowDist | Options Bench | Create Log | Circle Exit"
 	hud.add_child(controls_label)
 
 func _update_hud():
