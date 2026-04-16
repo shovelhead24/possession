@@ -201,6 +201,11 @@ func _input(event):
 	if event.is_action_pressed("reload_scene"):
 		_pull_and_reload()
 
+	# F2 — switch to lighting test scene
+	if event.is_action_pressed("lighting_test"):
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		get_tree().change_scene_to_file("res://lighting_test.tscn")
+
 	# Zoom — R3 cycles 1× → 1.5× → 3× → 10× → back to 1×
 	if event.is_action_pressed("zoom"):
 		_zoom_index = (_zoom_index + 1) % ZOOM_FOVS.size()
