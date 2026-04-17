@@ -268,25 +268,6 @@ void fragment() {
 		// Above water - normal terrain rendering with normal maps
 		ALBEDO = terrain_color;
 
-		// Normal map blending — sample in 0-1 texture space, blend, assign directly
-		// to NORMAL_MAP (which expects 0-1 encoded tangent-space normals)
-		vec3 nm_grass = texture(grass_normal, tex_uv).rgb;
-		vec3 nm_stone_x = texture(stone_normal, world_position.zy * cliff_texture_scale).rgb;
-		vec3 nm_stone_y = texture(stone_normal, cliff_uv).rgb;
-		vec3 nm_stone_z = texture(stone_normal, world_position.xy * cliff_texture_scale).rgb;
-		vec3 nm_stone = nm_stone_x * blend_weights.x + nm_stone_y * blend_weights.y + nm_stone_z * blend_weights.z;
-		vec3 nm_snow = texture(snow_normal, tex_uv).rgb;
-		vec3 nm_sand = texture(sand_normal, tex_uv).rgb;
-
-		vec3 nm = nm_grass;
-		nm = mix(nm, nm_sand, beach_blend);
-		nm = mix(nm, nm_stone, stone_blend);
-		nm = mix(nm, nm_snow, final_snow_blend);
-		nm = mix(nm, nm_stone, cliff_blend);
-
-		NORMAL_MAP = nm;
-		NORMAL_MAP_DEPTH = normal_map_strength;
-
 		// Per-material roughness
 		float base_roughness = 0.85;
 		base_roughness = mix(base_roughness, 0.90, beach_blend);

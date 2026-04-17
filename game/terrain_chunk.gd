@@ -575,6 +575,11 @@ func generate_terrain():
 	mesh_instance.visibility_range_end = 9000.0
 	mesh_instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
 
+	# Shadow casting: only LOD0 has smooth enough geometry for correct shadows.
+	# LOD1+ coarse normals cause banding seams at chunk edges at low sun angles.
+	if current_lod >= 1:
+		mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
 	var vertex_time = Time.get_ticks_msec() - start_time - mesh_time
 
 	# Only create collision for LOD 0-1 (close chunks)
@@ -1052,8 +1057,9 @@ static func _ensure_textures_loaded() -> void:
 	if ResourceLoader.exists("res://terrain_shader.gdshader"):
 		_tex_shader = load("res://terrain_shader.gdshader")
 
-# Shared material for distant LODs — vertex colors only, zero texture samples
-static var _distant_material: StandardMaterial3D = null
+# Shared materials for distant LODs — vertex colors only, zero texture samples
+static var _distant_material: StandardMaterial3D = null   # LOD1-2: lit, good normals
+static var _far_material: StandardMaterial3D = null       # LOD3+: unshaded, no seam banding
 
 static func _get_distant_material() -> StandardMaterial3D:
 	if _distant_material:
@@ -1064,8 +1070,19 @@ static func _get_distant_material() -> StandardMaterial3D:
 	_distant_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	return _distant_material
 
+static func _get_far_material() -> StandardMaterial3D:
+	if _far_material:
+		return _far_material
+	_far_material = StandardMaterial3D.new()
+	_far_material.vertex_color_use_as_albedo = true
+	_far_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return _far_material
+
 func create_terrain_material() -> Material:
-	# LOD >= 1: vertex colors only (0 texture samples, fill-rate friendly)
+	# LOD3+: unshaded — coarse 2-vertex meshes cause NdotL banding at chunk seams
+	if current_lod >= 3:
+		return _get_far_material()
+	# LOD1-2: lit vertex colors, no texture samples
 	if current_lod >= 1:
 		return _get_distant_material()
 
