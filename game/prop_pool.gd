@@ -41,9 +41,9 @@ var borrowed_trees: Dictionary = {}
 var borrowed_grass: Dictionary = {}
 
 # Pool configuration - Trees (tuned for Intel UHD / potato hardware)
-@export var initial_pool_size: int = 120
-@export var pool_grow_size: int = 30
-@export var max_pool_size: int = 600
+@export var initial_pool_size: int = 400
+@export var pool_grow_size: int = 60
+@export var max_pool_size: int = 4000
 
 # Pool configuration - Grass (legacy pool kept for compatibility)
 @export var initial_grass_pool_size: int = 0   # No longer pre-seeded — MultiMesh handles grass

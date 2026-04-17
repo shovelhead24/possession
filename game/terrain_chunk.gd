@@ -667,7 +667,7 @@ func generate_props():
 	thicket_noise.frequency = 0.025  # Medium scale ~40m thickets
 
 	# Calculate max trees based on density - higher density = more potential trees
-	var base_tree_count = int(tree_density * 50)  # Max ~50 trees per chunk
+	var base_tree_count = int(tree_density * 200)  # Max ~200 trees per chunk
 
 	# Apply quality multiplier from adaptive quality system
 	var max_tree_count = base_tree_count
@@ -796,7 +796,7 @@ func generate_props():
 	var _props_time = Time.get_ticks_msec() - props_start
 
 func _spawn_grass_multimesh(prop_pool, rng: RandomNumberGenerator, forest_noise: FastNoiseLite, half_size: float, absolute_water_height: float, tree_density: float, biome_height_mult: float, props_node: Node3D):
-	var base_count = int(tree_density * 400)
+	var base_count = int(tree_density * 2000)
 	if terrain_manager and terrain_manager.has_method("get_quality_tree_count"):
 		base_count = terrain_manager.get_quality_tree_count(base_count)
 	if base_count == 0:
