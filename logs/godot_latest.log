@@ -47,6 +47,52 @@ CORE API HASH: 937899573
 EDITOR API HASH: 1777164193
 SceneTreeFTI: traversal method DEFAULT
 Loaded system CA certificates
+Loading resource: res://lighting_test.tscn
+Loading resource: res://lighting_test_controller.gd
+Loading resource: res://sky_dome_shader.gdshader
+WARNING: Loaded resource as image file, this will not work on export: 'res://grass.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:1022)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1030)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:456)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:409)
+       [4] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:1022)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1031)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:456)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:409)
+       [4] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:1022)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1032)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:456)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:409)
+       [4] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:1022)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1033)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:456)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:409)
+       [4] _ready (res://lighting_test_controller.gd:119)
+Loading resource: res://terrain_shader.gdshader
+Loading resource: res://water_shader.gdshader
+Stress test: 500
+Stress test: 2k
+Stress test: 10k
+Stress test: 50k
+Stress test: 100k
+Stress test: chunk_1k
+Stress test: chunk_5k
+Stress test: chunk_20k
+Stress test: None
 Loading resource: res://world.tscn
 Loading resource: res://editor_controller.gd
 Loading resource: res://editor_hud.tscn
@@ -217,51 +263,6 @@ PropPool: grow_grass_sync creating 150 grass...
 PropPool: grow_grass_sync finished, total_grass_created=150
 PropPool: Seeded with 90 trees, 150 grass (rest grows async as needed)
 Loading resource: res://water_shader.gdshader
-WARNING: Loaded resource as image file, this will not work on export: 'res://grass.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
-   at: load (core/io/image.cpp:2531)
-   GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1033)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1041)
-       [2] create_terrain_material (res://terrain_chunk.gd:1052)
-       [3] generate_terrain (res://terrain_chunk.gd:575)
-       [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:897)
-       [6] find_or_create_player (res://terrain_manager.gd:299)
-       [7] _ready (res://terrain_manager.gd:132)
-WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
-   at: load (core/io/image.cpp:2531)
-   GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1033)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1042)
-       [2] create_terrain_material (res://terrain_chunk.gd:1052)
-       [3] generate_terrain (res://terrain_chunk.gd:575)
-       [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:897)
-       [6] find_or_create_player (res://terrain_manager.gd:299)
-       [7] _ready (res://terrain_manager.gd:132)
-WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
-   at: load (core/io/image.cpp:2531)
-   GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1033)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1043)
-       [2] create_terrain_material (res://terrain_chunk.gd:1052)
-       [3] generate_terrain (res://terrain_chunk.gd:575)
-       [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:897)
-       [6] find_or_create_player (res://terrain_manager.gd:299)
-       [7] _ready (res://terrain_manager.gd:132)
-WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
-   at: load (core/io/image.cpp:2531)
-   GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1033)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1044)
-       [2] create_terrain_material (res://terrain_chunk.gd:1052)
-       [3] generate_terrain (res://terrain_chunk.gd:575)
-       [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:897)
-       [6] find_or_create_player (res://terrain_manager.gd:299)
-       [7] _ready (res://terrain_manager.gd:132)
-Loading resource: res://terrain_shader.gdshader
 DayNightCycle: Using existing sun light: DirectionalLight3D
 Loading resource: res://sky_dome_shader.gdshader
 DayNightCycle: Sky dome created (GL Compat spatial shader)
@@ -274,6 +275,21 @@ Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
 Player: Exited vehicle
-Warthog: Player exited at (827.9528, 56.48893, -36.64763)
+Warthog: Player exited at (3.926759, 53.80871, -29.56595)
 Warthog: Press E to enter
 Fly mode: ON
+Loading resource: res://lighting_test.tscn
+Loading resource: res://sky_dome_shader.gdshader
+Loading resource: res://water_shader.gdshader
+Benchmark pass 1/11: baseline
+Benchmark pass 2/11: no_shadows
+Benchmark pass 3/11: shadow_100m
+Benchmark pass 4/11: shadow_1km
+Benchmark pass 5/11: stress_2k
+Benchmark pass 6/11: stress_10k
+Benchmark pass 7/11: stress_50k
+Benchmark pass 8/11: stress_100k
+Benchmark pass 9/11: chunk_1k
+Benchmark pass 10/11: chunk_5k
+Benchmark pass 11/11: chunk_20k
+Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-17T11-27-39.csv (28973 rows)
