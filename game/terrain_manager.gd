@@ -704,6 +704,17 @@ func get_lod_for_distance(distance: float, current_lod: int = -1) -> int:
 			return i
 	return lod_distances.size() - 1  # Max LOD for very distant chunks
 
+# 3D distance from player to chunk center, in chunk units
+# Used for LOD selection so flying high pushes chunks to cheaper LODs
+func get_3d_distance_to_chunk(chunk_coord: Vector2i) -> float:
+	var chunk_world_x = chunk_coord.x * chunk_size + chunk_size / 2.0
+	var chunk_world_z = chunk_coord.y * chunk_size + chunk_size / 2.0
+	var chunk_world_y = get_height_at_position(Vector3(chunk_world_x, 0, chunk_world_z))
+	var dx = player.global_position.x - chunk_world_x
+	var dy = player.global_position.y - chunk_world_y
+	var dz = player.global_position.z - chunk_world_z
+	return sqrt(dx * dx + dy * dy + dz * dz) / chunk_size
+
 # Queue chunks around player sorted by distance (ring pattern - closest first)
 func queue_chunks_around_player():
 	var player_chunk = get_chunk_coords(player.global_position)
@@ -724,7 +735,8 @@ func queue_chunks_around_player():
 			if chunk_coord in chunks:
 				var chunk = chunks[chunk_coord]
 				var current_lod = chunk.current_lod if "current_lod" in chunk else 0
-				var target_lod = get_lod_for_distance(distance, current_lod)
+				var dist_3d = get_3d_distance_to_chunk(chunk_coord)
+				var target_lod = get_lod_for_distance(dist_3d, current_lod)
 				# Queue LOD update if needed (don't apply immediately - causes hitching!)
 				if target_lod != current_lod:
 					# Check if not already queued
@@ -748,12 +760,13 @@ func queue_chunks_around_player():
 			if already_queued:
 				continue
 
-			# Add to needed list
-			var target_lod = get_lod_for_distance(distance, -1)
+			# Add to needed list — use 3D distance for LOD, 2D for sort priority
+			var dist_3d = get_3d_distance_to_chunk(chunk_coord)
+			var target_lod = get_lod_for_distance(dist_3d, -1)
 			needed_chunks.append({
 				"coord": chunk_coord,
 				"lod": target_lod,
-				"distance": distance
+				"distance": distance  # 2D distance for sort (load closest ground first)
 			})
 
 	# Sort by distance descending — pop_back() grabs from the end,
@@ -781,8 +794,8 @@ func process_chunk_queue():
 	# Re-sort queue by current distance from player every frame
 	# This ensures flying/moving players always load the closest chunks first
 	for item in chunk_load_queue:
-		item.distance = (item.coord - player_chunk).length()
-		item.lod = get_lod_for_distance(item.distance, -1)
+		item.distance = (item.coord - player_chunk).length()  # 2D for sort
+		item.lod = get_lod_for_distance(get_3d_distance_to_chunk(item.coord), -1)  # 3D for LOD
 	chunk_load_queue.sort_custom(func(a, b): return a.distance > b.distance)
 
 	# Budget: close chunks (LOD 0-1) are expensive, distant (LOD 2+) are cheap
