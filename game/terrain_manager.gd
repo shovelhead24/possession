@@ -5,11 +5,11 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 
 @export_group("Chunk Settings")
 @export var chunk_size: float = 100.0  # 4x larger — same polygon count, 4x render distance per chunk
-@export var view_distance: int = 100   # 100 * 100m = 10,000m render distance (full ring width)
-@export var unload_distance: int = 110  # Must be > view_distance
+@export var view_distance: int = 30    # 30 * 100m = 3km (reduced for fast debug iteration)
+@export var unload_distance: int = 35   # Must be > view_distance
 
 @export_group("LOD Settings")
-@export var lod_distances: Array[float] = [3.0, 8.0, 20.0, 50.0, 100.0]  # LOD0=300m LOD1=800m LOD2=2km LOD3=5km LOD4=10km
+@export var lod_distances: Array[float] = [3.0, 6.0, 12.0, 20.0, 30.0]  # LOD0=300m LOD1=600m LOD2=1.2km LOD3=2km LOD4=3km
 @export var lod_hysteresis: float = 1.0  # Buffer to prevent rapid LOD switching
 
 @export_group("Terrain Generation")
@@ -492,10 +492,7 @@ func create_global_water():
 	var plane_mesh = PlaneMesh.new()
 	# Size water plane to cover actual water features, not the entire world
 	var water_size: float
-	if use_structured_terrain:
-		water_size = (plains_radius + 1000.0) * 2.0  # 6km — covers river/plains + margin
-	else:
-		water_size = (view_distance + 5) * chunk_size * 2.0  # Full coverage for noise terrain
+	water_size = 500.0  # Small plane follows player — only renders water nearby
 	plane_mesh.size = Vector2(water_size, water_size)
 	plane_mesh.subdivide_width = 64  # Subdivisions for wave animation
 	plane_mesh.subdivide_depth = 64

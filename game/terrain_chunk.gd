@@ -1037,7 +1037,23 @@ static func _ensure_textures_loaded() -> void:
 	if ResourceLoader.exists("res://terrain_shader.gdshader"):
 		_tex_shader = load("res://terrain_shader.gdshader")
 
+# Shared material for distant LODs — vertex colors only, zero texture samples
+static var _distant_material: StandardMaterial3D = null
+
+static func _get_distant_material() -> StandardMaterial3D:
+	if _distant_material:
+		return _distant_material
+	_distant_material = StandardMaterial3D.new()
+	_distant_material.vertex_color_use_as_albedo = true
+	_distant_material.roughness = 0.9
+	_distant_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	return _distant_material
+
 func create_terrain_material() -> Material:
+	# LOD >= 2: vertex colors only (0 texture samples, fill-rate friendly)
+	if current_lod >= 2:
+		return _get_distant_material()
+
 	_ensure_textures_loaded()
 	var shader    = _tex_shader
 	var grass_tex = _tex_grass
