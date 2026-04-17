@@ -38,6 +38,10 @@ var current_weapon: WeaponType = WeaponType.CARBINE
 @onready var weapon_camera = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera
 @onready var weapon_viewport = $WeaponViewport/SubViewportContainer/SubViewport
 @onready var weapon_light = $WeaponViewport/SubViewportContainer/SubViewport/WeaponLight
+@onready var weapon_omni_key = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder/WeaponOmniKey
+@onready var weapon_omni_fill = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder/WeaponOmniFill
+@onready var weapon_world_env = $WeaponViewport/SubViewportContainer/SubViewport/WeaponWorldEnvironment
+var _weapon_light_mode: int = 0
 
 # Weapon model references
 @onready var carbine_model = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder/Carbine
@@ -214,6 +218,11 @@ func _input(event):
 		_zoom_index = (_zoom_index + 1) % ZOOM_FOVS.size()
 		if camera:
 			camera.fov = ZOOM_FOVS[_zoom_index]
+
+	# F3 — cycle weapon lighting modes
+	if event is InputEventKey and event.physical_keycode == KEY_F3 and event.pressed and not event.echo:
+		_weapon_light_mode = (_weapon_light_mode + 1) % 4
+		_apply_weapon_light_mode()
 
 	# F4 — toggle LOD debug colours (white=0 blue=1 green=2 red=3 yellow=4)
 	if event is InputEventKey and event.physical_keycode == KEY_F4 and event.pressed and not event.echo:
@@ -460,6 +469,38 @@ func update_hud():
 	var debug_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/DebugLabel")
 	if debug_label:
 		update_debug_stats(debug_label)
+
+func _apply_weapon_light_mode():
+	if not weapon_world_env:
+		return
+	var env = weapon_world_env.environment
+	var mode_names = ["OmniKey+Grey", "BrightIBL+Directional", "WhiteBox+Omni", "AmbientOnly"]
+	print("Weapon light mode: %d (%s)" % [_weapon_light_mode, mode_names[_weapon_light_mode]])
+	match _weapon_light_mode:
+		0: # OmniLights + medium grey IBL (default)
+			env.background_color = Color(0.28, 0.32, 0.38, 1)
+			env.ambient_light_energy = 1.5
+			if weapon_omni_key: weapon_omni_key.light_energy = 3.0
+			if weapon_omni_fill: weapon_omni_fill.light_energy = 1.5
+			if weapon_light: weapon_light.light_energy = 0.0
+		1: # Bright IBL + directional, no omni
+			env.background_color = Color(0.6, 0.62, 0.68, 1)
+			env.ambient_light_energy = 1.0
+			if weapon_omni_key: weapon_omni_key.light_energy = 0.0
+			if weapon_omni_fill: weapon_omni_fill.light_energy = 0.0
+			if weapon_light: weapon_light.light_energy = 3.0
+		2: # White IBL box + omni
+			env.background_color = Color(0.9, 0.9, 0.9, 1)
+			env.ambient_light_energy = 2.0
+			if weapon_omni_key: weapon_omni_key.light_energy = 2.0
+			if weapon_omni_fill: weapon_omni_fill.light_energy = 1.0
+			if weapon_light: weapon_light.light_energy = 1.0
+		3: # High ambient only (no directional, no omni)
+			env.background_color = Color(0.5, 0.52, 0.56, 1)
+			env.ambient_light_energy = 4.0
+			if weapon_omni_key: weapon_omni_key.light_energy = 0.0
+			if weapon_omni_fill: weapon_omni_fill.light_energy = 0.0
+			if weapon_light: weapon_light.light_energy = 0.0
 
 func update_weapon_animation(delta: float):
 	if not weapon_holder:

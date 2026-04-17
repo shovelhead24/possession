@@ -33,10 +33,10 @@ fog_depth_end = 9000.0
 
 [sub_resource type="Environment" id="Environment_weapon"]
 background_mode = 1
-background_color = Color(0, 0, 0, 0)
+background_color = Color(0.28, 0.32, 0.38, 1)
 ambient_light_source = 2
 ambient_light_color = Color(0.55, 0.57, 0.62, 1)
-ambient_light_energy = 2.5
+ambient_light_energy = 1.5
 
 [node name="World" type="Node3D"]
 
@@ -103,6 +103,16 @@ transform = Transform3D(0.03492816910148, -0.00105113256723, -0.00197918131016, 
 [node name="Railgun" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("6_railgun")]
 transform = Transform3D(0.000000000264243, 0.000000000528486, 0.00350000513717, 0.000000000305977, 0.00350000513717, -0.000000000528486, 0.00350000513717, -0.000000000305977, -0.000000000264243, -0.24999988079071, 0.22999995946884, 0.28999817371368)
 visible = false
+
+[node name="WeaponOmniKey" type="OmniLight3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.4, 0.5)
+light_energy = 3.0
+omni_range = 3.0
+
+[node name="WeaponOmniFill" type="OmniLight3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, -0.1, 0.4)
+light_energy = 1.5
+omni_range = 3.0
 
 [node name="WeaponLight" type="DirectionalLight3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
 transform = Transform3D(0.8, 0.2, 0.4, 0, 0.9, -0.3, -0.4, 0.2, 0.8, 0, 2, 1)
