@@ -37,6 +37,7 @@ var current_weapon: WeaponType = WeaponType.CARBINE
 @onready var weapon_holder = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder
 @onready var weapon_camera = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera
 @onready var weapon_viewport = $WeaponViewport/SubViewportContainer/SubViewport
+@onready var weapon_light = $WeaponViewport/SubViewportContainer/SubViewport/WeaponLight
 
 # Weapon model references
 @onready var carbine_model = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder/Carbine
@@ -431,23 +432,32 @@ func _physics_process(delta):
 	# Update HUD with coordinates and speed
 	update_hud()
 
+	# Hide weapon when zoomed in or flying
+	if weapon_holder:
+		weapon_holder.visible = not fly_mode and _zoom_index == 0
+
+	# Sync weapon light direction to match world sun
+	if weapon_light:
+		var world_sun = get_node_or_null("/root/World/DirectionalLight3D")
+		if world_sun:
+			weapon_light.global_transform.basis = world_sun.global_transform.basis
+
 func update_hud():
 	if not hud_instance:
 		return
 
-	var coords_label = hud_instance.get_node_or_null("CoordsLabel")
+	var coords_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/CoordsLabel")
 	if coords_label:
 		var pos = global_position
 		coords_label.text = "X: %.0f  Y: %.0f  Z: %.0f" % [pos.x, pos.y, pos.z]
 
-	var speed_label = hud_instance.get_node_or_null("SpeedLabel")
+	var speed_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/SpeedLabel")
 	if speed_label:
 		var mode_text = "FLY" if fly_mode else "WALK"
 		var sprint_text = " [SPRINT]" if fly_mode and Input.is_key_pressed(KEY_CTRL) else ""
 		speed_label.text = "%s%s: %.1f m/s" % [mode_text, sprint_text, current_speed]
 
-	# Debug stats (press Tab to toggle)
-	var debug_label = hud_instance.get_node_or_null("DebugLabel")
+	var debug_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/DebugLabel")
 	if debug_label:
 		update_debug_stats(debug_label)
 
@@ -871,14 +881,9 @@ func update_health_display():
 	if not hud_instance:
 		return
 
-	var health_label = hud_instance.get_node_or_null("HealthLabel")
+	var health_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/HealthLabel")
 	if not health_label:
-		# Create health label if it doesn't exist
-		health_label = Label.new()
-		health_label.name = "HealthLabel"
-		health_label.add_theme_font_size_override("font_size", 24)
-		health_label.position = Vector2(20, 20)
-		hud_instance.add_child(health_label)
+		return
 
 	# Update health text with color
 	var health_percent = health / max_health

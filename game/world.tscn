@@ -36,7 +36,7 @@ background_mode = 1
 background_color = Color(0, 0, 0, 0)
 ambient_light_source = 2
 ambient_light_color = Color(0.55, 0.57, 0.62, 1)
-ambient_light_energy = 0.5
+ambient_light_energy = 1.2
 
 [node name="World" type="Node3D"]
 
@@ -101,7 +101,7 @@ script = ExtResource("9_fp_arms_ctrl")
 transform = Transform3D(0.03492816910148, -0.00105113256723, -0.00197918131016, 0.00105652993079, 0.03498397767544, 0.00006561513146, -0.00197630538605, 0.00012522521138, -0.03494392335415, -0.25700005888939, 0.18000002205372, 0.31000000238419)
 
 [node name="Railgun" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("6_railgun")]
-transform = Transform3D(0.00000000037749, 0.00000000075498, 0.00500000733882, 0.00000000043711, 0.00500000733882, -0.00000000075498, 0.00500000733882, -0.00000000043711, -0.00000000037749, -0.24999988079071, 0.22999995946884, 0.28999817371368)
+transform = Transform3D(0.000000000264243, 0.000000000528486, 0.00350000513717, 0.000000000305977, 0.00350000513717, -0.000000000528486, 0.00350000513717, -0.000000000305977, -0.000000000264243, -0.24999988079071, 0.22999995946884, 0.28999817371368)
 visible = false
 
 [node name="WeaponLight" type="DirectionalLight3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]

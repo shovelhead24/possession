@@ -59,8 +59,12 @@ func _ready():
 
 	if skeleton:
 		cache_bone_indices()
-		# Start with carbine grip
-		apply_pose_to_both_hands(POSE_GRIP_CARBINE)
+		# Hide left arm by collapsing its root bone
+		var left_arm_idx = skeleton.find_bone("L_arm_01")
+		if left_arm_idx >= 0:
+			skeleton.set_bone_pose_scale(left_arm_idx, Vector3.ZERO)
+		# Start with carbine grip (right hand only)
+		apply_pose_to_hand(POSE_GRIP_CARBINE, RIGHT_FINGER_BONES, false)
 		print("FPArmsController: Skeleton found with ", skeleton.get_bone_count(), " bones")
 	else:
 		print("FPArmsController: WARNING - No skeleton found!")
@@ -123,10 +127,10 @@ func apply_pose_to_both_hands(pose: Dictionary):
 func set_weapon_pose(weapon_name: String):
 	match weapon_name.to_lower():
 		"carbine":
-			apply_pose_to_both_hands(POSE_GRIP_CARBINE)
+			apply_pose_to_hand(POSE_GRIP_CARBINE, RIGHT_FINGER_BONES, false)
 		"railgun":
-			apply_pose_to_both_hands(POSE_GRIP_RAILGUN)
+			apply_pose_to_hand(POSE_GRIP_RAILGUN, RIGHT_FINGER_BONES, false)
 		"open", "none":
-			apply_pose_to_both_hands(POSE_OPEN)
+			apply_pose_to_hand(POSE_OPEN, RIGHT_FINGER_BONES, false)
 		_:
-			apply_pose_to_both_hands(POSE_GRIP_CARBINE)
+			apply_pose_to_hand(POSE_GRIP_CARBINE, RIGHT_FINGER_BONES, false)

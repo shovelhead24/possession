@@ -1,6 +1,17 @@
-[gd_scene load_steps=2 format=3 uid="uid://bybv05powbsun"]
+[gd_scene load_steps=3 format=3 uid="uid://bybv05powbsun"]
 
 [ext_resource type="Script" uid="uid://caly8klahwuc4" path="res://crosshair_draw.gd" id="1_37p78"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0, 0, 0, 0.55)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+content_margin_left = 8.0
+content_margin_right = 12.0
+content_margin_top = 6.0
+content_margin_bottom = 6.0
 
 [node name="HUD" type="CanvasLayer"]
 
@@ -22,51 +33,42 @@ grow_vertical = 2
 anchors_preset = 0
 script = ExtResource("1_37p78")
 
-[node name="CoordsLabel" type="Label" parent="."]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -160.0
-offset_right = 800.0
-offset_bottom = -90.0
-grow_vertical = 0
+[node name="InfoPanel" type="PanelContainer" parent="."]
+offset_left = 8.0
+offset_top = 8.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="InfoPanel"]
+theme_override_constants/separation = 2
+
+[node name="HealthLabel" type="Label" parent="InfoPanel/VBoxContainer"]
+theme_override_colors/font_color = Color(0.2, 1.0, 0.2, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+text = "HP: 100/100"
+
+[node name="CoordsLabel" type="Label" parent="InfoPanel/VBoxContainer"]
 theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 48
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
 text = "X: 0  Y: 0  Z: 0"
 
-[node name="SpeedLabel" type="Label" parent="."]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -90.0
-offset_right = 800.0
-offset_bottom = -20.0
-grow_vertical = 0
+[node name="SpeedLabel" type="Label" parent="InfoPanel/VBoxContainer"]
 theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 48
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
 text = "WALK: 0.0 m/s"
 
-[node name="DebugLabel" type="Label" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -600.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = 450.0
-grow_horizontal = 0
-theme_override_colors/font_color = Color(0.8, 1.0, 0.8, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
-theme_override_constants/shadow_offset_x = 2
-theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 42
-text = "DEBUG"
-horizontal_alignment = 2
+[node name="DebugLabel" type="Label" parent="InfoPanel/VBoxContainer"]
+theme_override_colors/font_color = Color(0.7, 1.0, 0.7, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+text = "FPS: --"
