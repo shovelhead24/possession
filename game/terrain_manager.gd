@@ -352,7 +352,7 @@ func _process(delta):
 	if "velocity" in player:
 		player_vel = player.velocity
 	var speed := player_vel.length()
-	var lookahead_pos := player.global_position + player_vel * clamp(speed * 0.15, 1.5, 6.0)
+	var lookahead_pos: Vector3 = player.global_position + player_vel * clamp(speed * 0.15, 1.5, 6.0)
 	var lookahead_chunk := get_chunk_coords(lookahead_pos)
 
 	# Queue on boundary crossing OR when lookahead chunk changes (high speed pre-load)
