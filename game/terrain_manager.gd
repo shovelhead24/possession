@@ -704,17 +704,38 @@ func get_lod_for_distance(distance: float, current_lod: int = -1) -> int:
 			return i
 	return lod_distances.size() - 1  # Max LOD for very distant chunks
 
+# Build ring-based LOD lookup table: ring_lod[int_distance] = LOD level
+# Precomputed once per queue rebuild — O(view_distance) instead of O(chunks)
+func _build_ring_lod_table() -> PackedInt32Array:
+	var height_chunks = abs(player.global_position.y) / chunk_size
+	var height_sq = height_chunks * height_chunks
+	var table = PackedInt32Array()
+	table.resize(view_distance + 2)
+	for d in range(view_distance + 2):
+		# Effective 3D distance for this ring, using squared comparison
+		var effective_dist = sqrt(float(d * d) + height_sq)
+		table[d] = get_lod_for_distance(effective_dist, -1)
+	return table
+
 # Queue chunks around player sorted by distance (ring pattern - closest first)
 func queue_chunks_around_player():
 	var player_chunk = get_chunk_coords(player.global_position)
 
-	# Collect all needed chunks with their distances
+	# Precompute LOD for each distance ring — one lookup per ring, not per chunk
+	var ring_lod = _build_ring_lod_table()
+
+	# Build set of already-queued coords for O(1) lookup instead of O(n) scan
+	var queued_set := {}
+	for item in chunk_load_queue:
+		queued_set[item.coord] = true
+
 	var needed_chunks: Array = []
 
 	for x in range(-view_distance, view_distance + 1):
 		for z in range(-view_distance, view_distance + 1):
 			var chunk_coord = player_chunk + Vector2i(x, z)
 			var distance = Vector2(x, z).length()
+			var dist_int = mini(int(distance), view_distance + 1)
 
 			# Skip chunks outside ring boundaries
 			if not is_chunk_within_bounds(chunk_coord):
@@ -724,13 +745,8 @@ func queue_chunks_around_player():
 			if chunk_coord in chunks:
 				var chunk = chunks[chunk_coord]
 				var current_lod = chunk.current_lod if "current_lod" in chunk else 0
-				# Factor player height into LOD distance (cheap approximation of 3D)
-				var height_chunks = abs(player.global_position.y) / chunk_size
-				var dist_with_height = sqrt(distance * distance + height_chunks * height_chunks)
-				var target_lod = get_lod_for_distance(dist_with_height, current_lod)
-				# Queue LOD update if needed (don't apply immediately - causes hitching!)
+				var target_lod = ring_lod[dist_int]
 				if target_lod != current_lod:
-					# Check if not already queued
 					var already_queued_lod = false
 					for queued in lod_update_queue:
 						if queued.coord == chunk_coord:
@@ -742,33 +758,20 @@ func queue_chunks_around_player():
 					chunk.load_chunk()
 				continue
 
-			# Skip if already in queue
-			var already_queued = false
-			for queued in chunk_load_queue:
-				if queued.coord == chunk_coord:
-					already_queued = true
-					break
-			if already_queued:
+			# Skip if already in queue (O(1) dict lookup)
+			if chunk_coord in queued_set:
 				continue
 
-			# Add to needed list — factor player height into LOD distance
-			var height_chunks = abs(player.global_position.y) / chunk_size
-			var dist_with_height = sqrt(distance * distance + height_chunks * height_chunks)
-			var target_lod = get_lod_for_distance(dist_with_height, -1)
 			needed_chunks.append({
 				"coord": chunk_coord,
-				"lod": target_lod,
-				"distance": distance  # 2D distance for sort (load closest ground first)
+				"lod": ring_lod[dist_int],
+				"distance": distance
 			})
 
-	# Sort by distance descending — pop_back() grabs from the end,
-	# so farthest at front, closest at back = closest processed first
+	# Sort by distance descending — pop_back() grabs closest first
 	needed_chunks.sort_custom(func(a, b): return a.distance > b.distance)
-
-	# Add to queue
 	chunk_load_queue.append_array(needed_chunks)
 
-	# Only check for unloads periodically to reduce overhead
 	chunk_move_counter += 1
 	if chunk_move_counter >= unload_check_interval:
 		chunk_move_counter = 0
@@ -808,10 +811,8 @@ func process_chunk_queue():
 		if current_distance > view_distance:
 			continue
 
-		# Calculate LOD with player height factored in
-		var height_chunks = abs(player.global_position.y) / chunk_size
-		var dist_with_height = sqrt(current_distance * current_distance + height_chunks * height_chunks)
-		var lod = get_lod_for_distance(dist_with_height, -1)
+		# Use the LOD from the queue item (set by ring table at queue time)
+		var lod = item.lod
 
 		# Enforce per-LOD budget
 		if lod == 0:
