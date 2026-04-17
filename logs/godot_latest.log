@@ -84,15 +84,6 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://san
        [4] _ready (res://lighting_test_controller.gd:119)
 Loading resource: res://terrain_shader.gdshader
 Loading resource: res://water_shader.gdshader
-Stress test: 500
-Stress test: 2k
-Stress test: 10k
-Stress test: 50k
-Stress test: 100k
-Stress test: chunk_1k
-Stress test: chunk_5k
-Stress test: chunk_20k
-Stress test: None
 Loading resource: res://world.tscn
 Loading resource: res://editor_controller.gd
 Loading resource: res://editor_hud.tscn
@@ -182,7 +173,7 @@ FPArmsController: Skeleton found with 49 bones
 WARNING: Can't change the size of a `SubViewport` with a `SubViewportContainer` parent that has `stretch` enabled. Set `SubViewportContainer.stretch` to `false` to allow changing the size manually.
    at: _internal_set_size (scene/main/viewport.cpp:5417)
    GDScript backtrace (most recent call first):
-       [0] _ready (res://player.gd:111)
+       [0] _ready (res://player.gd:110)
 PropPool: _ready() START
 Loading resource: res://realistic_fir_trees_pack_lods_gameready/scene.gltf
 Loading resource: res://.godot/imported/scene.gltf-752d9c9993c841e0b687908a375c24a2.scn
@@ -274,22 +265,8 @@ Warthog: Positioned at height 55.1941355466843
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
+Bullet hit: @StaticBody3D@281
 Player: Exited vehicle
-Warthog: Player exited at (3.926759, 53.80871, -29.56595)
+Warthog: Player exited at (-62.19481, 52.71375, -217.5511)
 Warthog: Press E to enter
 Fly mode: ON
-Loading resource: res://lighting_test.tscn
-Loading resource: res://sky_dome_shader.gdshader
-Loading resource: res://water_shader.gdshader
-Benchmark pass 1/11: baseline
-Benchmark pass 2/11: no_shadows
-Benchmark pass 3/11: shadow_100m
-Benchmark pass 4/11: shadow_1km
-Benchmark pass 5/11: stress_2k
-Benchmark pass 6/11: stress_10k
-Benchmark pass 7/11: stress_50k
-Benchmark pass 8/11: stress_100k
-Benchmark pass 9/11: chunk_1k
-Benchmark pass 10/11: chunk_5k
-Benchmark pass 11/11: chunk_20k
-Benchmark CSV written: C:/Games/possession/game/logs/lighting_test_2026-04-17T11-27-39.csv (28973 rows)
