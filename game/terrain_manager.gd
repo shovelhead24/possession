@@ -75,9 +75,8 @@ var absolute_water_height: float = 0.0  # Calculated from water_level * terrain_
 # Chunk loading queue - prevents frame hitches by spreading load over time
 var chunk_load_queue: Array = []  # Array of {coord: Vector2i, lod: int, distance: float}
 var is_initial_load: bool = true  # True during first load, processes more chunks
-var chunks_per_frame_initial: int = 50  # Bulk load at start (fast initial fill for 10km view)
-var chunks_per_frame_normal: int = 1  # Close chunks (LOD0-2) per frame during gameplay
-var chunks_per_frame_distant: int = 5  # Distant chunks (LOD3+) per frame — trivial geometry
+var chunks_per_frame_initial: int = 8  # Bulk load at start (kept low to avoid frame tank)
+var chunks_per_frame_normal: int = 6  # Chunks per frame during gameplay (LOD3+ are cheap)
 var chunk_log_counter: int = 0  # Counter for FPS logging
 
 # Chunk unloading queue - spreads unloading across frames like loading
@@ -756,8 +755,9 @@ func queue_chunks_around_player():
 				"distance": distance
 			})
 
-	# Sort by distance (closest first - ring pattern)
-	needed_chunks.sort_custom(func(a, b): return a.distance < b.distance)
+	# Sort by distance descending — pop_back() grabs from the end,
+	# so farthest at front, closest at back = closest processed first
+	needed_chunks.sort_custom(func(a, b): return a.distance > b.distance)
 
 	# Add to queue
 	chunk_load_queue.append_array(needed_chunks)
@@ -776,17 +776,12 @@ func process_chunk_queue():
 		return
 
 	# Process more chunks during initial load, fewer during gameplay
-	# During gameplay allow more distant chunks (LOD3+) since they're trivially cheap
-	var chunks_to_process = chunks_per_frame_initial if is_initial_load else (chunks_per_frame_normal + chunks_per_frame_distant)
+	var chunks_to_process = chunks_per_frame_initial if is_initial_load else chunks_per_frame_normal
 	var processed = 0
 
 	var queue_start_size = chunk_load_queue.size()
 	while not chunk_load_queue.is_empty() and processed < chunks_to_process:
-		# Check frame budget before processing (skip during initial load)
-		if not is_initial_load and enable_adaptive_quality and not has_chunk_budget():
-			break  # Over budget, wait until next frame
-
-		var item = chunk_load_queue.pop_back()  # O(1) instead of pop_front O(n)
+		var item = chunk_load_queue.pop_back()  # O(1) — sorted so closest is at back
 		var coord = item.coord
 		var lod = item.lod
 
