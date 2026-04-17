@@ -33,6 +33,9 @@ Run this once from the repo root (`C:\Games\possession`) and leave the window op
 
 ## Performance architecture
 
+> These systems are the technical expression of the design philosophy in `game/design_document_chatgpt_conversation.md` — LOD tiers are the engine's fidelity cell implementation, megatile merging is the statistical world collapsing to nothing beyond player range, and adaptive prop placement is the Tier 2 Realized World made literal.
+
+
 This project targets potato hardware (Intel UHD integrated graphics). Every rendering and placement system uses adaptive strategies to keep draw calls and CPU work proportional to what the player can actually see.
 
 ### LOD system
