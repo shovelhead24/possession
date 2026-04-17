@@ -87,7 +87,9 @@ var chunk_move_counter: int = 0  # Count chunk moves since last unload check
 
 # LOD update queue - spreads LOD changes across frames to prevent hitching
 var lod_update_queue: Array = []  # Array of {coord: Vector2i, target_lod: int}
-var lod_updates_per_frame: int = 1  # Max LOD updates per frame (these are expensive!)
+var lod_queued_set: Dictionary = {}  # O(1) lookup for LOD queue membership
+var lod_updates_per_frame_lod0: int = 1  # LOD0 updates per frame (full shader rebuild - expensive)
+var lod_updates_per_frame_distant: int = 50  # LOD1+ updates per frame (vertex color swap - cheap)
 
 # Props generation limiter - only allow 1 chunk to generate props per frame
 var props_generated_this_frame: bool = false
@@ -747,13 +749,9 @@ func queue_chunks_around_player():
 				var current_lod = chunk.current_lod if "current_lod" in chunk else 0
 				var target_lod = ring_lod[dist_int]
 				if target_lod != current_lod:
-					var already_queued_lod = false
-					for queued in lod_update_queue:
-						if queued.coord == chunk_coord:
-							already_queued_lod = true
-							break
-					if not already_queued_lod:
+					if chunk_coord not in lod_queued_set:
 						lod_update_queue.append({"coord": chunk_coord, "target_lod": target_lod})
+						lod_queued_set[chunk_coord] = true
 				if distance <= view_distance:
 					chunk.load_chunk()
 				continue
@@ -833,15 +831,19 @@ func process_lod_queue():
 	if lod_update_queue.is_empty():
 		return
 
-	# Check frame budget before processing
-	if enable_adaptive_quality and not has_chunk_budget():
-		return  # Over budget, wait until next frame
+	# No budget gate here! LOD updates must flow or distant terrain never transitions.
+	# Split budget: LOD0 is expensive (full shader rebuild), LOD1+ is cheap (vertex color swap)
+	var lod0_updated = 0
+	var distant_updated = 0
 
-	var updated = 0
-	while not lod_update_queue.is_empty() and updated < lod_updates_per_frame:
+	while not lod_update_queue.is_empty():
+		if lod0_updated >= lod_updates_per_frame_lod0 and distant_updated >= lod_updates_per_frame_distant:
+			break
+
 		var item = lod_update_queue.pop_back()  # O(1) instead of pop_front O(n)
 		var coord = item.coord
 		var target_lod = item.target_lod
+		lod_queued_set.erase(coord)
 
 		# Skip if chunk no longer exists
 		if not coord in chunks:
@@ -859,10 +861,23 @@ func process_lod_queue():
 		if current_lod == target_lod:
 			continue
 
+		# Enforce per-LOD budget
+		if target_lod == 0:
+			if lod0_updated >= lod_updates_per_frame_lod0:
+				lod_update_queue.push_back(item)
+				lod_queued_set[coord] = true
+				break
+			lod0_updated += 1
+		else:
+			if distant_updated >= lod_updates_per_frame_distant:
+				lod_update_queue.push_back(item)
+				lod_queued_set[coord] = true
+				break
+			distant_updated += 1
+
 		# Apply the LOD change
 		if chunk.has_method("set_lod"):
 			chunk.set_lod(target_lod)
-			updated += 1
 
 # Queue distant chunks for unloading (doesn't unload immediately)
 func queue_distant_chunks_for_unload():
