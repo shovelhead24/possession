@@ -16,7 +16,7 @@ extends Node3D
 #   Shift+T / R3 = toggle time flow (pause/play day cycle)
 #   Shift+B / Options = start/stop benchmark (tests all settings)
 #   Shift+Q / Create = write CSV log to logs/
-#   F2, Escape / Circle = return to world.tscn
+#   F2 / Circle = return to world.tscn (toggle)
 
 # -- Camera --
 var camera: Camera3D
@@ -48,7 +48,7 @@ const PRESETS = [
 var current_preset: int = 0
 
 # -- A/B toggles --
-var shadow_distances := [100.0, 300.0, 500.0, 1000.0, 2000.0]
+var shadow_distances := [100.0, 300.0, 500.0, 1000.0, 2000.0, 5000.0, 10000.0]
 var shadow_dist_idx: int = 1  # Start at 300
 var ambient_levels := [0.1, 0.2, 0.3, 0.5, 0.8]
 var ambient_idx: int = 2  # Start at 0.3
@@ -77,8 +77,8 @@ var _prev_joy := {}
 # -- Geometry stress test --
 var stress_node: Node3D = null
 var stress_level: int = 0
-var stress_levels := [0, 500, 2000, 10000, 50000, 100000]
-var stress_level_names := ["None", "500", "2k", "10k", "50k", "100k"]
+var stress_levels := [0, 500, 2000, 10000, 50000, 100000, 1000, 5000, 20000]
+var stress_level_names := ["None", "500", "2k", "10k", "50k", "100k", "chunk_1k", "chunk_5k", "chunk_20k"]
 var stress_materials: Array = []  # 4 StandardMaterial3D with terrain textures
 
 # -- Flashlight --
@@ -99,6 +99,9 @@ var benchmark_passes := [
 	{"label": "stress_10k", "shadows": true, "shadow_dist": 300.0, "stress": 3},
 	{"label": "stress_50k", "shadows": true, "shadow_dist": 300.0, "stress": 4},
 	{"label": "stress_100k", "shadows": true, "shadow_dist": 300.0, "stress": 5},
+	{"label": "chunk_1k",   "shadows": true, "shadow_dist": 300.0,  "stress": 6},
+	{"label": "chunk_5k",   "shadows": true, "shadow_dist": 300.0,  "stress": 7},
+	{"label": "chunk_20k",  "shadows": true, "shadow_dist": 1000.0, "stress": 8},
 ]
 var benchmark_pass_idx: int = 0
 
@@ -126,6 +129,7 @@ func _build_camera():
 	camera = Camera3D.new()
 	camera.name = "TestCamera"
 	camera.position = Vector3(0, 110, 80)
+	camera.far = 15000.0
 	camera.current = true
 	add_child(camera)
 	pitch = -0.15
@@ -241,10 +245,9 @@ func _input(event):
 				KEY_Q:
 					_write_log()
 		else:
-			match event.keycode:
-				KEY_F3:
-					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-					get_tree().change_scene_to_file("res://world.tscn")
+			if event.is_action_pressed("lighting_test"):
+				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+				get_tree().change_scene_to_file("res://world.tscn")
 
 func _poll_controller():
 	# Poll controller buttons with edge detection — more reliable than
@@ -305,7 +308,9 @@ func _build_lighting():
 	environment.ambient_light_energy = 0.3
 	environment.fog_enabled = true
 	environment.fog_light_color = Color(0.52, 0.62, 0.78)
-	environment.fog_density = 0.0002
+	environment.fog_density = 0.00008
+	environment.fog_depth_begin = 5000.0
+	environment.fog_depth_end = 10000.0
 	world_env.environment = environment
 	add_child(world_env)
 
@@ -380,10 +385,10 @@ func _build_sky_dome():
 	sky_material.shader = dome_shader
 
 	var sphere = SphereMesh.new()
-	sphere.radius = 2000.0
-	sphere.height = 4000.0
-	sphere.radial_segments = 32
-	sphere.rings = 16
+	sphere.radius = 12000.0
+	sphere.height = 24000.0
+	sphere.radial_segments = 24
+	sphere.rings = 12
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
@@ -407,7 +412,7 @@ func _build_test_geometry():
 	var floor_mi = MeshInstance3D.new()
 	floor_mi.name = "GroundFloor"
 	var floor_plane = PlaneMesh.new()
-	floor_plane.size = Vector2(4000, 4000)
+	floor_plane.size = Vector2(22000, 22000)
 	floor_mi.mesh = floor_plane
 	var floor_mat = StandardMaterial3D.new()
 	floor_mat.albedo_color = Color(0.12, 0.14, 0.12)
@@ -438,7 +443,7 @@ func _build_test_geometry():
 	_add_monolith_pair(geo, Vector3(0, 35, -150))
 
 	# -- Distance posts (shadow/LOD reference markers) --
-	var post_distances = [100, 300, 500, 1000, 1500, 2000]
+	var post_distances = [100, 300, 500, 1000, 2000, 3000, 5000, 7000, 10000]
 	for d in post_distances:
 		_add_distance_post(geo, d)
 
@@ -702,6 +707,11 @@ func _build_stress_geometry(count: int):
 	if count == 0:
 		return
 
+	# Chunk stress tests (indices 6-8) use terrain planes instead of boxes
+	if stress_level >= 6:
+		_build_chunk_stress(count)
+		return
+
 	# Use MultiMesh for efficiency at high counts
 	var box = BoxMesh.new()
 	box.size = Vector3(1.5, 4.0, 1.5)
@@ -735,6 +745,39 @@ func _build_stress_geometry(count: int):
 		if g < stress_materials.size():
 			mmi.material_override = stress_materials[g]
 		stress_node.add_child(mmi)
+
+func _build_chunk_stress(count: int):
+	# Simulate terrain chunk rendering with 100x100m terrain planes
+	var plane = PlaneMesh.new()
+	plane.size = Vector2(100, 100)
+	plane.subdivide_width = 4
+	plane.subdivide_depth = 4  # 32 tris per plane, matching LOD2-3
+
+	var cols = ceili(sqrt(float(count)))
+	var spacing = 100.0  # Tile-to-tile, no gaps
+
+	var mm = MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = plane
+	mm.instance_count = count
+
+	var half_extent = cols * spacing / 2.0
+	for i in range(count):
+		var col = i % cols
+		var row = i / cols
+		var pos = Vector3(
+			-half_extent + col * spacing + spacing / 2.0,
+			50,
+			-half_extent + row * spacing + spacing / 2.0
+		)
+		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY, pos))
+
+	var mmi = MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	if terrain_material:
+		mmi.material_override = terrain_material
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	stress_node.add_child(mmi)
 
 # ------------------------------------------------------------------ #
 #  HUD                                                                #
@@ -771,7 +814,7 @@ func _build_hud():
 	controls_label.add_theme_font_size_override("font_size", 13)
 	controls_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
 	controls_label.add_theme_stylebox_override("normal", label_bg)
-	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+G Stress | Shift+F Flash | Shift+T Time | Shift+B Bench | Shift+Q Log | Esc Exit\nPS: L1 Preset | R1 Shadows | Tri Normals | Sq Stress | DPad U/D Ambient | DPad L/R ShDist | L3 Flash | R3 Time | Opt Bench | Create Log | O Exit"
+	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+G Stress | Shift+F Flash | Shift+T Time | Shift+B Bench | Shift+Q Log | F2 Landscape\nPS: L1 Preset | R1 Shadows | Tri Normals | Sq Stress | DPad U/D Ambient | DPad L/R ShDist | L3 Flash | R3 Time | Opt Bench | Create Log | O Landscape"
 	hud.add_child(controls_label)
 
 	# UAT test checklist — right side of screen
@@ -859,8 +902,9 @@ func _setup_benchmark_path():
 		Vector3(-50, 390, 20),  # Looking at snow plane (Y=380)
 		Vector3(50, 110, -40),  # Looking at slope ramp (Y=100)
 		Vector3(0, 55, -40),    # Looking at water (Y=48)
-		Vector3(0, 80, -100),   # Looking at monoliths
-		Vector3(0, 110, 80),    # Back to start — looking at everything
+		Vector3(0, 80, -100),    # Looking at monoliths
+		Vector3(0, 200, -5000),  # Distant — tests 10km render/fog
+		Vector3(0, 110, 80),     # Back to start — looking at everything
 	]
 	benchmark_look_targets = [
 		Vector3(-50, 100, 0),
@@ -870,6 +914,7 @@ func _setup_benchmark_path():
 		Vector3(50, 100, -60),
 		Vector3(0, 48, -60),
 		Vector3(0, 35, -150),
+		Vector3(0, 50, -8000),
 		Vector3(0, 100, -50),
 	]
 

@@ -490,8 +490,12 @@ func create_global_water():
 	water_plane.name = "GlobalWater"
 
 	var plane_mesh = PlaneMesh.new()
-	# Make it large enough to cover view distance with margin
-	var water_size = (view_distance + 5) * chunk_size * 2.0
+	# Size water plane to cover actual water features, not the entire world
+	var water_size: float
+	if use_structured_terrain:
+		water_size = (plains_radius + 1000.0) * 2.0  # 6km — covers river/plains + margin
+	else:
+		water_size = (view_distance + 5) * chunk_size * 2.0  # Full coverage for noise terrain
 	plane_mesh.size = Vector2(water_size, water_size)
 	plane_mesh.subdivide_width = 64  # Subdivisions for wave animation
 	plane_mesh.subdivide_depth = 64

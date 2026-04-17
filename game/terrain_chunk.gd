@@ -241,6 +241,90 @@ func rebuild_mesh() -> void:
 	# Rebuild (generate_terrain recreates mesh, collision for LOD0-1, shader params)
 	generate_terrain()
 
+func _generate_skirts(vertices: PackedVector3Array, uvs: PackedVector2Array, colors: PackedColorArray, indices: PackedInt32Array, res: int, main_vert_count: int):
+	# Bottom edge (z = 0)
+	for x in range(res + 1):
+		var idx = x
+		var vert = vertices[idx]
+		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
+		uvs.push_back(uvs[idx])
+		colors.push_back(colors[idx])
+	# Top edge (z = resolution)
+	for x in range(res + 1):
+		var idx = res * (res + 1) + x
+		var vert = vertices[idx]
+		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
+		uvs.push_back(uvs[idx])
+		colors.push_back(colors[idx])
+	# Left edge (x = 0)
+	for z in range(res + 1):
+		var idx = z * (res + 1)
+		var vert = vertices[idx]
+		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
+		uvs.push_back(uvs[idx])
+		colors.push_back(colors[idx])
+	# Right edge (x = resolution)
+	for z in range(res + 1):
+		var idx = z * (res + 1) + res
+		var vert = vertices[idx]
+		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
+		uvs.push_back(uvs[idx])
+		colors.push_back(colors[idx])
+
+	# Create skirt triangles
+	var skirt_offset = main_vert_count
+	# Bottom edge
+	for x in range(res):
+		var top_left = x
+		var top_right = x + 1
+		var bot_left = skirt_offset + x
+		var bot_right = skirt_offset + x + 1
+		indices.push_back(top_left)
+		indices.push_back(top_right)
+		indices.push_back(bot_left)
+		indices.push_back(top_right)
+		indices.push_back(bot_right)
+		indices.push_back(bot_left)
+	skirt_offset += res + 1
+	# Top edge
+	for x in range(res):
+		var top_left = res * (res + 1) + x
+		var top_right = res * (res + 1) + x + 1
+		var bot_left = skirt_offset + x
+		var bot_right = skirt_offset + x + 1
+		indices.push_back(top_left)
+		indices.push_back(bot_left)
+		indices.push_back(top_right)
+		indices.push_back(top_right)
+		indices.push_back(bot_left)
+		indices.push_back(bot_right)
+	skirt_offset += res + 1
+	# Left edge
+	for z in range(res):
+		var top_idx = z * (res + 1)
+		var bot_idx = (z + 1) * (res + 1)
+		var top_skirt = skirt_offset + z
+		var bot_skirt = skirt_offset + z + 1
+		indices.push_back(top_idx)
+		indices.push_back(top_skirt)
+		indices.push_back(bot_idx)
+		indices.push_back(top_skirt)
+		indices.push_back(bot_skirt)
+		indices.push_back(bot_idx)
+	skirt_offset += res + 1
+	# Right edge
+	for z in range(res):
+		var top_idx = z * (res + 1) + res
+		var bot_idx = (z + 1) * (res + 1) + res
+		var top_skirt = skirt_offset + z
+		var bot_skirt = skirt_offset + z + 1
+		indices.push_back(top_idx)
+		indices.push_back(bot_idx)
+		indices.push_back(top_skirt)
+		indices.push_back(bot_idx)
+		indices.push_back(bot_skirt)
+		indices.push_back(top_skirt)
+
 func generate_terrain():
 	var start_time = Time.get_ticks_msec()
 	_ensure_offsets_sized()
@@ -297,106 +381,11 @@ func generate_terrain():
 			indices.push_back(idx + resolution + 2)
 			indices.push_back(idx + resolution + 1)
 
-	# Add skirts to hide seams between LOD levels
+	# Add skirts to hide seams between LOD levels (skip for distant LODs — fog hides seams)
 	var main_vert_count = vertices.size()
 
-	# For each edge, add dropped vertices and triangles
-	# Bottom edge (z = 0)
-	for x in range(resolution + 1):
-		var idx = x  # Bottom edge vertex index
-		var vert = vertices[idx]
-		var skirt_vert = Vector3(vert.x, vert.y - skirt_depth, vert.z)
-		vertices.push_back(skirt_vert)
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-
-	# Top edge (z = resolution)
-	for x in range(resolution + 1):
-		var idx = resolution * (resolution + 1) + x
-		var vert = vertices[idx]
-		var skirt_vert = Vector3(vert.x, vert.y - skirt_depth, vert.z)
-		vertices.push_back(skirt_vert)
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-
-	# Left edge (x = 0)
-	for z in range(resolution + 1):
-		var idx = z * (resolution + 1)
-		var vert = vertices[idx]
-		var skirt_vert = Vector3(vert.x, vert.y - skirt_depth, vert.z)
-		vertices.push_back(skirt_vert)
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-
-	# Right edge (x = resolution)
-	for z in range(resolution + 1):
-		var idx = z * (resolution + 1) + resolution
-		var vert = vertices[idx]
-		var skirt_vert = Vector3(vert.x, vert.y - skirt_depth, vert.z)
-		vertices.push_back(skirt_vert)
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-
-	# Create skirt triangles
-	var skirt_offset = main_vert_count
-
-	# Bottom edge skirt triangles (face -Z, outward from bottom edge)
-	for x in range(resolution):
-		var top_left = x
-		var top_right = x + 1
-		var bot_left = skirt_offset + x
-		var bot_right = skirt_offset + x + 1
-		indices.push_back(top_left)
-		indices.push_back(top_right)
-		indices.push_back(bot_left)
-		indices.push_back(top_right)
-		indices.push_back(bot_right)
-		indices.push_back(bot_left)
-
-	skirt_offset += resolution + 1
-
-	# Top edge skirt triangles (face +Z, outward from top edge)
-	for x in range(resolution):
-		var top_left = resolution * (resolution + 1) + x
-		var top_right = resolution * (resolution + 1) + x + 1
-		var bot_left = skirt_offset + x
-		var bot_right = skirt_offset + x + 1
-		indices.push_back(top_left)
-		indices.push_back(bot_left)
-		indices.push_back(top_right)
-		indices.push_back(top_right)
-		indices.push_back(bot_left)
-		indices.push_back(bot_right)
-
-	skirt_offset += resolution + 1
-
-	# Left edge skirt triangles (face -X, outward from left edge)
-	for z in range(resolution):
-		var top_idx = z * (resolution + 1)
-		var bot_idx = (z + 1) * (resolution + 1)
-		var top_skirt = skirt_offset + z
-		var bot_skirt = skirt_offset + z + 1
-		indices.push_back(top_idx)
-		indices.push_back(top_skirt)
-		indices.push_back(bot_idx)
-		indices.push_back(top_skirt)
-		indices.push_back(bot_skirt)
-		indices.push_back(bot_idx)
-
-	skirt_offset += resolution + 1
-
-	# Right edge skirt triangles (face +X, outward from right edge)
-	for z in range(resolution):
-		var top_idx = z * (resolution + 1) + resolution
-		var bot_idx = (z + 1) * (resolution + 1) + resolution
-		var top_skirt = skirt_offset + z
-		var bot_skirt = skirt_offset + z + 1
-		indices.push_back(top_idx)
-		indices.push_back(bot_idx)
-		indices.push_back(top_skirt)
-		indices.push_back(bot_idx)
-		indices.push_back(bot_skirt)
-		indices.push_back(top_skirt)
+	if current_lod <= 2:
+		_generate_skirts(vertices, uvs, colors, indices, resolution, main_vert_count)
 
 	# Calculate normals
 	for i in range(vertices.size()):
