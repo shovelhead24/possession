@@ -42,6 +42,7 @@ var current_weapon: WeaponType = WeaponType.CARBINE
 @onready var weapon_omni_fill = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder/WeaponOmniFill
 @onready var weapon_world_env = $WeaponViewport/SubViewportContainer/SubViewport/WeaponWorldEnvironment
 var _weapon_light_mode: int = 0
+var _sky_sync_frame: int = 0
 
 # Weapon model references
 @onready var carbine_model = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder/Carbine
@@ -374,12 +375,26 @@ func _physics_process(delta):
 
 	# Always update HUD and sync weapon light regardless of vehicle state
 	update_hud()
-	if weapon_light:
+	_sky_sync_frame += 1
+	if _sky_sync_frame >= 3:
+		_sky_sync_frame = 0
 		var world_sun = get_node_or_null("/root/World/DirectionalLight3D")
-		if world_sun:
+		if world_sun and weapon_light:
 			var t = weapon_light.global_transform
 			t.basis = world_sun.global_transform.basis
 			weapon_light.global_transform = t
+			weapon_light.light_energy = world_sun.light_energy
+			weapon_light.light_color = world_sun.light_color
+		var world_env = get_node_or_null("/root/World/WorldEnvironment")
+		if world_env and world_env.environment and weapon_world_env and weapon_world_env.environment:
+			var we = world_env.environment
+			var sky_mat = weapon_world_env.environment.sky.sky_material as ProceduralSkyMaterial
+			if sky_mat:
+				var horizon = we.ambient_light_color
+				sky_mat.sky_horizon_color = horizon
+				sky_mat.sky_top_color = horizon * 0.25
+				sky_mat.ground_horizon_color = horizon * 0.6
+				sky_mat.ground_bottom_color = horizon * 0.2
 
 	# Skip player movement when in a vehicle
 	if in_vehicle:
