@@ -192,15 +192,3 @@ Loading resource: res://pause_menu.gd
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
-Player: Exited vehicle
-Warthog: Player exited at (8.0, -55.18722, 0.0)
-Warthog: Press E to enter
-Weapon light mode: 1 (BrightIBL+Directional)
-Weapon light mode: 2 (WhiteBox+Omni)
-Lighting preset: Noon (Shift+T to resume cycle)
-Lighting preset: Sunset (Shift+T to resume cycle)
-Lighting preset: Night (Shift+T to resume cycle)
-Weapon light mode: 3 (AmbientOnly)
-Lighting preset: Dawn (Shift+T to resume cycle)
-Switched to: RAILGUN
-Lighting preset: HighSun (Shift+T to resume cycle)
