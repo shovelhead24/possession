@@ -20,7 +20,7 @@ var lod_resolutions: Array = [16, 6, 3, 2, 1]  # LOD0=fine LOD1=medium LOD2=coar
 var height_offsets: PackedFloat32Array = PackedFloat32Array()
 var grass_weights: PackedFloat32Array = PackedFloat32Array()
 var has_collision: bool = true  # Only LOD 0-1 have collision
-var skirt_depth: float = 20.0  # Overridden per-LOD in generate_terrain()
+var sector_scale: int = 1  # Megatile size (1=100m, 2=200m, 4=400m, 8=800m per axis)
 
 # Track if we have borrowed trees/grass from the pool
 var has_borrowed_trees: bool = false
@@ -107,9 +107,9 @@ func initialize(coords: Vector2i, world_noise: FastNoiseLite, lod: int = 0):
 	resolution = lod_resolutions[current_lod]
 	_ensure_offsets_sized()
 	position = Vector3(
-		coords.x * chunk_size,
+		coords.x * chunk_size + (sector_scale - 1) * chunk_size * 0.5,
 		0,
-		coords.y * chunk_size
+		coords.y * chunk_size + (sector_scale - 1) * chunk_size * 0.5
 	)
 	generate_terrain()
 
@@ -247,97 +247,9 @@ func rebuild_mesh() -> void:
 	# Rebuild (generate_terrain recreates mesh, collision for LOD0-1, shader params)
 	generate_terrain()
 
-func _generate_skirts(vertices: PackedVector3Array, uvs: PackedVector2Array, colors: PackedColorArray, indices: PackedInt32Array, res: int, main_vert_count: int):
-	# Bottom edge (z = 0)
-	for x in range(res + 1):
-		var idx = x
-		var vert = vertices[idx]
-		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-	# Top edge (z = resolution)
-	for x in range(res + 1):
-		var idx = res * (res + 1) + x
-		var vert = vertices[idx]
-		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-	# Left edge (x = 0)
-	for z in range(res + 1):
-		var idx = z * (res + 1)
-		var vert = vertices[idx]
-		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-	# Right edge (x = resolution)
-	for z in range(res + 1):
-		var idx = z * (res + 1) + res
-		var vert = vertices[idx]
-		vertices.push_back(Vector3(vert.x, vert.y - skirt_depth, vert.z))
-		uvs.push_back(uvs[idx])
-		colors.push_back(colors[idx])
-
-	# Create skirt triangles
-	var skirt_offset = main_vert_count
-	# Bottom edge
-	for x in range(res):
-		var top_left = x
-		var top_right = x + 1
-		var bot_left = skirt_offset + x
-		var bot_right = skirt_offset + x + 1
-		indices.push_back(top_left)
-		indices.push_back(top_right)
-		indices.push_back(bot_left)
-		indices.push_back(top_right)
-		indices.push_back(bot_right)
-		indices.push_back(bot_left)
-	skirt_offset += res + 1
-	# Top edge
-	for x in range(res):
-		var top_left = res * (res + 1) + x
-		var top_right = res * (res + 1) + x + 1
-		var bot_left = skirt_offset + x
-		var bot_right = skirt_offset + x + 1
-		indices.push_back(top_left)
-		indices.push_back(bot_left)
-		indices.push_back(top_right)
-		indices.push_back(top_right)
-		indices.push_back(bot_left)
-		indices.push_back(bot_right)
-	skirt_offset += res + 1
-	# Left edge
-	for z in range(res):
-		var top_idx = z * (res + 1)
-		var bot_idx = (z + 1) * (res + 1)
-		var top_skirt = skirt_offset + z
-		var bot_skirt = skirt_offset + z + 1
-		indices.push_back(top_idx)
-		indices.push_back(top_skirt)
-		indices.push_back(bot_idx)
-		indices.push_back(top_skirt)
-		indices.push_back(bot_skirt)
-		indices.push_back(bot_idx)
-	skirt_offset += res + 1
-	# Right edge
-	for z in range(res):
-		var top_idx = z * (res + 1) + res
-		var bot_idx = (z + 1) * (res + 1) + res
-		var top_skirt = skirt_offset + z
-		var bot_skirt = skirt_offset + z + 1
-		indices.push_back(top_idx)
-		indices.push_back(bot_idx)
-		indices.push_back(top_skirt)
-		indices.push_back(bot_idx)
-		indices.push_back(bot_skirt)
-		indices.push_back(top_skirt)
-
 func generate_terrain():
 	var start_time = Time.get_ticks_msec()
 	_ensure_offsets_sized()
-
-	# Skirt must be deep enough to cover height mismatches between adjacent chunks.
-	# Coarser LODs have larger height steps between chunks, so scale accordingly.
-	skirt_depth = 80.0 + current_lod * 100.0  # LOD0=80 LOD1=180 LOD2=280 LOD3=380 (scaled for 100m chunks)
 
 	# Create mesh instance
 	mesh_instance = MeshInstance3D.new()
@@ -347,51 +259,41 @@ func generate_terrain():
 	var array_mesh = ArrayMesh.new()
 	var arrays = []
 	arrays.resize(Mesh.ARRAY_MAX)
-	
+
 	var vertices = PackedVector3Array()
 	var uvs = PackedVector2Array()
 	var normals = PackedVector3Array()
 	var colors = PackedColorArray()
-	
-	# Generate vertices
-	# Mesh is centered at chunk position, covering local coords [-chunk_size/2, +chunk_size/2]
-	# Height sampling must use matching world coords (no offset!)
-	for z in range(resolution + 1):
-		for x in range(resolution + 1):
-			var local_x = (float(x) / float(resolution)) * chunk_size - chunk_size / 2.0
-			var local_z = (float(z) / float(resolution)) * chunk_size - chunk_size / 2.0
 
-			# World position = chunk position + local offset (NO extra offset!)
+	# Megatile: mesh covers sector_scale × chunk_size per axis, same vertex density
+	var mesh_size: float = chunk_size * float(sector_scale)
+	var mesh_res: int = resolution * sector_scale
+
+	for z in range(mesh_res + 1):
+		for x in range(mesh_res + 1):
+			var local_x = (float(x) / float(mesh_res)) * mesh_size - mesh_size * 0.5
+			var local_z = (float(z) / float(mesh_res)) * mesh_size - mesh_size * 0.5
 			var world_x = position.x + local_x
 			var world_z = position.z + local_z
-
-			var height = get_height_at_world_pos(world_x, world_z)
-			
+			var height: float
+			if sector_scale > 1:
+				height = terrain_manager.get_height_at_position(Vector3(world_x, 0.0, world_z)) if terrain_manager else 0.0
+			else:
+				height = get_height_at_world_pos(world_x, world_z)
 			vertices.push_back(Vector3(local_x, height, local_z))
-			uvs.push_back(Vector2(float(x) / float(resolution), float(z) / float(resolution)))
-			# Placeholder color - will be recalculated after normals
+			uvs.push_back(Vector2(float(x) / float(mesh_res), float(z) / float(mesh_res)))
 			colors.push_back(Color.WHITE)
-	
-	# Generate indices for triangles
+
 	var indices = PackedInt32Array()
-
-	for z in range(resolution):
-		for x in range(resolution):
-			var idx = z * (resolution + 1) + x
-
+	for z in range(mesh_res):
+		for x in range(mesh_res):
+			var idx = z * (mesh_res + 1) + x
 			indices.push_back(idx)
 			indices.push_back(idx + 1)
-			indices.push_back(idx + resolution + 1)
-
+			indices.push_back(idx + mesh_res + 1)
 			indices.push_back(idx + 1)
-			indices.push_back(idx + resolution + 2)
-			indices.push_back(idx + resolution + 1)
-
-	# Add skirts to hide seams between LOD levels (skip for distant LODs — fog hides seams)
-	var main_vert_count = vertices.size()
-
-	if current_lod <= 2:
-		_generate_skirts(vertices, uvs, colors, indices, resolution, main_vert_count)
+			indices.push_back(idx + mesh_res + 2)
+			indices.push_back(idx + mesh_res + 1)
 
 	# Calculate normals
 	for i in range(vertices.size()):
@@ -422,12 +324,8 @@ func generate_terrain():
 	var biome_colors = {}
 	var use_global_water = true
 
-	# Get chunk center in world space for biome sampling
-	var chunk_center = Vector3(
-		position.x + chunk_size / 2.0,
-		0,
-		position.z + chunk_size / 2.0
-	)
+	# Get sector center in world space for biome sampling (position is already the center)
+	var chunk_center = Vector3(position.x, 0.0, position.z)
 
 	if terrain_manager:
 		# Check if using global water level
@@ -561,10 +459,8 @@ func generate_terrain():
 	arrays[Mesh.ARRAY_INDEX] = indices
 	arrays[Mesh.ARRAY_COLOR] = colors
 
-	var mesh_start = Time.get_ticks_msec()
 	array_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	mesh_instance.mesh = array_mesh
-	var mesh_time = Time.get_ticks_msec() - mesh_start
 
 	# Add textured material with shader
 	var material = create_terrain_material()
@@ -580,13 +476,9 @@ func generate_terrain():
 	if current_lod >= 1:
 		mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
-	var vertex_time = Time.get_ticks_msec() - start_time - mesh_time
-
 	# Only create collision for LOD 0-1 (close chunks)
 	has_collision = current_lod <= 1
-	var collision_time = 0
 	if has_collision:
-		var collision_start = Time.get_ticks_msec()
 		collision_body = StaticBody3D.new()
 		add_child(collision_body)
 
@@ -595,7 +487,6 @@ func generate_terrain():
 
 		var trimesh = mesh_instance.mesh.create_trimesh_shape()
 		collision_shape.shape = trimesh
-		collision_time = Time.get_ticks_msec() - collision_start
 
 	var total_time = Time.get_ticks_msec() - start_time
 
@@ -603,9 +494,6 @@ func generate_terrain():
 	if terrain_manager and terrain_manager.has_method("add_chunk_time"):
 		terrain_manager.add_chunk_time(total_time)
 
-	var fps = Performance.get_monitor(Performance.TIME_FPS)
-	if false:  # Debug logging disabled
-		print("CHUNK ", chunk_coords, " LOD", current_lod, ": total=", total_time, "ms (verts=", vertex_time, "ms, mesh=", mesh_time, "ms, collision=", collision_time, "ms) FPS=", int(fps))
 
 	# Water is now handled by TerrainManager as a single global plane
 
@@ -922,10 +810,7 @@ func generate_props():
 				tree.scale *= size_mult
 				props_node.add_child(tree)
 
-	var props_time = Time.get_ticks_msec() - props_start
-	var fps = Performance.get_monitor(Performance.TIME_FPS)
-	if false:  # Debug logging disabled
-		print("PROPS ", chunk_coords, ": ", props_time, "ms FPS=", int(fps))
+	var _props_time = Time.get_ticks_msec() - props_start
 
 func return_trees_to_pool():
 	# Return borrowed trees and grass to the prop pool

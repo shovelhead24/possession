@@ -11,6 +11,7 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 @export_group("LOD Settings")
 @export var lod_distances: Array[float] = [3.0, 8.0, 20.0, 50.0, 100.0]  # LOD0=300m LOD1=800m LOD2=2km LOD3=5km LOD4=10km
 @export var lod_hysteresis: float = 1.0  # Buffer to prevent rapid LOD switching
+@export var lod_scales: Array[int] = [1, 1, 2, 4, 8]  # Megatile sector sizes per LOD (LOD2=2x2 chunks, etc.)
 
 @export_group("Terrain Generation")
 @export var world_seed: int = 12345
@@ -743,33 +744,41 @@ func queue_chunks_around_player():
 		for z in range(-z_max, z_max + 1):
 			var chunk_coord = player_chunk + Vector2i(x, z)
 
-			# Skip chunks outside ring boundaries
 			if not is_chunk_within_bounds(chunk_coord):
 				continue
 
 			var dist_sq = x_sq + z * z
 			var dist_int = mini(int(sqrt(float(dist_sq))), view_distance + 1)
+			var target_lod = ring_lod[dist_int]
+			var scale = lod_scales[clampi(target_lod, 0, lod_scales.size() - 1)]
+
+			# Snap to sector anchor for LOD2+ megatiles
+			var sector_coord := chunk_coord
+			if scale > 1:
+				sector_coord = Vector2i(
+					int(floor(float(chunk_coord.x) / float(scale))) * scale,
+					int(floor(float(chunk_coord.y) / float(scale))) * scale
+				)
 
 			# Skip already loaded chunks (but queue LOD update if needed)
-			if chunk_coord in chunks:
-				var chunk = chunks[chunk_coord]
+			if sector_coord in chunks:
+				var chunk = chunks[sector_coord]
 				var current_lod = chunk.current_lod if "current_lod" in chunk else 0
-				var target_lod = ring_lod[dist_int]
-				if target_lod != current_lod:
-					if chunk_coord not in lod_queued_set:
-						lod_update_queue.append({"coord": chunk_coord, "target_lod": target_lod})
-						lod_queued_set[chunk_coord] = true
+				if target_lod != current_lod and sector_coord not in lod_queued_set:
+					lod_update_queue.append({"coord": sector_coord, "target_lod": target_lod})
+					lod_queued_set[sector_coord] = true
 				continue
 
-			# Skip if already in queue (O(1) dict lookup)
-			if chunk_coord in queued_set:
+			# Skip if already queued (O(1) dict lookup)
+			if sector_coord in queued_set:
 				continue
 
 			needed_chunks.append({
-				"coord": chunk_coord,
-				"lod": ring_lod[dist_int],
+				"coord": sector_coord,
+				"lod": target_lod,
 				"distance": sqrt(float(dist_sq))
 			})
+			queued_set[sector_coord] = true  # Deduplicate multiple raw coords mapping to same sector
 
 	# Sort by distance descending — pop_back() grabs closest first
 	needed_chunks.sort_custom(func(a, b): return a.distance > b.distance)
@@ -943,6 +952,7 @@ func create_chunk(coords: Vector2i, lod: int = 0):
 
 	# Pass the terrain manager reference so chunk can query heights
 	chunk.terrain_manager = self
+	chunk.sector_scale = lod_scales[clampi(lod, 0, lod_scales.size() - 1)]
 	chunk.initialize(coords, noise, lod)
 
 	chunks[coords] = chunk
@@ -1456,7 +1466,6 @@ func apply_grass_brush(world_pos: Vector3, radius: float, strength: float, erase
 
 func toggle_lod_debug() -> void:
 	TerrainChunk.debug_lod_active = not TerrainChunk.debug_lod_active
-	print("LOD debug: ", "ON" if TerrainChunk.debug_lod_active else "OFF")
 	for chunk in chunks.values():
 		if chunk and chunk.mesh_instance:
 			chunk.mesh_instance.material_override = chunk.create_terrain_material()
