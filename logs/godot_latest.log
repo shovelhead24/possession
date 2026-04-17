@@ -265,8 +265,14 @@ Warthog: Positioned at height 55.1941355466843
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
-Bullet hit: @StaticBody3D@281
 Player: Exited vehicle
-Warthog: Player exited at (-62.19481, 52.71375, -217.5511)
+Warthog: Player exited at (110.5553, 53.77453, -1344.893)
 Warthog: Press E to enter
+Switched to: RAILGUN
+Switched to: CARBINE
+Switched to: RAILGUN
+Railgun hit: @StaticBody3D@27359 for 100.0 damage
+Switched to: CARBINE
+Switched to: RAILGUN
+Switched to: CARBINE
 Fly mode: ON
