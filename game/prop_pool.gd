@@ -41,14 +41,17 @@ var borrowed_trees: Dictionary = {}
 var borrowed_grass: Dictionary = {}
 
 # Pool configuration - Trees (tuned for Intel UHD / potato hardware)
-@export var initial_pool_size: int = 90   # Sync seed — enough for first few visible chunks
-@export var pool_grow_size: int = 30      # Grow in batches
-@export var max_pool_size: int = 400      # Hard cap
+@export var initial_pool_size: int = 120
+@export var pool_grow_size: int = 30
+@export var max_pool_size: int = 600
 
-# Pool configuration - Grass
-@export var initial_grass_pool_size: int = 150  # Seed enough for first visible chunks
+# Pool configuration - Grass (legacy pool kept for compatibility)
+@export var initial_grass_pool_size: int = 0   # No longer pre-seeded — MultiMesh handles grass
 @export var grass_grow_size: int = 60
-@export var max_grass_pool_size: int = 800
+@export var max_grass_pool_size: int = 0
+
+# Cached grass meshes for MultiMesh use (extracted once at startup)
+var _mm_grass_meshes: Array = []  # [small_mesh, medium_mesh, large_mesh]
 
 var total_trees_created: int = 0
 var total_grass_created: int = 0
@@ -65,6 +68,7 @@ func _ready():
 	print("PropPool: load_tree_models() DONE - ", tree_scenes.size(), " scenes loaded")
 	load_grass_models()
 	print("PropPool: load_grass_models() DONE - grass_scene=", grass_scene != null)
+	_extract_mm_grass_meshes()
 	calculate_tree_pivot_offsets()
 	# Seed pool synchronously with a small number to give early chunks something to borrow
 	grow_pool_sync(initial_pool_size)
@@ -166,6 +170,50 @@ func load_grass_models():
 
 	if grass_scene == null:
 		print("PropPool: WARNING - No grass models found")
+
+func _extract_mm_grass_meshes():
+	if grass_scene == null:
+		return
+	var inst = grass_scene.instantiate()
+	_mm_grass_meshes = [
+		_extract_mesh_from_grass_variant(inst, "Grass small 1"),
+		_extract_mesh_from_grass_variant(inst, "Grass medium 1"),
+		_extract_mesh_from_grass_variant(inst, "Grass large 1"),
+	]
+	inst.queue_free()
+	var found = _mm_grass_meshes.filter(func(m): return m != null).size()
+	print("PropPool: Extracted ", found, "/3 grass meshes for MultiMesh")
+
+func _extract_mesh_from_grass_variant(root: Node, variant_name: String) -> Mesh:
+	for child in root.get_children():
+		if child.name == variant_name:
+			return _find_and_fix_first_mesh(child)
+	return null
+
+func _find_and_fix_first_mesh(node: Node) -> Mesh:
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		if mi.mesh:
+			var fixed_mesh = mi.mesh.duplicate() as Mesh
+			for s in range(fixed_mesh.get_surface_count()):
+				var mat = mi.get_active_material(s)
+				if mat == null: mat = fixed_mesh.surface_get_material(s)
+				if mat and mat is BaseMaterial3D:
+					var m := (mat as BaseMaterial3D).duplicate() as BaseMaterial3D
+					m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+					m.alpha_scissor_threshold = 0.5
+					m.cull_mode = BaseMaterial3D.CULL_DISABLED
+					fixed_mesh.surface_set_material(s, m)
+			return fixed_mesh
+	for child in node.get_children():
+		var result = _find_and_fix_first_mesh(child)
+		if result: return result
+	return null
+
+func get_grass_mesh(size_idx: int) -> Mesh:
+	if size_idx >= 0 and size_idx < _mm_grass_meshes.size():
+		return _mm_grass_meshes[size_idx]
+	return null
 
 # Calculate actual mesh bounds to determine pivot offsets
 # This is called once at startup to measure where the visible mesh geometry sits
@@ -552,6 +600,9 @@ func setup_tree_lods(tree_instance: Node, tree_name: String, lod_prefix: String)
 					elif "LOD2" in child_name:
 						child.visible = false
 						container.set_meta("lod2_node", child)
+					elif "LOD3" in child_name:
+						child.visible = false
+						container.set_meta("lod3_node", child)
 					else:
 						child.visible = false
 				else:
@@ -602,34 +653,40 @@ func set_tree_lod(tree: Node3D, lod_level: int):
 
 	tree.set_meta("current_lod", lod_level)
 
-	# Get LOD nodes from stored metadata (set during setup_tree_lods)
 	var lod0 = tree.get_meta("lod0_node", null) as Node3D
 	var lod1 = tree.get_meta("lod1_node", null) as Node3D
 	var lod2 = tree.get_meta("lod2_node", null) as Node3D
-	var billboard = tree.get_meta("billboard", null) as Node3D
+	var lod3 = tree.get_meta("lod3_node", null) as Node3D  # GLTF billboard with proper texture
+	var fallback_bb = tree.get_meta("billboard", null) as Node3D  # hand-made fallback
 
-	# Switch visibility based on LOD level
 	match lod_level:
-		0:  # Close - full detail
+		0:
 			if lod0: lod0.visible = true
 			if lod1: lod1.visible = false
 			if lod2: lod2.visible = false
-			if billboard: billboard.visible = false
-		1:  # Medium - LOD1
+			if lod3: lod3.visible = false
+			if fallback_bb: fallback_bb.visible = false
+		1:
 			if lod0: lod0.visible = false
 			if lod1: lod1.visible = true
 			if lod2: lod2.visible = false
-			if billboard: billboard.visible = false
-		2:  # Far - LOD2
+			if lod3: lod3.visible = false
+			if fallback_bb: fallback_bb.visible = false
+		2:
 			if lod0: lod0.visible = false
 			if lod1: lod1.visible = false
 			if lod2: lod2.visible = true
-			if billboard: billboard.visible = false
-		_:  # Very far - billboard only
+			if lod3: lod3.visible = false
+			if fallback_bb: fallback_bb.visible = false
+		_:  # Very far — prefer GLTF LOD3 billboard, fall back to hand-made
 			if lod0: lod0.visible = false
 			if lod1: lod1.visible = false
 			if lod2: lod2.visible = false
-			if billboard: billboard.visible = true
+			if lod3:
+				lod3.visible = true
+				if fallback_bb: fallback_bb.visible = false
+			else:
+				if fallback_bb: fallback_bb.visible = true
 
 # Find a LOD node within a tree instance (iterative)
 func find_lod_node(root_node: Node, lod_suffix: String) -> Node3D:

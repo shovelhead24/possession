@@ -25,6 +25,7 @@ var sector_scale: int = 1  # Megatile size (1=100m, 2=200m, 4=400m, 8=800m per a
 # Track if we have borrowed trees/grass from the pool
 var has_borrowed_trees: bool = false
 var has_borrowed_grass: bool = false
+var grass_multimesh: MultiMeshInstance3D = null
 var has_structure: bool = false
 
 # Deferred prop generation to prevent hitching
@@ -666,7 +667,7 @@ func generate_props():
 	thicket_noise.frequency = 0.025  # Medium scale ~40m thickets
 
 	# Calculate max trees based on density - higher density = more potential trees
-	var base_tree_count = int(tree_density * 30)  # Max ~30 trees per chunk
+	var base_tree_count = int(tree_density * 50)  # Max ~50 trees per chunk
 
 	# Apply quality multiplier from adaptive quality system
 	var max_tree_count = base_tree_count
@@ -756,48 +757,9 @@ func generate_props():
 
 			tree_index += 1
 
-		# Borrow and place grass from pool
-		var base_grass_count = int(tree_density * 70)  # Max ~70 grass per chunk
-		var max_grass_count = base_grass_count
-		if terrain_manager and terrain_manager.has_method("get_quality_tree_count"):
-			max_grass_count = terrain_manager.get_quality_tree_count(base_grass_count)
-
-		if prop_pool.has_method("borrow_grass"):
-			var borrowed_grass = prop_pool.borrow_grass(chunk_coords, max_grass_count, props_node)
-			has_borrowed_grass = true
-
-			var grass_index = 0
-			for grass in borrowed_grass:
-				rng.seed = hash(chunk_coords) + 10000 + grass_index  # Different seed offset for grass
-				# Local coords match terrain mesh: [-chunk_size/2, +chunk_size/2]
-				var local_x = rng.randf_range(-half_size + 1, half_size - 1)
-				var local_z = rng.randf_range(-half_size + 1, half_size - 1)
-
-				# World coords match terrain mesh calculation (no offset!)
-				var world_x = position.x + local_x
-				var world_z = position.z + local_z
-				# Use mesh surface height (raycast/interpolated) to match visual terrain
-				var y = get_mesh_surface_height(world_x, world_z)
-
-				# More grass in grassy areas (lower density threshold)
-				var grass_density = (forest_noise.get_noise_2d(world_x * 0.5, world_z * 0.5) + 1.0) * 0.5
-				var should_place_grass = grass_density > 0.15  # More liberal placement
-
-				var min_height_above_water = absolute_water_height + 1.0
-				var max_grass_height = height_scale * biome_height_mult * 0.6
-
-				if should_place_grass and y > min_height_above_water and y < max_grass_height:
-					# Use per-model pivot offset from prop pool metadata
-					var pivot_offset = grass.get_meta("pivot_offset", -0.15) if grass.has_meta("pivot_offset") else -0.15
-					grass.position = Vector3(local_x, y + pivot_offset, local_z)  # Use local coords matching terrain mesh
-					grass.rotation.y = rng.randf() * TAU
-					var size_mult = rng.randf_range(0.8, 1.2)
-					grass.scale *= size_mult
-					grass.visible = true
-				else:
-					grass.visible = false
-
-				grass_index += 1
+		# Spawn grass as MultiMesh (one draw call per chunk, 400+ density)
+		if prop_pool.has_method("get_grass_mesh"):
+			_spawn_grass_multimesh(prop_pool, rng, forest_noise, half_size, absolute_water_height)
 	else:
 		# Fallback: create trees directly (less efficient)
 		var half_size_fb = chunk_size / 2.0
@@ -833,6 +795,53 @@ func generate_props():
 
 	var _props_time = Time.get_ticks_msec() - props_start
 
+func _spawn_grass_multimesh(prop_pool, rng: RandomNumberGenerator, forest_noise: FastNoiseLite, half_size: float, absolute_water_height: float):
+	var base_count = int(tree_density * 400)
+	if terrain_manager and terrain_manager.has_method("get_quality_tree_count"):
+		base_count = terrain_manager.get_quality_tree_count(base_count)
+	if base_count == 0:
+		return
+
+	var grass_mesh: Mesh = prop_pool.get_grass_mesh(1)  # medium variant
+	if grass_mesh == null:
+		return
+
+	var transforms: Array[Transform3D] = []
+	var max_water = absolute_water_height + 1.0
+	var max_h = height_scale * biome_height_mult * 0.6
+
+	for i in range(base_count):
+		rng.seed = hash(chunk_coords) + 10000 + i
+		var lx := rng.randf_range(-half_size + 1.0, half_size - 1.0)
+		var lz := rng.randf_range(-half_size + 1.0, half_size - 1.0)
+		var y := get_mesh_surface_height(position.x + lx, position.z + lz)
+		if y <= max_water or y >= max_h:
+			continue
+		var gd := (forest_noise.get_noise_2d((position.x + lx) * 0.5, (position.z + lz) * 0.5) + 1.0) * 0.5
+		if gd <= 0.15:
+			continue
+		var s := rng.randf_range(0.7, 1.3)
+		transforms.append(Transform3D(
+			Basis(Vector3.UP, rng.randf() * TAU).scaled(Vector3(s, s, s)),
+			Vector3(lx, y - 0.15, lz)
+		))
+
+	if transforms.is_empty():
+		return
+
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = grass_mesh
+	mm.instance_count = transforms.size()
+	for i in range(transforms.size()):
+		mm.set_instance_transform(i, transforms[i])
+
+	grass_multimesh = MultiMeshInstance3D.new()
+	grass_multimesh.multimesh = mm
+	grass_multimesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	props_node.add_child(grass_multimesh)
+	has_borrowed_grass = true
+
 func return_trees_to_pool():
 	# Return borrowed trees and grass to the prop pool
 	if not terrain_manager or not "prop_pool" in terrain_manager:
@@ -846,11 +855,12 @@ func return_trees_to_pool():
 			prop_pool.return_trees(chunk_coords)
 			has_borrowed_trees = false
 
-	# Return grass
+	# Free grass MultiMesh (owned by chunk, not pooled)
 	if has_borrowed_grass:
-		if prop_pool and prop_pool.has_method("return_grass"):
-			prop_pool.return_grass(chunk_coords)
-			has_borrowed_grass = false
+		if is_instance_valid(grass_multimesh):
+			grass_multimesh.queue_free()
+		grass_multimesh = null
+		has_borrowed_grass = false
 
 func create_simple_tree() -> Node3D:
 	var tree = Node3D.new()
