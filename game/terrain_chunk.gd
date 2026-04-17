@@ -269,10 +269,9 @@ func generate_terrain():
 	var mesh_size: float = chunk_size * float(sector_scale)
 	var mesh_res: int = resolution * sector_scale
 
-	# Adaptive resolution: probe a 5×5 grid to estimate terrain roughness,
-	# then reduce mesh_res for flat/rolling chunks to save collision build cost.
-	# Only applies to LOD0 single-scale chunks (where collision matters most).
-	if sector_scale == 1 and current_lod == 0 and adaptive_res_mode > 0:
+	# Adaptive resolution: probe a 5×5 grid, reduce mesh_res on flat chunks.
+	# Only LOD0 single-scale chunks — that's where collision cost matters.
+	if sector_scale == 1 and current_lod == 0:
 		var probe_min: float = 1e9
 		var probe_max: float = -1e9
 		for pz in range(5):
@@ -283,13 +282,12 @@ func generate_terrain():
 				if h < probe_min: probe_min = h
 				if h > probe_max: probe_max = h
 		var height_range: float = probe_max - probe_min
-		var preset: Array = ADAPTIVE_PRESETS[adaptive_res_mode]
-		if height_range < preset[0]:
-			mesh_res = preset[2]
-		elif height_range < preset[1]:
-			mesh_res = preset[3]
+		if height_range < ADAPTIVE_FLAT_THRESH:
+			mesh_res = ADAPTIVE_FLAT_RES
+		elif height_range < ADAPTIVE_ROLL_THRESH:
+			mesh_res = ADAPTIVE_ROLL_RES
 		else:
-			mesh_res = preset[4]
+			mesh_res = ADAPTIVE_HILL_RES
 
 	for z in range(mesh_res + 1):
 		for x in range(mesh_res + 1):
@@ -977,19 +975,13 @@ static func _get_distant_material() -> StandardMaterial3D:
 	_distant_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	return _distant_material
 
-# Adaptive resolution modes (F5 to cycle): 0=off 1=conservative 2=moderate 3=aggressive
-# Conservative: only very flat chunks (<20m range) drop to res 12
-# Moderate:     flat→8, rolling→12, mountain→16
-# Aggressive:   flat→6, rolling→8,  mountain→16
-static var adaptive_res_mode: int = 0
-const ADAPTIVE_MODE_NAMES: Array = ["OFF", "Conservative", "Moderate", "Aggressive"]
-# [flat_thresh, rolling_thresh, flat_res, rolling_res, mountain_res]
-const ADAPTIVE_PRESETS: Array = [
-	[0.0,  0.0,   16, 16, 16],  # OFF
-	[20.0, 60.0,  12, 14, 16],  # Conservative
-	[15.0, 60.0,  8,  12, 16],  # Moderate
-	[15.0, 40.0,  6,  8,  16],  # Aggressive
-]
+# Adaptive resolution: probe 5×5 grid before mesh gen, reduce res on flat chunks.
+# Conservative preset: range<20m→res12, range<60m→res14, else→res16
+const ADAPTIVE_FLAT_THRESH: float = 20.0
+const ADAPTIVE_ROLL_THRESH: float = 60.0
+const ADAPTIVE_FLAT_RES: int = 12
+const ADAPTIVE_ROLL_RES: int = 14
+const ADAPTIVE_HILL_RES: int = 16
 
 # Per-LOD debug materials (F4 to toggle) — tints chunks by LOD so you can see transitions
 static var _debug_materials: Array = []

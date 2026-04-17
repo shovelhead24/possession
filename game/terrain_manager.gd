@@ -1471,9 +1471,3 @@ func toggle_lod_debug() -> void:
 		if chunk and chunk.mesh_instance:
 			chunk.mesh_instance.material_override = chunk.create_terrain_material()
 
-func cycle_adaptive_res() -> void:
-	TerrainChunk.adaptive_res_mode = (TerrainChunk.adaptive_res_mode + 1) % TerrainChunk.ADAPTIVE_MODE_NAMES.size()
-	print("Adaptive res: ", TerrainChunk.ADAPTIVE_MODE_NAMES[TerrainChunk.adaptive_res_mode])
-	for chunk in chunks.values():
-		if chunk and is_instance_valid(chunk) and chunk.current_lod == 0:
-			chunk.rebuild_mesh()
