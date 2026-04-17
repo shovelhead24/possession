@@ -5,11 +5,11 @@ const BiomeDefs = preload("res://biome_definitions.gd")
 
 @export_group("Chunk Settings")
 @export var chunk_size: float = 100.0  # 4x larger — same polygon count, 4x render distance per chunk
-@export var view_distance: int = 30    # 30 * 100m = 3km (reduced for fast debug iteration)
-@export var unload_distance: int = 35   # Must be > view_distance
+@export var view_distance: int = 100   # 100 * 100m = 10km
+@export var unload_distance: int = 110  # Must be > view_distance
 
 @export_group("LOD Settings")
-@export var lod_distances: Array[float] = [3.0, 6.0, 12.0, 20.0, 30.0]  # LOD0=300m LOD1=600m LOD2=1.2km LOD3=2km LOD4=3km
+@export var lod_distances: Array[float] = [3.0, 8.0, 20.0, 50.0, 100.0]  # LOD0=300m LOD1=800m LOD2=2km LOD3=5km LOD4=10km
 @export var lod_hysteresis: float = 1.0  # Buffer to prevent rapid LOD switching
 
 @export_group("Terrain Generation")
@@ -776,29 +776,51 @@ func process_chunk_queue():
 			is_initial_load = false
 		return
 
-	# Process more chunks during initial load, fewer during gameplay
-	var chunks_to_process = chunks_per_frame_initial if is_initial_load else chunks_per_frame_normal
-	var processed = 0
+	var player_chunk = get_chunk_coords(player.global_position)
 
-	var queue_start_size = chunk_load_queue.size()
-	while not chunk_load_queue.is_empty() and processed < chunks_to_process:
-		var item = chunk_load_queue.pop_back()  # O(1) — sorted so closest is at back
+	# Re-sort queue by current distance from player every frame
+	# This ensures flying/moving players always load the closest chunks first
+	for item in chunk_load_queue:
+		item.distance = (item.coord - player_chunk).length()
+		item.lod = get_lod_for_distance(item.distance, -1)
+	chunk_load_queue.sort_custom(func(a, b): return a.distance > b.distance)
+
+	# Budget: close chunks (LOD 0-1) are expensive, distant (LOD 2+) are cheap
+	var close_budget = chunks_per_frame_initial if is_initial_load else chunks_per_frame_normal
+	var distant_budget = 40  # LOD 2+ = vertex colors + few verts, very cheap
+	var close_processed = 0
+	var distant_processed = 0
+
+	while not chunk_load_queue.is_empty():
+		# Check if we've exhausted both budgets
+		if close_processed >= close_budget and distant_processed >= distant_budget:
+			break
+
+		var item = chunk_load_queue.pop_back()
 		var coord = item.coord
 		var lod = item.lod
 
-		# Skip if chunk was already created (e.g., by another system)
+		# Skip if chunk was already created
 		if coord in chunks:
 			continue
 
 		# Skip if now out of range (player moved)
-		var player_chunk = get_chunk_coords(player.global_position)
 		var current_distance = (coord - player_chunk).length()
 		if current_distance > view_distance:
 			continue
 
-		# Create the chunk
+		# Enforce per-LOD budget
+		if lod <= 1:
+			if close_processed >= close_budget:
+				chunk_load_queue.push_back(item)  # Put it back
+				break  # Close chunks are expensive — stop the loop
+			close_processed += 1
+		else:
+			if distant_processed >= distant_budget:
+				continue  # Skip this distant chunk but keep popping for close ones
+			distant_processed += 1
+
 		create_chunk(coord, lod)
-		processed += 1
 
 # Process LOD update queue - spread LOD changes across frames
 func process_lod_queue():
