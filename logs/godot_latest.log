@@ -225,7 +225,7 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://gra
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:914)
+       [5] create_chunk (res://terrain_manager.gd:902)
        [6] find_or_create_player (res://terrain_manager.gd:300)
        [7] _ready (res://terrain_manager.gd:133)
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
@@ -236,7 +236,7 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sno
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:914)
+       [5] create_chunk (res://terrain_manager.gd:902)
        [6] find_or_create_player (res://terrain_manager.gd:300)
        [7] _ready (res://terrain_manager.gd:133)
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
@@ -247,7 +247,7 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sto
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:914)
+       [5] create_chunk (res://terrain_manager.gd:902)
        [6] find_or_create_player (res://terrain_manager.gd:300)
        [7] _ready (res://terrain_manager.gd:133)
 WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
@@ -258,7 +258,7 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://san
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:914)
+       [5] create_chunk (res://terrain_manager.gd:902)
        [6] find_or_create_player (res://terrain_manager.gd:300)
        [7] _ready (res://terrain_manager.gd:133)
 Loading resource: res://terrain_shader.gdshader
@@ -269,32 +269,29 @@ Day/Night cycle started at time: 0.45
 Warthog: Found turret node
 Warthog: Ready!
 Loading resource: res://pause_menu.gd
-Warthog: Positioned at height 47.144140124321
+Warthog: Positioned at height 55.1941355466843
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
-Bullet hit: Warthog
-Fly mode: ON
 Player: Exited vehicle
-Warthog: Player exited at (6.787101, 48.50299, 0.285522)
+Warthog: Player exited at (7.248975, 56.35629, -2.697743)
 Warthog: Press E to enter
+Switched to: RAILGUN
+Switched to: CARBINE
+Bullet hit: @StaticBody3D@20315
+Bullet hit: @StaticBody3D@20315
+Bullet hit: @StaticBody3D@20315
+Bullet hit: @StaticBody3D@20315
+Bullet hit: @StaticBody3D@20315
+Switched to: RAILGUN
+Railgun hit: @StaticBody3D@19854 for 100.0 damage
+Switched to: CARBINE
+Switched to: RAILGUN
+Switched to: CARBINE
+Fly mode: ON
 Fly mode: OFF
 Fly mode: ON
 Fly mode: OFF
-Bullet hit: @StaticBody3D@1747
-Bullet hit: @StaticBody3D@1747
-Switched to: RAILGUN
-Bullet hit: @StaticBody3D@1747
-Railgun hit: @StaticBody3D@1747 for 100.0 damage
-XR: Clearing primary interface
-XR: Removed interface "Native mobile"
-XR: Removed interface "OpenXR"
-WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
-   at: cleanup (core/object/object.cpp:2514)
-Leaked instance: SceneTreeTimer:9223372239322229069
-Leaked instance: SceneTreeTimer:9223373152405443247
-Leaked instance: SceneTreeTimer:9223373150257959603
-Leaked instance: SceneTreeTimer:9223373147791708878
-Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
-Orphan StringName: timeout (static: 1, total: 5)
-StringName: 1 unclaimed string names at exit.
+Fly mode: ON
+Fly mode: OFF
+Fly mode: ON
