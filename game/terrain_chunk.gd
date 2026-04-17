@@ -269,6 +269,28 @@ func generate_terrain():
 	var mesh_size: float = chunk_size * float(sector_scale)
 	var mesh_res: int = resolution * sector_scale
 
+	# Adaptive resolution: probe a 5×5 grid to estimate terrain roughness,
+	# then reduce mesh_res for flat/rolling chunks to save collision build cost.
+	# Only applies to LOD0 single-scale chunks (where collision matters most).
+	if sector_scale == 1 and current_lod == 0 and adaptive_res_mode > 0:
+		var probe_min: float = 1e9
+		var probe_max: float = -1e9
+		for pz in range(5):
+			for px in range(5):
+				var lx: float = (float(px) / 4.0) * chunk_size - chunk_size * 0.5
+				var lz: float = (float(pz) / 4.0) * chunk_size - chunk_size * 0.5
+				var h: float = get_height_at_world_pos(position.x + lx, position.z + lz)
+				if h < probe_min: probe_min = h
+				if h > probe_max: probe_max = h
+		var height_range: float = probe_max - probe_min
+		var preset: Array = ADAPTIVE_PRESETS[adaptive_res_mode]
+		if height_range < preset[0]:
+			mesh_res = preset[2]
+		elif height_range < preset[1]:
+			mesh_res = preset[3]
+		else:
+			mesh_res = preset[4]
+
 	for z in range(mesh_res + 1):
 		for x in range(mesh_res + 1):
 			var local_x = (float(x) / float(mesh_res)) * mesh_size - mesh_size * 0.5
@@ -954,6 +976,20 @@ static func _get_distant_material() -> StandardMaterial3D:
 	_distant_material.roughness = 0.9
 	_distant_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	return _distant_material
+
+# Adaptive resolution modes (F5 to cycle): 0=off 1=conservative 2=moderate 3=aggressive
+# Conservative: only very flat chunks (<20m range) drop to res 12
+# Moderate:     flat→8, rolling→12, mountain→16
+# Aggressive:   flat→6, rolling→8,  mountain→16
+static var adaptive_res_mode: int = 0
+const ADAPTIVE_MODE_NAMES: Array = ["OFF", "Conservative", "Moderate", "Aggressive"]
+# [flat_thresh, rolling_thresh, flat_res, rolling_res, mountain_res]
+const ADAPTIVE_PRESETS: Array = [
+	[0.0,  0.0,   16, 16, 16],  # OFF
+	[20.0, 60.0,  12, 14, 16],  # Conservative
+	[15.0, 60.0,  8,  12, 16],  # Moderate
+	[15.0, 40.0,  6,  8,  16],  # Aggressive
+]
 
 # Per-LOD debug materials (F4 to toggle) — tints chunks by LOD so you can see transitions
 static var _debug_materials: Array = []

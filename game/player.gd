@@ -220,6 +220,12 @@ func _input(event):
 		if tm and tm.has_method("toggle_lod_debug"):
 			tm.toggle_lod_debug()
 
+	# F5 — cycle adaptive LOD0 resolution (OFF / Conservative / Moderate / Aggressive)
+	if event is InputEventKey and event.physical_keycode == KEY_F5 and event.pressed and not event.echo:
+		var tm = get_node_or_null("/root/World/TerrainManager")
+		if tm and tm.has_method("cycle_adaptive_res"):
+			tm.cycle_adaptive_res()
+
 	# Toggle fly mode — F key or D-pad Right
 	if event.is_action_pressed("toggle_fly"):
 		fly_mode = !fly_mode
