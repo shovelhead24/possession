@@ -225,9 +225,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://gra
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:902)
-       [6] find_or_create_player (res://terrain_manager.gd:300)
-       [7] _ready (res://terrain_manager.gd:133)
+       [5] create_chunk (res://terrain_manager.gd:897)
+       [6] find_or_create_player (res://terrain_manager.gd:299)
+       [7] _ready (res://terrain_manager.gd:132)
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
@@ -236,9 +236,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sno
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:902)
-       [6] find_or_create_player (res://terrain_manager.gd:300)
-       [7] _ready (res://terrain_manager.gd:133)
+       [5] create_chunk (res://terrain_manager.gd:897)
+       [6] find_or_create_player (res://terrain_manager.gd:299)
+       [7] _ready (res://terrain_manager.gd:132)
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
@@ -247,9 +247,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://sto
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:902)
-       [6] find_or_create_player (res://terrain_manager.gd:300)
-       [7] _ready (res://terrain_manager.gd:133)
+       [5] create_chunk (res://terrain_manager.gd:897)
+       [6] find_or_create_player (res://terrain_manager.gd:299)
+       [7] _ready (res://terrain_manager.gd:132)
 WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
@@ -258,9 +258,9 @@ WARNING: Loaded resource as image file, this will not work on export: 'res://san
        [2] create_terrain_material (res://terrain_chunk.gd:1052)
        [3] generate_terrain (res://terrain_chunk.gd:575)
        [4] initialize (res://terrain_chunk.gd:112)
-       [5] create_chunk (res://terrain_manager.gd:902)
-       [6] find_or_create_player (res://terrain_manager.gd:300)
-       [7] _ready (res://terrain_manager.gd:133)
+       [5] create_chunk (res://terrain_manager.gd:897)
+       [6] find_or_create_player (res://terrain_manager.gd:299)
+       [7] _ready (res://terrain_manager.gd:132)
 Loading resource: res://terrain_shader.gdshader
 DayNightCycle: Using existing sun light: DirectionalLight3D
 Loading resource: res://sky_dome_shader.gdshader
@@ -274,24 +274,6 @@ Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
 Player: Exited vehicle
-Warthog: Player exited at (7.248975, 56.35629, -2.697743)
+Warthog: Player exited at (827.9528, 56.48893, -36.64763)
 Warthog: Press E to enter
-Switched to: RAILGUN
-Switched to: CARBINE
-Bullet hit: @StaticBody3D@20315
-Bullet hit: @StaticBody3D@20315
-Bullet hit: @StaticBody3D@20315
-Bullet hit: @StaticBody3D@20315
-Bullet hit: @StaticBody3D@20315
-Switched to: RAILGUN
-Railgun hit: @StaticBody3D@19854 for 100.0 damage
-Switched to: CARBINE
-Switched to: RAILGUN
-Switched to: CARBINE
-Fly mode: ON
-Fly mode: OFF
-Fly mode: ON
-Fly mode: OFF
-Fly mode: ON
-Fly mode: OFF
 Fly mode: ON
