@@ -34,12 +34,15 @@ var physics_ready: bool = false  # True after physics has registered collision
 
 
 func _ready():
-	pass
+	# Start with processing disabled — enable only when needed
+	set_process(false)
+	set_physics_process(false)
 
 func _physics_process(_delta):
 	# Mark physics as ready after first physics frame (collision is now registered)
 	if not physics_ready and collision_body and collision_body.is_inside_tree():
 		physics_ready = true
+		set_physics_process(false)  # Done — never need this again
 
 var last_tree_lod: int = -1  # Track last tree LOD to avoid redundant updates
 
@@ -58,10 +61,9 @@ func _process(_delta):
 		generate_props()
 		# Set initial tree LOD based on chunk LOD
 		update_tree_lods()
+		set_process(false)  # Props done — no more per-frame work needed
 
-	# Update tree LODs when chunk LOD changes
-	if props_generated and last_tree_lod != current_lod:
-		update_tree_lods()
+	# Tree LOD updates are now handled directly in set_lod(), not here
 
 # Update tree LODs based on current chunk LOD level
 func update_tree_lods():
@@ -145,6 +147,10 @@ func set_lod(new_lod: int):
 
 	# Regenerate at new LOD
 	generate_terrain()
+
+	# Update tree LODs if props exist (e.g., LOD0→LOD1 transition keeps props)
+	if props_generated and last_tree_lod != current_lod:
+		update_tree_lods()
 
 # Use terrain manager's height function if available, otherwise use noise
 func get_height_at_world_pos(world_x: float, world_z: float) -> float:
@@ -564,6 +570,11 @@ func generate_terrain():
 	var material = create_terrain_material()
 	mesh_instance.material_override = material
 
+	# Distance culling — Godot skips rendering entirely for chunks beyond this range.
+	# Matches fog_depth_end (9000m) so we don't render invisible geometry.
+	mesh_instance.visibility_range_end = 9000.0
+	mesh_instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_DISABLED
+
 	var vertex_time = Time.get_ticks_msec() - start_time - mesh_time
 
 	# Only create collision for LOD 0-1 (close chunks)
@@ -601,6 +612,10 @@ func generate_terrain():
 	if current_lod <= 1:
 		props_pending = true
 		props_generated = false
+		# Enable processing for prop generation and physics readiness
+		set_process(true)
+		if has_collision:
+			set_physics_process(true)
 
 # Per-LOD debug colours: LOD0=white, LOD1=blue, LOD2=green, LOD3=red
 static var _structure_mats: Array = []

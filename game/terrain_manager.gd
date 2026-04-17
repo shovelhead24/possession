@@ -732,16 +732,23 @@ func queue_chunks_around_player():
 		queued_set[item.coord] = true
 
 	var needed_chunks: Array = []
+	var vd_sq = view_distance * view_distance
 
+	# Iterate only within the circular radius — skip square corners entirely
 	for x in range(-view_distance, view_distance + 1):
-		for z in range(-view_distance, view_distance + 1):
+		var x_sq = x * x
+		# Max z for this row: sqrt(vd² - x²)
+		var z_max = int(sqrt(float(vd_sq - x_sq)))
+
+		for z in range(-z_max, z_max + 1):
 			var chunk_coord = player_chunk + Vector2i(x, z)
-			var distance = Vector2(x, z).length()
-			var dist_int = mini(int(distance), view_distance + 1)
 
 			# Skip chunks outside ring boundaries
 			if not is_chunk_within_bounds(chunk_coord):
 				continue
+
+			var dist_sq = x_sq + z * z
+			var dist_int = mini(int(sqrt(float(dist_sq))), view_distance + 1)
 
 			# Skip already loaded chunks (but queue LOD update if needed)
 			if chunk_coord in chunks:
@@ -752,8 +759,6 @@ func queue_chunks_around_player():
 					if chunk_coord not in lod_queued_set:
 						lod_update_queue.append({"coord": chunk_coord, "target_lod": target_lod})
 						lod_queued_set[chunk_coord] = true
-				if distance <= view_distance:
-					chunk.load_chunk()
 				continue
 
 			# Skip if already in queue (O(1) dict lookup)
@@ -763,7 +768,7 @@ func queue_chunks_around_player():
 			needed_chunks.append({
 				"coord": chunk_coord,
 				"lod": ring_lod[dist_int],
-				"distance": distance
+				"distance": sqrt(float(dist_sq))
 			})
 
 	# Sort by distance descending — pop_back() grabs closest first
