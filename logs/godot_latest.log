@@ -53,32 +53,32 @@ Loading resource: res://sky_dome_shader.gdshader
 WARNING: Loaded resource as image file, this will not work on export: 'res://grass.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1037)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1045)
+       [0] _load_tex (res://terrain_chunk.gd:1042)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1050)
        [2] _build_terrain_material (res://lighting_test_controller.gd:456)
        [3] _build_test_geometry (res://lighting_test_controller.gd:409)
        [4] _ready (res://lighting_test_controller.gd:119)
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1037)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1046)
+       [0] _load_tex (res://terrain_chunk.gd:1042)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1051)
        [2] _build_terrain_material (res://lighting_test_controller.gd:456)
        [3] _build_test_geometry (res://lighting_test_controller.gd:409)
        [4] _ready (res://lighting_test_controller.gd:119)
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1037)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1047)
+       [0] _load_tex (res://terrain_chunk.gd:1042)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1052)
        [2] _build_terrain_material (res://lighting_test_controller.gd:456)
        [3] _build_test_geometry (res://lighting_test_controller.gd:409)
        [4] _ready (res://lighting_test_controller.gd:119)
 WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
-       [0] _load_tex (res://terrain_chunk.gd:1037)
-       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1048)
+       [0] _load_tex (res://terrain_chunk.gd:1042)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:1053)
        [2] _build_terrain_material (res://lighting_test_controller.gd:456)
        [3] _build_test_geometry (res://lighting_test_controller.gd:409)
        [4] _ready (res://lighting_test_controller.gd:119)
@@ -265,17 +265,9 @@ Warthog: Positioned at height 55.1941355466843
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
+Lighting preset: Noon (Shift+T to resume cycle)
+Lighting preset: Sunset (Shift+T to resume cycle)
 Player: Exited vehicle
-Warthog: Player exited at (-181.3885, 68.05158, -2675.615)
+Warthog: Player exited at (110.6819, 55.9068, -177.5466)
 Warthog: Press E to enter
-Switched to: RAILGUN
-Railgun hit: @StaticBody3D@31850 for 100.0 damage
-Switched to: CARBINE
-Bullet hit: @StaticBody3D@30934
-Bullet hit: @StaticBody3D@30934
-Bullet hit: @StaticBody3D@30934
 Fly mode: ON
-Switched to: RAILGUN
-Switched to: CARBINE
-Switched to: RAILGUN
-Railgun hit: @StaticBody3D@42877 for 100.0 damage
