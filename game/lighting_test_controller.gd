@@ -1017,9 +1017,9 @@ func _write_log():
 		print("No benchmark data to write.")
 		return
 
-	# Write to repo logs/ directory
+	# Write to repo root logs/ directory (one level above game/)
 	var project_path = ProjectSettings.globalize_path("res://")
-	var repo_root = project_path.get_base_dir()  # Go up from game/ to repo root
+	var repo_root = project_path.trim_suffix("/").get_base_dir()
 	var log_dir = repo_root + "/logs"
 	if not DirAccess.dir_exists_absolute(log_dir):
 		DirAccess.make_dir_absolute(log_dir)
