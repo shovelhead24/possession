@@ -242,7 +242,7 @@ func enter_vehicle(player: Node3D):
 	if old_parent:
 		old_parent.remove_child(driver)
 	add_child(driver)
-	driver.position = Vector3(0.2, 1.3, 0)  # Seat position inside vehicle
+	driver.position = Vector3(0.2, 1.3, -0.55)  # Seat position inside vehicle
 	driver.rotation.y = PI  # Face forward (vehicle model's front is +Z, player default faces -Z)
 
 	print("Warthog: Player entered!")
