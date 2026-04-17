@@ -753,7 +753,7 @@ func queue_chunks_around_player():
 			var scale = lod_scales[clampi(target_lod, 0, lod_scales.size() - 1)]
 
 			# Snap to sector anchor for LOD2+ megatiles
-			var sector_coord := chunk_coord
+			var sector_coord: Vector2i = chunk_coord
 			if scale > 1:
 				sector_coord = Vector2i(
 					int(floor(float(chunk_coord.x) / float(scale))) * scale,
