@@ -489,6 +489,7 @@ func generate_terrain():
 		collision_shape.shape = trimesh
 
 	var total_time = Time.get_ticks_msec() - start_time
+	print("CHUNK ", chunk_coords, " LOD", current_lod, " scale=", sector_scale, " res=", resolution, " verts=", vertices.size(), " total=", total_time, "ms")
 
 	# Report timing to terrain manager for adaptive quality
 	if terrain_manager and terrain_manager.has_method("add_chunk_time"):
