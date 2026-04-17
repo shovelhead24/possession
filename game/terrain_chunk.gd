@@ -759,7 +759,7 @@ func generate_props():
 
 		# Spawn grass as MultiMesh (one draw call per chunk, 400+ density)
 		if prop_pool.has_method("get_grass_mesh"):
-			_spawn_grass_multimesh(prop_pool, rng, forest_noise, half_size, absolute_water_height)
+			_spawn_grass_multimesh(prop_pool, rng, forest_noise, half_size, absolute_water_height, tree_density, biome_height_mult, props_node)
 	else:
 		# Fallback: create trees directly (less efficient)
 		var half_size_fb = chunk_size / 2.0
@@ -795,7 +795,7 @@ func generate_props():
 
 	var _props_time = Time.get_ticks_msec() - props_start
 
-func _spawn_grass_multimesh(prop_pool, rng: RandomNumberGenerator, forest_noise: FastNoiseLite, half_size: float, absolute_water_height: float):
+func _spawn_grass_multimesh(prop_pool, rng: RandomNumberGenerator, forest_noise: FastNoiseLite, half_size: float, absolute_water_height: float, tree_density: float, biome_height_mult: float, props_node: Node3D):
 	var base_count = int(tree_density * 400)
 	if terrain_manager and terrain_manager.has_method("get_quality_tree_count"):
 		base_count = terrain_manager.get_quality_tree_count(base_count)

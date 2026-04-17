@@ -79,6 +79,8 @@ var is_initial_load: bool = true  # True during first load, processes more chunk
 var chunks_per_frame_initial: int = 8  # Bulk load at start (kept low to avoid frame tank)
 var chunks_per_frame_normal: int = 6  # Chunks per frame during gameplay (LOD3+ are cheap)
 var chunk_log_counter: int = 0  # Counter for FPS logging
+var _chunk_budget_ms: float = 4.0   # Max ms per frame spent creating chunks
+var _last_lookahead_chunk: Vector2i = Vector2i(-9999, -9999)  # Lookahead trigger
 
 # Chunk unloading queue - spreads unloading across frames like loading
 var chunk_unload_queue: Array = []  # Array of chunk coords to unload
@@ -345,9 +347,18 @@ func _process(delta):
 
 	var player_chunk = get_chunk_coords(player.global_position)
 
-	# Queue new chunks when player moves to a new chunk
-	if player_chunk != last_player_chunk:
+	# Directional lookahead: project 2s ahead at current velocity
+	var player_vel := Vector3.ZERO
+	if "velocity" in player:
+		player_vel = player.velocity
+	var speed := player_vel.length()
+	var lookahead_pos := player.global_position + player_vel * clamp(speed * 0.15, 1.5, 6.0)
+	var lookahead_chunk := get_chunk_coords(lookahead_pos)
+
+	# Queue on boundary crossing OR when lookahead chunk changes (high speed pre-load)
+	if player_chunk != last_player_chunk or lookahead_chunk != _last_lookahead_chunk:
 		last_player_chunk = player_chunk
+		_last_lookahead_chunk = lookahead_chunk
 		queue_chunks_around_player()
 
 	# Process queued chunks (spread load across frames)

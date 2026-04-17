@@ -185,9 +185,13 @@ func _extract_mm_grass_meshes():
 	print("PropPool: Extracted ", found, "/3 grass meshes for MultiMesh")
 
 func _extract_mesh_from_grass_variant(root: Node, variant_name: String) -> Mesh:
-	for child in root.get_children():
-		if child.name == variant_name:
-			return _find_and_fix_first_mesh(child)
+	var queue: Array = [root]
+	while queue.size() > 0:
+		var node = queue.pop_back()
+		for child in node.get_children():
+			if child.name == variant_name:
+				return _find_and_fix_first_mesh(child)
+			queue.push_back(child)
 	return null
 
 func _find_and_fix_first_mesh(node: Node) -> Mesh:
