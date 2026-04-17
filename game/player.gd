@@ -214,6 +214,12 @@ func _input(event):
 		if camera:
 			camera.fov = ZOOM_FOVS[_zoom_index]
 
+	# F4 — toggle LOD debug colours (white=0 blue=1 green=2 red=3 yellow=4)
+	if event is InputEventKey and event.physical_keycode == KEY_F4 and event.pressed and not event.echo:
+		var tm = get_node_or_null("/root/World/TerrainManager")
+		if tm and tm.has_method("toggle_lod_debug"):
+			tm.toggle_lod_debug()
+
 	# Toggle fly mode — F key or D-pad Right
 	if event.is_action_pressed("toggle_fly"):
 		fly_mode = !fly_mode

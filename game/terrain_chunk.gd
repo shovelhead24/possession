@@ -1057,9 +1057,8 @@ static func _ensure_textures_loaded() -> void:
 	if ResourceLoader.exists("res://terrain_shader.gdshader"):
 		_tex_shader = load("res://terrain_shader.gdshader")
 
-# Shared materials for distant LODs — vertex colors only, zero texture samples
-static var _distant_material: StandardMaterial3D = null   # LOD1-2: lit, good normals
-static var _far_material: StandardMaterial3D = null       # LOD3+: unshaded, no seam banding
+# Shared material for distant LODs — vertex colors only, zero texture samples
+static var _distant_material: StandardMaterial3D = null
 
 static func _get_distant_material() -> StandardMaterial3D:
 	if _distant_material:
@@ -1070,19 +1069,26 @@ static func _get_distant_material() -> StandardMaterial3D:
 	_distant_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
 	return _distant_material
 
-static func _get_far_material() -> StandardMaterial3D:
-	if _far_material:
-		return _far_material
-	_far_material = StandardMaterial3D.new()
-	_far_material.vertex_color_use_as_albedo = true
-	_far_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	return _far_material
+# Per-LOD debug materials (F4 to toggle) — tints chunks by LOD so you can see transitions
+static var _debug_materials: Array = []
+static var debug_lod_active: bool = false
+
+static func _get_debug_material(lod: int) -> StandardMaterial3D:
+	while _debug_materials.size() <= lod:
+		_debug_materials.append(null)
+	if _debug_materials[lod]:
+		return _debug_materials[lod]
+	var colors = [Color(1,1,1), Color(0.3,0.5,1), Color(0.2,0.8,0.2), Color(1,0.3,0.3), Color(1,0.8,0.1)]
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = colors[clampi(lod, 0, colors.size()-1)]
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_debug_materials[lod] = mat
+	return mat
 
 func create_terrain_material() -> Material:
-	# LOD3+: unshaded — coarse 2-vertex meshes cause NdotL banding at chunk seams
-	if current_lod >= 3:
-		return _get_far_material()
-	# LOD1-2: lit vertex colors, no texture samples
+	if debug_lod_active:
+		return _get_debug_material(current_lod)
+	# LOD1+: lit vertex colors, no texture samples
 	if current_lod >= 1:
 		return _get_distant_material()
 

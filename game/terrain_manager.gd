@@ -1453,3 +1453,10 @@ func apply_grass_brush(world_pos: Vector3, radius: float, strength: float, erase
 			if touched and not dirty.has(coord):
 				dirty.append(coord)
 	return dirty
+
+func toggle_lod_debug() -> void:
+	TerrainChunk.debug_lod_active = not TerrainChunk.debug_lod_active
+	print("LOD debug: ", "ON" if TerrainChunk.debug_lod_active else "OFF")
+	for chunk in chunks.values():
+		if chunk and chunk.mesh_instance:
+			chunk.mesh_instance.material_override = chunk.create_terrain_material()
