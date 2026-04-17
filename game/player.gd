@@ -363,6 +363,15 @@ func _physics_process(delta):
 		head.rotate_x(-look_input.y * STICK_SENSITIVITY * delta)
 		head.rotation.x = clamp(head.rotation.x, -1.5, 1.5)
 
+	# Always update HUD and sync weapon light regardless of vehicle state
+	update_hud()
+	if weapon_light:
+		var world_sun = get_node_or_null("/root/World/DirectionalLight3D")
+		if world_sun:
+			var t = weapon_light.global_transform
+			t.basis = world_sun.global_transform.basis
+			weapon_light.global_transform = t
+
 	# Skip player movement when in a vehicle
 	if in_vehicle:
 		return
@@ -429,18 +438,9 @@ func _physics_process(delta):
 	# Update weapon animations
 	update_weapon_animation(delta)
 
-	# Update HUD with coordinates and speed
-	update_hud()
-
 	# Hide weapon when zoomed in or flying
 	if weapon_holder:
 		weapon_holder.visible = not fly_mode and _zoom_index == 0
-
-	# Sync weapon light direction to match world sun
-	if weapon_light:
-		var world_sun = get_node_or_null("/root/World/DirectionalLight3D")
-		if world_sun:
-			weapon_light.global_transform.basis = world_sun.global_transform.basis
 
 func update_hud():
 	if not hud_instance:

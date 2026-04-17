@@ -36,7 +36,7 @@ background_mode = 1
 background_color = Color(0, 0, 0, 0)
 ambient_light_source = 2
 ambient_light_color = Color(0.55, 0.57, 0.62, 1)
-ambient_light_energy = 1.2
+ambient_light_energy = 2.5
 
 [node name="World" type="Node3D"]
 
