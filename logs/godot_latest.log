@@ -192,3 +192,7 @@ Loading resource: res://pause_menu.gd
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
+Player: Exited vehicle
+Warthog: Player exited at (8.0, 18.74212, 0.0)
+Warthog: Press E to enter
+Fly mode: ON
