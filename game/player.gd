@@ -219,8 +219,8 @@ func _input(event):
 		if camera:
 			camera.fov = ZOOM_FOVS[_zoom_index]
 
-	# F3 — cycle weapon lighting modes
-	if event is InputEventKey and event.physical_keycode == KEY_F3 and event.pressed and not event.echo:
+	# F6 — cycle weapon lighting modes
+	if event is InputEventKey and event.physical_keycode == KEY_F6 and event.pressed and not event.echo:
 		_weapon_light_mode = (_weapon_light_mode + 1) % 4
 		_apply_weapon_light_mode()
 
