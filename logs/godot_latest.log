@@ -286,3 +286,15 @@ Bullet hit: @StaticBody3D@1747
 Switched to: RAILGUN
 Bullet hit: @StaticBody3D@1747
 Railgun hit: @StaticBody3D@1747 for 100.0 damage
+XR: Clearing primary interface
+XR: Removed interface "Native mobile"
+XR: Removed interface "OpenXR"
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2514)
+Leaked instance: SceneTreeTimer:9223372239322229069
+Leaked instance: SceneTreeTimer:9223373152405443247
+Leaked instance: SceneTreeTimer:9223373150257959603
+Leaked instance: SceneTreeTimer:9223373147791708878
+Hint: Leaked instances typically happen when nodes are removed from the scene tree (with `remove_child()`) but not freed (with `free()` or `queue_free()`).
+Orphan StringName: timeout (static: 1, total: 5)
+StringName: 1 unclaimed string names at exit.
