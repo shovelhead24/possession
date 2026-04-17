@@ -1050,8 +1050,8 @@ static func _get_distant_material() -> StandardMaterial3D:
 	return _distant_material
 
 func create_terrain_material() -> Material:
-	# LOD >= 2: vertex colors only (0 texture samples, fill-rate friendly)
-	if current_lod >= 2:
+	# LOD >= 1: vertex colors only (0 texture samples, fill-rate friendly)
+	if current_lod >= 1:
 		return _get_distant_material()
 
 	_ensure_textures_loaded()

@@ -704,17 +704,6 @@ func get_lod_for_distance(distance: float, current_lod: int = -1) -> int:
 			return i
 	return lod_distances.size() - 1  # Max LOD for very distant chunks
 
-# 3D distance from player to chunk center, in chunk units
-# Used for LOD selection so flying high pushes chunks to cheaper LODs
-func get_3d_distance_to_chunk(chunk_coord: Vector2i) -> float:
-	var chunk_world_x = chunk_coord.x * chunk_size + chunk_size / 2.0
-	var chunk_world_z = chunk_coord.y * chunk_size + chunk_size / 2.0
-	var chunk_world_y = get_height_at_position(Vector3(chunk_world_x, 0, chunk_world_z))
-	var dx = player.global_position.x - chunk_world_x
-	var dy = player.global_position.y - chunk_world_y
-	var dz = player.global_position.z - chunk_world_z
-	return sqrt(dx * dx + dy * dy + dz * dz) / chunk_size
-
 # Queue chunks around player sorted by distance (ring pattern - closest first)
 func queue_chunks_around_player():
 	var player_chunk = get_chunk_coords(player.global_position)
@@ -735,8 +724,10 @@ func queue_chunks_around_player():
 			if chunk_coord in chunks:
 				var chunk = chunks[chunk_coord]
 				var current_lod = chunk.current_lod if "current_lod" in chunk else 0
-				var dist_3d = get_3d_distance_to_chunk(chunk_coord)
-				var target_lod = get_lod_for_distance(dist_3d, current_lod)
+				# Factor player height into LOD distance (cheap approximation of 3D)
+				var height_chunks = abs(player.global_position.y) / chunk_size
+				var dist_with_height = sqrt(distance * distance + height_chunks * height_chunks)
+				var target_lod = get_lod_for_distance(dist_with_height, current_lod)
 				# Queue LOD update if needed (don't apply immediately - causes hitching!)
 				if target_lod != current_lod:
 					# Check if not already queued
@@ -760,9 +751,10 @@ func queue_chunks_around_player():
 			if already_queued:
 				continue
 
-			# Add to needed list — use 3D distance for LOD, 2D for sort priority
-			var dist_3d = get_3d_distance_to_chunk(chunk_coord)
-			var target_lod = get_lod_for_distance(dist_3d, -1)
+			# Add to needed list — factor player height into LOD distance
+			var height_chunks = abs(player.global_position.y) / chunk_size
+			var dist_with_height = sqrt(distance * distance + height_chunks * height_chunks)
+			var target_lod = get_lod_for_distance(dist_with_height, -1)
 			needed_chunks.append({
 				"coord": chunk_coord,
 				"lod": target_lod,
@@ -791,27 +783,21 @@ func process_chunk_queue():
 
 	var player_chunk = get_chunk_coords(player.global_position)
 
-	# Re-sort queue by current distance from player every frame
-	# This ensures flying/moving players always load the closest chunks first
-	for item in chunk_load_queue:
-		item.distance = (item.coord - player_chunk).length()  # 2D for sort
-		item.lod = get_lod_for_distance(get_3d_distance_to_chunk(item.coord), -1)  # 3D for LOD
-	chunk_load_queue.sort_custom(func(a, b): return a.distance > b.distance)
+	# Queue is sorted by distance when built in queue_chunks_around_player()
+	# No per-frame re-sort needed — queue rebuilds every time player crosses a chunk boundary
 
-	# Budget: close chunks (LOD 0-1) are expensive, distant (LOD 2+) are cheap
+	# Budget: LOD 0 is expensive (full shader), everything else is cheap (vertex colors)
 	var close_budget = chunks_per_frame_initial if is_initial_load else chunks_per_frame_normal
-	var distant_budget = 40  # LOD 2+ = vertex colors + few verts, very cheap
+	var distant_budget = 50  # LOD 1+ = vertex colors + few verts, very cheap
 	var close_processed = 0
 	var distant_processed = 0
 
 	while not chunk_load_queue.is_empty():
-		# Check if we've exhausted both budgets
 		if close_processed >= close_budget and distant_processed >= distant_budget:
 			break
 
 		var item = chunk_load_queue.pop_back()
 		var coord = item.coord
-		var lod = item.lod
 
 		# Skip if chunk was already created
 		if coord in chunks:
@@ -822,15 +808,21 @@ func process_chunk_queue():
 		if current_distance > view_distance:
 			continue
 
+		# Calculate LOD with player height factored in
+		var height_chunks = abs(player.global_position.y) / chunk_size
+		var dist_with_height = sqrt(current_distance * current_distance + height_chunks * height_chunks)
+		var lod = get_lod_for_distance(dist_with_height, -1)
+
 		# Enforce per-LOD budget
-		if lod <= 1:
+		if lod == 0:
 			if close_processed >= close_budget:
-				chunk_load_queue.push_back(item)  # Put it back
-				break  # Close chunks are expensive — stop the loop
+				chunk_load_queue.push_back(item)
+				break
 			close_processed += 1
 		else:
 			if distant_processed >= distant_budget:
-				continue  # Skip this distant chunk but keep popping for close ones
+				chunk_load_queue.push_back(item)  # Put it back! Don't drain the queue
+				break
 			distant_processed += 1
 
 		create_chunk(coord, lod)
