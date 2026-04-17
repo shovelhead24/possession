@@ -242,7 +242,7 @@ func _input(event):
 					_write_log()
 		else:
 			match event.keycode:
-				KEY_F2, KEY_ESCAPE:
+				KEY_F3:
 					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 					get_tree().change_scene_to_file("res://world.tscn")
 
@@ -280,7 +280,7 @@ func _poll_controller():
 		_toggle_benchmark()
 	if _joy_just_pressed(JOY_BUTTON_BACK):  # Create = write CSV
 		_write_log()
-	if _joy_just_pressed(JOY_BUTTON_B):  # Circle = exit to world
+	if _joy_just_pressed(JOY_BUTTON_B):  # Circle = landscape scene
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		get_tree().change_scene_to_file("res://world.tscn")
 

@@ -209,6 +209,8 @@ func _input(event):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		get_tree().change_scene_to_file("res://lighting_test.tscn")
 
+	# F3 — already in landscape, no-op (F3 is used from lighting_test to get here)
+
 	# Zoom — R3 cycles 1× → 1.5× → 3× → 10× → back to 1×
 	if event.is_action_pressed("zoom"):
 		_zoom_index = (_zoom_index + 1) % ZOOM_FOVS.size()
