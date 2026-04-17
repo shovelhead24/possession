@@ -5,9 +5,20 @@ class_name DayNightCycle
 @export var start_time: float = 0.45  # 0.0 = midnight, 0.5 = noon — start just before noon
 
 var time_of_day: float = 0.0
+var cycle_paused: bool = false  # True when a preset is active (Shift+L/L1 to cycle, Shift+T to resume)
 var sun_light: DirectionalLight3D
 var environment: Environment
 var world_env: WorldEnvironment
+
+# Lighting presets — same as lighting test (Shift+L / L1 to cycle)
+const PRESETS = [
+	{ "name": "Noon",    "time": 0.50, "sun_energy": 1.4, "ambient": 0.3,  "shadow": true  },
+	{ "name": "Sunset",  "time": 0.73, "sun_energy": 0.3, "ambient": 0.15, "shadow": true  },
+	{ "name": "Night",   "time": 0.0,  "sun_energy": 0.0, "ambient": 0.1,  "shadow": false },
+	{ "name": "Dawn",    "time": 0.26, "sun_energy": 0.25,"ambient": 0.12, "shadow": true  },
+	{ "name": "HighSun", "time": 0.50, "sun_energy": 1.8, "ambient": 0.4,  "shadow": true  },
+]
+var current_preset: int = -1  # -1 = normal cycle (no preset active)
 var sky_shader_material: ShaderMaterial
 var sky_dome: MeshInstance3D = null
 var _water_material: ShaderMaterial = null
@@ -85,10 +96,10 @@ func setup_environment():
 	sky_shader_material.shader = dome_shader
 
 	var sphere     = SphereMesh.new()
-	sphere.radius  = 2000.0
-	sphere.height  = 4000.0
-	sphere.radial_segments = 32
-	sphere.rings   = 16
+	sphere.radius  = 12000.0
+	sphere.height  = 24000.0
+	sphere.radial_segments = 24
+	sphere.rings   = 12
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
@@ -102,11 +113,30 @@ func setup_environment():
 	get_parent().add_child.call_deferred(sky_dome)
 	print("DayNightCycle: Sky dome created (GL Compat spatial shader)")
 
+# Controller edge-detection state for L1
+var _l1_was_pressed: bool = false
+
+func _unhandled_input(event):
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.shift_pressed:
+			match event.keycode:
+				KEY_L:
+					_cycle_preset()
+				KEY_T:
+					_resume_cycle()
+
 func _process(delta):
+	# Poll controller L1 with edge detection
+	var l1 = Input.is_joy_button_pressed(0, JOY_BUTTON_LEFT_SHOULDER)
+	if l1 and not _l1_was_pressed:
+		_cycle_preset()
+	_l1_was_pressed = l1
+
 	# Update time (0.0 to 1.0 representing full day)
-	time_of_day += delta / day_length_seconds
-	if time_of_day >= 1.0:
-		time_of_day -= 1.0
+	if not cycle_paused:
+		time_of_day += delta / day_length_seconds
+		if time_of_day >= 1.0:
+			time_of_day -= 1.0
 
 	update_sun()
 	update_lighting()
@@ -116,6 +146,26 @@ func _process(delta):
 		var camera = get_viewport().get_camera_3d()
 		if camera and camera.is_inside_tree():
 			sky_dome.global_position = camera.global_position
+
+func _cycle_preset():
+	current_preset = (current_preset + 1) % PRESETS.size()
+	var p = PRESETS[current_preset]
+	time_of_day = p["time"]
+	cycle_paused = true
+	# Apply overrides after next update_sun/update_lighting
+	update_sun()
+	update_lighting()
+	# Override with preset values
+	sun_light.light_energy = p["sun_energy"]
+	sun_light.shadow_enabled = p["shadow"]
+	if environment:
+		environment.ambient_light_energy = p["ambient"]
+	print("Lighting preset: ", p["name"], " (Shift+T to resume cycle)")
+
+func _resume_cycle():
+	cycle_paused = false
+	current_preset = -1
+	print("Day/night cycle resumed")
 
 func update_sun():
 	# Compute sun direction vector to match sky dome visual position exactly
