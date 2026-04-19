@@ -54,11 +54,11 @@ vec3 sample_skybox(vec3 d) {
 		if (d.y > 0.0) {
 			// +Y = up face
 			uv  = vec2(-d.z / a.y,  d.x / a.y) * 0.5 + 0.5;
-			col = texture(face_up, uv).rgb;
+			col = texture(face_dn, uv).rgb;
 		} else {
 			// -Y = down face
 			uv  = vec2( d.x / a.y, -d.z / a.y) * 0.5 + 0.5;
-			col = texture(face_dn, uv).rgb;
+			col = texture(face_up, uv).rgb;
 		}
 	} else {
 		if (d.z < 0.0) {
