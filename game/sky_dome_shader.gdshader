@@ -6,12 +6,12 @@ shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never;
 
 // Cubemap faces — ft/bk/lf/rt/up/dn (Halo Installation 05)
-uniform sampler2D face_ft : source_color, filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_bk : source_color, filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_lf : source_color, filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_rt : source_color, filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_up : source_color, filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_dn : source_color, filter_linear_mipmap, repeat_disable;
+uniform sampler2D face_ft : filter_linear_mipmap, repeat_disable;
+uniform sampler2D face_bk : filter_linear_mipmap, repeat_disable;
+uniform sampler2D face_lf : filter_linear_mipmap, repeat_disable;
+uniform sampler2D face_rt : filter_linear_mipmap, repeat_disable;
+uniform sampler2D face_up : filter_linear_mipmap, repeat_disable;
+uniform sampler2D face_dn : filter_linear_mipmap, repeat_disable;
 
 // Day/night
 uniform float sun_elevation : hint_range(-90.0, 90.0) = 45.0;
@@ -53,7 +53,7 @@ vec3 sample_skybox(vec3 d) {
 	} else if (a.y >= a.x && a.y >= a.z) {
 		if (d.y > 0.0) {
 			// +Y = up face
-			uv  = vec2( d.x / a.y,  d.z / a.y) * 0.5 + 0.5;
+			uv  = vec2( d.z / a.y, -d.x / a.y) * 0.5 + 0.5;
 			col = texture(face_up, uv).rgb;
 		} else {
 			// -Y = down face
