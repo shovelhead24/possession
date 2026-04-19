@@ -95,6 +95,22 @@ func setup_environment():
 	sky_shader_material = ShaderMaterial.new()
 	sky_shader_material.shader = dome_shader
 
+	# Load Halo Installation 05 cubemap face textures
+	var faces = {
+		"face_ft": "res://skybox/Installation05_01ft.png",
+		"face_bk": "res://skybox/Installation05_01bk.png",
+		"face_lf": "res://skybox/Installation05_01lf.png",
+		"face_rt": "res://skybox/Installation05_01rt.png",
+		"face_up": "res://skybox/Installation05_01up.png",
+		"face_dn": "res://skybox/Installation05_01dn.png",
+	}
+	for param in faces:
+		var tex = load(faces[param])
+		if tex:
+			sky_shader_material.set_shader_parameter(param, tex)
+		else:
+			push_error("DayNightCycle: missing skybox face: " + faces[param])
+
 	var sphere     = SphereMesh.new()
 	sphere.radius  = 12000.0
 	sphere.height  = 24000.0
