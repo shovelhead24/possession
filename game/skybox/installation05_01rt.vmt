@@ -1,0 +1,6 @@
+unlitgeneric 
+ { 
+ $basetexture "skybox/SpaceEngine/installation05_01rt" 
+ $nofog 1 
+ $ignorez 1 
+ }
