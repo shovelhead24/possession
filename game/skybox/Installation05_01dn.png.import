@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://fmal0sy0nt8c"
-path="res://.godot/imported/Installation05_01dn.png-645664265da8f49d740871cc73d441d1.ctex"
+uid="uid://d3s6ilj6dm0uu"
+path="res://.godot/imported/Installation05_01dn.png-de0e191dd41ad633486df0e36c304411.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://skybox/Installation05_01dn.png"
-dest_files=["res://.godot/imported/Installation05_01dn.png-645664265da8f49d740871cc73d441d1.ctex"]
+dest_files=["res://.godot/imported/Installation05_01dn.png-de0e191dd41ad633486df0e36c304411.ctex"]
 
 [params]
 
