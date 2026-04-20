@@ -142,7 +142,7 @@ func _unhandled_input(event):
 					_cycle_preset()
 				KEY_T:
 					_resume_cycle()
-				KEY_R:
+				KEY_Y:
 					_debug_raycast_enabled = !_debug_raycast_enabled
 					print("DEBUG: sun visibility raycast ", "ON" if _debug_raycast_enabled else "OFF")
 
