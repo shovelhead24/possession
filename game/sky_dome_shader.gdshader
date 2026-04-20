@@ -6,12 +6,12 @@ shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never;
 
 // Cubemap faces — ft/bk/lf/rt/up/dn (Halo Installation 05)
-uniform sampler2D face_ft : filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_bk : filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_lf : filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_rt : filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_up : filter_linear_mipmap, repeat_disable;
-uniform sampler2D face_dn : filter_linear_mipmap, repeat_disable;
+uniform sampler2D face_ft : filter_linear, repeat_disable;
+uniform sampler2D face_bk : filter_linear, repeat_disable;
+uniform sampler2D face_lf : filter_linear, repeat_disable;
+uniform sampler2D face_rt : filter_linear, repeat_disable;
+uniform sampler2D face_up : filter_linear, repeat_disable;
+uniform sampler2D face_dn : filter_linear, repeat_disable;
 
 // Day/night
 uniform float sun_elevation : hint_range(-90.0, 90.0) = 45.0;
