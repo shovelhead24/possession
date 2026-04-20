@@ -142,9 +142,12 @@ func _unhandled_input(event):
 					_cycle_preset()
 				KEY_T:
 					_resume_cycle()
-				KEY_Y:
-					_debug_raycast_enabled = !_debug_raycast_enabled
-					print("DEBUG: sun visibility raycast ", "ON" if _debug_raycast_enabled else "OFF")
+
+func _input(event):
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F5:
+			_debug_raycast_enabled = !_debug_raycast_enabled
+			print("DEBUG: sun visibility raycast ", "ON" if _debug_raycast_enabled else "OFF")
 
 func _process(delta):
 	# Poll controller L1 with edge detection
