@@ -132,6 +132,7 @@ func setup_environment():
 
 # Controller edge-detection state for L1
 var _l1_was_pressed: bool = false
+var _debug_raycast_enabled: bool = true
 
 func _unhandled_input(event):
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -141,6 +142,9 @@ func _unhandled_input(event):
 					_cycle_preset()
 				KEY_T:
 					_resume_cycle()
+				KEY_R:
+					_debug_raycast_enabled = !_debug_raycast_enabled
+					print("DEBUG: sun visibility raycast ", "ON" if _debug_raycast_enabled else "OFF")
 
 func _process(delta):
 	# Poll controller L1 with edge detection
@@ -272,6 +276,8 @@ func update_lighting():
 
 
 func check_sun_visibility() -> bool:
+	if not _debug_raycast_enabled:
+		return true
 	var sun_direction = -sun_light.global_transform.basis.z
 	var space_state = get_world_3d().direct_space_state
 	var camera = get_viewport().get_camera_3d()
