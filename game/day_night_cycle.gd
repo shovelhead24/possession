@@ -111,8 +111,11 @@ func setup_environment():
 		else:
 			push_error("DayNightCycle: missing skybox face: " + faces[param])
 
-	var sphere     = BoxMesh.new()
-	sphere.size    = Vector3(24000.0, 24000.0, 24000.0)
+	var sphere     = SphereMesh.new()
+	sphere.radius  = 12000.0
+	sphere.height  = 24000.0
+	sphere.radial_segments = 24
+	sphere.rings   = 12
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
