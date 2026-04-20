@@ -114,8 +114,8 @@ func setup_environment():
 	var sphere     = SphereMesh.new()
 	sphere.radius  = 12000.0
 	sphere.height  = 24000.0
-	sphere.radial_segments = 64
-	sphere.rings   = 32
+	sphere.radial_segments = 24
+	sphere.rings   = 12
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
