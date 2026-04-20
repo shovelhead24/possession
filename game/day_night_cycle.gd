@@ -114,8 +114,8 @@ func setup_environment():
 	var sphere     = SphereMesh.new()
 	sphere.radius  = 12000.0
 	sphere.height  = 24000.0
-	sphere.radial_segments = 24
-	sphere.rings   = 12
+	sphere.radial_segments = 64
+	sphere.rings   = 32
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
@@ -123,6 +123,7 @@ func setup_environment():
 	sky_dome.material_override = sky_shader_material
 	sky_dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	sky_dome.gi_mode    = GeometryInstance3D.GI_MODE_DISABLED
+	sky_dome.layers     = 1
 	# Defer add_child — calling it during _ready() while parent is still
 	# initialising children causes a "parent node is busy" error and silently
 	# drops the node, leaving the sky dome invisible.
