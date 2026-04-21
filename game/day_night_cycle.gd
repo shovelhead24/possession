@@ -139,6 +139,10 @@ func _input(event):
 		if event.keycode == KEY_F5:
 			_debug_raycast_enabled = !_debug_raycast_enabled
 			print("DEBUG: sun visibility raycast ", "ON" if _debug_raycast_enabled else "OFF")
+		if event.keycode == KEY_F7:
+			if sky_dome:
+				sky_dome.visible = !sky_dome.visible
+				print("DEBUG: sky dome visible = ", sky_dome.visible)
 
 func _process(delta):
 	# Poll controller L1 with edge detection
