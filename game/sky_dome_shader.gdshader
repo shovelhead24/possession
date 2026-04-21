@@ -1,7 +1,7 @@
 // Sky dome shader — shader_type spatial so it works in GL Compatibility renderer.
 // Rendered on the inside of a large sphere that follows the camera.
-// Samples a single equirectangular panorama — no cubemap face seams.
-// day_night_cycle.gd creates the dome mesh and updates the uniforms each frame.
+// Ray direction is reconstructed per-pixel from screen position + camera matrices,
+// so the mesh polygon topology has zero effect on the sky image.
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never;
 
@@ -18,11 +18,7 @@ uniform float night_darkness : hint_range(0.0, 1.0) = 0.92;
 
 uniform float star_brightness : hint_range(0.0, 2.0) = 1.0;
 
-varying vec3 sky_dir;
-
-void vertex() {
-	sky_dir = VERTEX;
-}
+void vertex() {}
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -50,7 +46,11 @@ float star_field(vec3 dir) {
 }
 
 void fragment() {
-	vec3 dir = normalize(sky_dir);
+	// Per-pixel world-space ray from screen position — no mesh-topology artifacts
+	vec2 ndc = SCREEN_UV * 2.0 - 1.0;
+	ndc.y = -ndc.y;
+	vec4 vp = INV_PROJECTION_MATRIX * vec4(ndc, 1.0, 1.0);
+	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(normalize(vp.xyz / vp.w), 0.0)).xyz);
 
 	// Equirectangular UV
 	float u = atan(dir.x, -dir.z) / (2.0 * PI) + 0.5;
