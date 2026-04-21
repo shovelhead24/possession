@@ -1,17 +1,11 @@
 // Sky dome shader — shader_type spatial so it works in GL Compatibility renderer.
 // Rendered on the inside of a large sphere that follows the camera.
-// Samples the Halo Installation 05 cubemap skybox (6 separate face textures).
+// Samples a single equirectangular panorama — no cubemap face seams.
 // day_night_cycle.gd creates the dome mesh and updates the uniforms each frame.
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never;
 
-// Cubemap faces — ft/bk/lf/rt/up/dn (Halo Installation 05)
-uniform sampler2D face_ft : filter_linear, repeat_disable;
-uniform sampler2D face_bk : filter_linear, repeat_disable;
-uniform sampler2D face_lf : filter_linear, repeat_disable;
-uniform sampler2D face_rt : filter_linear, repeat_disable;
-uniform sampler2D face_up : filter_linear, repeat_disable;
-uniform sampler2D face_dn : filter_linear, repeat_disable;
+uniform sampler2D panorama : filter_linear, repeat_enable;
 
 // Day/night
 uniform float sun_elevation : hint_range(-90.0, 90.0) = 45.0;
@@ -28,50 +22,6 @@ varying vec3 sky_dir;
 
 void vertex() {
 	sky_dir = VERTEX;
-}
-
-// Sample the correct cubemap face for a given direction.
-// Source Engine skybox axes mapped to Godot (Y-up, -Z forward):
-//   ft = Godot -Z,  bk = Godot +Z
-//   rt = Godot +X,  lf = Godot -X
-//   up = Godot +Y,  dn = Godot -Y
-vec3 sample_skybox(vec3 d) {
-	vec3 a = abs(d);
-	vec2 uv;
-	vec3 col;
-
-	if (a.x >= a.y && a.x >= a.z) {
-		if (d.x > 0.0) {
-			// +X = right face
-			uv  = vec2(-d.z / a.x, -d.y / a.x) * 0.5 + 0.5;
-			col = texture(face_rt, uv).rgb;
-		} else {
-			// -X = left face
-			uv  = vec2( d.z / a.x, -d.y / a.x) * 0.5 + 0.5;
-			col = texture(face_lf, uv).rgb;
-		}
-	} else if (a.y >= a.x && a.y >= a.z) {
-		if (d.y > 0.0) {
-			// +Y = up face
-			uv  = vec2(-d.z / a.y,  d.x / a.y) * 0.5 + 0.5;
-			col = texture(face_up, uv).rgb;
-		} else {
-			// -Y = down face
-			uv  = vec2( d.x / a.y, -d.z / a.y) * 0.5 + 0.5;
-			col = texture(face_dn, uv).rgb;
-		}
-	} else {
-		if (d.z < 0.0) {
-			// -Z = front face
-			uv  = vec2( d.x / a.z, -d.y / a.z) * 0.5 + 0.5;
-			col = texture(face_ft, uv).rgb;
-		} else {
-			// +Z = back face
-			uv  = vec2(-d.x / a.z, -d.y / a.z) * 0.5 + 0.5;
-			col = texture(face_bk, uv).rgb;
-		}
-	}
-	return col;
 }
 
 float hash(vec2 p) {
@@ -102,14 +52,16 @@ float star_field(vec3 dir) {
 void fragment() {
 	vec3 dir = normalize(sky_dir);
 
-	// Sample the skybox
-	vec3 sky = sample_skybox(dir);
+	// Equirectangular UV
+	float u = atan(dir.x, -dir.z) / (2.0 * PI) + 0.5;
+	float v = asin(clamp(dir.y, -1.0, 1.0)) / PI + 0.5;
+	vec3 sky = texture(panorama, vec2(u, v)).rgb;
 
 	// Day/night: darken skybox at night, tint toward deep blue
 	float day    = smoothstep(-10.0, 20.0, sun_elevation);
 	float sunset = smoothstep(-10.0, 5.0, sun_elevation) * smoothstep(25.0, 5.0, sun_elevation);
 
-	// Night darkening — blend skybox toward night_tint
+	// Night darkening
 	sky = mix(night_tint, sky, mix(night_darkness, 1.0, day));
 
 	// Sunset warmth at the horizon
@@ -126,7 +78,7 @@ void fragment() {
 	float glow   = smoothstep(sun_size * 8.0, sun_size, sd) * 0.3;
 	sky += sun_color * (disc + glow) * sv;
 
-	// Extra stars at night (supplements any in the skybox texture)
+	// Extra stars at night
 	float star_vis = clamp(1.0 - day * 0.85, 0.1, 1.0);
 	if (dir.y > -0.1 && star_vis > 0.01) {
 		sky += vec3(star_field(dir)) * star_vis * 2.0;
