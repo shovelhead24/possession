@@ -491,27 +491,28 @@ func _apply_weapon_light_mode():
 	var env = weapon_world_env.environment
 	var mode_names = ["OmniKey+Grey", "BrightIBL+Directional", "WhiteBox+Omni", "AmbientOnly"]
 	print("Weapon light mode: %d (%s)" % [_weapon_light_mode, mode_names[_weapon_light_mode]])
+	env.background_mode = Environment.BG_COLOR
 	match _weapon_light_mode:
 		0: # OmniLights + medium grey IBL (default)
-			env.background_color = Color(0.28, 0.32, 0.38, 1)
+			env.background_color = Color(0.28, 0.32, 0.38, 0)
 			env.ambient_light_energy = 1.5
 			if weapon_omni_key: weapon_omni_key.light_energy = 3.0
 			if weapon_omni_fill: weapon_omni_fill.light_energy = 1.5
 			if weapon_light: weapon_light.light_energy = 0.0
 		1: # Bright IBL + directional, no omni
-			env.background_color = Color(0.6, 0.62, 0.68, 1)
+			env.background_color = Color(0.6, 0.62, 0.68, 0)
 			env.ambient_light_energy = 1.0
 			if weapon_omni_key: weapon_omni_key.light_energy = 0.0
 			if weapon_omni_fill: weapon_omni_fill.light_energy = 0.0
 			if weapon_light: weapon_light.light_energy = 3.0
 		2: # White IBL box + omni
-			env.background_color = Color(0.9, 0.9, 0.9, 1)
+			env.background_color = Color(0.9, 0.9, 0.9, 0)
 			env.ambient_light_energy = 2.0
 			if weapon_omni_key: weapon_omni_key.light_energy = 2.0
 			if weapon_omni_fill: weapon_omni_fill.light_energy = 1.0
 			if weapon_light: weapon_light.light_energy = 1.0
 		3: # High ambient only (no directional, no omni)
-			env.background_color = Color(0.5, 0.52, 0.56, 1)
+			env.background_color = Color(0.5, 0.52, 0.56, 0)
 			env.ambient_light_energy = 4.0
 			if weapon_omni_key: weapon_omni_key.light_energy = 0.0
 			if weapon_omni_fill: weapon_omni_fill.light_energy = 0.0
