@@ -186,6 +186,13 @@ func _process(delta):
 		_weapon_switch_timer -= delta
 
 func _input(event):
+	# Debug: F6 toggles weapon viewport visibility to isolate diamond artifact
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F6:
+		var wv = get_node_or_null("WeaponViewport")
+		if wv:
+			wv.visible = !wv.visible
+			print("DEBUG: weapon viewport visible = ", wv.visible)
+
 	# Mouse look
 	if event is InputEventMouseMotion:
 		rotate_y(-event.relative.x * SENSITIVITY)
