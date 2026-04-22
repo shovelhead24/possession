@@ -1,10 +1,8 @@
 // Sky dome shader — SphereMesh rendered from inside, camera-centered.
-// depth_draw_always + DEPTH=0.9999 forces every sphere fragment to write the
-// same depth value, preventing polygon-face overdraw artifacts while still
-// letting terrain (depth < 0.9999) render on top correctly.
+// depth_draw_never: sky renders behind all opaque geometry (terrain writes depth first).
 // Ray direction computed per-pixel from SCREEN_UV + camera matrices.
 shader_type spatial;
-render_mode unshaded, cull_front, depth_draw_always;
+render_mode unshaded, cull_front, depth_draw_never;
 
 uniform sampler2D panorama : filter_linear, repeat_enable;
 
@@ -47,9 +45,6 @@ float star_field(vec3 dir) {
 }
 
 void fragment() {
-	// Force uniform depth so no sphere polygon face can overdraw another.
-	DEPTH = 0.9999;
-
 	// Per-pixel world-space ray from screen position.
 	// GL Compat: SCREEN_UV.y=0 is bottom → NDC needs no Y flip.
 	vec2 ndc = SCREEN_UV * 2.0 - 1.0;
