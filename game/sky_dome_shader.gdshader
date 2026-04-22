@@ -1,9 +1,9 @@
-// Sky dome shader — shader_type spatial so it works in GL Compatibility renderer.
-// Rendered on the inside of a large sphere that follows the camera.
-// Ray direction is reconstructed per-pixel from screen position + camera matrices,
-// so the mesh polygon topology has zero effect on the sky image.
+// Sky background shader — fullscreen quad forced to maximum depth.
+// A 2x2 QuadMesh has its clip-space POSITION overridden in the vertex shader
+// so it always covers the entire screen behind all 3D geometry.
+// Ray direction is per-pixel from screen position + camera matrices.
 shader_type spatial;
-render_mode unshaded, cull_front, depth_draw_never;
+render_mode unshaded, cull_disabled, depth_draw_never;
 
 uniform sampler2D panorama : filter_linear, repeat_enable;
 
@@ -18,7 +18,11 @@ uniform float night_darkness : hint_range(0.0, 1.0) = 0.92;
 
 uniform float star_brightness : hint_range(0.0, 2.0) = 1.0;
 
-void vertex() {}
+void vertex() {
+	// Force quad to cover the full screen at maximum depth, regardless of world position.
+	// VERTEX.xy is ±1 for a 2×2 QuadMesh, mapping directly to clip-space corners.
+	POSITION = vec4(VERTEX.xy, 0.9999, 1.0);
+}
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);

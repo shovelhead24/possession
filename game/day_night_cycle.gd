@@ -102,15 +102,12 @@ func setup_environment():
 	else:
 		push_error("DayNightCycle: missing skybox panorama: res://skybox/panorama.png")
 
-	var sphere     = SphereMesh.new()
-	sphere.radius  = 12000.0
-	sphere.height  = 24000.0
-	sphere.radial_segments = 24
-	sphere.rings   = 12
+	var quad      = QuadMesh.new()
+	quad.size     = Vector2(2.0, 2.0)  # vertex shader maps ±1 directly to clip-space corners
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
-	sky_dome.mesh = sphere
+	sky_dome.mesh = quad
 	sky_dome.material_override = sky_shader_material
 	sky_dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	sky_dome.gi_mode    = GeometryInstance3D.GI_MODE_DISABLED
@@ -160,11 +157,6 @@ func _process(delta):
 	update_sun()
 	update_lighting()
 
-	# Keep sky dome centred on the camera so it always fills the background
-	if sky_dome and sky_dome.is_inside_tree():
-		var camera = get_viewport().get_camera_3d()
-		if camera and camera.is_inside_tree():
-			sky_dome.global_position = camera.global_position
 
 func _cycle_preset():
 	current_preset = (current_preset + 1) % PRESETS.size()
