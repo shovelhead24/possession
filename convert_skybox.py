@@ -51,15 +51,15 @@ u = np.where(m,  dz / np.where(ax > 0, ax, 1) * 0.5 + 0.5, 0)
 v = np.where(m, -dy / np.where(ax > 0, ax, 1) * 0.5 + 0.5, 0)
 out[m] = sample(rt, u, v)[m]
 
-# +Y up face — with rotation applied (CCW, matching shader fix)
+# +Y up face — CCW rotation + u flip (cube faces painted from outside, seen mirrored from inside)
 m = (~((ax >= ay) & (ax >= az))) & (ay >= az) & (dy > 0)
-u = np.where(m, -dz / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
+u = np.where(m,  dz / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
 v = np.where(m,  dx / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
 out[m] = sample(up, u, v)[m]
 
-# -Y down face
+# -Y down face — u flipped (same reason as up face)
 m = (~((ax >= ay) & (ax >= az))) & (ay >= az) & (dy <= 0)
-u = np.where(m,  dx / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
+u = np.where(m, -dx / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
 v = np.where(m, -dz / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
 out[m] = sample(dn, u, v)[m]
 
