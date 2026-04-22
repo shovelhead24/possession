@@ -103,8 +103,8 @@ func setup_environment():
 		push_error("DayNightCycle: missing skybox panorama: res://skybox/panorama.png")
 
 	var sphere     = SphereMesh.new()
-	sphere.radius  = 12000.0
-	sphere.height  = 24000.0
+	sphere.radius  = 9000.0   # must be < camera.far (12000) to avoid far-plane clipping artifacts
+	sphere.height  = 18000.0
 	sphere.radial_segments = 24
 	sphere.rings   = 12
 
