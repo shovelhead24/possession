@@ -1,7 +1,7 @@
 // Sky background shader — fullscreen quad forced to maximum depth.
-// A 2x2 QuadMesh has its clip-space POSITION overridden in the vertex shader
-// so it always covers the entire screen behind all 3D geometry.
-// Ray direction is per-pixel from screen position + camera matrices.
+// A 2x2 QuadMesh covers the screen; vertex shader pins it to clip-space corners.
+// NDC position is passed as a varying so the fragment shader never depends on
+// SCREEN_UV (which may not reflect the POSITION override in GL Compat).
 shader_type spatial;
 render_mode unshaded, cull_disabled, depth_draw_never;
 
@@ -18,9 +18,13 @@ uniform float night_darkness : hint_range(0.0, 1.0) = 0.92;
 
 uniform float star_brightness : hint_range(0.0, 2.0) = 1.0;
 
+varying vec2 ndc_pos;
+
 void vertex() {
-	// Force quad to cover the full screen at maximum depth, regardless of world position.
-	// VERTEX.xy is ±1 for a 2×2 QuadMesh, mapping directly to clip-space corners.
+	// VERTEX.xy is ±1 for a 2×2 QuadMesh — maps directly to NDC corners.
+	// Pass it as a varying so the fragment shader has the true per-pixel NDC,
+	// independent of SCREEN_UV which may be stale after the POSITION override.
+	ndc_pos = VERTEX.xy;
 	POSITION = vec4(VERTEX.xy, 0.9999, 1.0);
 }
 
@@ -50,13 +54,12 @@ float star_field(vec3 dir) {
 }
 
 void fragment() {
-	// Per-pixel world-space ray — no mesh-topology artifacts.
-	// GL Compat: SCREEN_UV.y=0 is bottom, matching NDC, so no Y flip.
-	// Use projection matrix diagonal (focal lengths) to avoid precision issues from INV_PROJECTION_MATRIX.
-	vec2 ndc = SCREEN_UV * 2.0 - 1.0;
+	// Reconstruct world-space ray direction from the interpolated NDC position.
+	// PROJECTION_MATRIX[0][0] = 1/tan(fov_x/2), [1][1] = 1/tan(fov_y/2).
+	// Camera looks along -Z in view space (Godot convention).
 	vec3 view_dir = normalize(vec3(
-		ndc.x / PROJECTION_MATRIX[0][0],
-		ndc.y / PROJECTION_MATRIX[1][1],
+		ndc_pos.x / PROJECTION_MATRIX[0][0],
+		ndc_pos.y / PROJECTION_MATRIX[1][1],
 		-1.0
 	));
 	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(view_dir, 0.0)).xyz);
