@@ -1,9 +1,10 @@
-// Sky background shader — fullscreen quad forced to maximum depth.
-// A 2x2 QuadMesh covers the screen; vertex shader pins it to clip-space corners.
-// NDC position is passed as a varying so the fragment shader never depends on
-// SCREEN_UV (which may not reflect the POSITION override in GL Compat).
+// Sky dome shader — SphereMesh rendered from inside, camera-centered.
+// depth_draw_always + DEPTH=0.9999 forces every sphere fragment to write the
+// same depth value, preventing polygon-face overdraw artifacts while still
+// letting terrain (depth < 0.9999) render on top correctly.
+// Ray direction computed per-pixel from SCREEN_UV + camera matrices.
 shader_type spatial;
-render_mode unshaded, cull_disabled, depth_draw_never;
+render_mode unshaded, cull_front, depth_draw_always;
 
 uniform sampler2D panorama : filter_linear, repeat_enable;
 
@@ -18,15 +19,7 @@ uniform float night_darkness : hint_range(0.0, 1.0) = 0.92;
 
 uniform float star_brightness : hint_range(0.0, 2.0) = 1.0;
 
-varying vec2 ndc_pos;
-
-void vertex() {
-	// VERTEX.xy is ±1 for a 2×2 QuadMesh — maps directly to NDC corners.
-	// Pass it as a varying so the fragment shader has the true per-pixel NDC,
-	// independent of SCREEN_UV which may be stale after the POSITION override.
-	ndc_pos = VERTEX.xy;
-	POSITION = vec4(VERTEX.xy, 0.9999, 1.0);
-}
+void vertex() {}
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -54,12 +47,15 @@ float star_field(vec3 dir) {
 }
 
 void fragment() {
-	// Reconstruct world-space ray direction from the interpolated NDC position.
-	// PROJECTION_MATRIX[0][0] = 1/tan(fov_x/2), [1][1] = 1/tan(fov_y/2).
-	// Camera looks along -Z in view space (Godot convention).
+	// Force uniform depth so no sphere polygon face can overdraw another.
+	DEPTH = 0.9999;
+
+	// Per-pixel world-space ray from screen position.
+	// GL Compat: SCREEN_UV.y=0 is bottom → NDC needs no Y flip.
+	vec2 ndc = SCREEN_UV * 2.0 - 1.0;
 	vec3 view_dir = normalize(vec3(
-		ndc_pos.x / PROJECTION_MATRIX[0][0],
-		ndc_pos.y / PROJECTION_MATRIX[1][1],
+		ndc.x / PROJECTION_MATRIX[0][0],
+		ndc.y / PROJECTION_MATRIX[1][1],
 		-1.0
 	));
 	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(view_dir, 0.0)).xyz);
