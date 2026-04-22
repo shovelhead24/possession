@@ -46,11 +46,16 @@ float star_field(vec3 dir) {
 }
 
 void fragment() {
-	// Per-pixel world-space ray from screen position — no mesh-topology artifacts
+	// Per-pixel world-space ray — no mesh-topology artifacts.
+	// GL Compat: SCREEN_UV.y=0 is bottom, matching NDC, so no Y flip.
+	// Use projection matrix diagonal (focal lengths) to avoid precision issues from INV_PROJECTION_MATRIX.
 	vec2 ndc = SCREEN_UV * 2.0 - 1.0;
-	ndc.y = -ndc.y;
-	vec4 vp = INV_PROJECTION_MATRIX * vec4(ndc, 1.0, 1.0);
-	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(normalize(vp.xyz / vp.w), 0.0)).xyz);
+	vec3 view_dir = normalize(vec3(
+		ndc.x / PROJECTION_MATRIX[0][0],
+		ndc.y / PROJECTION_MATRIX[1][1],
+		-1.0
+	));
+	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(view_dir, 0.0)).xyz);
 
 	// Equirectangular UV
 	float u = atan(dir.x, -dir.z) / (2.0 * PI) + 0.5;
