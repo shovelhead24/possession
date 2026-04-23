@@ -28,10 +28,10 @@ Shader 'SkyShaderGLES3' SHA256: 4bce99c1cb2bb53e4e7b066fe460f61037137f33c125a6e2
 OpenGL API 3.3.0 - Build 31.0.101.2137 - Compatibility - Using Device: Intel - Intel(R) UHD Graphics
 WASAPI: Activated output_device using IAudioClient3 interface
 WASAPI: wFormatTag = 65534
-WASAPI: nChannels = 4
+WASAPI: nChannels = 2
 WASAPI: nSamplesPerSec = 48000
-WASAPI: nAvgBytesPerSec = 768000
-WASAPI: nBlockAlign = 16
+WASAPI: nAvgBytesPerSec = 384000
+WASAPI: nBlockAlign = 8
 WASAPI: wBitsPerSample = 32
 WASAPI: cbSize = 22
 WASAPI: mix_rate = 48000
@@ -39,7 +39,7 @@ WASAPI: fundamental_period_frames = 480
 WASAPI: min_period_frames = 480
 WASAPI: max_period_frames = 480
 WASAPI: selected a period frame size of 480
-WASAPI: detected 4 channels
+WASAPI: detected 2 channels
 WASAPI: audio buffer frames: 480 calculated latency: 10ms
 
 TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
@@ -122,18 +122,6 @@ Loading resource: res://.godot/imported/bullet-gunshot-impact-390253.mp3-4741e1b
 Loading resource: res://plasma_rifle.mp3
 Loading resource: res://.godot/imported/plasma_rifle.mp3-dbd184ee77489d3cc2801c42116d8589.mp3str
 Loading resource: res://terrain_manager.gd
-SCRIPT ERROR: Parse Error: Cannot infer the type of "half" variable because the value doesn't have a set type.
-   at: GDScript::reload (res://terrain_manager.gd:776)
-   GDScript backtrace (most recent call first):
-       [0] _input (res://lighting_test_controller.gd:250)
-SCRIPT ERROR: Parse Error: Cannot infer the type of "rel" variable because the value doesn't have a set type.
-   at: GDScript::reload (res://terrain_manager.gd:777)
-   GDScript backtrace (most recent call first):
-       [0] _input (res://lighting_test_controller.gd:250)
-ERROR: Failed to load script "res://terrain_manager.gd" with error "Parse error".
-   at: load (modules/gdscript/gdscript.cpp:3041)
-   GDScript backtrace (most recent call first):
-       [0] _input (res://lighting_test_controller.gd:250)
 Loading resource: res://day_night_cycle.gd
 Loading resource: res://halo_-_carbine/scene.gltf
 Loading resource: res://.godot/imported/scene.gltf-ded69584ac9a8096b37becd4be0cb4d7.scn
@@ -210,22 +198,1346 @@ WARNING: Can't change the size of a `SubViewport` with a `SubViewportContainer` 
    at: _internal_set_size (scene/main/viewport.cpp:5417)
    GDScript backtrace (most recent call first):
        [0] _ready (res://player.gd:116)
+PropPool: _ready() START
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/scene.gltf
+Loading resource: res://.godot/imported/scene.gltf-752d9c9993c841e0b687908a375c24a2.scn
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_Billboard_Mat_baseColor.png
+Loading resource: res://.godot/imported/Christmas_tree_Billboard_Mat_baseColor.png-eca553a29b00b74091117c73d804c39c.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_Billboard_Mat_metallicRoughness.png
+Loading resource: res://.godot/imported/Christmas_tree_Billboard_Mat_metallicRoughness.png-90fdcf9f12f9a1f85f46c779876210ee.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_Billboard_Mat_normal.png
+Loading resource: res://.godot/imported/Christmas_tree_Billboard_Mat_normal.png-8cac994cc39c912f1adea5cfd3215107.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Bark_Mat_baseColor.png
+Loading resource: res://.godot/imported/Bark_Mat_baseColor.png-d07dd53b7267a93108ad8eb732853737.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Bark_Mat_metallicRoughness.png
+Loading resource: res://.godot/imported/Bark_Mat_metallicRoughness.png-f34e7ff6d18bd233b489d2f9d29b7f83.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Bark_Mat_normal.png
+Loading resource: res://.godot/imported/Bark_Mat_normal.png-011ba1fdd0871832fdd42cb90d7427b0.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Brunches_Mat_baseColor.png
+Loading resource: res://.godot/imported/Brunches_Mat_baseColor.png-3c7cb90e379d612a14426ae0e4f38bd0.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Brunches_Mat_metallicRoughness.png
+Loading resource: res://.godot/imported/Brunches_Mat_metallicRoughness.png-c62bfa1709ec1bb16fdd1a1493529f66.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Brunches_Mat_normal.png
+Loading resource: res://.godot/imported/Brunches_Mat_normal.png-fdd819d4e25f575cca2ac0861f1620d7.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_2_Billboard_Mat_baseColor.png
+Loading resource: res://.godot/imported/Christmas_tree_2_Billboard_Mat_baseColor.png-de91c0f199f92351a357e2ff8b478798.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_2_Billboard_Mat_metallicRoughness.png
+Loading resource: res://.godot/imported/Christmas_tree_2_Billboard_Mat_metallicRoughness.png-63e7e07b35f0ca8720868534c69647af.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_2_Billboard_Mat_normal.png
+Loading resource: res://.godot/imported/Christmas_tree_2_Billboard_Mat_normal.png-555c375eedd74280ec6f99c0c1854325.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_3_Billboard_Mat_baseColor.png
+Loading resource: res://.godot/imported/Christmas_tree_3_Billboard_Mat_baseColor.png-acfe59e26631cc5efe0ea58b88b14366.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_3_Billboard_Mat_metallicRoughness.png
+Loading resource: res://.godot/imported/Christmas_tree_3_Billboard_Mat_metallicRoughness.png-61725e3a45f9d58b3db18a7c8bd12703.s3tc.ctex
+Loading resource: res://realistic_fir_trees_pack_lods_gameready/textures/Christmas_tree_3_Billboard_Mat_normal.png
+Loading resource: res://.godot/imported/Christmas_tree_3_Billboard_Mat_normal.png-e9515d4cd8a7914ca18009f6b6df2d6f.s3tc.ctex
+PropPool: Loaded Realistic Fir Trees pack (3 variants)
+PropPool: load_tree_models() DONE - 3 scenes loaded
+Loading resource: res://grass_pack_of_9_vars_lowpoly_game_ready/scene.gltf
+Loading resource: res://.godot/imported/scene.gltf-117ed22c107eaba613611f8c64a3c623.scn
+Loading resource: res://grass_pack_of_9_vars_lowpoly_game_ready/textures/GrassAtlas_baseColor.png
+Loading resource: res://.godot/imported/GrassAtlas_baseColor.png-5bd57787a09f3c452a0836f14b4aeec0.s3tc.ctex
+Loading resource: res://grass_pack_of_9_vars_lowpoly_game_ready/textures/GrassAtlas_metallicRoughness.png
+Loading resource: res://.godot/imported/GrassAtlas_metallicRoughness.png-8a88bd9fb92f1aadb3fa9f49735981ad.s3tc.ctex
+Loading resource: res://grass_pack_of_9_vars_lowpoly_game_ready/textures/GrassAtlas_normal.png
+Loading resource: res://.godot/imported/GrassAtlas_normal.png-890c785245bd5b0b340510d5e06c96d7.s3tc.ctex
+PropPool: Loaded Grass pack (9 variants with pivot offsets)
+PropPool: load_grass_models() DONE - grass_scene=true
+PropPool: Extracted 3/3 grass meshes for MultiMesh
+PropPool: Calculating tree pivot offsets from mesh bounds...
+PropPool: Fir1 mesh Y range: -0.00047600202379 to 9.29253005981445 -> pivot_offset = -2.99952399797621 (includes -3.0 visual correction)
+PropPool: Fir2 mesh Y range: -0.00299035827629 to 4.15528011322021 -> pivot_offset = -2.99700964172371 (includes -3.0 visual correction)
+PropPool: Fir3 mesh Y range: -0.00075042579556 to 1.53074014186859 -> pivot_offset = -2.99924957420444 (includes -3.0 visual correction)
+PropPool: grow_pool_sync creating 400 trees...
+PropPool: Creating tree 0/400
+PropPool: create_model_tree #1 type_index=0
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir1
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #1 complete
+PropPool: create_model_tree #2 type_index=1
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir2
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #2 complete
+PropPool: create_model_tree #3 type_index=2
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir3
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #3 complete
+PropPool: Creating tree 100/400
+PropPool: Creating tree 200/400
+PropPool: Creating tree 300/400
+PropPool: grow_pool_sync finished, total_trees_created=400
+PropPool: Seeded with 400 trees, 0 grass (rest grows async as needed)
+Loading resource: res://water_shader.gdshader
+CHUNK (0, 0) LOD0 scale=1 res=16 verts=169 total=3ms
 DayNightCycle: Using existing sun light: DirectionalLight3D
 Loading resource: res://sky_dome_shader.gdshader
-WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/panorama.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01ft.png'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load_from_file (core/io/image.cpp:2541)
    GDScript backtrace (most recent call first):
-       [0] setup_environment (res://day_night_cycle.gd:99)
-       [1] _ready (res://day_night_cycle.gd:62)
+       [0] setup_environment (res://day_night_cycle.gd:114)
+       [1] _ready (res://day_night_cycle.gd:68)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01bk.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] setup_environment (res://day_night_cycle.gd:114)
+       [1] _ready (res://day_night_cycle.gd:68)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01lf.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] setup_environment (res://day_night_cycle.gd:114)
+       [1] _ready (res://day_night_cycle.gd:68)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01rt.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] setup_environment (res://day_night_cycle.gd:114)
+       [1] _ready (res://day_night_cycle.gd:68)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01up.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] setup_environment (res://day_night_cycle.gd:114)
+       [1] _ready (res://day_night_cycle.gd:68)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01dn.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] setup_environment (res://day_night_cycle.gd:114)
+       [1] _ready (res://day_night_cycle.gd:68)
 DayNightCycle: Sky dome created (GL Compat spatial shader)
 Day/Night cycle started at time: 0.45
 Warthog: Found turret node
 Warthog: Ready!
 Loading resource: res://pause_menu.gd
+CHUNK (-1, 0) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (0, -1) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (0, 1) LOD0 scale=1 res=16 verts=225 total=4ms
+CHUNK (1, 0) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (-1, -1) LOD0 scale=1 res=16 verts=169 total=3ms
+CHUNK (-1, 1) LOD0 scale=1 res=16 verts=225 total=5ms
+CHUNK (1, -1) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (1, 1) LOD0 scale=1 res=16 verts=225 total=4ms
+Warthog: Positioned at height 55.1941355466843
 Player: Entered vehicle
 Warthog: Player entered!
 Warthog: Auto-entered player
+CHUNK (4, -7) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (5, -7) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-5, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (10, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, -52) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -52) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, -52) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -52) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, -2) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (-2, 0) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (2, 0) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (0, 2) LOD0 scale=1 res=16 verts=225 total=5ms
+CHUNK (-1, -2) LOD0 scale=1 res=16 verts=169 total=3ms
+CHUNK (-1, 2) LOD0 scale=1 res=16 verts=225 total=4ms
+CHUNK (1, -2) LOD0 scale=1 res=16 verts=169 total=3ms
+CHUNK (1, 2) LOD0 scale=1 res=16 verts=225 total=7ms
+CHUNK (-2, 1) LOD0 scale=1 res=16 verts=225 total=5ms
+CHUNK (2, -1) LOD0 scale=1 res=16 verts=169 total=3ms
+CHUNK (2, 1) LOD0 scale=1 res=16 verts=225 total=6ms
+CHUNK (-2, -1) LOD0 scale=1 res=16 verts=169 total=3ms
+CHUNK (2, -2) LOD0 scale=1 res=16 verts=169 total=3ms
+CHUNK (-2, -2) LOD0 scale=1 res=16 verts=169 total=4ms
+CHUNK (-2, 2) LOD0 scale=1 res=16 verts=225 total=6ms
+CHUNK (2, 2) LOD0 scale=1 res=16 verts=169 total=3ms
+CHUNK (-3, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, -3) LOD1 scale=1 res=6 verts=49 total=0ms
+CHUNK (0, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-1, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 1) LOD1 scale=1 res=6 verts=49 total=3ms
+CHUNK (1, -3) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-1, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, 2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (2, -3) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (2, 3) LOD1 scale=1 res=6 verts=49 total=3ms
+CHUNK (3, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 2) LOD1 scale=1 res=6 verts=49 total=0ms
+CHUNK (0, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-1, 4) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-1, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, 2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (2, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, -2) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-2, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, 2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (2, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, -4) LOD1 scale=1 res=6 verts=49 total=0ms
+CHUNK (-4, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, -1) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-1, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-1, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, 2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (2, -5) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (5, -2) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-5, 2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (2, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, 3) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-5, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, 0) LOD1 scale=1 res=6 verts=49 total=0ms
+CHUNK (1, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-1, 6) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (6, -1) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-1, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, -1) LOD1 scale=1 res=6 verts=49 total=0ms
+CHUNK (2, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (2, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, 2) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-2, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, 2) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (4, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 6) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (3, -6) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-6, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, 7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (7, 0) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-1, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-1, 7) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (7, 1) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (1, 7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (7, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, -4) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (6, 4) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (4, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, 4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (7, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, 7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (7, 2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-2, -7) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (2, 7) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (2, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, 2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, 7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (7, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, 7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (7, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, -3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (5, -6) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (5, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, -5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (6, 5) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-6, -5) LOD1 scale=1 res=6 verts=49 total=0ms
+CHUNK (-5, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-5, 6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-8, 0) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (8, 0) LOD2 scale=2 res=3 verts=49 total=2ms
+CHUNK (0, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (0, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, 7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-4, -7) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-1, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (7, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (1, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-7, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-8, 1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-8, -1) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (2, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-8, 2) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-2, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-8, -2) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (8, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, -6) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (3, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-3, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-8, -3) LOD1 scale=1 res=6 verts=49 total=2ms
+CHUNK (-8, 3) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (8, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, -8) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (-8, -4) LOD1 scale=1 res=6 verts=49 total=1ms
+CHUNK (4, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, -6) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-6, 8) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (10, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -2) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (2, -10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (4, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, 10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (10, 4) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (8, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, 10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (6, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, -2) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-12, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, -12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (12, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, 4) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-4, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, -4) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-4, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, -10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (8, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 8) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-10, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, 6) LOD2 scale=2 res=3 verts=49 total=2ms
+CHUNK (-12, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, 10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (10, -10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-10, -10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (2, -14) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-10, 10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (2, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, -14) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-2, 14) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (8, 12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (8, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, -4) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-4, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, -6) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (6, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, -14) LOD2 scale=2 res=3 verts=49 total=2ms
+CHUNK (-6, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, 16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, 16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, 16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, -14) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-4, 16) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (4, 16) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-16, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, -16) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (16, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, -12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (12, 12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-12, 12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-16, -6) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-6, 16) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-16, 6) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (6, -16) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-6, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, 16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, -10) LOD2 scale=2 res=3 verts=49 total=2ms
+CHUNK (14, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -14) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (10, 14) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-14, -10) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-8, 16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, 16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, 18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (18, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, 18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (18, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (18, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, -2) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (2, 18) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-12, -14) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (14, -12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (4, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, -12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-14, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, 12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, 18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (18, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, 18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (12, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (18, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -16) LOD2 scale=2 res=3 verts=49 total=2ms
+CHUNK (-16, 10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, 16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (10, -16) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-16, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, -18) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (18, -6) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-18, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, 18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, 8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-18, -10) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-10, -18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-12, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, -12) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, 12) LOD2 scale=2 res=3 verts=49 total=0ms
+CHUNK (-20, 0) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (0, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-20, -2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-2, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (2, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-20, 2) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, 18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (18, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-4, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (20, -4) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (20, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, 4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-20, -4) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (4, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (18, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-8, 18) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (6, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-20, -6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-6, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-20, 6) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-14, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, 14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (14, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (-16, -14) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (8, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -8) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (20, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -20) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (20, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, 20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-16, -16) LOD2 scale=2 res=3 verts=49 total=1ms
+CHUNK (16, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-16, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, 20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (20, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 0) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, 0) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (0, 24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-4, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, 4) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, 8) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (20, 16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-20, 16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (16, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, -12) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, 12) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (12, -24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-24, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, 28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-28, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 4) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-20, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, 24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-24, -16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, 24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-28, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 8) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (8, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -12) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-28, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, 28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-12, -28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (28, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, 28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (28, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-20, -24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, 20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, 32) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (32, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-4, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-16, -28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (4, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, 28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (16, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, -8) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-8, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -32) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-32, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, 24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-24, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, -24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-12, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 12) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (12, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-20, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (32, 16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (32, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, 0) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-36, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, -4) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (36, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, -36) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (36, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, 8) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-24, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -36) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-32, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, -20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-32, -20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-20, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -32) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-20, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, 12) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-36, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, -16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-36, 16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (36, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (28, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (32, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (0, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -32) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (0, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, -40) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-4, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, -4) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (4, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -40) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (8, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, -8) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (40, 8) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-40, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, 36) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (36, 20) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (36, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, -12) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-12, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, 40) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-40, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 32) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-16, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 36) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (24, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, 24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-24, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, -44) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-44, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, 0) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, 4) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-44, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-4, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, -8) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-20, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-8, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (32, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -28) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (12, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (12, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, 40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, -24) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-16, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, -16) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (44, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (0, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, 0) LOD3 scale=4 res=2 verts=81 total=0ms
+CHUNK (0, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (48, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-4, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (4, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, 32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, -36) LOD3 scale=4 res=2 verts=81 total=0ms
+CHUNK (32, -36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, 4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, -4) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (36, -32) LOD3 scale=4 res=2 verts=81 total=0ms
+CHUNK (-32, 36) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (8, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-8, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-8, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, 8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, -8) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, 40) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (40, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-28, -40) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-40, 28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-40, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (28, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, 24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (24, -44) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (12, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-12, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, 12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, -12) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-36, -36) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (-28, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, -28) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, -44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-24, 44) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-44, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (44, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, 44) LOD3 scale=4 res=2 verts=81 total=2ms
+CHUNK (48, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-16, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, 16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, -16) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-16, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (0, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-32, -40) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (40, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (40, -32) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (32, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-40, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-40, -32) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-32, 40) LOD4 scale=8 res=1 verts=81 total=0ms
+CHUNK (32, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (8, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-8, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, -20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-20, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (20, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, 20) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (16, -56) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-16, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-24, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, -24) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (-48, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (24, 48) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-24, -48) LOD3 scale=4 res=2 verts=81 total=1ms
+CHUNK (48, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (24, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-24, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (24, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (40, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (40, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-40, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-40, -40) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (56, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-32, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (32, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, -32) LOD4 scale=8 res=1 verts=81 total=0ms
+CHUNK (32, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-32, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, -16) LOD4 scale=8 res=1 verts=81 total=0ms
+CHUNK (56, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, -16) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (32, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-32, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-40, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-40, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (40, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, -40) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-48, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (40, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, -8) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (40, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-40, -56) LOD4 scale=8 res=1 verts=81 total=1ms
 Player: Exited vehicle
-Warthog: Player exited at (8.0, 15.32212, 0.0)
+Warthog: Player exited at (7.863143, 56.59935, -0.22437)
 Warthog: Press E to enter
-Fly mode: ON
+CHUNK (-64, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (48, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-48, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, 48) LOD4 scale=8 res=1 verts=81 total=0ms
+CHUNK (-72, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-56, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (56, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, 24) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-72, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, 0) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-64, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-64, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, 16) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (80, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (64, -56) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-64, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (72, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, 0) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (88, 0) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (72, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-72, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, -8) LOD4 scale=8 res=1 verts=81 total=0ms
+CHUNK (88, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, -40) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-80, 40) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-88, 16) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (-88, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, 48) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (80, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, 48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, -48) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, 32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, -32) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (80, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-80, -56) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-96, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (96, 0) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (96, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-96, 8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (96, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-96, -8) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, -40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-88, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (88, -40) LOD4 scale=8 res=1 verts=81 total=2ms
+CHUNK (88, 40) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-96, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-96, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (96, -16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (96, 16) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-96, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (-96, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (96, 24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (96, -24) LOD4 scale=8 res=1 verts=81 total=1ms
+CHUNK (40, 16) LOD4 scale=4 res=1 verts=25 total=7ms
+CHUNK (40, -24) LOD4 scale=4 res=1 verts=25 total=0ms
+CHUNK (40, 24) LOD4 scale=4 res=1 verts=25 total=0ms
+CHUNK (32, 32) LOD4 scale=4 res=1 verts=25 total=1ms
+CHUNK (24, 40) LOD4 scale=4 res=1 verts=25 total=0ms
+CHUNK (16, 40) LOD4 scale=4 res=1 verts=25 total=0ms
+CHUNK (16, -48) LOD4 scale=4 res=1 verts=25 total=1ms
+CHUNK (16, 4) LOD3 scale=2 res=2 verts=25 total=0ms
+CHUNK (16, -8) LOD3 scale=2 res=2 verts=25 total=0ms
+CHUNK (16, 8) LOD3 scale=2 res=2 verts=25 total=1ms
+CHUNK (12, 12) LOD3 scale=2 res=2 verts=25 total=0ms
+CHUNK (8, 16) LOD3 scale=2 res=2 verts=25 total=0ms
+CHUNK (6, 4) LOD2 scale=1 res=3 verts=16 total=1ms
+CHUNK (4, 16) LOD3 scale=2 res=2 verts=25 total=0ms
+CHUNK (4, -20) LOD3 scale=2 res=2 verts=25 total=1ms
+CHUNK (4, 6) LOD2 scale=1 res=3 verts=16 total=1ms
+CHUNK (-8, 16) LOD3 scale=2 res=2 verts=25 total=1ms
+CHUNK (-20, 4) LOD3 scale=2 res=2 verts=25 total=0ms
+CHUNK (-24, -48) LOD4 scale=4 res=1 verts=25 total=0ms
+CHUNK (-24, 40) LOD4 scale=4 res=1 verts=25 total=1ms
+CHUNK (-48, 16) LOD4 scale=4 res=1 verts=25 total=1ms
+CHUNK (-48, -24) LOD4 scale=4 res=1 verts=25 total=1ms
+PropPool: create_model_tree #500 type_index=1
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir2
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #500 complete
+PropPool: create_model_tree #1000 type_index=0
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir1
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #1000 complete
+PropPool: create_model_tree #1500 type_index=2
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir3
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #1500 complete
+PropPool: create_model_tree #2000 type_index=1
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir2
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #2000 complete
+SKY face=[bk] rot=0 flip=0 | rots=[0, 0, 0, 0, 0, 0] flips=[0, 0, 0, 0, 0, 0]
+PropPool: create_model_tree #2500 type_index=0
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir1
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #2500 complete
+PropPool: create_model_tree #3000 type_index=2
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir3
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #3000 complete
+PropPool: create_model_tree #3500 type_index=1
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir2
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #3500 complete
+PropPool: create_model_tree #4000 type_index=0
+  - Instantiating tree scene...
+  - Adding child...
+  - Setting up LODs for Fir1
+  - LOD setup done
+  - Fixing materials...
+  - Creating billboard...
+  - Tree #4000 complete
+=== RELOAD: pulling latest commits... ===
+git: From https://github.com/shovelhead24/possession
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+
+=== RELOAD: git exit code 0 — quitting so watcher relaunches ===
+SKY face=[bk] rot=1 flip=0 | rots=[0, 1, 0, 0, 0, 0] flips=[0, 0, 0, 0, 0, 0]
+XR: Clearing primary interface
+XR: Removed interface "Native mobile"
+XR: Removed interface "OpenXR"
