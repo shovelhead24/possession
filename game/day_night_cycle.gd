@@ -95,10 +95,10 @@ func setup_environment():
 	sky_shader_material = ShaderMaterial.new()
 	sky_shader_material.shader = dome_shader
 
-	# Load equirectangular panorama (baked from 6 cubemap faces, no seams)
-	var panorama = load("res://skybox/panorama.png")
-	if panorama:
-		sky_shader_material.set_shader_parameter("panorama", panorama)
+	# Load equirectangular panorama — bypass resource cache so updated PNGs take effect immediately
+	var img = Image.load_from_file("res://skybox/panorama.png")
+	if img:
+		sky_shader_material.set_shader_parameter("panorama", ImageTexture.create_from_image(img))
 	else:
 		push_error("DayNightCycle: missing skybox panorama: res://skybox/panorama.png")
 
