@@ -11,21 +11,6 @@ uniform sampler2D face_rt : filter_linear, repeat_disable;  // right  +X
 uniform sampler2D face_up : filter_linear, repeat_disable;  // up     +Y
 uniform sampler2D face_dn : filter_linear, repeat_disable;  // down   -Y
 
-// Per-face rotation: 0=0° 1=90°CCW 2=180° 3=270°CCW  (float avoids GL Compat int uniform issues)
-uniform float rot_ft : hint_range(0.0, 3.0, 1.0) = 0.0;
-uniform float rot_bk : hint_range(0.0, 3.0, 1.0) = 0.0;
-uniform float rot_lf : hint_range(0.0, 3.0, 1.0) = 0.0;
-uniform float rot_rt : hint_range(0.0, 3.0, 1.0) = 0.0;
-uniform float rot_up : hint_range(0.0, 3.0, 1.0) = 0.0;
-uniform float rot_dn : hint_range(0.0, 3.0, 1.0) = 0.0;
-
-// Per-face horizontal flip: 0=none 1=flip
-uniform float flip_ft : hint_range(0.0, 1.0, 1.0) = 0.0;
-uniform float flip_bk : hint_range(0.0, 1.0, 1.0) = 0.0;
-uniform float flip_lf : hint_range(0.0, 1.0, 1.0) = 0.0;
-uniform float flip_rt : hint_range(0.0, 1.0, 1.0) = 0.0;
-uniform float flip_up : hint_range(0.0, 1.0, 1.0) = 0.0;
-uniform float flip_dn : hint_range(0.0, 1.0, 1.0) = 0.0;
 
 // Day/night
 uniform float sun_elevation : hint_range(-90.0, 90.0) = 45.0;
@@ -64,17 +49,6 @@ float star_field(vec3 dir) {
 	return s * star_brightness;
 }
 
-vec2 xform(vec2 uv, float rot, float flip) {
-	int r = int(rot + 0.5);
-	uv -= 0.5;
-	if (r == 1)      uv = vec2(-uv.y,  uv.x);
-	else if (r == 2) uv = vec2(-uv.x, -uv.y);
-	else if (r == 3) uv = vec2( uv.y, -uv.x);
-	uv += 0.5;
-	if (flip > 0.5) uv.x = 1.0 - uv.x;
-	return uv;
-}
-
 void fragment() {
 	// Per-pixel world-space ray (GL Compat, no Y flip needed)
 	vec2 ndc = SCREEN_UV * 2.0 - 1.0;
@@ -90,21 +64,21 @@ void fragment() {
 
 	if (ax >= ay && ax >= az) {
 		if (dir.x > 0.0) {
-			sky = texture(face_rt, xform(vec2(-dir.z / ax, -dir.y / ax) * 0.5 + 0.5, rot_rt, flip_rt)).rgb;
+			sky = texture(face_rt, vec2(-dir.z / ax, -dir.y / ax) * 0.5 + 0.5).rgb;
 		} else {
-			sky = texture(face_lf, xform(vec2( dir.z / ax, -dir.y / ax) * 0.5 + 0.5, rot_lf, flip_lf)).rgb;
+			sky = texture(face_lf, vec2( dir.z / ax, -dir.y / ax) * 0.5 + 0.5).rgb;
 		}
 	} else if (ay >= az) {
 		if (dir.y > 0.0) {
-			sky = texture(face_up, xform(vec2( dir.x / ay,  dir.z / ay) * 0.5 + 0.5, rot_up, flip_up)).rgb;
+			sky = texture(face_up, vec2( dir.x / ay,  dir.z / ay) * 0.5 + 0.5).rgb;
 		} else {
-			sky = texture(face_dn, xform(vec2( dir.x / ay, -dir.z / ay) * 0.5 + 0.5, rot_dn, flip_dn)).rgb;
+			sky = texture(face_dn, vec2( dir.x / ay, -dir.z / ay) * 0.5 + 0.5).rgb;
 		}
 	} else {
 		if (dir.z < 0.0) {
-			sky = texture(face_ft, xform(vec2( dir.x / az, -dir.y / az) * 0.5 + 0.5, rot_ft, flip_ft)).rgb;
+			sky = texture(face_ft, vec2( dir.x / az, -dir.y / az) * 0.5 + 0.5).rgb;
 		} else {
-			sky = texture(face_bk, xform(vec2(-dir.x / az, -dir.y / az) * 0.5 + 0.5, rot_bk, flip_bk)).rgb;
+			sky = texture(face_bk, vec2(-dir.x / az, -dir.y / az) * 0.5 + 0.5).rgb;
 		}
 	}
 

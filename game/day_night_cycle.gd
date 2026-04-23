@@ -24,10 +24,12 @@ var sky_dome: MeshInstance3D = null
 var _water_material: ShaderMaterial = null
 
 # Skybox face dev tool — [ ] selects face, Shift+R rotates, Shift+H flips
+# Transforms applied to Image data (re-uploads texture) — no shader uniforms needed
 const _SKY_FACES = ["ft", "bk", "lf", "rt", "up", "dn"]
 var _sky_face: int = 0
 var _sky_rot: Array  = [0, 0, 0, 0, 0, 0]
 var _sky_flip: Array = [0, 0, 0, 0, 0, 0]
+var _sky_images: Array = []  # original unmodified face images
 
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
@@ -101,21 +103,24 @@ func setup_environment():
 	sky_shader_material = ShaderMaterial.new()
 	sky_shader_material.shader = dome_shader
 
-	# Load the 6 cubemap face images directly — no panorama bake step needed
-	var face_files = {
-		"face_ft": "res://skybox/Installation05_01ft.png",
-		"face_bk": "res://skybox/Installation05_01bk.png",
-		"face_lf": "res://skybox/Installation05_01lf.png",
-		"face_rt": "res://skybox/Installation05_01rt.png",
-		"face_up": "res://skybox/Installation05_01up.png",
-		"face_dn": "res://skybox/Installation05_01dn.png",
-	}
-	for param in face_files:
-		var face_img = Image.load_from_file(face_files[param])
+	# Load the 6 cubemap face images and store originals for dev-tool transforms
+	_sky_images.clear()
+	var face_paths = [
+		"res://skybox/Installation05_01ft.png",
+		"res://skybox/Installation05_01bk.png",
+		"res://skybox/Installation05_01lf.png",
+		"res://skybox/Installation05_01rt.png",
+		"res://skybox/Installation05_01up.png",
+		"res://skybox/Installation05_01dn.png",
+	]
+	for i in range(6):
+		var face_img = Image.load_from_file(face_paths[i])
 		if face_img:
-			sky_shader_material.set_shader_parameter(param, ImageTexture.create_from_image(face_img))
+			_sky_images.append(face_img)
+			sky_shader_material.set_shader_parameter("face_" + _SKY_FACES[i], ImageTexture.create_from_image(face_img))
 		else:
-			push_error("DayNightCycle: missing skybox face: " + face_files[param])
+			_sky_images.append(Image.new())
+			push_error("DayNightCycle: missing skybox face: " + face_paths[i])
 
 	var sphere     = SphereMesh.new()
 	sphere.radius  = 9000.0   # must be < camera.far (12000) to avoid far-plane clipping artifacts
@@ -172,11 +177,21 @@ func _input(event):
 			_sky_log()
 
 func _sky_apply():
-	if not sky_shader_material:
+	if not sky_shader_material or _sky_images.size() < 6:
 		return
 	for i in range(6):
-		sky_shader_material.set_shader_parameter("rot_"  + _SKY_FACES[i], float(_sky_rot[i]))
-		sky_shader_material.set_shader_parameter("flip_" + _SKY_FACES[i], float(_sky_flip[i]))
+		var img: Image = _sky_images[i].duplicate()
+		var rot: int = _sky_rot[i]
+		if rot == 1:
+			img.rotate_90(Image.COUNTERCLOCKWISE)
+		elif rot == 2:
+			img.rotate_90(Image.CLOCKWISE)
+			img.rotate_90(Image.CLOCKWISE)
+		elif rot == 3:
+			img.rotate_90(Image.CLOCKWISE)
+		if _sky_flip[i] == 1:
+			img.flip_x()
+		sky_shader_material.set_shader_parameter("face_" + _SKY_FACES[i], ImageTexture.create_from_image(img))
 	_sky_log()
 
 func _sky_log():
