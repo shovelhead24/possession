@@ -175,8 +175,8 @@ func _sky_apply():
 	if not sky_shader_material:
 		return
 	for i in range(6):
-		sky_shader_material.set_shader_parameter("rot_"  + _SKY_FACES[i], _sky_rot[i])
-		sky_shader_material.set_shader_parameter("flip_" + _SKY_FACES[i], _sky_flip[i])
+		sky_shader_material.set_shader_parameter("rot_"  + _SKY_FACES[i], float(_sky_rot[i]))
+		sky_shader_material.set_shader_parameter("flip_" + _SKY_FACES[i], float(_sky_flip[i]))
 	_sky_log()
 
 func _sky_log():

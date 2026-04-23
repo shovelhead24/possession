@@ -11,21 +11,21 @@ uniform sampler2D face_rt : filter_linear, repeat_disable;  // right  +X
 uniform sampler2D face_up : filter_linear, repeat_disable;  // up     +Y
 uniform sampler2D face_dn : filter_linear, repeat_disable;  // down   -Y
 
-// Per-face rotation: 0=0° 1=90°CCW 2=180° 3=270°CCW
-uniform int rot_ft : hint_range(0, 3) = 0;
-uniform int rot_bk : hint_range(0, 3) = 0;
-uniform int rot_lf : hint_range(0, 3) = 0;
-uniform int rot_rt : hint_range(0, 3) = 0;
-uniform int rot_up : hint_range(0, 3) = 0;
-uniform int rot_dn : hint_range(0, 3) = 0;
+// Per-face rotation: 0=0° 1=90°CCW 2=180° 3=270°CCW  (float avoids GL Compat int uniform issues)
+uniform float rot_ft : hint_range(0.0, 3.0, 1.0) = 0.0;
+uniform float rot_bk : hint_range(0.0, 3.0, 1.0) = 0.0;
+uniform float rot_lf : hint_range(0.0, 3.0, 1.0) = 0.0;
+uniform float rot_rt : hint_range(0.0, 3.0, 1.0) = 0.0;
+uniform float rot_up : hint_range(0.0, 3.0, 1.0) = 0.0;
+uniform float rot_dn : hint_range(0.0, 3.0, 1.0) = 0.0;
 
 // Per-face horizontal flip: 0=none 1=flip
-uniform int flip_ft : hint_range(0, 1) = 0;
-uniform int flip_bk : hint_range(0, 1) = 0;
-uniform int flip_lf : hint_range(0, 1) = 0;
-uniform int flip_rt : hint_range(0, 1) = 0;
-uniform int flip_up : hint_range(0, 1) = 0;
-uniform int flip_dn : hint_range(0, 1) = 0;
+uniform float flip_ft : hint_range(0.0, 1.0, 1.0) = 0.0;
+uniform float flip_bk : hint_range(0.0, 1.0, 1.0) = 0.0;
+uniform float flip_lf : hint_range(0.0, 1.0, 1.0) = 0.0;
+uniform float flip_rt : hint_range(0.0, 1.0, 1.0) = 0.0;
+uniform float flip_up : hint_range(0.0, 1.0, 1.0) = 0.0;
+uniform float flip_dn : hint_range(0.0, 1.0, 1.0) = 0.0;
 
 // Day/night
 uniform float sun_elevation : hint_range(-90.0, 90.0) = 45.0;
@@ -64,13 +64,14 @@ float star_field(vec3 dir) {
 	return s * star_brightness;
 }
 
-vec2 xform(vec2 uv, int rot, int flip) {
+vec2 xform(vec2 uv, float rot, float flip) {
+	int r = int(rot + 0.5);
 	uv -= 0.5;
-	if (rot == 1)      uv = vec2(-uv.y,  uv.x);
-	else if (rot == 2) uv = vec2(-uv.x, -uv.y);
-	else if (rot == 3) uv = vec2( uv.y, -uv.x);
+	if (r == 1)      uv = vec2(-uv.y,  uv.x);
+	else if (r == 2) uv = vec2(-uv.x, -uv.y);
+	else if (r == 3) uv = vec2( uv.y, -uv.x);
 	uv += 0.5;
-	if (flip == 1) uv.x = 1.0 - uv.x;
+	if (flip > 0.5) uv.x = 1.0 - uv.x;
 	return uv;
 }
 
