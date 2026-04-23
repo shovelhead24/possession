@@ -29,7 +29,8 @@ const _SKY_FACES = ["ft", "bk", "lf", "rt", "up", "dn"]
 var _sky_face: int = 0
 var _sky_rot: Array  = [0, 0, 0, 0, 0, 0]
 var _sky_flip: Array = [0, 0, 0, 0, 0, 0]
-var _sky_images: Array = []  # original unmodified face images
+var _sky_images: Array = []    # original unmodified face images
+var _sky_textures: Array = []  # live ImageTexture per face — updated in-place to avoid GPU crash
 
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
@@ -103,8 +104,9 @@ func setup_environment():
 	sky_shader_material = ShaderMaterial.new()
 	sky_shader_material.shader = dome_shader
 
-	# Load the 6 cubemap face images and store originals for dev-tool transforms
+	# Load 6 cubemap faces — store originals + live textures (updated in-place to avoid GPU crash)
 	_sky_images.clear()
+	_sky_textures.clear()
 	var face_paths = [
 		"res://skybox/Installation05_01ft.png",
 		"res://skybox/Installation05_01bk.png",
@@ -117,9 +119,12 @@ func setup_environment():
 		var face_img = Image.load_from_file(face_paths[i])
 		if face_img:
 			_sky_images.append(face_img)
-			sky_shader_material.set_shader_parameter("face_" + _SKY_FACES[i], ImageTexture.create_from_image(face_img))
+			var tex := ImageTexture.create_from_image(face_img)
+			_sky_textures.append(tex)
+			sky_shader_material.set_shader_parameter("face_" + _SKY_FACES[i], tex)
 		else:
 			_sky_images.append(Image.new())
+			_sky_textures.append(ImageTexture.new())
 			push_error("DayNightCycle: missing skybox face: " + face_paths[i])
 
 	var sphere     = SphereMesh.new()
@@ -177,21 +182,22 @@ func _input(event):
 			_sky_log()
 
 func _sky_apply():
-	if not sky_shader_material or _sky_images.size() < 6:
+	if not sky_shader_material or _sky_images.size() < 6 or _sky_textures.size() < 6:
 		return
-	for i in range(6):
-		var img: Image = _sky_images[i].duplicate()
-		var rot: int = _sky_rot[i]
-		if rot == 1:
-			img.rotate_90(1)   # 1 = COUNTERCLOCKWISE
-		elif rot == 2:
-			img.rotate_90(0)   # 0 = CLOCKWISE
-			img.rotate_90(0)
-		elif rot == 3:
-			img.rotate_90(0)
-		if _sky_flip[i] == 1:
-			img.flip_x()
-		sky_shader_material.set_shader_parameter("face_" + _SKY_FACES[i], ImageTexture.create_from_image(img))
+	# Only re-upload the face that changed — update in-place so GPU object stays alive
+	var i := _sky_face
+	var img: Image = _sky_images[i].duplicate()
+	var rot: int = _sky_rot[i]
+	if rot == 1:
+		img.rotate_90(1)
+	elif rot == 2:
+		img.rotate_90(0)
+		img.rotate_90(0)
+	elif rot == 3:
+		img.rotate_90(0)
+	if _sky_flip[i] == 1:
+		img.flip_x()
+	_sky_textures[i].update(img)
 	_sky_log()
 
 func _sky_log():
