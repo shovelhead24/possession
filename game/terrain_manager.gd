@@ -770,6 +770,23 @@ func queue_chunks_around_player():
 					int(floor(float(chunk_coord.x) / float(scale))) * scale,
 					int(floor(float(chunk_coord.y) / float(scale))) * scale
 				)
+				# Re-derive LOD from sector centre so boundary is circular
+				# (raw coord LOD bleeds because loop order determines which raw
+				# coord first triggers the sector, not distance from player)
+				var half := scale / 2
+				var rel := sector_coord - player_chunk + Vector2i(half, half)
+				var ctr_dist_int := mini(int(sqrt(float(rel.x * rel.x + rel.y * rel.y))), view_distance + 1)
+				target_lod = ring_lod[ctr_dist_int]
+				var new_scale := lod_scales[clampi(target_lod, 0, lod_scales.size() - 1)]
+				if new_scale != scale:
+					scale = new_scale
+					if scale > 1:
+						sector_coord = Vector2i(
+							int(floor(float(chunk_coord.x) / float(scale))) * scale,
+							int(floor(float(chunk_coord.y) / float(scale))) * scale
+						)
+					else:
+						sector_coord = chunk_coord
 
 			# Skip already loaded chunks (but queue LOD update if needed)
 			if sector_coord in chunks:
