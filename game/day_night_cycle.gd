@@ -105,8 +105,8 @@ func setup_environment():
 	var sphere     = SphereMesh.new()
 	sphere.radius  = 9000.0   # must be < camera.far (12000) to avoid far-plane clipping artifacts
 	sphere.height  = 18000.0
-	sphere.radial_segments = 24
-	sphere.rings   = 12
+	sphere.radial_segments = 128
+	sphere.rings   = 64
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
