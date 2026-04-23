@@ -308,7 +308,7 @@ func _build_lighting():
 	environment.ambient_light_energy = 0.3
 	environment.fog_enabled = true
 	environment.fog_light_color = Color(0.52, 0.62, 0.78)
-	environment.fog_density = 0.00008
+	environment.fog_density = 0.00004
 	environment.fog_depth_begin = 5000.0
 	environment.fog_depth_end = 10000.0
 	world_env.environment = environment
