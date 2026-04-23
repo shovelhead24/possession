@@ -183,12 +183,12 @@ func _sky_apply():
 		var img: Image = _sky_images[i].duplicate()
 		var rot: int = _sky_rot[i]
 		if rot == 1:
-			img.rotate_90(Image.COUNTERCLOCKWISE)
+			img.rotate_90(1)   # 1 = COUNTERCLOCKWISE
 		elif rot == 2:
-			img.rotate_90(Image.CLOCKWISE)
-			img.rotate_90(Image.CLOCKWISE)
+			img.rotate_90(0)   # 0 = CLOCKWISE
+			img.rotate_90(0)
 		elif rot == 3:
-			img.rotate_90(Image.CLOCKWISE)
+			img.rotate_90(0)
 		if _sky_flip[i] == 1:
 			img.flip_x()
 		sky_shader_material.set_shader_parameter("face_" + _SKY_FACES[i], ImageTexture.create_from_image(img))
