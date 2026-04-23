@@ -23,6 +23,12 @@ var sky_shader_material: ShaderMaterial
 var sky_dome: MeshInstance3D = null
 var _water_material: ShaderMaterial = null
 
+# Skybox face dev tool — [ ] selects face, Shift+R rotates, Shift+H flips
+const _SKY_FACES = ["ft", "bk", "lf", "rt", "up", "dn"]
+var _sky_face: int = 0
+var _sky_rot: Array  = [0, 0, 0, 0, 0, 0]
+var _sky_flip: Array = [0, 0, 0, 0, 0, 0]
+
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
 var sun_color_sunset = Color(1.0, 0.6, 0.4)
@@ -95,12 +101,21 @@ func setup_environment():
 	sky_shader_material = ShaderMaterial.new()
 	sky_shader_material.shader = dome_shader
 
-	# Load equirectangular panorama — bypass resource cache so updated PNGs take effect immediately
-	var img = Image.load_from_file("res://skybox/panorama.png")
-	if img:
-		sky_shader_material.set_shader_parameter("panorama", ImageTexture.create_from_image(img))
-	else:
-		push_error("DayNightCycle: missing skybox panorama: res://skybox/panorama.png")
+	# Load the 6 cubemap face images directly — no panorama bake step needed
+	var face_files = {
+		"face_ft": "res://skybox/Installation05_01ft.png",
+		"face_bk": "res://skybox/Installation05_01bk.png",
+		"face_lf": "res://skybox/Installation05_01lf.png",
+		"face_rt": "res://skybox/Installation05_01rt.png",
+		"face_up": "res://skybox/Installation05_01up.png",
+		"face_dn": "res://skybox/Installation05_01dn.png",
+	}
+	for param in face_files:
+		var face_img = Image.load_from_file(face_files[param])
+		if face_img:
+			sky_shader_material.set_shader_parameter(param, ImageTexture.create_from_image(face_img))
+		else:
+			push_error("DayNightCycle: missing skybox face: " + face_files[param])
 
 	var sphere     = SphereMesh.new()
 	sphere.radius  = 9000.0   # must be < camera.far (12000) to avoid far-plane clipping artifacts
@@ -133,6 +148,12 @@ func _unhandled_input(event):
 					_cycle_preset()
 				KEY_T:
 					_resume_cycle()
+				KEY_R:
+					_sky_rot[_sky_face] = (_sky_rot[_sky_face] + 1) % 4
+					_sky_apply()
+				KEY_H:
+					_sky_flip[_sky_face] = 1 - _sky_flip[_sky_face]
+					_sky_apply()
 
 func _input(event):
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -143,6 +164,26 @@ func _input(event):
 			if sky_dome:
 				sky_dome.visible = !sky_dome.visible
 				print("DEBUG: sky dome visible = ", sky_dome.visible)
+		if event.keycode == KEY_BRACKETLEFT:
+			_sky_face = (_sky_face - 1 + 6) % 6
+			_sky_log()
+		if event.keycode == KEY_BRACKETRIGHT:
+			_sky_face = (_sky_face + 1) % 6
+			_sky_log()
+
+func _sky_apply():
+	if not sky_shader_material:
+		return
+	for i in range(6):
+		sky_shader_material.set_shader_parameter("rot_"  + _SKY_FACES[i], _sky_rot[i])
+		sky_shader_material.set_shader_parameter("flip_" + _SKY_FACES[i], _sky_flip[i])
+	_sky_log()
+
+func _sky_log():
+	print("SKY face=[%s] rot=%d flip=%d | rots=%s flips=%s" % [
+		_SKY_FACES[_sky_face], _sky_rot[_sky_face], _sky_flip[_sky_face],
+		_sky_rot, _sky_flip
+	])
 
 func _process(delta):
 	# Poll controller L1 with edge detection

@@ -1,10 +1,31 @@
-// Sky dome shader — SphereMesh rendered from inside, camera-centered.
-// depth_draw_never: sky renders behind all opaque geometry (terrain writes depth first).
-// Ray direction computed per-pixel from SCREEN_UV + camera matrices.
+// Sky dome shader — direct cubemap face sampling, no panorama bake needed.
+// Per-face rotation (0-3 = 0/90/180/270 CCW) and flip (0/1) let you tune
+// orientation in-game: [ ] selects face, Shift+R rotates, Shift+H flips.
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never;
 
-uniform sampler2D panorama : filter_linear, repeat_enable;
+uniform sampler2D face_ft : filter_linear, repeat_disable;  // front  -Z
+uniform sampler2D face_bk : filter_linear, repeat_disable;  // back   +Z
+uniform sampler2D face_lf : filter_linear, repeat_disable;  // left   -X
+uniform sampler2D face_rt : filter_linear, repeat_disable;  // right  +X
+uniform sampler2D face_up : filter_linear, repeat_disable;  // up     +Y
+uniform sampler2D face_dn : filter_linear, repeat_disable;  // down   -Y
+
+// Per-face rotation: 0=0° 1=90°CCW 2=180° 3=270°CCW
+uniform int rot_ft : hint_range(0, 3) = 0;
+uniform int rot_bk : hint_range(0, 3) = 0;
+uniform int rot_lf : hint_range(0, 3) = 0;
+uniform int rot_rt : hint_range(0, 3) = 0;
+uniform int rot_up : hint_range(0, 3) = 0;
+uniform int rot_dn : hint_range(0, 3) = 0;
+
+// Per-face horizontal flip: 0=none 1=flip
+uniform int flip_ft : hint_range(0, 1) = 0;
+uniform int flip_bk : hint_range(0, 1) = 0;
+uniform int flip_lf : hint_range(0, 1) = 0;
+uniform int flip_rt : hint_range(0, 1) = 0;
+uniform int flip_up : hint_range(0, 1) = 0;
+uniform int flip_dn : hint_range(0, 1) = 0;
 
 // Day/night
 uniform float sun_elevation : hint_range(-90.0, 90.0) = 45.0;
@@ -14,7 +35,6 @@ uniform vec3  sun_color     : source_color = vec3(1.0, 0.95, 0.8);
 uniform vec3  sunset_color  : source_color = vec3(1.0, 0.4,  0.15);
 uniform vec3  night_tint    : source_color = vec3(0.04, 0.06, 0.12);
 uniform float night_darkness : hint_range(0.0, 1.0) = 0.92;
-
 uniform float star_brightness : hint_range(0.0, 2.0) = 1.0;
 
 void vertex() {}
@@ -44,9 +64,18 @@ float star_field(vec3 dir) {
 	return s * star_brightness;
 }
 
+vec2 xform(vec2 uv, int rot, int flip) {
+	uv -= 0.5;
+	if (rot == 1)      uv = vec2(-uv.y,  uv.x);
+	else if (rot == 2) uv = vec2(-uv.x, -uv.y);
+	else if (rot == 3) uv = vec2( uv.y, -uv.x);
+	uv += 0.5;
+	if (flip == 1) uv.x = 1.0 - uv.x;
+	return uv;
+}
+
 void fragment() {
-	// Per-pixel world-space ray from screen position.
-	// GL Compat: SCREEN_UV.y=0 is bottom → NDC needs no Y flip.
+	// Per-pixel world-space ray (GL Compat, no Y flip needed)
 	vec2 ndc = SCREEN_UV * 2.0 - 1.0;
 	vec3 view_dir = normalize(vec3(
 		ndc.x / PROJECTION_MATRIX[0][0],
@@ -55,16 +84,32 @@ void fragment() {
 	));
 	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(view_dir, 0.0)).xyz);
 
-	// Equirectangular UV
-	float u = atan(dir.x, -dir.z) / (2.0 * PI) + 0.5;
-	float v = asin(clamp(dir.y, -1.0, 1.0)) / PI + 0.5;
-	vec3 sky = texture(panorama, vec2(u, v)).rgb;
+	float ax = abs(dir.x), ay = abs(dir.y), az = abs(dir.z);
+	vec3 sky;
 
-	// Day/night: darken skybox at night, tint toward deep blue
+	if (ax >= ay && ax >= az) {
+		if (dir.x > 0.0) {
+			sky = texture(face_rt, xform(vec2(-dir.z / ax, -dir.y / ax) * 0.5 + 0.5, rot_rt, flip_rt)).rgb;
+		} else {
+			sky = texture(face_lf, xform(vec2( dir.z / ax, -dir.y / ax) * 0.5 + 0.5, rot_lf, flip_lf)).rgb;
+		}
+	} else if (ay >= az) {
+		if (dir.y > 0.0) {
+			sky = texture(face_up, xform(vec2( dir.x / ay,  dir.z / ay) * 0.5 + 0.5, rot_up, flip_up)).rgb;
+		} else {
+			sky = texture(face_dn, xform(vec2( dir.x / ay, -dir.z / ay) * 0.5 + 0.5, rot_dn, flip_dn)).rgb;
+		}
+	} else {
+		if (dir.z < 0.0) {
+			sky = texture(face_ft, xform(vec2( dir.x / az, -dir.y / az) * 0.5 + 0.5, rot_ft, flip_ft)).rgb;
+		} else {
+			sky = texture(face_bk, xform(vec2(-dir.x / az, -dir.y / az) * 0.5 + 0.5, rot_bk, flip_bk)).rgb;
+		}
+	}
+
+	// Day/night darkening
 	float day    = smoothstep(-10.0, 20.0, sun_elevation);
 	float sunset = smoothstep(-10.0, 5.0, sun_elevation) * smoothstep(25.0, 5.0, sun_elevation);
-
-	// Night darkening
 	sky = mix(night_tint, sky, mix(night_darkness, 1.0, day));
 
 	// Sunset warmth at the horizon
@@ -81,7 +126,7 @@ void fragment() {
 	float glow   = smoothstep(sun_size * 8.0, sun_size, sd) * 0.3;
 	sky += sun_color * (disc + glow) * sv;
 
-	// Extra stars at night
+	// Stars at night
 	float star_vis = clamp(1.0 - day * 0.85, 0.1, 1.0);
 	if (dir.y > -0.1 && star_vis > 0.01) {
 		sky += vec3(star_field(dir)) * star_vis * 2.0;
