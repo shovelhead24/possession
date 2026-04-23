@@ -182,12 +182,22 @@ func _input(event):
 			_sky_log()
 
 func _sky_apply():
-	if not sky_shader_material or _sky_images.size() < 6 or _sky_textures.size() < 6:
+	_sky_log()  # log intent before any GPU work
+	call_deferred("_sky_apply_deferred", _sky_face, _sky_rot[_sky_face], _sky_flip[_sky_face])
+
+func _sky_apply_deferred(face_idx: int, rot: int, flip: int):
+	print("SKY_DBG: enter deferred face=", face_idx, " rot=", rot, " flip=", flip)
+	if not sky_shader_material:
+		print("SKY_DBG: no shader material, abort")
 		return
-	# Only re-upload the face that changed — update in-place so GPU object stays alive
-	var i := _sky_face
-	var img: Image = _sky_images[i].duplicate()
-	var rot: int = _sky_rot[i]
+	if _sky_images.size() < 6 or _sky_textures.size() < 6:
+		print("SKY_DBG: arrays not ready sizes=", _sky_images.size(), "/", _sky_textures.size())
+		return
+	print("SKY_DBG: duplicating image")
+	var img: Image = _sky_images[face_idx].duplicate()
+	print("SKY_DBG: format=", img.get_format(), " size=", img.get_size())
+	img.convert(Image.FORMAT_RGBA8)
+	print("SKY_DBG: converted, applying transforms rot=", rot, " flip=", flip)
 	if rot == 1:
 		img.rotate_90(1)
 	elif rot == 2:
@@ -195,10 +205,11 @@ func _sky_apply():
 		img.rotate_90(0)
 	elif rot == 3:
 		img.rotate_90(0)
-	if _sky_flip[i] == 1:
+	if flip == 1:
 		img.flip_x()
-	_sky_textures[i].update(img)
-	_sky_log()
+	print("SKY_DBG: calling ImageTexture.update()")
+	_sky_textures[face_idx].update(img)
+	print("SKY_DBG: update complete")
 
 func _sky_log():
 	print("SKY face=[%s] rot=%d flip=%d | rots=%s flips=%s" % [
