@@ -63,9 +63,9 @@ u = np.where(m, -dx / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
 v = np.where(m, -dz / np.where(ay > 0, ay, 1) * 0.5 + 0.5, 0)
 out[m] = sample(dn, u, v)[m]
 
-# -Z front face
+# -Z front face — u flipped (face image is horizontally mirrored in this skybox pack)
 m = (~((ax >= ay) & (ax >= az))) & (~((~((ax >= ay) & (ax >= az))) & (ay >= az))) & (dz < 0)
-u = np.where(m,  dx / np.where(az > 0, az, 1) * 0.5 + 0.5, 0)
+u = np.where(m, -dx / np.where(az > 0, az, 1) * 0.5 + 0.5, 0)
 v = np.where(m, -dy / np.where(az > 0, az, 1) * 0.5 + 0.5, 0)
 out[m] = sample(ft, u, v)[m]
 
