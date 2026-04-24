@@ -51,84 +51,84 @@ Loading resource: res://sky_dome_shader.gdshader
 WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01ft.png'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load_from_file (core/io/image.cpp:2541)
    GDScript backtrace (most recent call first):
-       [0] _build_sky_dome (res://lighting_test_controller.gd:421)
-       [1] _ready (res://lighting_test_controller.gd:122)
+       [0] _build_sky_dome (res://lighting_test_controller.gd:427)
+       [1] _ready (res://lighting_test_controller.gd:126)
 WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01bk.png'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load_from_file (core/io/image.cpp:2541)
    GDScript backtrace (most recent call first):
-       [0] _build_sky_dome (res://lighting_test_controller.gd:421)
-       [1] _ready (res://lighting_test_controller.gd:122)
+       [0] _build_sky_dome (res://lighting_test_controller.gd:427)
+       [1] _ready (res://lighting_test_controller.gd:126)
 WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01lf.png'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load_from_file (core/io/image.cpp:2541)
    GDScript backtrace (most recent call first):
-       [0] _build_sky_dome (res://lighting_test_controller.gd:421)
-       [1] _ready (res://lighting_test_controller.gd:122)
+       [0] _build_sky_dome (res://lighting_test_controller.gd:427)
+       [1] _ready (res://lighting_test_controller.gd:126)
 WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01rt.png'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load_from_file (core/io/image.cpp:2541)
    GDScript backtrace (most recent call first):
-       [0] _build_sky_dome (res://lighting_test_controller.gd:421)
-       [1] _ready (res://lighting_test_controller.gd:122)
+       [0] _build_sky_dome (res://lighting_test_controller.gd:427)
+       [1] _ready (res://lighting_test_controller.gd:126)
 WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01up.png'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load_from_file (core/io/image.cpp:2541)
    GDScript backtrace (most recent call first):
-       [0] _build_sky_dome (res://lighting_test_controller.gd:421)
-       [1] _ready (res://lighting_test_controller.gd:122)
+       [0] _build_sky_dome (res://lighting_test_controller.gd:427)
+       [1] _ready (res://lighting_test_controller.gd:126)
 WARNING: Loaded resource as image file, this will not work on export: 'res://grass.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
        [0] _load_tex (res://terrain_chunk.gd:958)
        [1] _ensure_textures_loaded (res://terrain_chunk.gd:966)
-       [2] _build_terrain_material (res://lighting_test_controller.gd:499)
-       [3] _build_test_geometry (res://lighting_test_controller.gd:452)
-       [4] _ready (res://lighting_test_controller.gd:123)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:505)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:458)
+       [4] _ready (res://lighting_test_controller.gd:127)
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
        [0] _load_tex (res://terrain_chunk.gd:958)
        [1] _ensure_textures_loaded (res://terrain_chunk.gd:967)
-       [2] _build_terrain_material (res://lighting_test_controller.gd:499)
-       [3] _build_test_geometry (res://lighting_test_controller.gd:452)
-       [4] _ready (res://lighting_test_controller.gd:123)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:505)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:458)
+       [4] _ready (res://lighting_test_controller.gd:127)
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
        [0] _load_tex (res://terrain_chunk.gd:958)
        [1] _ensure_textures_loaded (res://terrain_chunk.gd:968)
-       [2] _build_terrain_material (res://lighting_test_controller.gd:499)
-       [3] _build_test_geometry (res://lighting_test_controller.gd:452)
-       [4] _ready (res://lighting_test_controller.gd:123)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:505)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:458)
+       [4] _ready (res://lighting_test_controller.gd:127)
 WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
        [0] _load_tex (res://terrain_chunk.gd:958)
        [1] _ensure_textures_loaded (res://terrain_chunk.gd:969)
-       [2] _build_terrain_material (res://lighting_test_controller.gd:499)
-       [3] _build_test_geometry (res://lighting_test_controller.gd:452)
-       [4] _ready (res://lighting_test_controller.gd:123)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:505)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:458)
+       [4] _ready (res://lighting_test_controller.gd:127)
 WARNING: Loaded resource as image file, this will not work on export: 'res://grass_normal.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
        [0] _load_tex (res://terrain_chunk.gd:958)
        [1] _ensure_textures_loaded (res://terrain_chunk.gd:970)
-       [2] _build_terrain_material (res://lighting_test_controller.gd:499)
-       [3] _build_test_geometry (res://lighting_test_controller.gd:452)
-       [4] _ready (res://lighting_test_controller.gd:123)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:505)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:458)
+       [4] _ready (res://lighting_test_controller.gd:127)
 WARNING: Loaded resource as image file, this will not work on export: 'res://stone_normal.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
        [0] _load_tex (res://terrain_chunk.gd:958)
        [1] _ensure_textures_loaded (res://terrain_chunk.gd:971)
-       [2] _build_terrain_material (res://lighting_test_controller.gd:499)
-       [3] _build_test_geometry (res://lighting_test_controller.gd:452)
-       [4] _ready (res://lighting_test_controller.gd:123)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:505)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:458)
+       [4] _ready (res://lighting_test_controller.gd:127)
 WARNING: Loaded resource as image file, this will not work on export: 'res://snow_normal.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
    at: load (core/io/image.cpp:2531)
    GDScript backtrace (most recent call first):
        [0] _load_tex (res://terrain_chunk.gd:958)
        [1] _ensure_textures_loaded (res://terrain_chunk.gd:972)
-       [2] _build_terrain_material (res://lighting_test_controller.gd:499)
-       [3] _build_test_geometry (res://lighting_test_controller.gd:452)
-       [4] _ready (res://lighting_test_controller.gd:123)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:505)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:458)
+       [4] _ready (res://lighting_test_controller.gd:127)
 Loading resource: res://terrain_shader.gdshader
 Loading resource: res://water_shader.gdshader
 Loading resource: res://cloud_system.gd
@@ -136,9 +136,8 @@ Loading resource: res://cloud_shader.gdshader
 Loading resource: res://cloud_layer_shader.gdshader
 CloudSystem: ready, mat=true
 Loading resource: res://cloud_pane_test.gd
-PaneTest: built  |  [ ] = layers  |  Shift+P = toggle
+PaneTest: ready  |  [ ] layers  |  Shift+P toggle  |  pane 9 animated
 CloudSystem: camera found at (0.0, 110.0, 80.0)
 CloudSystem: spawned chunk (-4, -5) lod=2 verts=1
 CloudSystem: spawned chunk (-3, -5) lod=2 verts=1
 CloudSystem: spawned chunk (-2, -5) lod=2 verts=1
-CloudSystem: approach 1 (layered FBM)
