@@ -20,6 +20,11 @@ var _mat      : ShaderMaterial
 var _chunks   : Dictionary = {}   # Vector2i → {mi, lod}
 var _camera   : Camera3D = null
 
+# ── Approach cycling ─────────────────────────────────────────────────────────
+# 0 = marching-cubes IGN  1 = layered FBM planes
+var approach  : int = 0
+var _layers   : Array = []   # MeshInstance3D for approach 1
+
 # ── Marching-cubes lookup tables ─────────────────────────────────────────────
 # edgeTable[256] — which of the 12 edges are cut for each of 256 vertex configs
 const EDGE_TABLE := [
@@ -372,7 +377,62 @@ var _diag_chunks_spawned: int = 0
 func _ready():
 	_setup_noise()
 	_setup_material()
+	_build_layers()
+	_apply_approach()
 	print("CloudSystem: ready, mat=", _mat != null)
+
+func _unhandled_input(event):
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_C:
+			approach = (approach + 1) % 2
+			_apply_approach()
+			print("CloudSystem: approach ", approach, " (", ["marching-cubes IGN", "layered FBM"][approach], ")")
+
+func _apply_approach():
+	# Show/hide layer planes
+	for lm in _layers:
+		lm.visible = (approach == 1)
+	# Marching-cubes chunks visibility
+	for coord in _chunks:
+		_chunks[coord]["mi"].visible = (approach == 0)
+
+func _build_layers():
+	var shader = load("res://cloud_layer_shader.gdshader") as Shader
+	if not shader:
+		push_error("CloudSystem: cloud_layer_shader.gdshader not found")
+		return
+	const NUM_LAYERS := 5
+	const PLANE_SIZE := 12000.0
+	for i in NUM_LAYERS:
+		var t  = float(i) / float(NUM_LAYERS - 1)
+		var y  = CLOUD_BASE + t * CHUNK_Y
+		var verts = PackedVector3Array([
+			Vector3(-PLANE_SIZE * 0.5, 0.0, -PLANE_SIZE * 0.5),
+			Vector3( PLANE_SIZE * 0.5, 0.0, -PLANE_SIZE * 0.5),
+			Vector3(-PLANE_SIZE * 0.5, 0.0,  PLANE_SIZE * 0.5),
+			Vector3( PLANE_SIZE * 0.5, 0.0,  PLANE_SIZE * 0.5),
+		])
+		var normals = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP])
+		var indices = PackedInt32Array([0, 1, 2, 1, 3, 2])
+		var arr = Array(); arr.resize(Mesh.ARRAY_MAX)
+		arr[Mesh.ARRAY_VERTEX] = verts
+		arr[Mesh.ARRAY_NORMAL] = normals
+		arr[Mesh.ARRAY_INDEX]  = indices
+		var mesh = ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		var mat = ShaderMaterial.new()
+		mat.shader = shader
+		mat.set_shader_parameter("cloud_base", CLOUD_BASE)
+		mat.set_shader_parameter("cloud_top",  CLOUD_TOP)
+		mat.set_shader_parameter("layer_t",    t)
+		var mi = MeshInstance3D.new()
+		mi.mesh             = mesh
+		mi.material_override = mat
+		mi.cast_shadow      = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.gi_mode          = GeometryInstance3D.GI_MODE_DISABLED
+		mi.position         = Vector3(0.0, y, 0.0)
+		add_child(mi)
+		_layers.append(mi)
 
 func _process(_delta):
 	if not _camera:
@@ -381,6 +441,12 @@ func _process(_delta):
 			print("CloudSystem: camera found at ", _camera.global_position)
 		else:
 			return
+
+	# Layer planes track camera XZ
+	if approach == 1:
+		for lm in _layers:
+			lm.global_position.x = _camera.global_position.x
+			lm.global_position.z = _camera.global_position.z
 
 	var cp   = _camera.global_position
 	var ccx  = int(floor(cp.x / CHUNK_XZ))
