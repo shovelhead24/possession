@@ -57,20 +57,19 @@ void fragment() {
 	vec3 dir = normalize((INV_VIEW_MATRIX * vec4(view_dir, 0.0)).xyz);
 
 	float ax = abs(dir.x), ay = abs(dir.y), az = abs(dir.z);
-	vec3 sky;
+	vec3 sky = vec3(0.0);
 
-	if (dir.y < 0.0 && ay >= ax && ay >= az) {
-		// Below horizon — ground will cover this, return void
-		ALBEDO = vec3(0.0);
-		return;
-	} else if (ax >= ay && ax >= az) {
+	if (ax >= ay && ax >= az) {
 		if (dir.x > 0.0) {
 			sky = texture(face_rt, vec2(-dir.z / ax, -dir.y / ax) * 0.5 + 0.5).rgb;
 		} else {
 			sky = texture(face_lf, vec2( dir.z / ax, -dir.y / ax) * 0.5 + 0.5).rgb;
 		}
 	} else if (ay >= az) {
-		sky = texture(face_up, vec2( dir.x / ay,  dir.z / ay) * 0.5 + 0.5).rgb;
+		if (dir.y >= 0.0) {
+			sky = texture(face_up, vec2( dir.x / ay,  dir.z / ay) * 0.5 + 0.5).rgb;
+		}
+		// dir.y < 0: dn face omitted — ground occludes it, sky stays vec3(0)
 	} else {
 		if (dir.z < 0.0) {
 			sky = texture(face_ft, vec2( dir.x / az, -dir.y / az) * 0.5 + 0.5).rgb;
