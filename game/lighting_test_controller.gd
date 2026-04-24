@@ -32,6 +32,7 @@ var environment: Environment
 var world_env: WorldEnvironment
 var sky_dome: MeshInstance3D
 var sky_material: ShaderMaterial
+var _sky_textures: Array = []  # keep refs alive
 
 # -- Test materials --
 var terrain_material: ShaderMaterial
@@ -174,6 +175,8 @@ func _process(delta):
 		_process_free_camera(delta)
 	else:
 		_process_benchmark(delta)
+	if sky_dome and camera:
+		sky_dome.global_position = camera.global_position
 	_poll_controller()
 	_update_hud()
 	_log_frame()
@@ -391,11 +394,30 @@ func _build_sky_dome():
 	sky_material = ShaderMaterial.new()
 	sky_material.shader = dome_shader
 
+	# Load skybox faces — keep refs in _sky_textures so GC doesn't free them
+	_sky_textures.clear()
+	var faces = {
+		"ft": "res://skybox/Installation05_01ft.png",
+		"bk": "res://skybox/Installation05_01bk.png",
+		"lf": "res://skybox/Installation05_01lf.png",
+		"rt": "res://skybox/Installation05_01rt.png",
+		"up": "res://skybox/Installation05_01up.png",
+	}
+	for face in faces:
+		var img = Image.load_from_file(faces[face])
+		if img:
+			img.convert(Image.FORMAT_RGBA8)
+			var tex := ImageTexture.create_from_image(img)
+			_sky_textures.append(tex)
+			sky_material.set_shader_parameter("face_" + face, tex)
+		else:
+			push_error("LightingTest: missing skybox face: " + faces[face])
+
 	var sphere = SphereMesh.new()
-	sphere.radius = 12000.0
-	sphere.height = 24000.0
-	sphere.radial_segments = 24
-	sphere.rings = 12
+	sphere.radius = 9000.0
+	sphere.height = 18000.0
+	sphere.radial_segments = 128
+	sphere.rings = 64
 
 	sky_dome = MeshInstance3D.new()
 	sky_dome.name = "SkyDome"
