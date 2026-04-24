@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_disabled, shadows_disabled, blend_mix, depth_draw_opaque;
+render_mode cull_disabled, shadows_disabled, blend_mix, depth_draw_never;
 
 uniform vec3  color_top    : source_color = vec3(1.0,  1.0,  1.0);
 uniform vec3  color_bottom : source_color = vec3(0.58, 0.64, 0.72);
@@ -9,6 +9,8 @@ uniform float noise_scale  : hint_range(0.00005, 0.001) = 0.00018;
 uniform float cloud_base   : hint_range(0.0, 5000.0) = 1500.0;
 uniform float cloud_top    : hint_range(0.0, 5000.0) = 2000.0;
 uniform float layer_t      : hint_range(0.0, 1.0) = 0.5;
+uniform vec2  wind_dir     = vec2(1.0, 0.0);
+uniform float wind_speed   : hint_range(0.0, 0.05) = 0.008;
 
 varying vec3 world_pos;
 
@@ -42,7 +44,7 @@ void vertex() {
 }
 
 void fragment() {
-	float d = fbm(world_pos.xz * noise_scale);
+	float d = fbm(world_pos.xz * noise_scale + wind_dir * TIME * wind_speed);
 	float threshold = 1.0 - coverage;
 	d = smoothstep(threshold - softness, threshold + softness, d);
 	d *= mix(1.0, 0.8, layer_t);

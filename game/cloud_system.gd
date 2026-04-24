@@ -6,17 +6,27 @@ const CLOUD_TOP    := 2000.0
 const CHUNK_XZ     := 512.0
 const CHUNK_Y      := (CLOUD_TOP - CLOUD_BASE)
 
-# [max_horiz_dist, grid_xz, grid_y]
+# [max_horiz_dist, lod_type (0=MC 1=billboard), grid_xz, grid_y]
 const LODS := [
-	[600.0,   24, 12],
-	[1400.0,  12,  6],
-	[3000.0,   6,  3],
+	[ 500.0, 0, 24, 12],   # < 500m:  marching cubes
+	[2000.0, 1,  0,  0],   # < 2000m: billboard
+	[5000.0, 1,  0,  0],   # < 5000m: billboard far
+]
+
+# Per-layer wind: [dir_x, dir_z, speed]
+const LAYER_WIND := [
+	[ 1.0,   0.00,  0.008],
+	[-0.8,   0.15,  0.005],
+	[ 0.5,  -0.25,  0.003],
+	[-0.4,   0.35,  0.002],
+	[ 0.3,   0.45,  0.001],
 ]
 const VIEW_RADIUS := 5   # chunks each direction
 const ISO         := 0.05
 
 var _noise    : FastNoiseLite
 var _mat      : ShaderMaterial
+var _billboard_shader : Shader = null
 var _chunks   : Dictionary = {}   # Vector2i → {mi, lod}
 var _camera   : Camera3D = null
 
@@ -370,6 +380,9 @@ func _setup_material():
 	_mat.shader = shader
 	_mat.set_shader_parameter("cloud_base", CLOUD_BASE)
 	_mat.set_shader_parameter("cloud_top",  CLOUD_TOP)
+	_billboard_shader = load("res://cloud_billboard_shader.gdshader") as Shader
+	if not _billboard_shader:
+		push_error("CloudSystem: cloud_billboard_shader.gdshader not found")
 
 # ── Lifecycle ────────────────────────────────────────────────────────────────
 var _diag_chunks_spawned: int = 0
@@ -386,13 +399,13 @@ func _unhandled_input(event):
 		if event.keycode == KEY_C:
 			approach = (approach + 1) % 2
 			_apply_approach()
-			print("CloudSystem: approach ", approach, " (", ["marching-cubes IGN", "layered FBM"][approach], ")")
+			print("CloudSystem: approach ", approach, " (", ["MC+billboard+layers", "layers only"][approach], ")")
 
 func _apply_approach():
-	# Show/hide layer planes
+	# Layer planes always visible — they are the background
 	for lm in _layers:
-		lm.visible = (approach == 1)
-	# Marching-cubes chunks visibility
+		lm.visible = true
+	# MC + billboard chunks visible only in approach 0
 	for coord in _chunks:
 		_chunks[coord]["mi"].visible = (approach == 0)
 
@@ -422,9 +435,12 @@ func _build_layers():
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 		var mat = ShaderMaterial.new()
 		mat.shader = shader
-		mat.set_shader_parameter("cloud_base", CLOUD_BASE)
-		mat.set_shader_parameter("cloud_top",  CLOUD_TOP)
-		mat.set_shader_parameter("layer_t",    t)
+		mat.set_shader_parameter("cloud_base",  CLOUD_BASE)
+		mat.set_shader_parameter("cloud_top",   CLOUD_TOP)
+		mat.set_shader_parameter("layer_t",     t)
+		var wp = LAYER_WIND[i]
+		mat.set_shader_parameter("wind_dir",   Vector2(wp[0], wp[1]))
+		mat.set_shader_parameter("wind_speed",  wp[2])
 		var mi = MeshInstance3D.new()
 		mi.mesh             = mesh
 		mi.material_override = mat
@@ -442,11 +458,10 @@ func _process(_delta):
 		else:
 			return
 
-	# Layer planes track camera XZ
-	if approach == 1:
-		for lm in _layers:
-			lm.global_position.x = _camera.global_position.x
-			lm.global_position.z = _camera.global_position.z
+	# Layer planes always track camera XZ
+	for lm in _layers:
+		lm.global_position.x = _camera.global_position.x
+		lm.global_position.z = _camera.global_position.z
 
 	var cp   = _camera.global_position
 	var ccx  = int(floor(cp.x / CHUNK_XZ))
@@ -487,8 +502,11 @@ func _lod_for_dist(d: float) -> int:
 
 # ── Chunk generation ─────────────────────────────────────────────────────────
 func _spawn_chunk(coord: Vector2i, lod: int):
-	var gxz: int = LODS[lod][1]
-	var gy:  int = LODS[lod][2]
+	if LODS[lod][1] == 1:
+		_spawn_chunk_billboard(coord)
+		return
+	var gxz: int = LODS[lod][2]
+	var gy:  int = LODS[lod][3]
 	var ox = coord.x * CHUNK_XZ
 	var oz = coord.y * CHUNK_XZ
 	var oy = CLOUD_BASE
@@ -525,6 +543,28 @@ func _spawn_chunk(coord: Vector2i, lod: int):
 	mi.gi_mode     = GeometryInstance3D.GI_MODE_DISABLED
 	add_child(mi)
 	_chunks[coord] = {"mi": mi, "lod": lod}
+
+func _spawn_chunk_billboard(coord: Vector2i):
+	if not _billboard_shader:
+		return
+	var quad = QuadMesh.new()
+	quad.size = Vector2(CHUNK_XZ, CHUNK_Y)
+	quad.orientation = PlaneMesh.FACE_Z
+	var mi = MeshInstance3D.new()
+	mi.mesh = quad
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.gi_mode     = GeometryInstance3D.GI_MODE_DISABLED
+	mi.position    = Vector3(
+		(coord.x + 0.5) * CHUNK_XZ,
+		CLOUD_BASE + CHUNK_Y * 0.5,
+		(coord.y + 0.5) * CHUNK_XZ)
+	var mat = ShaderMaterial.new()
+	mat.shader = _billboard_shader
+	mat.set_shader_parameter("noise_offset",
+		Vector2(float(coord.x) * 3.73, float(coord.y) * 4.17))
+	mi.material_override = mat
+	add_child(mi)
+	_chunks[coord] = {"mi": mi, "lod": 1}
 
 # ── Marching cubes ────────────────────────────────────────────────────────────
 func _marching_cubes(grid: PackedFloat32Array,
