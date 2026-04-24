@@ -121,9 +121,13 @@ func _ready():
 	_build_hud()
 	_setup_benchmark_path()
 	apply_preset(current_preset)
-	var clouds = CloudSystem.new()
-	clouds.name = "CloudSystem"
-	add_child(clouds)
+	var cloud_script = load("res://cloud_system.gd")
+	if cloud_script:
+		var clouds = cloud_script.new()
+		clouds.name = "CloudSystem"
+		add_child(clouds)
+	else:
+		push_error("LightingTest: could not load cloud_system.gd")
 
 # ------------------------------------------------------------------ #
 #  CAMERA                                                             #
