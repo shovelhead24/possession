@@ -22,6 +22,7 @@ var current_preset: int = -1  # -1 = normal cycle (no preset active)
 var sky_shader_material: ShaderMaterial
 var sky_dome: MeshInstance3D = null
 var _water_material: ShaderMaterial = null
+var _sky_textures: Array = []  # holds refs so GC doesn't free GPU textures
 
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
@@ -97,11 +98,14 @@ func setup_environment():
 		"rt": "res://skybox/Installation05_01rt.png",
 		"up": "res://skybox/Installation05_01up.png",
 	}
+	_sky_textures.clear()
 	for face in faces:
 		var img = Image.load_from_file(faces[face])
 		if img:
 			img.convert(Image.FORMAT_RGBA8)
-			sky_shader_material.set_shader_parameter("face_" + face, ImageTexture.create_from_image(img))
+			var tex := ImageTexture.create_from_image(img)
+			_sky_textures.append(tex)
+			sky_shader_material.set_shader_parameter("face_" + face, tex)
 		else:
 			push_error("DayNightCycle: missing skybox face: " + faces[face])
 
