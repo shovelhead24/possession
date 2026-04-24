@@ -121,6 +121,9 @@ func _ready():
 	_build_hud()
 	_setup_benchmark_path()
 	apply_preset(current_preset)
+	var clouds = CloudSystem.new()
+	clouds.name = "CloudSystem"
+	add_child(clouds)
 
 # ------------------------------------------------------------------ #
 #  CAMERA                                                             #
