@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_disabled, shadows_disabled, blend_mix, depth_draw_never;
+render_mode cull_disabled, shadows_disabled, blend_mix, depth_draw_opaque;
 
 uniform vec3  color_top    : source_color = vec3(1.0,  1.0,  1.0);
 uniform vec3  color_bottom : source_color = vec3(0.58, 0.64, 0.72);
