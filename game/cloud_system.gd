@@ -367,14 +367,20 @@ func _setup_material():
 	_mat.set_shader_parameter("cloud_top",  CLOUD_TOP)
 
 # ── Lifecycle ────────────────────────────────────────────────────────────────
+var _diag_chunks_spawned: int = 0
+
 func _ready():
 	_setup_noise()
 	_setup_material()
+	print("CloudSystem: ready, mat=", _mat != null)
 
 func _process(_delta):
 	if not _camera:
 		_camera = get_viewport().get_camera_3d()
-		if not _camera: return
+		if _camera:
+			print("CloudSystem: camera found at ", _camera.global_position)
+		else:
+			return
 
 	var cp   = _camera.global_position
 	var ccx  = int(floor(cp.x / CHUNK_XZ))
@@ -438,7 +444,13 @@ func _spawn_chunk(coord: Vector2i, lod: int):
 
 	var mesh = _marching_cubes(grid, nx, ny, nz, ox, oy, oz, sx, sy, sz)
 	if not mesh:
-		return  # Empty chunk — all air or all cloud
+		if _diag_chunks_spawned == 0:
+			print("CloudSystem: chunk ", coord, " is empty (no geometry)")
+		return
+
+	_diag_chunks_spawned += 1
+	if _diag_chunks_spawned <= 3:
+		print("CloudSystem: spawned chunk ", coord, " lod=", lod, " verts=", mesh.get_surface_count())
 
 	var mi = MeshInstance3D.new()
 	mi.mesh = mesh

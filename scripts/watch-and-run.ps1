@@ -249,8 +249,15 @@ while ($true) {
                 Write-Host "    $c" -ForegroundColor White
             }
         }
-        Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
-        $godotProcess = Start-Godot $godotProcess
+        # Only relaunch for real code commits — skip pure log pushes
+        $codeCommits = git -C $projectPath log --oneline "$prevHash..HEAD" 2>$null |
+            Where-Object { $_ -notmatch '^\S+ log:' }
+        if ($codeCommits) {
+            Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
+            $godotProcess = Start-Godot $godotProcess
+        } else {
+            Write-Host "$(Get-Date -Format HH:mm:ss) Log-only commits — skipping relaunch" -ForegroundColor DarkGray
+        }
     }
 
     # Heartbeat every 4 polls (~60s) so you can confirm the watcher is alive
