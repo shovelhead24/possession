@@ -189,7 +189,6 @@ func update_sun():
 
 func update_lighting():
 	var sun_elevation = sin(time_of_day * TAU - PI/2.0) * 90
-	var sun_visible = check_sun_visibility()
 
 	var sun_intensity: float
 	var sun_color: Color
@@ -206,8 +205,6 @@ func update_lighting():
 		ambient_color = ambient_day
 	elif sun_elevation > -5:
 		var t = (10 - sun_elevation) / 15
-		if not sun_visible:
-			t = min(t + 0.4, 1.0)
 		sun_intensity = lerp(0.3, 0.0, t)
 		sun_color = sun_color_sunset.lerp(sun_color_night, t)
 		ambient_color = ambient_day.lerp(ambient_night, t)
@@ -244,17 +241,6 @@ func update_lighting():
 		sky_shader_material.set_shader_parameter("sun_color",
 				Vector3(sun_color.r, sun_color.g, sun_color.b))
 
-func check_sun_visibility() -> bool:
-	var sun_direction = -sun_light.global_transform.basis.z
-	var space_state = get_world_3d().direct_space_state
-	var camera = get_viewport().get_camera_3d()
-	if not camera or not camera.is_inside_tree():
-		return true
-	var from = camera.global_position
-	var to = from - (sun_direction * 1000)
-	var query = PhysicsRayQueryParameters3D.create(from, to)
-	query.collision_mask = 1
-	return space_state.intersect_ray(query).is_empty()
 
 func get_time_string() -> String:
 	var hours = int(time_of_day * 24)
