@@ -23,7 +23,7 @@ var sky_shader_material: ShaderMaterial
 var sky_dome: MeshInstance3D = null
 var _water_material: ShaderMaterial = null
 
-# Skybox face dev tool — [ ] selects face, Shift+R rotates, Shift+H flips
+# Skybox face dev tool — [ ] selects face, Shift+] rotates, Shift+[ flips
 # Transforms applied to Image data (re-uploads texture) — no shader uniforms needed
 const _SKY_FACES = ["ft", "bk", "lf", "rt", "up", "dn"]
 var _sky_face: int = 0
@@ -118,6 +118,7 @@ func setup_environment():
 	for i in range(6):
 		var face_img = Image.load_from_file(face_paths[i])
 		if face_img:
+			face_img.convert(Image.FORMAT_RGBA8)  # must match format used in update() calls
 			_sky_images.append(face_img)
 			var tex := ImageTexture.create_from_image(face_img)
 			_sky_textures.append(tex)
@@ -158,12 +159,6 @@ func _unhandled_input(event):
 					_cycle_preset()
 				KEY_T:
 					_resume_cycle()
-				KEY_R:
-					_sky_rot[_sky_face] = (_sky_rot[_sky_face] + 1) % 4
-					_sky_apply()
-				KEY_H:
-					_sky_flip[_sky_face] = 1 - _sky_flip[_sky_face]
-					_sky_apply()
 
 func _input(event):
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -175,11 +170,19 @@ func _input(event):
 				sky_dome.visible = !sky_dome.visible
 				print("DEBUG: sky dome visible = ", sky_dome.visible)
 		if event.keycode == KEY_BRACKETLEFT:
-			_sky_face = (_sky_face - 1 + 6) % 6
-			_sky_log()
+			if event.shift_pressed:
+				_sky_flip[_sky_face] = 1 - _sky_flip[_sky_face]
+				_sky_apply()
+			else:
+				_sky_face = (_sky_face - 1 + 6) % 6
+				_sky_log()
 		if event.keycode == KEY_BRACKETRIGHT:
-			_sky_face = (_sky_face + 1) % 6
-			_sky_log()
+			if event.shift_pressed:
+				_sky_rot[_sky_face] = (_sky_rot[_sky_face] + 1) % 4
+				_sky_apply()
+			else:
+				_sky_face = (_sky_face + 1) % 6
+				_sky_log()
 
 func _sky_apply():
 	_sky_log()  # log intent before any GPU work
