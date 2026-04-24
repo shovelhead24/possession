@@ -2,7 +2,7 @@ extends Node3D
 
 const PANE_W    = 50.0
 const PANE_H    = 80.0
-const PANE_STEP = 60.0   # pane width + gap
+const PANE_STEP = 60.0
 const N_PANES   = 10
 const BASE_Z    = -300.0
 const BASE_Y    = 130.0
@@ -10,17 +10,21 @@ const LAYER_DZ  = 20.0
 const MAX_LAYERS = 5
 
 const LABELS = [
-	"1.Opaque",
-	"2.blnd_dflt",
-	"3.blnd+opq",
-	"4.blnd+nvr",
-	"5.blnd+ush",
-	"6.additive",
-	"7.IGN_50%",
-	"8.Bayer4x4",
-	"9.FBM+IGN",
-	"10.FBM+blnd",
+	"1.Opaque", "2.blnd_dflt", "3.blnd+opq",
+	"4.blnd+nvr", "5.blnd+ush", "6.additive",
+	"7.IGN_50%", "8.Bayer4x4", "9.FBM+IGN", "10.FBM+blnd",
 ]
+
+# Pane 9 (index 8) layer animation params: [scroll_x, scroll_y, speed_mult, tint_r, tint_g, tint_b]
+# Layer 0 = front (lowest), each successive layer = higher altitude, slower, cooler tint
+const P9_SCROLL = [
+	[ 1.0,  0.00,  1.000,  1.00, 1.00, 1.00],  # low: rightward, white
+	[-0.8,  0.15,  0.500,  0.90, 0.92, 0.97],  # mid: leftish+up, slight blue
+	[ 0.5, -0.25,  0.250,  0.82, 0.84, 0.93],  # high: right-angled, more blue
+	[-0.4,  0.35,  0.125,  0.75, 0.77, 0.89],  # very high: slow, blue-grey
+	[ 0.3,  0.45,  0.063,  0.70, 0.72, 0.86],  # top: barely drifting, pale
+]
+const SCROLL_BASE = 0.04   # UV units/sec at speed_mult = 1.0
 
 const _FBM_GLSL = """
 float _h2(vec2 p){
@@ -45,13 +49,22 @@ var _layer_count : int = 1
 var _cols        : Array = []
 var _col_labels  : Array = []
 var _lbl_info    : Label3D = null
+var _p9_mats     : Array = []   # ShaderMaterial refs for animated pane 9 layers
+var _time        : float = 0.0
 
 func _ready():
 	_build()
-	print("PaneTest: built  |  [ ] = layers  |  Shift+P = toggle")
+	print("PaneTest: ready  |  [ ] layers  |  Shift+P toggle  |  pane 9 animated")
 
 func toggle():
 	visible = not visible
+
+func _process(delta):
+	if not visible: return
+	_time += delta
+	for mat in _p9_mats:
+		if is_instance_valid(mat):
+			mat.set_shader_parameter("u_time", _time)
 
 func _unhandled_input(ev: InputEvent):
 	if not visible: return
@@ -105,8 +118,18 @@ func _rebuild_layers():
 	_refresh_info()
 
 func _fill_col(col: Node3D, pi: int, px: float, n: int):
+	if pi == 8:
+		_p9_mats.clear()
 	for li in range(n):
-		col.add_child(_make_pane(pi, px, BASE_Y, BASE_Z - li * LAYER_DZ))
+		var mi = _make_pane(pi, px, BASE_Y, BASE_Z - li * LAYER_DZ)
+		col.add_child(mi)
+		if pi == 8:
+			var mat = mi.material_override as ShaderMaterial
+			var p   = P9_SCROLL[min(li, P9_SCROLL.size() - 1)]
+			mat.set_shader_parameter("u_scroll", Vector2(p[0], p[1]))
+			mat.set_shader_parameter("u_speed",  SCROLL_BASE * p[2])
+			mat.set_shader_parameter("u_tint",   Vector3(p[3], p[4], p[5]))
+			_p9_mats.append(mat)
 
 func _refresh_info():
 	if is_instance_valid(_lbl_info):
@@ -151,12 +174,12 @@ func _shader_code(idx: int) -> String:
 render_mode cull_disabled,shadows_disabled;
 void fragment(){ ALBEDO=vec3(.75,.85,1.); }
 """
-		# 2 — blend_mix only (default depth_draw)
+		# 2 — blend_mix only
 		1: return """shader_type spatial;
 render_mode cull_disabled,shadows_disabled,blend_mix;
 void fragment(){ ALBEDO=vec3(.4,.6,1.); ALPHA=.5; }
 """
-		# 3 — blend_mix + depth_draw_opaque  (what the cloud layer shader uses)
+		# 3 — blend_mix + depth_draw_opaque
 		2: return """shader_type spatial;
 render_mode cull_disabled,shadows_disabled,blend_mix,depth_draw_opaque;
 void fragment(){ ALBEDO=vec3(1.,.5,.5); ALPHA=.5; }
@@ -166,17 +189,17 @@ void fragment(){ ALBEDO=vec3(1.,.5,.5); ALPHA=.5; }
 render_mode cull_disabled,shadows_disabled,blend_mix,depth_draw_never;
 void fragment(){ ALBEDO=vec3(1.,.85,.3); ALPHA=.5; }
 """
-		# 5 — blend_mix + unshaded  (no lighting path)
+		# 5 — blend_mix + unshaded
 		4: return """shader_type spatial;
 render_mode cull_disabled,shadows_disabled,blend_mix,unshaded;
 void fragment(){ ALBEDO=vec3(.4,1.,.5); ALPHA=.5; }
 """
-		# 6 — additive blend  (blend_add + unshaded)
+		# 6 — additive blend
 		5: return """shader_type spatial;
 render_mode cull_disabled,shadows_disabled,blend_add,depth_draw_never,unshaded;
 void fragment(){ ALBEDO=vec3(.3,.3,.7); ALPHA=1.; }
 """
-		# 7 — IGN discard at 50% density  (current cloud approach)
+		# 7 — IGN discard 50%
 		6: return """shader_type spatial;
 render_mode cull_disabled,shadows_disabled;
 void fragment(){
@@ -185,7 +208,7 @@ void fragment(){
 	ALBEDO=vec3(.8,.9,1.);
 }
 """
-		# 8 — Bayer 4x4 ordered dither at 50%
+		# 8 — Bayer 4x4 ordered dither 50%
 		7: return """shader_type spatial;
 render_mode cull_disabled,shadows_disabled;
 void fragment(){
@@ -199,24 +222,29 @@ void fragment(){
 	ALBEDO=vec3(.8,.9,1.);
 }
 """
-		# 9 — FBM cloud noise + IGN discard  (noise-shaped opaque)
+		# 9 — FBM + IGN, animated per-layer (main cloud candidate)
 		8: return ("shader_type spatial;\nrender_mode cull_disabled,shadows_disabled;\n"
+				+ "uniform float u_time=0.;\n"
+				+ "uniform vec2  u_scroll=vec2(1.,0.);\n"
+				+ "uniform float u_speed=0.04;\n"
+				+ "uniform vec3  u_tint=vec3(1.,1.,1.);\n"
 				+ _FBM_GLSL
 				+ """void fragment(){
-	float d=_fbm(UV*8.);
-	float density=smoothstep(.35,.65,d);
-	float ign=fract(52.9829189*fract(dot(FRAGCOORD.xy,vec2(.06711056,.00583715))));
-	if(density<ign) discard;
-	ALBEDO=mix(vec3(.62,.68,.75),vec3(1.,1.,1.),density);
+	vec2 uv = UV + u_scroll * u_time * u_speed;
+	float d = _fbm(uv * 8.0);
+	float density = smoothstep(.35, .65, d);
+	float ign = fract(52.9829189*fract(dot(FRAGCOORD.xy,vec2(.06711056,.00583715))));
+	if (density < ign) discard;
+	ALBEDO = mix(vec3(.62,.68,.75), vec3(1.,1.,1.), density) * u_tint;
 }
 """)
-		# 10 — FBM cloud noise + blend_mix  (holy grail: real alpha with cloud shape)
+		# 10 — FBM + blend_mix (visible against terrain, invisible against sky)
 		9: return ("shader_type spatial;\nrender_mode cull_disabled,shadows_disabled,blend_mix,depth_draw_never;\n"
 				+ _FBM_GLSL
 				+ """void fragment(){
-	float d=_fbm(UV*8.);
-	ALBEDO=mix(vec3(.62,.68,.75),vec3(1.,1.,1.),d);
-	ALPHA=smoothstep(.35,.65,d);
+	float d = _fbm(UV * 8.0);
+	ALBEDO = mix(vec3(.62,.68,.75), vec3(1.,1.,1.), d);
+	ALPHA  = smoothstep(.35, .65, d);
 }
 """)
 	return ""

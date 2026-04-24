@@ -20,7 +20,7 @@ extends Node3D
 
 # -- Camera --
 var camera: Camera3D
-var cam_speed: float = 20.0
+var cam_speed: float = 80.0
 var mouse_sens: float = 0.003
 var pitch: float = 0.0
 var yaw: float = 0.0
@@ -77,6 +77,10 @@ var _prev_joy := {}
 
 # -- Cloud pane transparency test gallery --
 var _pane_test: Node3D = null
+
+# -- ESC info menu --
+var _esc_open : bool = false
+var _esc_layer: CanvasLayer = null
 
 # -- Geometry stress test --
 var stress_node: Node3D = null
@@ -269,7 +273,9 @@ func _input(event):
 					if _pane_test:
 						_pane_test.toggle()
 		else:
-			if event.is_action_pressed("lighting_test"):
+			if event.keycode == KEY_ESCAPE:
+				_toggle_esc()
+			elif event.is_action_pressed("lighting_test"):
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 				get_tree().change_scene_to_file("res://world.tscn")
 
@@ -845,64 +851,98 @@ func _build_hud():
 
 	preset_label = Label.new()
 	preset_label.name = "PresetLabel"
-	preset_label.position = Vector2(20, 350)
+	preset_label.position = Vector2(20, 160)
 	preset_label.add_theme_font_size_override("font_size", 24)
 	preset_label.add_theme_color_override("font_color", Color(1, 1, 0))
 	preset_label.add_theme_stylebox_override("normal", label_bg)
 	hud.add_child(preset_label)
 
-	controls_label = Label.new()
-	controls_label.name = "ControlsLabel"
-	controls_label.position = Vector2(20, 620)
-	controls_label.add_theme_font_size_override("font_size", 13)
-	controls_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-	controls_label.add_theme_stylebox_override("normal", label_bg)
-	controls_label.text = "KB: Shift+L Preset | Shift+S Shadows | Shift+N Normals | Shift+M ShadowDist | Shift+A Ambient | Shift+G Stress | Shift+F Flash | Shift+T Time | Shift+B Bench | Shift+Q Log | F2 Landscape\nPS: L1 Preset | R1 Shadows | Tri Normals | Sq Stress | DPad U/D Ambient | DPad L/R ShDist | L3 Flash | R3 Time | Opt Bench | Create Log | O Landscape"
-	hud.add_child(controls_label)
+	var esc_hint = Label.new()
+	esc_hint.text = "ESC — info & controls"
+	esc_hint.position = Vector2(20, 270)
+	esc_hint.add_theme_font_size_override("font_size", 13)
+	esc_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	esc_hint.add_theme_stylebox_override("normal", label_bg)
+	hud.add_child(esc_hint)
+	_build_esc_menu()
 
-	# UAT test checklist — right side of screen
-	var uat_label = Label.new()
-	uat_label.name = "UATLabel"
-	uat_label.anchor_right = 1.0
-	uat_label.position = Vector2(900, 20)
-	uat_label.add_theme_font_size_override("font_size", 14)
-	uat_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7))
-	uat_label.add_theme_stylebox_override("normal", label_bg)
-	uat_label.text = """--- UAT TEST FLOW ---
+func _build_esc_menu():
+	_esc_layer = CanvasLayer.new()
+	_esc_layer.name = "EscMenu"
+	_esc_layer.layer = 30
+	_esc_layer.visible = false
+	add_child(_esc_layer)
+
+	var bg = ColorRect.new()
+	bg.color = Color(0, 0, 0, 0.82)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_esc_layer.add_child(bg)
+
+	var ctrl_lbl = Label.new()
+	ctrl_lbl.text = """[ESC to close]
+
+KEYBOARD / CONTROLLER:
+  Shift+L / L1         Cycle lighting preset
+  Shift+S / R1         Toggle shadows
+  Shift+N / Triangle   Toggle normal maps
+  Shift+M / DPad L/R   Shadow distance
+  Shift+A / DPad U/D   Ambient energy
+  Shift+G / Square     Cycle stress test
+  Shift+F / L3         Flashlight
+  Shift+T / R3         Pause / play time
+  Shift+B / Options    Start / stop benchmark
+  Shift+Q / Create     Write CSV log
+  Shift+P              Toggle pane gallery
+  [ / ]                Add / remove pane layers
+  F2 / Circle          Return to world.tscn
+
+CAMERA:
+  WASD + Mouse         Fly
+  Ctrl / RT            Sprint (5x)
+  Space / A            Ascend
+  C / LT               Descend"""
+	ctrl_lbl.position = Vector2(60, 50)
+	ctrl_lbl.add_theme_font_size_override("font_size", 15)
+	ctrl_lbl.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7))
+	_esc_layer.add_child(ctrl_lbl)
+
+	var uat_lbl = Label.new()
+	uat_lbl.text = """UAT TEST FLOW
+
 1. TEXTURE ZONES (visual check):
-   Fly to each plane, confirm correct texture:
    - Grass (Y=100): green, not sand
    - Sand (Y=52): beach texture near water
    - Stone (Y=250): grey rock texture
    - Snow (Y=380): white snow texture
-   - Slope: cliff/triplanar stone on face
+   - Slope: cliff / triplanar stone on face
 
-2. LIGHTING PRESETS (Shift+L / L1):
-   Cycle all 5. For each, check:
-   - Shadows cast on ground? (Noon/Sunset/Dawn)
+2. LIGHTING PRESETS (Shift+L):
+   Cycle all 5. For each:
+   - Shadows cast? (Noon/Sunset/Dawn)
    - Night: ambient only, no sun
    - Colours change naturally?
 
-3. SHADOWS PERF (Shift+S / R1):
-   At Noon preset, toggle shadows:
-   - Note FPS with shadows ON
-   - Note FPS with shadows OFF
-   - Delta = shadow cost on your GPU
+3. SHADOWS PERF (Shift+S):
+   Note FPS with shadows ON vs OFF.
 
-4. SHADOW DISTANCE (Shift+M / DPad L/R):
-   Cycle 100/300/500/1000/2000m:
-   - Note FPS at each setting
-   - Find sweet spot for quality vs perf
+4. SHADOW DISTANCE (Shift+M):
+   Cycle 100 / 300 / 500 / 1000 / 2000m.
+   Find quality vs perf sweet spot.
 
-5. STRESS TEST (Shift+G / Square):
-   Cycle through geometry levels:
-   - Note FPS at each density level
-   - With shadows ON vs OFF at each level
+5. STRESS TEST (Shift+G):
+   FPS at each density + with/without shadows.
 
-6. BENCHMARK (Shift+B / Options):
-   Run auto-flythrough, then Shift+Q to save CSV.
-   Check logs/ folder for results."""
-	hud.add_child(uat_label)
+6. BENCHMARK (Shift+B):
+   Auto-flythrough → Shift+Q → check logs/"""
+	uat_lbl.position = Vector2(680, 50)
+	uat_lbl.add_theme_font_size_override("font_size", 15)
+	uat_lbl.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7))
+	_esc_layer.add_child(uat_lbl)
+
+func _toggle_esc():
+	_esc_open = not _esc_open
+	_esc_layer.visible = _esc_open
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _esc_open else Input.MOUSE_MODE_CAPTURED
 
 func _update_hud():
 	var fps = Performance.get_monitor(Performance.TIME_FPS)
@@ -917,18 +957,14 @@ func _update_hud():
 	var bench_status = "IDLE"
 	if benchmark_active:
 		bench_status = "PASS %d/%d: %s" % [benchmark_pass_idx + 1, benchmark_passes.size(), benchmark_passes[benchmark_pass_idx]["label"]]
-	stats_label.text = "FPS: %d\nFrame: %.1f ms\nObjects: %d\nPrimitives: %d\nMemory: %.0f MB\n---\nTime: %02d:%02d %s\nShadows: %s (%dm)\nNormals: %s\nAmbient: %.2f\nSun: %.2f\nFlashlight: %s\nStress: %s\n---\nCAM: %.0f, %.0f, %.0f\nBenchmark: %s" % [
-		fps, frame_ms, objects, prims, mem,
-		time_h, time_m, "PLAY" if time_running else "PAUSED",
-		"ON" if sun_light.shadow_enabled else "OFF",
-		int(sun_light.directional_shadow_max_distance),
-		"ON" if normals_enabled else "OFF",
-		environment.ambient_light_energy,
-		sun_light.light_energy,
-		"ON" if flashlight.visible else "OFF",
-		stress_level_names[stress_level],
+	var shd = ("ON %dm" % int(sun_light.directional_shadow_max_distance)) if sun_light.shadow_enabled else "OFF"
+	stats_label.text = "FPS: %d   %.1f ms\nObjs: %d   Tris: %d   Mem: %.0f MB\n%02d:%02d %s  [%s]\nShd: %s   Stress: %s\nCAM: %.0f, %.0f, %.0f%s" % [
+		fps, frame_ms, int(objects), int(prims), mem,
+		time_h, time_m, "PLAY" if time_running else "PAUSE",
+		PRESETS[current_preset]["name"],
+		shd, stress_level_names[stress_level],
 		camera.position.x, camera.position.y, camera.position.z,
-		bench_status
+		"\nBENCH: " + bench_status if benchmark_active else ""
 	]
 
 	preset_label.text = "%02d:%02d" % [time_h, time_m]
