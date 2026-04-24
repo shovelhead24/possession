@@ -75,6 +75,9 @@ var preset_label: Label
 # -- Controller edge detection (DS4Windows may not deliver InputEventJoypadButton) --
 var _prev_joy := {}
 
+# -- Cloud pane transparency test gallery --
+var _pane_test: Node3D = null
+
 # -- Geometry stress test --
 var stress_node: Node3D = null
 var stress_level: int = 0
@@ -129,6 +132,14 @@ func _ready():
 		add_child(clouds)
 	else:
 		push_error("LightingTest: could not load cloud_system.gd")
+
+	var pane_script = load("res://cloud_pane_test.gd")
+	if pane_script:
+		_pane_test = pane_script.new()
+		_pane_test.name = "CloudPaneTest"
+		add_child(_pane_test)
+	else:
+		push_error("LightingTest: could not load cloud_pane_test.gd")
 
 # ------------------------------------------------------------------ #
 #  CAMERA                                                             #
@@ -254,6 +265,9 @@ func _input(event):
 					time_running = not time_running
 				KEY_Q:
 					_write_log()
+				KEY_P:
+					if _pane_test:
+						_pane_test.toggle()
 		else:
 			if event.is_action_pressed("lighting_test"):
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
