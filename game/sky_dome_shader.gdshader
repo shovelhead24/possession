@@ -1,7 +1,7 @@
 // Sky dome shader — 5-face cubemap (dn omitted, ground always occludes it).
 // Face orientations are baked into the PNG files — no runtime transforms needed.
 shader_type spatial;
-render_mode unshaded, cull_front, depth_draw_never;
+render_mode unshaded, cull_front, depth_draw_opaque;
 
 uniform sampler2D face_ft : filter_linear, repeat_disable;  // front  -Z
 uniform sampler2D face_bk : filter_linear, repeat_disable;  // back   +Z
