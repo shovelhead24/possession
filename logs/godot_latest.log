@@ -8,3 +8,133 @@ Unrecognized output string "misc2" in mapping:
 Unrecognized output string "misc2" in mapping:
 030000007e0500006920000000000000,Nintendo Switch 2 Pro Controller,a:b0,b:b1,back:b14,dpdown:b8,dpleft:b10,dpright:b9,dpup:b11,guide:b16,leftshoulder:b12,leftstick:b15,lefttrigger:b13,leftx:a0,lefty:a1~,misc1:b17,misc2:b20,paddle1:b18,paddle2:b19,rightshoulder:b4,rightstick:b7,righttrigger:b5,rightx:a2,righty:a3~,start:b6,x:b2,y:b3,platform:Windows,
 Native OpenGL API detected: 3.3: Intel - Intel(R) UHD Graphics
+SDL: Init OK!
+Using "winink" pen tablet driver...
+Shader 'CanvasSdfShaderGLES3' SHA256: 40c856f97ed9b9a1228861e55e1f799133f969d3b56a29ac4ea5b8f8d86aa4c9
+Shader 'SkeletonShaderGLES3' SHA256: 458bf18804dd7dedab683ef2a142a670aa923aa3bd6bc6f305980593cfcdd74e
+Shader 'ParticlesShaderGLES3' SHA256: 5d7d09c90aea5d02b5ed8a1c68edd5e44a19936e65a7a10ad984c9dab66926ca
+Shader 'ParticlesCopyShaderGLES3' SHA256: db3fe9ed7098dcf01cd1fa9e603e39507efc9f3adac399253b686aee341601ce
+Shader 'CopyShaderGLES3' SHA256: 2f17acc5e8f566725fe68c7e0f3b29ff0a57e93a5bf18f4d90c38032e8c0c768
+Shader 'CubemapFilterShaderGLES3' SHA256: b93f42ba06d15e957d4ebe858f6d527c71594a647801d71c8b0fad40988f0dd5
+Shader 'GlowShaderGLES3' SHA256: 8a67bc830b3148bc25fe8c6885c0733c76be79bd8871ebd2c74e221eb09d77f8
+Shader 'PostShaderGLES3' SHA256: 3704a4dcc1ab2ee70c8e7b89d7329323f2472185fcd1afb266eb67e82732129e
+Shader 'FeedShaderGLES3' SHA256: 2502ebb8eac6fb9ab2fef61924d3d772eaaf147dae9ac9c8cfb59d853a56af87
+Shader 'CanvasShaderGLES3' SHA256: f82a42d86a0e33823a5dec3fcbe33af136ec77020abc32320d74521c366bcb0e
+Shader 'CanvasOcclusionShaderGLES3' SHA256: 0525e49cebfa6e8a2e4ee725e50b44806d74cf5d17e4957358391449bbe8648d
+Shader 'SceneShaderGLES3' SHA256: cc931699124cf9e75997c67a445b98ac657d946e36e523d12e007ef1a954f1b9
+Shader 'SkyShaderGLES3' SHA256: 4bce99c1cb2bb53e4e7b066fe460f61037137f33c125a6e225f4a46abf2a330e
+OpenGL API 3.3.0 - Build 31.0.101.2137 - Compatibility - Using Device: Intel - Intel(R) UHD Graphics
+WASAPI: Activated output_device using IAudioClient3 interface
+WASAPI: wFormatTag = 65534
+WASAPI: nChannels = 2
+WASAPI: nSamplesPerSec = 48000
+WASAPI: nAvgBytesPerSec = 384000
+WASAPI: nBlockAlign = 8
+WASAPI: wBitsPerSample = 32
+WASAPI: cbSize = 22
+WASAPI: mix_rate = 48000
+WASAPI: fundamental_period_frames = 480
+WASAPI: min_period_frames = 480
+WASAPI: max_period_frames = 480
+WASAPI: selected a period frame size of 480
+WASAPI: detected 2 channels
+WASAPI: audio buffer frames: 480 calculated latency: 10ms
+
+TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
+CORE API HASH: 937899573
+EDITOR API HASH: 1777164193
+SceneTreeFTI: traversal method DEFAULT
+Loaded system CA certificates
+Loading resource: res://lighting_test.tscn
+Loading resource: res://lighting_test_controller.gd
+Loading resource: res://sky_dome_shader.gdshader
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01ft.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] _build_sky_dome (res://lighting_test_controller.gd:407)
+       [1] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01bk.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] _build_sky_dome (res://lighting_test_controller.gd:407)
+       [1] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01lf.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] _build_sky_dome (res://lighting_test_controller.gd:407)
+       [1] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01rt.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] _build_sky_dome (res://lighting_test_controller.gd:407)
+       [1] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://skybox/Installation05_01up.png'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load_from_file (core/io/image.cpp:2541)
+   GDScript backtrace (most recent call first):
+       [0] _build_sky_dome (res://lighting_test_controller.gd:407)
+       [1] _ready (res://lighting_test_controller.gd:119)
+WARNING: Loaded resource as image file, this will not work on export: 'res://grass.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:958)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:966)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:485)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:438)
+       [4] _ready (res://lighting_test_controller.gd:120)
+WARNING: Loaded resource as image file, this will not work on export: 'res://snow.jpeg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:958)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:967)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:485)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:438)
+       [4] _ready (res://lighting_test_controller.gd:120)
+WARNING: Loaded resource as image file, this will not work on export: 'res://stone.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:958)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:968)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:485)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:438)
+       [4] _ready (res://lighting_test_controller.gd:120)
+WARNING: Loaded resource as image file, this will not work on export: 'res://sand.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:958)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:969)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:485)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:438)
+       [4] _ready (res://lighting_test_controller.gd:120)
+WARNING: Loaded resource as image file, this will not work on export: 'res://grass_normal.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:958)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:970)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:485)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:438)
+       [4] _ready (res://lighting_test_controller.gd:120)
+WARNING: Loaded resource as image file, this will not work on export: 'res://stone_normal.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:958)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:971)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:485)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:438)
+       [4] _ready (res://lighting_test_controller.gd:120)
+WARNING: Loaded resource as image file, this will not work on export: 'res://snow_normal.jpg'. Instead, import the image file as an Image resource and load it normally as a resource.
+   at: load (core/io/image.cpp:2531)
+   GDScript backtrace (most recent call first):
+       [0] _load_tex (res://terrain_chunk.gd:958)
+       [1] _ensure_textures_loaded (res://terrain_chunk.gd:972)
+       [2] _build_terrain_material (res://lighting_test_controller.gd:485)
+       [3] _build_test_geometry (res://lighting_test_controller.gd:438)
+       [4] _ready (res://lighting_test_controller.gd:120)
+Loading resource: res://terrain_shader.gdshader
+Loading resource: res://water_shader.gdshader
+Loading resource: res://cloud_system.gd
+Loading resource: res://cloud_shader.gdshader
+CloudSystem: ready, mat=true
+CloudSystem: camera found at (0.0, 110.0, 80.0)
+CloudSystem: spawned chunk (-4, -5) lod=2 verts=1
+CloudSystem: spawned chunk (-3, -5) lod=2 verts=1
+CloudSystem: spawned chunk (-2, -5) lod=2 verts=1
