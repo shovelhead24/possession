@@ -1,6 +1,5 @@
-// Sky dome shader — direct cubemap face sampling, no panorama bake needed.
-// Per-face rotation (0-3 = 0/90/180/270 CCW) and flip (0/1) let you tune
-// orientation in-game: [ ] selects face, Shift+R rotates, Shift+H flips.
+// Sky dome shader — 5-face cubemap (dn omitted, ground always occludes it).
+// Face orientations are baked into the PNG files — no runtime transforms needed.
 shader_type spatial;
 render_mode unshaded, cull_front, depth_draw_never;
 
@@ -9,8 +8,6 @@ uniform sampler2D face_bk : filter_linear, repeat_disable;  // back   +Z
 uniform sampler2D face_lf : filter_linear, repeat_disable;  // left   -X
 uniform sampler2D face_rt : filter_linear, repeat_disable;  // right  +X
 uniform sampler2D face_up : filter_linear, repeat_disable;  // up     +Y
-uniform sampler2D face_dn : filter_linear, repeat_disable;  // down   -Y
-
 
 // Day/night
 uniform float sun_elevation : hint_range(-90.0, 90.0) = 45.0;
@@ -62,18 +59,18 @@ void fragment() {
 	float ax = abs(dir.x), ay = abs(dir.y), az = abs(dir.z);
 	vec3 sky;
 
-	if (ax >= ay && ax >= az) {
+	if (dir.y < 0.0 && ay >= ax && ay >= az) {
+		// Below horizon — ground will cover this, return void
+		ALBEDO = vec3(0.0);
+		return;
+	} else if (ax >= ay && ax >= az) {
 		if (dir.x > 0.0) {
 			sky = texture(face_rt, vec2(-dir.z / ax, -dir.y / ax) * 0.5 + 0.5).rgb;
 		} else {
 			sky = texture(face_lf, vec2( dir.z / ax, -dir.y / ax) * 0.5 + 0.5).rgb;
 		}
 	} else if (ay >= az) {
-		if (dir.y > 0.0) {
-			sky = texture(face_up, vec2( dir.x / ay,  dir.z / ay) * 0.5 + 0.5).rgb;
-		} else {
-			sky = texture(face_dn, vec2( dir.x / ay, -dir.z / ay) * 0.5 + 0.5).rgb;
-		}
+		sky = texture(face_up, vec2( dir.x / ay,  dir.z / ay) * 0.5 + 0.5).rgb;
 	} else {
 		if (dir.z < 0.0) {
 			sky = texture(face_ft, vec2( dir.x / az, -dir.y / az) * 0.5 + 0.5).rgb;

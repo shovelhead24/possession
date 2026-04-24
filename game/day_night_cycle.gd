@@ -23,15 +23,6 @@ var sky_shader_material: ShaderMaterial
 var sky_dome: MeshInstance3D = null
 var _water_material: ShaderMaterial = null
 
-# Skybox face dev tool — [ ] selects face, Shift+] rotates, Shift+[ flips
-# Transforms applied to Image data (re-uploads texture) — no shader uniforms needed
-const _SKY_FACES = ["ft", "bk", "lf", "rt", "up", "dn"]
-var _sky_face: int = 0
-var _sky_rot: Array  = [0, 0, 0, 0, 0, 0]
-var _sky_flip: Array = [0, 0, 0, 0, 0, 0]
-var _sky_images: Array = []    # original unmodified face images
-var _sky_textures: Array = []  # live ImageTexture per face — updated in-place to avoid GPU crash
-
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
 var sun_color_sunset = Color(1.0, 0.6, 0.4)
@@ -48,13 +39,11 @@ func _ready():
 	if not sun_light:
 		sun_light = get_tree().get_first_node_in_group("sun")
 	if not sun_light:
-		# Search for any DirectionalLight3D in the scene
 		for child in get_parent().get_children():
 			if child is DirectionalLight3D:
 				sun_light = child
 				break
 
-	# Only create if none found
 	if not sun_light:
 		sun_light = DirectionalLight3D.new()
 		sun_light.shadow_enabled = true
@@ -67,15 +56,11 @@ func _ready():
 	# The dedicated WeaponLight inside the SubViewport handles weapon illumination.
 	sun_light.light_cull_mask = 0xFFFFFD  # all layers except layer 2
 
-	# Setup environment
 	setup_environment()
-
 	print("Day/Night cycle started at time: ", time_of_day)
 
 func setup_environment():
-	# Look for existing WorldEnvironment node
 	world_env = get_node_or_null("/root/World/WorldEnvironment")
-
 	if not world_env:
 		world_env = WorldEnvironment.new()
 		get_parent().add_child(world_env)
@@ -87,11 +72,10 @@ func setup_environment():
 		environment = Environment.new()
 		world_env.environment = environment
 
-	# GL Compatibility does NOT support shader_type sky — the Sky resource always
-	# renders black.  Use a sky dome instead: a large sphere rendered from the inside
-	# with a shader_type spatial material, which works in every renderer.
+	# GL Compatibility does NOT support shader_type sky — use a sky dome instead:
+	# a large sphere rendered from the inside with a shader_type spatial material.
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color  = Color(0.02, 0.04, 0.10)  # deep-night fallback
+	environment.background_color  = Color(0.02, 0.04, 0.10)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	environment.ambient_light_color  = Color(0.5, 0.6, 0.7)
 	environment.ambient_light_energy = 0.3
@@ -104,32 +88,25 @@ func setup_environment():
 	sky_shader_material = ShaderMaterial.new()
 	sky_shader_material.shader = dome_shader
 
-	# Load 6 cubemap faces — store originals + live textures (updated in-place to avoid GPU crash)
-	_sky_images.clear()
-	_sky_textures.clear()
-	var face_paths = [
-		"res://skybox/Installation05_01ft.png",
-		"res://skybox/Installation05_01bk.png",
-		"res://skybox/Installation05_01lf.png",
-		"res://skybox/Installation05_01rt.png",
-		"res://skybox/Installation05_01up.png",
-		"res://skybox/Installation05_01dn.png",
-	]
-	for i in range(6):
-		var face_img = Image.load_from_file(face_paths[i])
-		if face_img:
-			face_img.convert(Image.FORMAT_RGBA8)  # must match format used in update() calls
-			_sky_images.append(face_img)
-			var tex := ImageTexture.create_from_image(face_img)
-			_sky_textures.append(tex)
-			sky_shader_material.set_shader_parameter("face_" + _SKY_FACES[i], tex)
+	# Load 5 faces — dn omitted, ground always occludes it.
+	# Orientations are baked into the PNGs; no runtime transforms needed.
+	var faces = {
+		"ft": "res://skybox/Installation05_01ft.png",
+		"bk": "res://skybox/Installation05_01bk.png",
+		"lf": "res://skybox/Installation05_01lf.png",
+		"rt": "res://skybox/Installation05_01rt.png",
+		"up": "res://skybox/Installation05_01up.png",
+	}
+	for face in faces:
+		var img = Image.load_from_file(faces[face])
+		if img:
+			img.convert(Image.FORMAT_RGBA8)
+			sky_shader_material.set_shader_parameter("face_" + face, ImageTexture.create_from_image(img))
 		else:
-			_sky_images.append(Image.new())
-			_sky_textures.append(ImageTexture.new())
-			push_error("DayNightCycle: missing skybox face: " + face_paths[i])
+			push_error("DayNightCycle: missing skybox face: " + faces[face])
 
 	var sphere     = SphereMesh.new()
-	sphere.radius  = 9000.0   # must be < camera.far (12000) to avoid far-plane clipping artifacts
+	sphere.radius  = 9000.0
 	sphere.height  = 18000.0
 	sphere.radial_segments = 128
 	sphere.rings   = 64
@@ -141,15 +118,13 @@ func setup_environment():
 	sky_dome.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	sky_dome.gi_mode    = GeometryInstance3D.GI_MODE_DISABLED
 	sky_dome.layers     = 1
-	# Defer add_child — calling it during _ready() while parent is still
-	# initialising children causes a "parent node is busy" error and silently
-	# drops the node, leaving the sky dome invisible.
+	# Defer add_child — calling during _ready() while parent initialises children
+	# causes a "parent node is busy" error and silently drops the node.
 	get_parent().add_child.call_deferred(sky_dome)
-	print("DayNightCycle: Sky dome created (GL Compat spatial shader)")
+	print("DayNightCycle: Sky dome created")
 
 # Controller edge-detection state for L1
 var _l1_was_pressed: bool = false
-var _debug_raycast_enabled: bool = true
 
 func _unhandled_input(event):
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -160,66 +135,6 @@ func _unhandled_input(event):
 				KEY_T:
 					_resume_cycle()
 
-func _input(event):
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F5:
-			_debug_raycast_enabled = !_debug_raycast_enabled
-			print("DEBUG: sun visibility raycast ", "ON" if _debug_raycast_enabled else "OFF")
-		if event.keycode == KEY_F7:
-			if sky_dome:
-				sky_dome.visible = !sky_dome.visible
-				print("DEBUG: sky dome visible = ", sky_dome.visible)
-		if event.keycode == KEY_BRACKETLEFT:
-			if event.shift_pressed:
-				_sky_flip[_sky_face] = 1 - _sky_flip[_sky_face]
-				_sky_apply()
-			else:
-				_sky_face = (_sky_face - 1 + 6) % 6
-				_sky_log()
-		if event.keycode == KEY_BRACKETRIGHT:
-			if event.shift_pressed:
-				_sky_rot[_sky_face] = (_sky_rot[_sky_face] + 1) % 4
-				_sky_apply()
-			else:
-				_sky_face = (_sky_face + 1) % 6
-				_sky_log()
-
-func _sky_apply():
-	_sky_log()  # log intent before any GPU work
-	call_deferred("_sky_apply_deferred", _sky_face, _sky_rot[_sky_face], _sky_flip[_sky_face])
-
-func _sky_apply_deferred(face_idx: int, rot: int, flip: int):
-	print("SKY_DBG: enter deferred face=", face_idx, " rot=", rot, " flip=", flip)
-	if not sky_shader_material:
-		print("SKY_DBG: no shader material, abort")
-		return
-	if _sky_images.size() < 6 or _sky_textures.size() < 6:
-		print("SKY_DBG: arrays not ready sizes=", _sky_images.size(), "/", _sky_textures.size())
-		return
-	print("SKY_DBG: duplicating image")
-	var img: Image = _sky_images[face_idx].duplicate()
-	print("SKY_DBG: format=", img.get_format(), " size=", img.get_size())
-	img.convert(Image.FORMAT_RGBA8)
-	print("SKY_DBG: converted, applying transforms rot=", rot, " flip=", flip)
-	if rot == 1:
-		img.rotate_90(1)
-	elif rot == 2:
-		img.rotate_90(0)
-		img.rotate_90(0)
-	elif rot == 3:
-		img.rotate_90(0)
-	if flip == 1:
-		img.flip_x()
-	print("SKY_DBG: calling ImageTexture.update()")
-	_sky_textures[face_idx].update(img)
-	print("SKY_DBG: update complete")
-
-func _sky_log():
-	print("SKY face=[%s] rot=%d flip=%d | rots=%s flips=%s" % [
-		_SKY_FACES[_sky_face], _sky_rot[_sky_face], _sky_flip[_sky_face],
-		_sky_rot, _sky_flip
-	])
-
 func _process(delta):
 	# Poll controller L1 with edge detection
 	var l1 = Input.is_joy_button_pressed(0, JOY_BUTTON_LEFT_SHOULDER)
@@ -227,7 +142,6 @@ func _process(delta):
 		_cycle_preset()
 	_l1_was_pressed = l1
 
-	# Update time (0.0 to 1.0 representing full day)
 	if not cycle_paused:
 		time_of_day += delta / day_length_seconds
 		if time_of_day >= 1.0:
@@ -246,10 +160,8 @@ func _cycle_preset():
 	var p = PRESETS[current_preset]
 	time_of_day = p["time"]
 	cycle_paused = true
-	# Apply overrides after next update_sun/update_lighting
 	update_sun()
 	update_lighting()
-	# Override with preset values
 	sun_light.light_energy = p["sun_energy"]
 	sun_light.shadow_enabled = p["shadow"]
 	if environment:
@@ -262,74 +174,56 @@ func _resume_cycle():
 	print("Day/night cycle resumed")
 
 func update_sun():
-	# Compute sun direction vector to match sky dome visual position exactly
 	var sun_elevation = sin(time_of_day * TAU - PI / 2.0) * 90.0
 	var sun_azimuth_deg = fmod(time_of_day * 360.0 + 180.0, 360.0)
 	var er = deg_to_rad(sun_elevation)
 	var ar = deg_to_rad(sun_azimuth_deg)
 	var sun_dir = Vector3(cos(er) * sin(ar), sin(er), cos(er) * cos(ar))
-	# Point light FROM the sun TOWARD the ground (light travels -sun_dir)
 	if sun_dir.length_squared() > 0.001:
 		var up = Vector3.FORWARD if abs(sun_dir.y) > 0.99 else Vector3.UP
 		sun_light.basis = Basis.looking_at(-sun_dir, up)
 
 func update_lighting():
-	# Get sun's actual elevation angle in degrees (-90 to 90)
 	var sun_elevation = sin(time_of_day * TAU - PI/2.0) * 90
-
-	# Check if sun is occluded by terrain
 	var sun_visible = check_sun_visibility()
 
 	var sun_intensity: float
 	var sun_color: Color
 	var ambient_color: Color
 
-	# Determine lighting based on sun position AND visibility
-	if sun_elevation > 30:  # High in sky - full day
+	if sun_elevation > 30:
 		sun_intensity = 1.0
 		sun_color = sun_color_day
 		ambient_color = ambient_day
-
-	elif sun_elevation > 10:  # Getting lower - late afternoon
+	elif sun_elevation > 10:
 		var t = (30 - sun_elevation) / 20
 		sun_intensity = lerp(1.0, 0.3, t)
 		sun_color = sun_color_day.lerp(sun_color_sunset, t)
 		ambient_color = ambient_day
-
-	elif sun_elevation > -5:  # Sunset zone (just above/below horizon)
+	elif sun_elevation > -5:
 		var t = (10 - sun_elevation) / 15
-
-		# If sun is blocked by terrain, transition faster to night
 		if not sun_visible:
 			t = min(t + 0.4, 1.0)
-
 		sun_intensity = lerp(0.3, 0.0, t)
 		sun_color = sun_color_sunset.lerp(sun_color_night, t)
 		ambient_color = ambient_day.lerp(ambient_night, t)
-
-	else:  # Below horizon - night
+	else:
 		sun_intensity = 0.0
 		sun_color = sun_color_night
 		ambient_color = ambient_night
 
-	# Apply lighting changes
 	sun_light.light_energy = sun_intensity
 	sun_light.light_color = sun_color
-
-	# Hide sun when it's truly below horizon
 	sun_light.visible = sun_elevation > -5
 
-	# Update environment ambient
 	if environment:
 		environment.ambient_light_color  = ambient_color
 		environment.ambient_light_energy = 0.3 if sun_elevation > 0 else 0.15
-		# Update fog color for time of day
 		var fog_day = Color(0.52, 0.62, 0.78)
 		var fog_night = Color(0.05, 0.06, 0.10)
 		var fog_t = clampf(sun_elevation / 30.0, 0.0, 1.0)
 		environment.fog_light_color = fog_day.lerp(fog_night, 1.0 - fog_t)
 
-	# Push sun direction to water shader
 	if not _water_material:
 		var tm = get_node_or_null("/root/World/TerrainManager")
 		if tm and "water_plane" in tm and tm.water_plane:
@@ -339,7 +233,6 @@ func update_lighting():
 		_water_material.set_shader_parameter("sun_direction",
 			Vector3(sun_dir.x, sun_dir.y, sun_dir.z))
 
-	# Push sun position to sky dome shader
 	var sun_azimuth = fmod(time_of_day * 360.0 + 180.0, 360.0)
 	if sky_shader_material:
 		sky_shader_material.set_shader_parameter("sun_elevation", sun_elevation)
@@ -347,26 +240,17 @@ func update_lighting():
 		sky_shader_material.set_shader_parameter("sun_color",
 				Vector3(sun_color.r, sun_color.g, sun_color.b))
 
-
 func check_sun_visibility() -> bool:
-	if not _debug_raycast_enabled:
-		return true
 	var sun_direction = -sun_light.global_transform.basis.z
 	var space_state = get_world_3d().direct_space_state
 	var camera = get_viewport().get_camera_3d()
-
 	if not camera or not camera.is_inside_tree():
 		return true
-
 	var from = camera.global_position
 	var to = from - (sun_direction * 1000)
-
 	var query = PhysicsRayQueryParameters3D.create(from, to)
-	query.collision_mask = 1  # Set to your terrain's collision layer
-
-	var result = space_state.intersect_ray(query)
-	return result.is_empty()  # True if nothing blocks the sun
-
+	query.collision_mask = 1
+	return space_state.intersect_ray(query).is_empty()
 
 func get_time_string() -> String:
 	var hours = int(time_of_day * 24)
