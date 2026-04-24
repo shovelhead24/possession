@@ -219,15 +219,8 @@ while ($true) {
         if ($host.UI.RawUI.KeyAvailable) {
             $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
             if ($key.Character -eq 'l' -or $key.Character -eq 'L') {
-                $hashBefore = git -C $projectPath rev-parse HEAD 2>$null
                 Push-Log
                 $lastHash = git -C $projectPath rev-parse HEAD 2>$null
-                # Push-Log pulls before pushing the log commit — if new code arrived,
-                # Godot must be relaunched or those commits are silently ignored.
-                if ($lastHash -ne $hashBefore) {
-                    Write-Host "$(Get-Date -Format HH:mm:ss) New commits pulled during log push - relaunching Godot..." -ForegroundColor Yellow
-                    $godotProcess = Start-Godot $godotProcess
-                }
             }
         }
     }
@@ -249,15 +242,8 @@ while ($true) {
                 Write-Host "    $c" -ForegroundColor White
             }
         }
-        # Only relaunch for real code commits — skip pure log pushes
-        $codeCommits = git -C $projectPath log --oneline "$prevHash..HEAD" 2>$null |
-            Where-Object { $_ -notmatch '^\S+ log:' }
-        if ($codeCommits) {
-            Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
-            $godotProcess = Start-Godot $godotProcess
-        } else {
-            Write-Host "$(Get-Date -Format HH:mm:ss) Log-only commits — skipping relaunch" -ForegroundColor DarkGray
-        }
+        Write-Host "$(Get-Date -Format HH:mm:ss) Relaunching Godot..."
+        $godotProcess = Start-Godot $godotProcess
     }
 
     # Heartbeat every 4 polls (~60s) so you can confirm the watcher is alive
