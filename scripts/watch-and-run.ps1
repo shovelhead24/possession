@@ -219,8 +219,15 @@ while ($true) {
         if ($host.UI.RawUI.KeyAvailable) {
             $key = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
             if ($key.Character -eq 'l' -or $key.Character -eq 'L') {
+                $hashBefore = git -C $projectPath rev-parse HEAD 2>$null
                 Push-Log
                 $lastHash = git -C $projectPath rev-parse HEAD 2>$null
+                # Push-Log pulls before pushing the log commit — if new code arrived,
+                # Godot must be relaunched or those commits are silently ignored.
+                if ($lastHash -ne $hashBefore) {
+                    Write-Host "$(Get-Date -Format HH:mm:ss) New commits pulled during log push - relaunching Godot..." -ForegroundColor Yellow
+                    $godotProcess = Start-Godot $godotProcess
+                }
             }
         }
     }
