@@ -133,8 +133,16 @@ Loading resource: res://terrain_shader.gdshader
 Loading resource: res://water_shader.gdshader
 Loading resource: res://cloud_system.gd
 Loading resource: res://cloud_shader.gdshader
+Loading resource: res://cloud_layer_shader.gdshader
 CloudSystem: ready, mat=true
 CloudSystem: camera found at (0.0, 110.0, 80.0)
 CloudSystem: spawned chunk (-4, -5) lod=2 verts=1
 CloudSystem: spawned chunk (-3, -5) lod=2 verts=1
 CloudSystem: spawned chunk (-2, -5) lod=2 verts=1
+CloudSystem: approach 1 (layered FBM)
+CloudSystem: approach 0 (marching-cubes IGN)
+CloudSystem: approach 1 (layered FBM)
+CloudSystem: approach 0 (marching-cubes IGN)
+CloudSystem: approach 1 (layered FBM)
+CloudSystem: approach 0 (marching-cubes IGN)
+CloudSystem: approach 1 (layered FBM)
