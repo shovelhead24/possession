@@ -1176,50 +1176,43 @@ func get_noise_height_at_position(world_pos: Vector3) -> float:
 	# Scale to world height with biome height multiplier
 	var final_height = height * terrain_height * traits.height_multiplier
 
-	# --- Structured terrain: radial zone shaping + river carving ---
+	# --- Structured terrain: valley running along X axis, walls rising on Z sides ---
 	if use_structured_terrain:
 		var wx = world_pos.x
 		var wz = world_pos.z
-		var dist = sqrt(wx * wx + wz * wz)
+		var abs_z = absf(wz)
+		var ring_half = ring_width * 0.5  # 5000m
 
-		# Zone factor: 0.0 = pure plains, 1.0 = full mountains
-		var zone_factor: float
-		if dist < plains_radius:
-			zone_factor = 0.0
-		elif dist < foothills_radius:
-			zone_factor = smoothstep_gd(plains_radius, foothills_radius, dist)
-		else:
-			zone_factor = 1.0
+		# Cross-sectional profile: flat valley floor → rising foothills → steep wall approach
+		var zone_factor = smoothstep_gd(2000.0, 4500.0, abs_z)   # 0=valley 1=mountains
+		var wall_factor  = smoothstep_gd(3800.0, ring_half, abs_z) # extra height near wall
 
-		# Plains target: gentle undulation above water level
+		# Valley floor: gentle rolling plains
 		var plains_noise = (noise.get_noise_2d(x * 0.003, z * 0.003) + 1.0) * 0.5
 		var plains_target = plains_base_height + plains_noise * plains_variation
 
-		# Mountain target: boost noise height to push peaks into snow zone (300m+)
-		var mountain_target = final_height * mountain_boost
+		# Mountain sides: boosted noise forced toward wall height
+		var mountain_target = final_height * mountain_boost + wall_factor * 180.0
 
-		# Blend between plains and mountains
-		final_height = lerp(plains_target, mountain_target, zone_factor)
+		# Blend floor → mountains based on Z distance from centreline
+		final_height = lerpf(plains_target, mountain_target, zone_factor)
 
-		# River carving — suppress in mountain zone where water plane looks wrong
-		var river_suppress = smoothstep_gd(foothills_radius - 500.0, foothills_radius + 200.0, dist)
-		if river_suppress < 1.0:
-			var river_center_z = get_river_center_z(wx)
-			var river_dist = abs(wz - river_center_z)
-
-			# Width tapers: wide gentle river in plains → narrow gorge in foothills
-			var active_half_width = lerp(25.0, 8.0, zone_factor)
-			var active_bank_width = lerp(30.0, 12.0, zone_factor)
-
-			var river_factor = smoothstep_gd(
-				active_half_width + active_bank_width,
-				active_half_width,
-				river_dist)
-			river_factor *= (1.0 - river_suppress)
-
-			# River bottom sits below water plane so it fills with water
+		# Rivers: two small warthog-crossable rivers in the valley
+		var river_zone = 1.0 - smoothstep_gd(1600.0, 2400.0, abs_z)
+		if river_zone > 0.01:
 			var river_bottom = absolute_water_height - 2.0
-			final_height = lerp(final_height, river_bottom, river_factor)
+
+			# River A: meanders south of the road
+			var ra_center = get_river_center_z(wx) - 500.0
+			var ra_dist = absf(wz - ra_center)
+			var ra_factor = smoothstep_gd(16.0, 7.0, ra_dist) * river_zone
+			final_height = lerpf(final_height, river_bottom, ra_factor)
+
+			# River B: meanders north of the road, different phase
+			var rb_center = get_river_center_z(wx + 7777.0) * 0.6 + 620.0
+			var rb_dist = absf(wz - rb_center)
+			var rb_factor = smoothstep_gd(14.0, 6.0, rb_dist) * river_zone * 0.85
+			final_height = lerpf(final_height, river_bottom + 0.5, rb_factor)
 
 	# Central road: flat band running along X axis at Z=0, traverses the ring
 	const ROAD_HALF_W := 8.0
