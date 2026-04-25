@@ -133,11 +133,42 @@ Loading resource: res://terrain_shader.gdshader
 Loading resource: res://water_shader.gdshader
 Loading resource: res://cloud_system.gd
 Loading resource: res://cloud_shader.gdshader
+Loading resource: res://cloud_billboard_shader.gdshader
 Loading resource: res://cloud_layer_shader.gdshader
 CloudSystem: ready, mat=true
 Loading resource: res://cloud_pane_test.gd
 PaneTest: ready  |  [ ] layers  |  Shift+P toggle  |  pane 9 animated
 CloudSystem: camera found at (0.0, 110.0, 80.0)
-CloudSystem: spawned chunk (-4, -5) lod=2 verts=1
-CloudSystem: spawned chunk (-3, -5) lod=2 verts=1
-CloudSystem: spawned chunk (-2, -5) lod=2 verts=1
+CloudSystem: spawned chunk (-1, -2) lod=0 verts=1
+CloudSystem: spawned chunk (0, -2) lod=0 verts=1
+CloudSystem: spawned chunk (-2, -1) lod=0 verts=1
+CloudSystem: MC off
+CloudSystem: billboard off
+CloudSystem: billboard on
+CloudSystem: billboard off
+CloudSystem: MC on
+CloudSystem: MC off
+CloudSystem: layers off
+CloudSystem: layers on
+CloudSystem: layers off
+CloudSystem: billboard on
+CloudSystem: billboard off
+CloudSystem: billboard on
+CloudSystem: billboard off
+CloudSystem: MC on
+CloudSystem: layers on
+CloudSystem: MC off
+CloudSystem: MC on
+CloudSystem: billboard on
+CloudSystem: billboard off
+CloudSystem: MC off
+CloudSystem: MC on
+CloudSystem: layers off
+CloudSystem: layers on
+CloudSystem: layers off
+CloudSystem: MC off
+CloudSystem: MC on
+CloudSystem: MC off
+CloudSystem: billboard on
+CloudSystem: billboard off
+CloudSystem: layers on
