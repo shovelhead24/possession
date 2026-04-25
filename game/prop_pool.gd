@@ -205,7 +205,7 @@ func _find_and_fix_first_mesh(node: Node) -> Mesh:
 				if mat and mat is BaseMaterial3D:
 					var m := (mat as BaseMaterial3D).duplicate() as BaseMaterial3D
 					m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-					m.alpha_scissor_threshold = 0.5
+					m.alpha_scissor_threshold = 0.2
 					m.cull_mode = BaseMaterial3D.CULL_DISABLED
 					fixed_mesh.surface_set_material(s, m)
 			return fixed_mesh
@@ -256,7 +256,7 @@ func calculate_tree_pivot_offsets():
 			# The mesh bounds show trees at Y=0, but they appear to float
 			# This suggests internal GLTF transforms are causing visual offset
 			# Try -3.0 to push trees down into terrain
-			var visual_correction = -3.0
+			var visual_correction = 0.0
 			offset += visual_correction
 
 			tree_pivot_offsets[tree_name] = offset
@@ -424,7 +424,7 @@ func fix_grass_materials(root_node: Node):
 								# Create and cache new fixed material
 								var new_mat = base_mat.duplicate() as BaseMaterial3D
 								new_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-								new_mat.alpha_scissor_threshold = 0.5
+								new_mat.alpha_scissor_threshold = 0.2
 								new_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 								_material_cache[mat_rid] = new_mat
 								mesh_instance.set_surface_override_material(surface_idx, new_mat)
@@ -634,7 +634,7 @@ func create_tree_billboard(tree_name: String) -> MeshInstance3D:
 	# Create billboard material
 	var mat = StandardMaterial3D.new()
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-	mat.alpha_scissor_threshold = 0.5
+	mat.alpha_scissor_threshold = 0.2
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED  # Face camera
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX  # Some shading for depth
@@ -812,7 +812,7 @@ func fix_tree_materials(root_node: Node):
 								# Create and cache new fixed material
 								var new_mat = base_mat.duplicate() as BaseMaterial3D
 								new_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-								new_mat.alpha_scissor_threshold = 0.5
+								new_mat.alpha_scissor_threshold = 0.2
 								new_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 								_material_cache[mat_rid] = new_mat
 								mesh_instance.set_surface_override_material(surface_idx, new_mat)

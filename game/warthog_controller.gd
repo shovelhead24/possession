@@ -158,7 +158,7 @@ func position_on_terrain():
 
 	if terrain_manager and terrain_manager.has_method("get_height_at_position"):
 		var terrain_height = terrain_manager.get_height_at_position(global_position)
-		global_position.y = terrain_height + 1.5  # Slight offset so wheels touch ground
+		global_position.y = terrain_height + 0.5  # Just above ground so wheels land cleanly
 		print("Warthog: Positioned at height ", terrain_height)
 
 func _on_editor_mode_changed(active: bool) -> void:
@@ -242,7 +242,7 @@ func enter_vehicle(player: Node3D):
 	if old_parent:
 		old_parent.remove_child(driver)
 	add_child(driver)
-	driver.position = Vector3(0.2, 1.3, -0.55)  # Seat position inside vehicle
+	driver.position = Vector3(0.2, 1.3, 0.4)  # Seat position — pushed forward to windscreen
 	driver.rotation.y = PI  # Face forward (vehicle model's front is +Z, player default faces -Z)
 
 	print("Warthog: Player entered!")

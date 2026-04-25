@@ -1221,6 +1221,16 @@ func get_noise_height_at_position(world_pos: Vector3) -> float:
 			var river_bottom = absolute_water_height - 2.0
 			final_height = lerp(final_height, river_bottom, river_factor)
 
+	# Central road: flat band running along X axis at Z=0, traverses the ring
+	const ROAD_HALF_W := 8.0
+	const ROAD_BLEND_W := 10.0
+	var road_abs_z = absf(world_pos.z)
+	if road_abs_z < ROAD_HALF_W + ROAD_BLEND_W:
+		var road_t = smoothstep_gd(ROAD_HALF_W, ROAD_HALF_W + ROAD_BLEND_W, road_abs_z)
+		# Road height follows terrain's X profile at centreline, suppresses lateral variation
+		var road_h = plains_base_height + (noise.get_noise_2d(world_pos.x * 0.002, 0.0) + 1.0) * 0.5 * 3.0
+		final_height = lerpf(road_h, final_height, road_t)
+
 	return final_height
 
 # GDScript smoothstep helper

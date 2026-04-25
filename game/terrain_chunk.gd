@@ -472,6 +472,14 @@ func generate_terrain():
 				color = rock_color.lerp(snow_color, clamp(t, 0.0, 1.0))
 
 		color.a = grass_weights[i] if grass_weights.size() > i else 0.0
+
+		# Road colour: asphalt grey band along X axis at Z=0
+		var road_world_z = absf(position.z + vert.z)
+		if road_world_z < 18.0:
+			var road_blend = 1.0 - smoothstep(8.0, 18.0, road_world_z)
+			var road_col = Color(0.22, 0.22, 0.24, color.a)
+			color = color.lerp(road_col, road_blend)
+
 		colors[i] = color
 	
 	arrays[Mesh.ARRAY_VERTEX] = vertices
