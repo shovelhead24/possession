@@ -66,12 +66,15 @@ void fragment() {
 	// Base cloud colour
 	vec3 base_color = mix(color_bottom, color_top, layer_t + d * 0.15);
 
-	// Sunset/sunrise Rayleigh scatter: warm tint on fragments facing the sun
-	if (scatter > 0.01 && dist > 1.0) {
-		vec2 frag_dir  = _plane_offset / dist;
-		float sun_face = max(0.0, dot(frag_dir, sun_dir_xz));
-		sun_face = pow(sun_face, 2.5) * scatter;
-		base_color = mix(base_color, sun_tint, sun_face * 0.75);
+	// Sunset/sunrise: global warm tint on all cloud fragments + directional boost
+	if (scatter > 0.01) {
+		base_color = mix(base_color, sun_tint, scatter * 0.5);
+		if (dist > 1.0) {
+			vec2 frag_dir  = _plane_offset / dist;
+			float sun_face = max(0.0, dot(frag_dir, sun_dir_xz));
+			sun_face = pow(sun_face, 1.5) * scatter;
+			base_color = mix(base_color, sun_tint, sun_face * 0.9);
+		}
 	}
 
 	ALBEDO = base_color * cloud_brightness;
