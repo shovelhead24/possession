@@ -58,6 +58,16 @@ var preset_dir     : int  = 0
 var _weather_brightness_mult : float = 1.0
 var _layers        : Array = []
 
+# Weather transition state
+var _tr_t    : float = 1.0   # 1.0 = complete
+var _tr_dur  : float = 60.0
+var _tr_from_coverage   : Array = [0.42, 0.08, 0.01]
+var _tr_from_softness   : Array = [0.14, 0.24, 0.30]
+var _tr_from_brightness : float = 1.0
+var _tr_to_coverage     : Array = [0.42, 0.08, 0.01]
+var _tr_to_softness     : Array = [0.14, 0.24, 0.30]
+var _tr_to_brightness   : float = 1.0
+
 # ── Marching-cubes lookup tables ─────────────────────────────────────────────
 # edgeTable[256] — which of the 12 edges are cut for each of 256 vertex configs
 const EDGE_TABLE := [
@@ -425,7 +435,7 @@ func _unhandled_input(event):
 		KEY_Z: show_layers = not show_layers; _apply_visibility(); print("CloudSystem: layers ", "on" if show_layers else "off")
 		KEY_W:
 			preset_weather = (preset_weather + 1) % WEATHER_NAMES.size()
-			_apply_weather_preset()
+			transition_to_weather(preset_weather, 5.0)
 			print("CloudSystem: weather → ", WEATHER_NAMES[preset_weather])
 		KEY_7: preset_speed = 0; _apply_wind_preset(); print("CloudSystem: slow")
 		KEY_8: preset_speed = 1; _apply_wind_preset(); print("CloudSystem: normal speed")
@@ -448,6 +458,34 @@ func set_sun_scatter(dir_xz: Vector2, scatter_factor: float, tint: Color):
 		mat.set_shader_parameter("sun_dir_xz", dir_xz)
 		mat.set_shader_parameter("scatter",    scatter_factor)
 		mat.set_shader_parameter("sun_tint",   tint)
+
+func transition_to_weather(target_idx: int, duration: float = 60.0):
+	preset_weather = target_idx
+	var wp = WEATHER_PRESETS[WEATHER_NAMES[target_idx]]
+	# Snapshot current material values as start point
+	for i in _layers.size():
+		var mat = _layers[i].material_override as ShaderMaterial
+		if not mat: continue
+		_tr_from_coverage[i] = mat.get_shader_parameter("coverage")
+		_tr_from_softness[i] = mat.get_shader_parameter("softness")
+	_tr_from_brightness = _weather_brightness_mult
+	for i in 3:
+		_tr_to_coverage[i] = wp["layers"][i][0]
+		_tr_to_softness[i] = wp["layers"][i][1]
+	_tr_to_brightness = wp["brightness"]
+	_tr_dur = duration
+	_tr_t   = 0.0
+
+func _tick_weather_transition(delta: float):
+	if _tr_t >= 1.0: return
+	_tr_t = minf(_tr_t + delta / _tr_dur, 1.0)
+	var t = _tr_t * _tr_t * (3.0 - 2.0 * _tr_t)  # smoothstep ease
+	_weather_brightness_mult = lerpf(_tr_from_brightness, _tr_to_brightness, t)
+	for i in _layers.size():
+		var mat = _layers[i].material_override as ShaderMaterial
+		if not mat: continue
+		mat.set_shader_parameter("coverage", lerpf(_tr_from_coverage[i], _tr_to_coverage[i], t))
+		mat.set_shader_parameter("softness",  lerpf(_tr_from_softness[i], _tr_to_softness[i], t))
 
 func _apply_visibility():
 	for lm in _layers:
@@ -527,7 +565,8 @@ func _build_layers():
 		add_child(mi)
 		_layers.append(mi)
 
-func _process(_delta):
+func _process(delta):
+	_tick_weather_transition(delta)
 	if not _camera:
 		_camera = get_viewport().get_camera_3d()
 		if _camera:

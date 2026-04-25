@@ -9,6 +9,8 @@ var cycle_paused: bool = false  # True when a preset is active (Shift+L/L1 to cy
 var sun_light: DirectionalLight3D
 var environment: Environment
 var world_env: WorldEnvironment
+var _weather_timer: float = 0.0
+const WEATHER_CYCLE_INTERVAL := 180.0  # 3 minutes
 
 # Lighting presets — same as lighting test (Shift+L / L1 to cycle)
 const PRESETS = [
@@ -147,6 +149,10 @@ func _unhandled_input(event):
 					_cycle_preset()
 				KEY_T:
 					_resume_cycle()
+				KEY_C:
+					if _cloud_system:
+						_cloud_system.debug_active = not _cloud_system.debug_active
+						print("DayNightCycle: cloud debug ", "on" if _cloud_system.debug_active else "off")
 
 func _process(delta):
 	# Poll controller L1 with edge detection
@@ -159,6 +165,14 @@ func _process(delta):
 		time_of_day += delta / day_length_seconds
 		if time_of_day >= 1.0:
 			time_of_day -= 1.0
+
+	if _cloud_system and _cloud_system.is_inside_tree():
+		_weather_timer += delta
+		if _weather_timer >= WEATHER_CYCLE_INTERVAL:
+			_weather_timer = 0.0
+			var next = (_cloud_system.preset_weather + 1) % 3
+			_cloud_system.call("transition_to_weather", next, 60.0)
+			print("DayNightCycle: auto weather → ", next)
 
 	update_sun()
 	update_lighting()
