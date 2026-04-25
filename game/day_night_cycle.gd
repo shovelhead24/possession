@@ -267,7 +267,7 @@ func update_lighting():
 				Vector3(sun_color.r, sun_color.g, sun_color.b))
 
 	if _cloud_system and _cloud_system.is_inside_tree():
-		var b = clampf(remap(sun_elevation, -5.0, 60.0, 0.2, 1.0), 0.2, 1.0)
+		var b = clampf(remap(sun_elevation, -5.0, 60.0, 0.4, 1.0), 0.4, 1.0)
 		_cloud_system.call("set_cloud_brightness", b)
 		var ar = deg_to_rad(sun_azimuth)
 		var sun_xz = Vector2(sin(ar), cos(ar))
