@@ -6,8 +6,8 @@ const CUMULUS_TOP  := 1200.0
 const CHUNK_XZ     := 512.0
 const CHUNK_Y      := (CUMULUS_TOP - CUMULUS_BASE)
 const ALTOCUM_Y    := 2800.0
-const CIRRUS_BASE  := 1800.0
-const CIRRUS_TOP   := 2800.0
+const CIRRUS_BASE  := 1000.0
+const CIRRUS_TOP   := 1800.0
 
 # [max_horiz_dist, lod_type (0=MC 1=billboard), grid_xz, grid_y]
 const LODS := [
@@ -426,6 +426,12 @@ func _unhandled_input(event):
 			preset_dir = (preset_dir + 1) % DIR_PRESETS.size()
 			_apply_layer_presets()
 			print("CloudSystem: dir ", DIR_NAMES[preset_dir])
+
+func set_cloud_brightness(b: float):
+	for lm in _layers:
+		var mat = lm.material_override as ShaderMaterial
+		if mat:
+			mat.set_shader_parameter("cloud_brightness", b)
 
 func _apply_visibility():
 	for lm in _layers:

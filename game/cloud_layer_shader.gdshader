@@ -1,8 +1,9 @@
 shader_type spatial;
-render_mode cull_disabled, shadows_disabled, blend_mix, depth_draw_never;
+render_mode cull_disabled, shadows_disabled, blend_mix, depth_draw_never, unshaded;
 
 uniform vec3  color_top    : source_color = vec3(1.0,  1.0,  1.0);
 uniform vec3  color_bottom : source_color = vec3(0.58, 0.64, 0.72);
+uniform float cloud_brightness : hint_range(0.0, 1.0) = 0.5;
 uniform float coverage     : hint_range(0.0, 1.0) = 0.52;
 uniform float softness     : hint_range(0.05, 0.4) = 0.18;
 uniform float noise_scale  : hint_range(0.00005, 0.001) = 0.00018;
@@ -56,6 +57,6 @@ void fragment() {
 	float dist        = length(_plane_offset);
 	float horizon     = 1.0 - smoothstep(plane_half_size * 0.45, plane_half_size, dist);
 
-	ALBEDO = mix(color_bottom, color_top, layer_t + d * 0.15);
+	ALBEDO = mix(color_bottom, color_top, layer_t + d * 0.15) * cloud_brightness;
 	ALPHA  = d * horizon;
 }

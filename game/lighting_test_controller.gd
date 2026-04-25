@@ -405,6 +405,11 @@ func _update_sun_from_time(t: float):
 		sky_material.set_shader_parameter("sun_color",
 			Vector3(sun_light.light_color.r, sun_light.light_color.g, sun_light.light_color.b))
 
+	# Cloud brightness: dim at night, bright white at noon
+	if _cloud_system:
+		var b = clampf(remap(sun_elevation, -5.0, 60.0, 0.2, 1.0), 0.2, 1.0)
+		_cloud_system.call("set_cloud_brightness", b)
+
 	# Water
 	if water_material:
 		var water_sun = -sun_light.global_transform.basis.z
