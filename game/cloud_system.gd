@@ -11,7 +11,7 @@ const CIRRUS_TOP   := 5500.0
 
 # [max_horiz_dist, lod_type (0=MC 1=billboard), grid_xz, grid_y]
 const LODS := [
-	[1200.0, 0, 24, 12],   # < 1200m 3D: marching cubes (cumulus)
+	[2400.0, 0, 24, 12],   # < 2400m 3D: marching cubes (cumulus)
 	[3500.0, 1,  0,  0],   # < 3500m: billboard (altocumulus)
 	[7000.0, 1,  0,  0],   # < 7000m: billboard far
 ]
@@ -24,7 +24,7 @@ const LAYER_WIND := [
 	[-0.4,   0.35,  0.002],
 	[ 0.3,   0.45,  0.001],
 ]
-const VIEW_RADIUS := 8   # chunks each direction
+const VIEW_RADIUS := 12   # chunks each direction
 const ISO         := 0.05
 
 var _noise    : FastNoiseLite
@@ -424,10 +424,10 @@ func _build_layers():
 	if not shader:
 		push_error("CloudSystem: cloud_layer_shader.gdshader not found")
 		return
-	const NUM_LAYERS := 5
+	const NUM_LAYERS := 1
 	const PLANE_SIZE := 12000.0
 	for i in NUM_LAYERS:
-		var t  = float(i) / float(NUM_LAYERS - 1)
+		var t  = 0.5 if NUM_LAYERS <= 1 else float(i) / float(NUM_LAYERS - 1)
 		var y  = CIRRUS_BASE + t * (CIRRUS_TOP - CIRRUS_BASE)
 		var verts = PackedVector3Array([
 			Vector3(-PLANE_SIZE * 0.5, 0.0, -PLANE_SIZE * 0.5),

@@ -37,13 +37,16 @@ void vertex() {
 	_chunk_uv = UV * 6.0 + cc;
 	_edge_uv  = UV * 4.0 + cc + vec2(17.3, 41.7);
 
-	// Spherical billboard: cancel rotation, keep scale + translation.
+	// Cylindrical billboard: world Y stays vertical, rotates toward camera in XZ only.
+	// VIEW_MATRIX[1].xyz = world-up (0,1,0) expressed in view space.
 	float sx = length(MODELVIEW_MATRIX[0].xyz);
 	float sy = length(MODELVIEW_MATRIX[1].xyz);
 	float sz = length(MODELVIEW_MATRIX[2].xyz);
-	MODELVIEW_MATRIX[0] = vec4(sx, 0.0, 0.0, MODELVIEW_MATRIX[0].w);
-	MODELVIEW_MATRIX[1] = vec4(0.0, sy, 0.0, MODELVIEW_MATRIX[1].w);
-	MODELVIEW_MATRIX[2] = vec4(0.0, 0.0, sz, MODELVIEW_MATRIX[2].w);
+	vec3 world_up = normalize(VIEW_MATRIX[1].xyz);
+	vec3 right    = normalize(cross(vec3(0.0, 0.0, -1.0), world_up)) * sx;
+	MODELVIEW_MATRIX[0] = vec4(right,          MODELVIEW_MATRIX[0].w);
+	MODELVIEW_MATRIX[1] = vec4(world_up * sy,  MODELVIEW_MATRIX[1].w);
+	MODELVIEW_MATRIX[2] = vec4(0.0, 0.0, sz,  MODELVIEW_MATRIX[2].w);
 }
 
 void fragment() {

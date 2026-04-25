@@ -8,9 +8,13 @@ uniform float alpha_edge   : hint_range(0.0, 1.0) = 0.20;
 uniform float cloud_base   : hint_range(0.0, 5000.0) = 1500.0;
 uniform float cloud_top    : hint_range(0.0, 5000.0) = 2000.0;
 
+uniform vec2 wind_speed = vec2(3.0, 1.2);
+
 varying float world_y;
 
 void vertex() {
+	VERTEX.x += TIME * wind_speed.x;
+	VERTEX.z += TIME * wind_speed.y;
 	world_y = (MODEL_MATRIX * vec4(VERTEX, 1.0)).y;
 }
 
