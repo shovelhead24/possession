@@ -442,8 +442,8 @@ func _build_sky_dome():
 			push_error("LightingTest: missing skybox face: " + faces[face])
 
 	var sphere = SphereMesh.new()
-	sphere.radius = 9000.0
-	sphere.height = 18000.0
+	sphere.radius = 14000.0
+	sphere.height = 28000.0
 	sphere.radial_segments = 128
 	sphere.rings = 64
 

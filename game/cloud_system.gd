@@ -6,8 +6,8 @@ const CUMULUS_TOP  := 1200.0
 const CHUNK_XZ     := 512.0
 const CHUNK_Y      := (CUMULUS_TOP - CUMULUS_BASE)
 const ALTOCUM_Y    := 2800.0
-const CIRRUS_BASE  := 4500.0
-const CIRRUS_TOP   := 5500.0
+const CIRRUS_BASE  := 1800.0
+const CIRRUS_TOP   := 2800.0
 
 # [max_horiz_dist, lod_type (0=MC 1=billboard), grid_xz, grid_y]
 const LODS := [
@@ -16,7 +16,7 @@ const LODS := [
 	[7000.0, 1,  0,  0],   # < 7000m: billboard far
 ]
 
-const PLANE_SIZE        := 32000.0  # 32km — covers camera.far in every direction
+const PLANE_SIZE        := 28000.0  # 28km — half=14km matches sky dome radius
 const DENSITY_PRESETS   := [[0.25, 0.12], [0.52, 0.18], [0.72, 0.22]]
 const DENSITY_NAMES     := ["wispy", "normal", "heavy"]
 const SPEED_PRESETS     := [0.003, 0.008, 0.025]

@@ -54,7 +54,7 @@ void fragment() {
 
 	// Horizon fade: full opacity within 55% radius, gone at plane edge
 	float dist        = length(_plane_offset);
-	float horizon     = 1.0 - smoothstep(plane_half_size * 0.55, plane_half_size, dist);
+	float horizon     = 1.0 - smoothstep(plane_half_size * 0.45, plane_half_size, dist);
 
 	ALBEDO = mix(color_bottom, color_top, layer_t + d * 0.15);
 	ALPHA  = d * horizon;
