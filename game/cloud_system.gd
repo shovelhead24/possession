@@ -16,14 +16,19 @@ const LODS := [
 	[7000.0, 1,  0,  0],   # < 7000m: billboard far
 ]
 
-# Per-layer wind: [dir_x, dir_z, speed]
-const LAYER_WIND := [
-	[ 1.0,   0.00,  0.008],
-	[-0.8,   0.15,  0.005],
-	[ 0.5,  -0.25,  0.003],
-	[-0.4,   0.35,  0.002],
-	[ 0.3,   0.45,  0.001],
+const PLANE_SIZE        := 32000.0  # 32km — covers camera.far in every direction
+const DENSITY_PRESETS   := [[0.25, 0.12], [0.52, 0.18], [0.72, 0.22]]
+const DENSITY_NAMES     := ["wispy", "normal", "heavy"]
+const SPEED_PRESETS     := [0.003, 0.008, 0.025]
+const SPEED_NAMES       := ["slow", "normal", "fast"]
+const DIR_PRESETS       := [
+	Vector2( 1.0,  0.0), Vector2( 0.7,  0.7), Vector2( 0.0,  1.0),
+	Vector2(-0.7,  0.7), Vector2(-1.0,  0.0), Vector2(-0.7, -0.7),
+	Vector2( 0.0, -1.0), Vector2( 0.7, -0.7),
 ]
+const DIR_NAMES         := ["E", "NE", "N", "NW", "W", "SW", "S", "SE"]
+const LAYER_DIR_OFFSETS := [0.0, 35.0, -25.0]  # degrees from base dir per layer
+const LAYER_SPEED_MULT  := [1.0, 0.55, 0.30]   # speed factor per layer
 const VIEW_RADIUS := 12   # chunks each direction
 const ISO         := 0.05
 
@@ -33,9 +38,14 @@ var _billboard_shader : Shader = null
 var _chunks   : Dictionary = {}   # Vector2i → {mi, lod}
 var _camera   : Camera3D = null
 
-var show_mc        : bool = true
-var show_billboard : bool = true
+var show_mc        : bool = false
+var show_billboard : bool = false
 var show_layers    : bool = true
+var debug_active   : bool = false
+var layer_count    : int  = 1
+var preset_density : int  = 1
+var preset_speed   : int  = 1
+var preset_dir     : int  = 0
 var _layers        : Array = []
 
 # ── Marching-cubes lookup tables ─────────────────────────────────────────────
@@ -393,24 +403,29 @@ var _diag_chunks_spawned: int = 0
 func _ready():
 	_setup_noise()
 	_setup_material()
-	_build_layers()
-	_apply_visibility()
+	_rebuild_layers()
 	print("CloudSystem: ready, mat=", _mat != null)
 
 func _unhandled_input(event):
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_V:
-			show_mc = not show_mc
-			_apply_visibility()
-			print("CloudSystem: MC ", "on" if show_mc else "off")
-		elif event.keycode == KEY_B:
-			show_billboard = not show_billboard
-			_apply_visibility()
-			print("CloudSystem: billboard ", "on" if show_billboard else "off")
-		elif event.keycode == KEY_C:
-			show_layers = not show_layers
-			_apply_visibility()
-			print("CloudSystem: layers ", "on" if show_layers else "off")
+	if not debug_active: return
+	if not (event is InputEventKey and event.pressed and not event.echo): return
+	match event.keycode:
+		KEY_V: show_mc = not show_mc; _apply_visibility(); print("CloudSystem: MC ", "on" if show_mc else "off")
+		KEY_B: show_billboard = not show_billboard; _apply_visibility(); print("CloudSystem: billboard ", "on" if show_billboard else "off")
+		KEY_Z: show_layers = not show_layers; _apply_visibility(); print("CloudSystem: layers ", "on" if show_layers else "off")
+		KEY_1: layer_count = 1; _rebuild_layers(); print("CloudSystem: 1 layer")
+		KEY_2: layer_count = 2; _rebuild_layers(); print("CloudSystem: 2 layers")
+		KEY_3: layer_count = 3; _rebuild_layers(); print("CloudSystem: 3 layers")
+		KEY_4: preset_density = 0; _apply_layer_presets(); print("CloudSystem: wispy")
+		KEY_5: preset_density = 1; _apply_layer_presets(); print("CloudSystem: normal density")
+		KEY_6: preset_density = 2; _apply_layer_presets(); print("CloudSystem: heavy")
+		KEY_7: preset_speed = 0; _apply_layer_presets(); print("CloudSystem: slow")
+		KEY_8: preset_speed = 1; _apply_layer_presets(); print("CloudSystem: normal speed")
+		KEY_9: preset_speed = 2; _apply_layer_presets(); print("CloudSystem: fast")
+		KEY_0:
+			preset_dir = (preset_dir + 1) % DIR_PRESETS.size()
+			_apply_layer_presets()
+			print("CloudSystem: dir ", DIR_NAMES[preset_dir])
 
 func _apply_visibility():
 	for lm in _layers:
@@ -419,21 +434,43 @@ func _apply_visibility():
 		var is_bb = _chunks[coord].get("type", 0) == 1
 		_chunks[coord]["mi"].visible = show_billboard if is_bb else show_mc
 
+func _rebuild_layers():
+	for lm in _layers:
+		lm.queue_free()
+	_layers.clear()
+	_build_layers()
+	_apply_layer_presets()
+	_apply_visibility()
+
+func _apply_layer_presets():
+	var dp = DENSITY_PRESETS[preset_density]
+	var sp = SPEED_PRESETS[preset_speed]
+	var base_dir = DIR_PRESETS[preset_dir]
+	for i in _layers.size():
+		var mat = _layers[i].material_override as ShaderMaterial
+		if not mat: continue
+		mat.set_shader_parameter("coverage", dp[0])
+		mat.set_shader_parameter("softness", dp[1])
+		var angle = deg_to_rad(LAYER_DIR_OFFSETS[i])
+		var c = cos(angle); var s = sin(angle)
+		var dir = Vector2(base_dir.x * c - base_dir.y * s, base_dir.x * s + base_dir.y * c)
+		mat.set_shader_parameter("wind_dir",   dir)
+		mat.set_shader_parameter("wind_speed", sp * LAYER_SPEED_MULT[i])
+
 func _build_layers():
 	var shader = load("res://cloud_layer_shader.gdshader") as Shader
 	if not shader:
 		push_error("CloudSystem: cloud_layer_shader.gdshader not found")
 		return
-	const NUM_LAYERS := 1
-	const PLANE_SIZE := 12000.0
-	for i in NUM_LAYERS:
-		var t  = 0.5 if NUM_LAYERS <= 1 else float(i) / float(NUM_LAYERS - 1)
+	var half = PLANE_SIZE * 0.5
+	for i in layer_count:
+		var t  = 0.5 if layer_count <= 1 else float(i) / float(layer_count - 1)
 		var y  = CIRRUS_BASE + t * (CIRRUS_TOP - CIRRUS_BASE)
 		var verts = PackedVector3Array([
-			Vector3(-PLANE_SIZE * 0.5, 0.0, -PLANE_SIZE * 0.5),
-			Vector3( PLANE_SIZE * 0.5, 0.0, -PLANE_SIZE * 0.5),
-			Vector3(-PLANE_SIZE * 0.5, 0.0,  PLANE_SIZE * 0.5),
-			Vector3( PLANE_SIZE * 0.5, 0.0,  PLANE_SIZE * 0.5),
+			Vector3(-half, 0.0, -half),
+			Vector3( half, 0.0, -half),
+			Vector3(-half, 0.0,  half),
+			Vector3( half, 0.0,  half),
 		])
 		var normals = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP])
 		var indices = PackedInt32Array([0, 1, 2, 1, 3, 2])
@@ -445,12 +482,10 @@ func _build_layers():
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 		var mat = ShaderMaterial.new()
 		mat.shader = shader
-		mat.set_shader_parameter("cloud_base",  CIRRUS_BASE)
-		mat.set_shader_parameter("cloud_top",   CIRRUS_TOP)
-		mat.set_shader_parameter("layer_t",     t)
-		var wp = LAYER_WIND[i]
-		mat.set_shader_parameter("wind_dir",   Vector2(wp[0], wp[1]))
-		mat.set_shader_parameter("wind_speed",  wp[2])
+		mat.set_shader_parameter("cloud_base",      CIRRUS_BASE)
+		mat.set_shader_parameter("cloud_top",       CIRRUS_TOP)
+		mat.set_shader_parameter("layer_t",         t)
+		mat.set_shader_parameter("plane_half_size", half)
 		var mi = MeshInstance3D.new()
 		mi.mesh             = mesh
 		mi.material_override = mat
@@ -472,6 +507,13 @@ func _process(_delta):
 	for lm in _layers:
 		lm.global_position.x = _camera.global_position.x
 		lm.global_position.z = _camera.global_position.z
+
+	# Cull all chunks when both MC and billboard are disabled
+	if not show_mc and not show_billboard:
+		for coord in _chunks.keys():
+			_chunks[coord]["mi"].queue_free()
+		_chunks.clear()
+		return
 
 	var cp   = _camera.global_position
 	var ccx  = int(floor(cp.x / CHUNK_XZ))

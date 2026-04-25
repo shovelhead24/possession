@@ -10,9 +10,11 @@ uniform float cloud_base   : hint_range(0.0, 5000.0) = 1500.0;
 uniform float cloud_top    : hint_range(0.0, 5000.0) = 2000.0;
 uniform float layer_t      : hint_range(0.0, 1.0) = 0.5;
 uniform vec2  wind_dir     = vec2(1.0, 0.0);
-uniform float wind_speed   : hint_range(0.0, 0.05) = 0.008;
+uniform float wind_speed       : hint_range(0.0, 0.05) = 0.008;
+uniform float plane_half_size  : hint_range(1000.0, 50000.0) = 16000.0;
 
 varying vec3 world_pos;
+varying vec2 _plane_offset;
 
 float hash2(vec2 p) {
 	p = fract(p * vec2(0.1031, 0.1030));
@@ -40,7 +42,8 @@ float fbm(vec2 p) {
 }
 
 void vertex() {
-	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	world_pos      = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	_plane_offset  = VERTEX.xz;  // local XZ = metres from camera (plane tracks camera)
 }
 
 void fragment() {
@@ -49,6 +52,10 @@ void fragment() {
 	d = smoothstep(threshold - softness, threshold + softness, d);
 	d *= mix(1.0, 0.8, layer_t);
 
+	// Horizon fade: full opacity within 55% radius, gone at plane edge
+	float dist        = length(_plane_offset);
+	float horizon     = 1.0 - smoothstep(plane_half_size * 0.55, plane_half_size, dist);
+
 	ALBEDO = mix(color_bottom, color_top, layer_t + d * 0.15);
-	ALPHA  = d;  // true alpha blend — no discard
+	ALPHA  = d * horizon;
 }

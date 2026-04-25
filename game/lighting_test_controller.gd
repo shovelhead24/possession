@@ -78,6 +78,11 @@ var _prev_joy := {}
 # -- Cloud pane transparency test gallery --
 var _pane_test: Node3D = null
 
+# -- Cloud system --
+var _cloud_system: Node3D = null
+var _cloud_debug: bool = false
+var _cloud_debug_label: Label = null
+
 # -- ESC info menu --
 var _esc_open : bool = false
 var _esc_layer: CanvasLayer = null
@@ -134,6 +139,7 @@ func _ready():
 		var clouds = cloud_script.new()
 		clouds.name = "CloudSystem"
 		add_child(clouds)
+		_cloud_system = clouds
 	else:
 		push_error("LightingTest: could not load cloud_system.gd")
 
@@ -272,6 +278,8 @@ func _input(event):
 				KEY_P:
 					if _pane_test:
 						_pane_test.toggle()
+				KEY_C:
+					_toggle_cloud_debug()
 		else:
 			if event.keycode == KEY_ESCAPE:
 				_toggle_esc()
@@ -894,6 +902,7 @@ KEYBOARD / CONTROLLER:
   Shift+Q / Create     Write CSV log
   Shift+P              Toggle pane gallery
   [ / ]                Add / remove pane layers
+  Shift+C              Toggle cloud debug controls
   F2 / Circle          Return to world.tscn
 
 CAMERA:
@@ -905,6 +914,21 @@ CAMERA:
 	ctrl_lbl.add_theme_font_size_override("font_size", 15)
 	ctrl_lbl.add_theme_color_override("font_color", Color(0.9, 0.9, 0.7))
 	_esc_layer.add_child(ctrl_lbl)
+
+	_cloud_debug_label = Label.new()
+	_cloud_debug_label.text = """CLOUD DEBUG (Shift+C to hide):
+  V   Toggle volumetric (MC)
+  B   Toggle billboards
+  Z   Toggle cirrus layers
+  1/2/3   Layer count (1, 2, 3)
+  4/5/6   Density (wispy / normal / heavy)
+  7/8/9   Speed (slow / normal / fast)
+  0   Cycle wind direction (E/NE/N/NW/W/SW/S/SE)"""
+	_cloud_debug_label.position = Vector2(60, 420)
+	_cloud_debug_label.add_theme_font_size_override("font_size", 15)
+	_cloud_debug_label.add_theme_color_override("font_color", Color(0.6, 0.9, 1.0))
+	_cloud_debug_label.visible = false
+	_esc_layer.add_child(_cloud_debug_label)
 
 	var uat_lbl = Label.new()
 	uat_lbl.text = """UAT TEST FLOW
@@ -943,6 +967,14 @@ func _toggle_esc():
 	_esc_open = not _esc_open
 	_esc_layer.visible = _esc_open
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if _esc_open else Input.MOUSE_MODE_CAPTURED
+
+func _toggle_cloud_debug():
+	_cloud_debug = not _cloud_debug
+	if _cloud_system:
+		_cloud_system.set("debug_active", _cloud_debug)
+	if _cloud_debug_label:
+		_cloud_debug_label.visible = _cloud_debug
+	print("Cloud debug: ", "on" if _cloud_debug else "off")
 
 func _update_hud():
 	var fps = Performance.get_monitor(Performance.TIME_FPS)
