@@ -247,6 +247,8 @@ func update_lighting():
 		var fog_night = Color(0.05, 0.06, 0.10)
 		var fog_t = clampf(sun_elevation / 30.0, 0.0, 1.0)
 		environment.fog_light_color = fog_day.lerp(fog_night, 1.0 - fog_t)
+		environment.fog_enabled = true
+		environment.fog_density = lerpf(0.001, 0.0002, fog_t)
 
 	if not _water_material:
 		var tm = get_node_or_null("/root/World/TerrainManager")
