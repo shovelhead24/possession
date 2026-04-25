@@ -405,10 +405,17 @@ func _update_sun_from_time(t: float):
 		sky_material.set_shader_parameter("sun_color",
 			Vector3(sun_light.light_color.r, sun_light.light_color.g, sun_light.light_color.b))
 
-	# Cloud brightness: dim at night, bright white at noon
+	# Cloud brightness + sunset/sunrise scatter
 	if _cloud_system:
 		var b = clampf(remap(sun_elevation, -5.0, 60.0, 0.2, 1.0), 0.2, 1.0)
 		_cloud_system.call("set_cloud_brightness", b)
+		var ar = deg_to_rad(sun_azimuth_deg)
+		var sun_xz = Vector2(sin(ar), cos(ar))
+		var scatter_f = 0.0
+		if sun_elevation > -5.0 and sun_elevation < 35.0:
+			var rise = clampf((sun_elevation + 5.0) / 10.0, 0.0, 1.0)
+			scatter_f = rise * (1.0 - smoothstep(0.0, 35.0, sun_elevation))
+		_cloud_system.call("set_sun_scatter", sun_xz, scatter_f, sun_light.light_color)
 
 	# Water
 	if water_material:
@@ -922,13 +929,11 @@ CAMERA:
 
 	_cloud_debug_label = Label.new()
 	_cloud_debug_label.text = """CLOUD DEBUG (Shift+C to hide):
-  V   Toggle volumetric (MC)
-  B   Toggle billboards
-  Z   Toggle cirrus layers
-  1/2/3   Layer count (1, 2, 3)
-  4/5/6   Density (wispy / normal / heavy)
-  7/8/9   Speed (slow / normal / fast)
-  0   Cycle wind direction (E/NE/N/NW/W/SW/S/SE)"""
+  W       Cycle weather (clear / overcast / fresh)
+  Z       Toggle cloud layers
+  V / B   Toggle MC / billboards (disabled by default)
+  7/8/9   Wind speed (slow / normal / fast)
+  0       Cycle wind direction (E/NE/N/NW/W/SW/S/SE)"""
 	_cloud_debug_label.position = Vector2(60, 420)
 	_cloud_debug_label.add_theme_font_size_override("font_size", 15)
 	_cloud_debug_label.add_theme_color_override("font_color", Color(0.6, 0.9, 1.0))

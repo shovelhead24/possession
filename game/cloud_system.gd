@@ -6,8 +6,20 @@ const CUMULUS_TOP  := 1200.0
 const CHUNK_XZ     := 512.0
 const CHUNK_Y      := (CUMULUS_TOP - CUMULUS_BASE)
 const ALTOCUM_Y    := 2800.0
-const CIRRUS_BASE  := 1000.0
-const CIRRUS_TOP   := 1800.0
+# Per cloud type: [altitude_m, noise_scale, noise_stretch_x]
+const CLOUD_ALTITUDES   := [900.0, 1800.0, 3000.0]   # cumulus, altocumulus, cirrus
+const CLOUD_TYPE_PARAMS := [
+	[0.00012, 1.0],   # cumulus — large rounded puffs
+	[0.00022, 1.5],   # altocumulus — medium wave patches
+	[0.00030, 6.0],   # cirrus — elongated wispy streaks
+]
+# Weather presets: per-layer [coverage, softness], overall brightness multiplier
+const WEATHER_PRESETS := {
+	"clear":    {"layers": [[0.01, 0.20], [0.22, 0.28], [0.55, 0.35]], "brightness": 1.0},
+	"overcast": {"layers": [[0.80, 0.10], [0.78, 0.12], [0.62, 0.15]], "brightness": 0.5},
+	"fresh":    {"layers": [[0.42, 0.14], [0.08, 0.24], [0.01, 0.30]], "brightness": 1.0},
+}
+const WEATHER_NAMES := ["clear", "overcast", "fresh"]
 
 # [max_horiz_dist, lod_type (0=MC 1=billboard), grid_xz, grid_y]
 const LODS := [
@@ -17,8 +29,6 @@ const LODS := [
 ]
 
 const PLANE_SIZE        := 28000.0  # 28km — half=14km matches sky dome radius
-const DENSITY_PRESETS   := [[0.25, 0.12], [0.52, 0.18], [0.72, 0.22]]
-const DENSITY_NAMES     := ["wispy", "normal", "heavy"]
 const SPEED_PRESETS     := [0.003, 0.008, 0.025]
 const SPEED_NAMES       := ["slow", "normal", "fast"]
 const DIR_PRESETS       := [
@@ -42,10 +52,10 @@ var show_mc        : bool = false
 var show_billboard : bool = false
 var show_layers    : bool = true
 var debug_active   : bool = false
-var layer_count    : int  = 1
-var preset_density : int  = 1
+var preset_weather : int  = 2   # 0=clear 1=overcast 2=fresh
 var preset_speed   : int  = 1
 var preset_dir     : int  = 0
+var _weather_brightness_mult : float = 1.0
 var _layers        : Array = []
 
 # ── Marching-cubes lookup tables ─────────────────────────────────────────────
@@ -413,25 +423,31 @@ func _unhandled_input(event):
 		KEY_V: show_mc = not show_mc; _apply_visibility(); print("CloudSystem: MC ", "on" if show_mc else "off")
 		KEY_B: show_billboard = not show_billboard; _apply_visibility(); print("CloudSystem: billboard ", "on" if show_billboard else "off")
 		KEY_Z: show_layers = not show_layers; _apply_visibility(); print("CloudSystem: layers ", "on" if show_layers else "off")
-		KEY_1: layer_count = 1; _rebuild_layers(); print("CloudSystem: 1 layer")
-		KEY_2: layer_count = 2; _rebuild_layers(); print("CloudSystem: 2 layers")
-		KEY_3: layer_count = 3; _rebuild_layers(); print("CloudSystem: 3 layers")
-		KEY_4: preset_density = 0; _apply_layer_presets(); print("CloudSystem: wispy")
-		KEY_5: preset_density = 1; _apply_layer_presets(); print("CloudSystem: normal density")
-		KEY_6: preset_density = 2; _apply_layer_presets(); print("CloudSystem: heavy")
-		KEY_7: preset_speed = 0; _apply_layer_presets(); print("CloudSystem: slow")
-		KEY_8: preset_speed = 1; _apply_layer_presets(); print("CloudSystem: normal speed")
-		KEY_9: preset_speed = 2; _apply_layer_presets(); print("CloudSystem: fast")
+		KEY_W:
+			preset_weather = (preset_weather + 1) % WEATHER_NAMES.size()
+			_apply_weather_preset()
+			print("CloudSystem: weather → ", WEATHER_NAMES[preset_weather])
+		KEY_7: preset_speed = 0; _apply_wind_preset(); print("CloudSystem: slow")
+		KEY_8: preset_speed = 1; _apply_wind_preset(); print("CloudSystem: normal speed")
+		KEY_9: preset_speed = 2; _apply_wind_preset(); print("CloudSystem: fast")
 		KEY_0:
 			preset_dir = (preset_dir + 1) % DIR_PRESETS.size()
-			_apply_layer_presets()
+			_apply_wind_preset()
 			print("CloudSystem: dir ", DIR_NAMES[preset_dir])
 
 func set_cloud_brightness(b: float):
 	for lm in _layers:
 		var mat = lm.material_override as ShaderMaterial
 		if mat:
-			mat.set_shader_parameter("cloud_brightness", b)
+			mat.set_shader_parameter("cloud_brightness", b * _weather_brightness_mult)
+
+func set_sun_scatter(dir_xz: Vector2, scatter_factor: float, tint: Color):
+	for lm in _layers:
+		var mat = lm.material_override as ShaderMaterial
+		if not mat: continue
+		mat.set_shader_parameter("sun_dir_xz", dir_xz)
+		mat.set_shader_parameter("scatter",    scatter_factor)
+		mat.set_shader_parameter("sun_tint",   tint)
 
 func _apply_visibility():
 	for lm in _layers:
@@ -445,18 +461,26 @@ func _rebuild_layers():
 		lm.queue_free()
 	_layers.clear()
 	_build_layers()
-	_apply_layer_presets()
+	_apply_weather_preset()
+	_apply_wind_preset()
 	_apply_visibility()
 
-func _apply_layer_presets():
-	var dp = DENSITY_PRESETS[preset_density]
+func _apply_weather_preset():
+	var wp = WEATHER_PRESETS[WEATHER_NAMES[preset_weather]]
+	_weather_brightness_mult = wp["brightness"]
+	var layer_data = wp["layers"]
+	for i in _layers.size():
+		var mat = _layers[i].material_override as ShaderMaterial
+		if not mat: continue
+		mat.set_shader_parameter("coverage", layer_data[i][0])
+		mat.set_shader_parameter("softness",  layer_data[i][1])
+
+func _apply_wind_preset():
 	var sp = SPEED_PRESETS[preset_speed]
 	var base_dir = DIR_PRESETS[preset_dir]
 	for i in _layers.size():
 		var mat = _layers[i].material_override as ShaderMaterial
 		if not mat: continue
-		mat.set_shader_parameter("coverage", dp[0])
-		mat.set_shader_parameter("softness", dp[1])
 		var angle = deg_to_rad(LAYER_DIR_OFFSETS[i])
 		var c = cos(angle); var s = sin(angle)
 		var dir = Vector2(base_dir.x * c - base_dir.y * s, base_dir.x * s + base_dir.y * c)
@@ -469,9 +493,9 @@ func _build_layers():
 		push_error("CloudSystem: cloud_layer_shader.gdshader not found")
 		return
 	var half = PLANE_SIZE * 0.5
-	for i in layer_count:
-		var t  = 0.5 if layer_count <= 1 else float(i) / float(layer_count - 1)
-		var y  = CIRRUS_BASE + t * (CIRRUS_TOP - CIRRUS_BASE)
+	for i in 3:
+		var y  = CLOUD_ALTITUDES[i]
+		var tp = CLOUD_TYPE_PARAMS[i]
 		var verts = PackedVector3Array([
 			Vector3(-half, 0.0, -half),
 			Vector3( half, 0.0, -half),
@@ -488,10 +512,12 @@ func _build_layers():
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 		var mat = ShaderMaterial.new()
 		mat.shader = shader
-		mat.set_shader_parameter("cloud_base",      CIRRUS_BASE)
-		mat.set_shader_parameter("cloud_top",       CIRRUS_TOP)
-		mat.set_shader_parameter("layer_t",         t)
+		mat.set_shader_parameter("cloud_base",      y - 200.0)
+		mat.set_shader_parameter("cloud_top",       y + 200.0)
+		mat.set_shader_parameter("layer_t",         float(i) / 2.0)
 		mat.set_shader_parameter("plane_half_size", half)
+		mat.set_shader_parameter("noise_scale",     tp[0])
+		mat.set_shader_parameter("noise_stretch",   Vector2(tp[1], 1.0))
 		var mi = MeshInstance3D.new()
 		mi.mesh             = mesh
 		mi.material_override = mat

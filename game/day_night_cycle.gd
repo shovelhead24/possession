@@ -23,6 +23,7 @@ var sky_shader_material: ShaderMaterial
 var sky_dome: MeshInstance3D = null
 var _water_material: ShaderMaterial = null
 var _sky_textures: Array = []  # holds refs so GC doesn't free GPU textures
+var _cloud_system: Node = null
 
 # Colors for different times of day
 var sun_color_day = Color(1.0, 0.95, 0.8)
@@ -110,8 +111,8 @@ func setup_environment():
 			push_error("DayNightCycle: missing skybox face: " + faces[face])
 
 	var sphere     = SphereMesh.new()
-	sphere.radius  = 9000.0
-	sphere.height  = 18000.0
+	sphere.radius  = 14000.0
+	sphere.height  = 28000.0
 	sphere.radial_segments = 128
 	sphere.rings   = 64
 
@@ -126,6 +127,14 @@ func setup_environment():
 	# causes a "parent node is busy" error and silently drops the node.
 	get_parent().add_child.call_deferred(sky_dome)
 	print("DayNightCycle: Sky dome created")
+
+	var cloud_script = load("res://cloud_system.gd")
+	if cloud_script:
+		_cloud_system = cloud_script.new()
+		_cloud_system.name = "CloudSystem"
+		get_parent().add_child.call_deferred(_cloud_system)
+	else:
+		push_error("DayNightCycle: could not load cloud_system.gd")
 
 # Controller edge-detection state for L1
 var _l1_was_pressed: bool = false
@@ -240,6 +249,17 @@ func update_lighting():
 		sky_shader_material.set_shader_parameter("sun_azimuth",   sun_azimuth)
 		sky_shader_material.set_shader_parameter("sun_color",
 				Vector3(sun_color.r, sun_color.g, sun_color.b))
+
+	if _cloud_system and _cloud_system.is_inside_tree():
+		var b = clampf(remap(sun_elevation, -5.0, 60.0, 0.2, 1.0), 0.2, 1.0)
+		_cloud_system.call("set_cloud_brightness", b)
+		var ar = deg_to_rad(sun_azimuth)
+		var sun_xz = Vector2(sin(ar), cos(ar))
+		var scatter_f = 0.0
+		if sun_elevation > -5.0 and sun_elevation < 35.0:
+			var rise = clampf((sun_elevation + 5.0) / 10.0, 0.0, 1.0)
+			scatter_f = rise * (1.0 - smoothstep(0.0, 35.0, sun_elevation))
+		_cloud_system.call("set_sun_scatter", sun_xz, scatter_f, sun_light.light_color)
 
 
 func get_time_string() -> String:
