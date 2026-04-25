@@ -71,16 +71,19 @@ void fragment() {
 	float e = 0.5;
 	float ndx = fbm(uv + vec2(e, 0.0)) - raw;
 	float ndz = fbm(uv + vec2(0.0, e)) - raw;
-	vec3 fake_normal = normalize(vec3(-ndx * 6.0, 1.0, -ndz * 6.0));
+	vec3 fake_normal = normalize(vec3(-ndx * 10.0, 1.0, -ndz * 10.0));
 
 	// Sun direction with slight upward component (approximate elevation)
 	vec3 sun3d = normalize(vec3(sun_dir_xz.x, 0.4, sun_dir_xz.y));
 	float diffuse = max(0.0, dot(fake_normal, sun3d));
 
 	// Self-shadow: denser cloud interior is darker (simulates depth/thickness)
-	float self_shadow = 1.0 - raw * 0.55;
+	float self_shadow = 1.0 - raw * 0.72;
 
-	base_color *= (0.35 + diffuse * 0.65) * self_shadow;
+	float lighting = (0.20 + diffuse * 0.80) * self_shadow;
+	// Contrast boost: push darks darker, lights lighter
+	lighting = smoothstep(0.0, 1.0, lighting);
+	base_color *= lighting;
 
 	// Sunset/sunrise: global warm tint on all cloud fragments + directional boost
 	if (scatter > 0.01) {
