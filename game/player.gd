@@ -103,7 +103,7 @@ func _ready():
 	# Allow climbing steeper slopes (default is ~45 degrees / 0.785 radians)
 	floor_max_angle = deg_to_rad(70.0)  # Can climb up to 70 degree slopes
 
-	camera.far = 12000.0  # 10km view distance + margin
+	camera.far = 15000.0  # 14km sky dome + margin
 
 	# Store weapon base position for animations
 	if weapon_holder:
