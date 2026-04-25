@@ -54,9 +54,9 @@ void vertex() {
 void fragment() {
 	// noise_stretch elongates cirrus into streaks (x=6 for top layer)
 	vec2 uv = world_pos.xz * (noise_scale * noise_stretch) + wind_dir * TIME * wind_speed;
-	float d = fbm(uv);
+	float raw = fbm(uv);
 	float threshold = 1.0 - coverage;
-	d = smoothstep(threshold - softness, threshold + softness, d);
+	float d = smoothstep(threshold - softness, threshold + softness, raw);
 	d *= mix(1.0, 0.8, layer_t);
 
 	// Horizon fade: full opacity at 45% radius, gone at plane edge
@@ -65,6 +65,22 @@ void fragment() {
 
 	// Base cloud colour
 	vec3 base_color = mix(color_bottom, color_top, layer_t + d * 0.15);
+
+	// Fake surface normal from FBM density gradient (2 extra samples)
+	// Gives each cloud puff a lit dome on top and shadowed sides
+	float e = 0.5;
+	float ndx = fbm(uv + vec2(e, 0.0)) - raw;
+	float ndz = fbm(uv + vec2(0.0, e)) - raw;
+	vec3 fake_normal = normalize(vec3(-ndx * 6.0, 1.0, -ndz * 6.0));
+
+	// Sun direction with slight upward component (approximate elevation)
+	vec3 sun3d = normalize(vec3(sun_dir_xz.x, 0.4, sun_dir_xz.y));
+	float diffuse = max(0.0, dot(fake_normal, sun3d));
+
+	// Self-shadow: denser cloud interior is darker (simulates depth/thickness)
+	float self_shadow = 1.0 - raw * 0.55;
+
+	base_color *= (0.35 + diffuse * 0.65) * self_shadow;
 
 	// Sunset/sunrise: global warm tint on all cloud fragments + directional boost
 	if (scatter > 0.01) {
