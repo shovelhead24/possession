@@ -409,7 +409,6 @@ func _update_sun_from_time(t: float):
 	if _cloud_system:
 		var b = clampf(remap(sun_elevation, -5.0, 60.0, 0.2, 1.0), 0.2, 1.0)
 		_cloud_system.call("set_cloud_brightness", b)
-		var ar = deg_to_rad(sun_azimuth_deg)
 		var sun_xz = Vector2(sin(ar), cos(ar))
 		var scatter_f = 0.0
 		if sun_elevation > -5.0 and sun_elevation < 35.0:
