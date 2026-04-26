@@ -139,6 +139,15 @@ func _ready():
 	# Initial chunk load
 	call_deferred("update_chunks")
 
+	# Spawn objective marker
+	call_deferred("_spawn_objective_manager")
+
+func _spawn_objective_manager():
+	var om = Node3D.new()
+	om.set_script(load("res://objective_manager.gd"))
+	om.name = "ObjectiveManager"
+	add_child(om)
+
 func setup_noise_generator():
 	noise = FastNoiseLite.new()
 	noise.seed = world_seed

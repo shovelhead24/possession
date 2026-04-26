@@ -717,6 +717,15 @@ func generate_props():
 			# Combined forest density - creates clusters with internal variation
 			var local_density = forest_value * 0.7 + thicket_value * 0.3
 
+			# Obstacle cluster hotspots: dense tree stands every ~420m along X
+			var _ci = int(round(world_x / 420.0))
+			var _cx = _ci * 420.0
+			var _cz = 350.0 * (1.0 if _ci % 2 == 0 else -1.0)
+			var _cdist = Vector2(world_x - _cx, world_z - _cz).length()
+			if _cdist < 80.0 and absf(world_z) > 30.0 and absf(world_z) < 1300.0 and world_x > 150.0 and world_x < 2800.0:
+				var _ct = clampf(1.0 - _cdist / 80.0, 0.0, 1.0)
+				local_density = minf(1.0, local_density + _ct * _ct * 0.6)
+
 			# Tree placement threshold - higher density biomes need lower threshold
 			var placement_threshold = 1.0 - tree_density * 0.8  # 0.2 to 1.0
 
@@ -787,6 +796,16 @@ func generate_props():
 			var forest_value = (forest_noise.get_noise_2d(world_x, world_z) + 1.0) * 0.5
 			var thicket_value = (thicket_noise.get_noise_2d(world_x, world_z) + 1.0) * 0.5
 			var local_density = forest_value * 0.7 + thicket_value * 0.3
+
+			# Obstacle cluster hotspots
+			var _ci = int(round(world_x / 420.0))
+			var _cx = _ci * 420.0
+			var _cz = 350.0 * (1.0 if _ci % 2 == 0 else -1.0)
+			var _cdist = Vector2(world_x - _cx, world_z - _cz).length()
+			if _cdist < 80.0 and absf(world_z) > 30.0 and absf(world_z) < 1300.0 and world_x > 150.0 and world_x < 2800.0:
+				var _ct = clampf(1.0 - _cdist / 80.0, 0.0, 1.0)
+				local_density = minf(1.0, local_density + _ct * _ct * 0.6)
+
 			var placement_threshold = 1.0 - tree_density * 0.8
 
 			var should_place = local_density > placement_threshold
