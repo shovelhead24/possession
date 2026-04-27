@@ -50,7 +50,7 @@ func _build_mesh():
 	body_mesh.mesh = box
 	body_mesh.position = Vector3(0, 0.7, 0)
 	var mat := StandardMaterial3D.new()
-	var col_faction := FACTION_COLORS[clamp(faction, 0, 1)]
+	var col_faction: Color = FACTION_COLORS[clamp(faction, 0, 1)]
 	mat.albedo_color = col_faction.lerp(Color(0.5, 0.5, 0.5), 0.7)
 	body_mesh.material_override = mat
 	add_child(body_mesh)
@@ -190,7 +190,7 @@ func _tick_gunner(delta: float):
 	for node in get_tree().get_nodes_in_group(opp_group):
 		if not is_instance_valid(node):
 			continue
-		var d := (node.global_position - global_position).length()
+		var d: float = ((node as Node3D).global_position - global_position).length()
 		if d < best_dist:
 			best_dist = d
 			best_target = node

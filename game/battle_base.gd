@@ -23,7 +23,6 @@ func _ready():
 
 func _make_static_box(size: Vector3, pos: Vector3, color: Color, in_cover_group: bool = false) -> StaticBody3D:
 	var body := StaticBody3D.new()
-	body.global_position = pos
 	if in_cover_group:
 		body.add_to_group("cover")
 
@@ -43,6 +42,7 @@ func _make_static_box(size: Vector3, pos: Vector3, color: Color, in_cover_group:
 	body.add_child(mesh)
 
 	add_child(body)
+	body.global_position = pos
 	return body
 
 func _build_platform():
@@ -73,13 +73,13 @@ func _build_ramp():
 	# Pitch the ramp so it climbs from ground to platform_h
 	var rise_angle := atan2(platform_h, ramp_len)
 	ramp_body.rotation.z = rise_angle
+	add_child(ramp_body)
 	# Position: front face of platform, centred, midway up
 	ramp_body.global_position = base_center + Vector3(
 		-(platform_w * 0.5 + ramp_len * 0.5 * cos(rise_angle)),
 		platform_h * 0.5,
 		0.0
 	)
-	add_child(ramp_body)
 
 func _build_crenelations():
 	# Short battlements along three edges of the platform top (back + two sides).
