@@ -9,3 +9,9 @@
 
 # Old prototype folder - too large and superseded by game/
 # Uncomment to exclude: halo-test - trees 7/
+
+# Mixamo bundles the character mesh with every animation download — only soldier.fbx is needed
+game/shooter animation/Ch44_nonPBR.fbx
+
+# Maya source files — not importable by Godot
+game/t90 tank/
