@@ -27,7 +27,8 @@ var _state_timer: float = 0.0
 var _attack_timer: float = 0.0
 var _pre_hit_state: State = State.PATROL
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
-var _settled: bool = false  # wait for terrain physics to load before moving
+var _settled: bool = false
+var _anim_player: AnimationPlayer = null
 
 func _ready():
 	add_to_group("enemy")
@@ -35,8 +36,36 @@ func _ready():
 	_pick_patrol_target()
 	call_deferred("_find_player")
 	call_deferred("_attach_weapon")
+	call_deferred("_setup_animations")
 	set_physics_process(false)
 	_settle_to_ground.call_deferred()
+
+func _setup_animations():
+	_anim_player = find_child("AnimationPlayer", true, false)
+	if not _anim_player:
+		return
+	var clips := {
+		"idle": "res://shooter animation/rifle aiming idle.fbx",
+		"walk": "res://shooter animation/walking.fbx",
+		"run":  "res://shooter animation/rifle run.fbx",
+		"hit":  "res://shooter animation/hit reaction.fbx",
+		"fire": "res://shooter animation/firing rifle.fbx",
+	}
+	for lib_name in clips:
+		var lib = load(clips[lib_name])
+		if lib and not _anim_player.has_animation_library(lib_name):
+			_anim_player.add_animation_library(lib_name, lib)
+	_play_anim("idle")
+
+func _play_anim(lib_name: String):
+	if not _anim_player:
+		return
+	# Mixamo names the clip "mixamo.com" inside each library
+	for candidate in [lib_name + "/mixamo.com", lib_name + "/Take 001", lib_name]:
+		if _anim_player.has_animation(candidate):
+			if _anim_player.current_animation != candidate:
+				_anim_player.play(candidate)
+			return
 
 func _attach_weapon():
 	var skeleton = find_child("Skeleton3D", true, false) as Skeleton3D
@@ -111,15 +140,18 @@ func _tick_patrol(delta):
 	if to_target.length() < 2.0:
 		velocity.x = 0.0
 		velocity.z = 0.0
+		_play_anim("idle")
 		_state_timer -= delta
 		if _state_timer <= 0.0:
 			_pick_patrol_target()
 		return
+	_play_anim("walk")
 	_move_toward(to_target.normalized(), walk_speed, delta)
 
 func _tick_alert(delta):
 	velocity.x = 0.0
 	velocity.z = 0.0
+	_play_anim("idle")
 	_state_timer -= delta
 	if _state_timer <= 0.0:
 		_enter_patrol()
@@ -133,6 +165,7 @@ func _tick_chase(delta):
 		state = State.ATTACK
 		_attack_timer = 0.5
 		return
+	_play_anim("run")
 	_move_toward(to_player.normalized(), run_speed, delta)
 
 func _tick_attack(delta):
@@ -146,14 +179,17 @@ func _tick_attack(delta):
 	velocity.x = 0.0
 	velocity.z = 0.0
 	_face_dir(to_player.normalized(), delta * 4.0)
+	_play_anim("idle")
 	_attack_timer -= delta
 	if _attack_timer <= 0.0:
 		_attack_timer = attack_interval
 		_fire()
+		_play_anim("fire")
 
 func _tick_hit(delta):
 	velocity.x = 0.0
 	velocity.z = 0.0
+	_play_anim("hit")
 	_state_timer -= delta
 	if _state_timer <= 0.0:
 		state = _pre_hit_state
