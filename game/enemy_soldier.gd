@@ -34,8 +34,30 @@ func _ready():
 	_spawn_pos = global_position
 	_pick_patrol_target()
 	call_deferred("_find_player")
+	call_deferred("_attach_weapon")
 	set_physics_process(false)
 	_settle_to_ground.call_deferred()
+
+func _attach_weapon():
+	var skeleton = find_child("Skeleton3D", true, false) as Skeleton3D
+	if not skeleton:
+		return
+	# Try common Mixamo right-hand bone names
+	var bone_idx = skeleton.find_bone("mixamorig:RightHand")
+	if bone_idx < 0:
+		bone_idx = skeleton.find_bone("RightHand")
+	if bone_idx < 0:
+		return
+	var attach = BoneAttachment3D.new()
+	attach.bone_name = skeleton.get_bone_name(bone_idx)
+	skeleton.add_child(attach)
+	# Placeholder rifle (box mesh) — swap for real weapon model later
+	var gun = MeshInstance3D.new()
+	var box = BoxMesh.new()
+	box.size = Vector3(0.05, 0.05, 0.35)
+	gun.mesh = box
+	gun.position = Vector3(0.0, 0.0, -0.18)
+	attach.add_child(gun)
 
 func _settle_to_ground():
 	# Retry until terrain physics mesh is ready under this soldier
