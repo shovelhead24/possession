@@ -82,8 +82,8 @@ func _setup_animations():
 func _play_anim(lib_name: String):
 	if not _anim_player:
 		return
-	for candidate in [lib_name + "/mixamo.com", lib_name + "/Take 001", lib_name,
-					   lib_name + "_/mixamo.com", lib_name + "_/Take 001"]:
+	for candidate in [lib_name + "/mixamo_com", lib_name + "/mixamo.com",
+					   lib_name + "/Take 001", lib_name]:
 		if _anim_player.has_animation(candidate):
 			if _anim_player.current_animation != candidate:
 				_anim_player.play(candidate)
@@ -99,8 +99,10 @@ func _attach_weapon():
 	for i in skeleton.get_bone_count():
 		all_bones.append(skeleton.get_bone_name(i))
 	print("EnemySoldier: bones = ", all_bones)
-	# Try common Mixamo right-hand bone names
-	var bone_idx = skeleton.find_bone("mixamorig:RightHand")
+	# Godot FBX importer converts ":" to "_" in bone names
+	var bone_idx = skeleton.find_bone("mixamorig_RightHand")
+	if bone_idx < 0:
+		bone_idx = skeleton.find_bone("mixamorig:RightHand")
 	if bone_idx < 0:
 		bone_idx = skeleton.find_bone("RightHand")
 	if bone_idx < 0:
