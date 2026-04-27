@@ -1,12 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://enemy_soldier001"]
+[gd_scene load_steps=4 format=3 uid="uid://uxgenokivtbp"]
 
-[ext_resource type="Script" path="res://enemy_soldier.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://biq8b6hhs8r72" path="res://enemy_soldier.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://d0nfukfwfcl86" path="res://soldier.fbx" id="2_ngy4p"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
-radius = 0.4
-height = 1.8
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
 radius = 0.4
 height = 1.8
 
@@ -17,6 +14,4 @@ script = ExtResource("1_script")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_1")
 
-[node name="Mesh" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("CapsuleMesh_1")
+[node name="soldier" parent="." instance=ExtResource("2_ngy4p")]
