@@ -27,12 +27,34 @@ var _state_timer: float = 0.0
 var _attack_timer: float = 0.0
 var _pre_hit_state: State = State.PATROL
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var _settled: bool = false  # wait for terrain physics to load before moving
 
 func _ready():
 	add_to_group("enemy")
 	_spawn_pos = global_position
 	_pick_patrol_target()
 	call_deferred("_find_player")
+	set_physics_process(false)
+	_settle_to_ground.call_deferred()
+
+func _settle_to_ground():
+	# Retry until terrain physics mesh is ready under this soldier
+	var space = get_world_3d().direct_space_state
+	var q = PhysicsRayQueryParameters3D.create(
+		global_position + Vector3.UP * 5.0,
+		global_position + Vector3.DOWN * 100.0
+	)
+	q.exclude = [self]
+	var hit = space.intersect_ray(q)
+	if hit:
+		global_position = hit.position + Vector3.UP * 0.1
+		_spawn_pos = global_position
+		_settled = true
+		set_physics_process(true)
+	else:
+		# Terrain not loaded yet — retry next frame
+		await get_tree().process_frame
+		_settle_to_ground()
 
 func _find_player():
 	_player = get_node_or_null("/root/World/Player")
