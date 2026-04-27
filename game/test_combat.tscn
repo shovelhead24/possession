@@ -227,6 +227,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 1.0, 0)
 
 [node name="StressSpawner" type="Node3D" parent="."]
 script = ExtResource("9_stress_spawner")
+max_enemies = 1
+demo_cycle = true
 
 [node name="BattleBase" type="Node3D" parent="."]
 script = ExtResource("10_battle_base")

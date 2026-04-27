@@ -22,6 +22,9 @@ enum State { PATROL, ALERT, CHASE, ATTACK, SEEK_COVER, HIT, DEAD }
 @export_group("Faction")
 @export var faction: int = 0  # 0 = red, 1 = purple
 
+@export_group("Debug")
+@export var demo_cycle: bool = false
+
 # Faction colours — glowing head marker
 const FACTION_COLORS: Array = [Color(1.0, 0.15, 0.15), Color(0.7, 0.1, 1.0)]
 
@@ -38,6 +41,23 @@ var _reloading: bool = false
 var _pre_hit_state: State = State.PATROL
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _anim_player: AnimationPlayer = null
+var _cycle_step: int = 0
+var _cycle_timer: float = 0.0
+
+const DEMO_STEPS: Array = [
+	["idle",     Vector3.ZERO,           2.0],
+	["walk",     Vector3( 1, 0,  0),     2.5],
+	["walk",     Vector3( 0, 0,  1),     2.5],
+	["walk",     Vector3(-1, 0,  0),     2.5],
+	["walk",     Vector3( 0, 0, -1),     2.5],
+	["run",      Vector3( 1, 0,  0),     2.0],
+	["run",      Vector3(-1, 0,  0),     2.0],
+	["strafe_l", Vector3(-1, 0,  0),     2.0],
+	["strafe_r", Vector3( 1, 0,  0),     2.0],
+	["fire",     Vector3.ZERO,           2.0],
+	["reload",   Vector3.ZERO,           2.2],
+	["hit",      Vector3.ZERO,           1.0],
+]
 var _shoot_sound: AudioStreamPlayer3D = null
 var _step_sound: AudioStreamPlayer3D = null
 var _step_timer: float = 0.0
@@ -47,6 +67,7 @@ func _ready():
 	add_to_group("faction_%d" % faction)
 	_spawn_pos = global_position
 	_pick_patrol_target()
+	_cycle_timer = DEMO_STEPS[0][2]
 	call_deferred("_find_player")
 	call_deferred("_attach_weapon")
 	call_deferred("_attach_faction_marker")
@@ -97,7 +118,7 @@ func _play_anim(lib_name: String):
 					   lib_name + "/Take 001", lib_name]:
 		if _anim_player.has_animation(candidate):
 			if _anim_player.current_animation != candidate:
-				_anim_player.play(candidate)
+				_anim_player.play(candidate, 0.15)
 			return
 
 func _attach_weapon():
@@ -193,6 +214,22 @@ func _find_player():
 
 # ── Physics ───────────────────────────────────────────────────────────────────
 
+func _tick_demo_cycle(delta: float):
+	var step: Array = DEMO_STEPS[_cycle_step]
+	var anim: String = step[0]
+	var dir: Vector3 = step[1]
+	var duration: float = step[2]
+	_play_anim(anim)
+	var speed := run_speed if anim == "run" else walk_speed * 0.5
+	velocity.x = dir.x * speed
+	velocity.z = dir.z * speed
+	if dir.length_squared() > 0.001:
+		_face_dir(dir, delta * 6.0)
+	_cycle_timer -= delta
+	if _cycle_timer <= 0.0:
+		_cycle_step = (_cycle_step + 1) % DEMO_STEPS.size()
+		_cycle_timer = DEMO_STEPS[_cycle_step][2]
+
 func _physics_process(delta):
 	if state == State.DEAD:
 		return
@@ -201,6 +238,11 @@ func _physics_process(delta):
 		velocity.y -= _gravity * delta
 	else:
 		velocity.y = 0.0
+
+	if demo_cycle:
+		_tick_demo_cycle(delta)
+		move_and_slide()
+		return
 
 	match state:
 		State.PATROL:     _tick_patrol(delta)
