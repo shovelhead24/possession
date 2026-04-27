@@ -19,8 +19,15 @@ enum State { PATROL, ALERT, CHASE, ATTACK, SEEK_COVER, HIT, DEAD }
 @export var sight_range: float = 80.0
 @export var sight_fov_deg: float = 120.0
 
+@export_group("Faction")
+@export var faction: int = 0  # 0 = red, 1 = purple
+
+# Faction colours — glowing head marker
+const FACTION_COLORS: Array = [Color(1.0, 0.15, 0.15), Color(0.7, 0.1, 1.0)]
+
 var state: State = State.PATROL
-var _player: Node3D = null
+var _player: Node3D = null   # the human player (always relevant for alerts/cover)
+var _target: Node3D = null   # current combat target (player or opposing soldier)
 var _spawn_pos: Vector3
 var _patrol_target: Vector3
 var _cover_pos: Vector3
@@ -31,14 +38,20 @@ var _reloading: bool = false
 var _pre_hit_state: State = State.PATROL
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _anim_player: AnimationPlayer = null
+var _shoot_sound: AudioStreamPlayer3D = null
+var _step_sound: AudioStreamPlayer3D = null
+var _step_timer: float = 0.0
 
 func _ready():
 	add_to_group("enemy")
+	add_to_group("faction_%d" % faction)
 	_spawn_pos = global_position
 	_pick_patrol_target()
 	call_deferred("_find_player")
 	call_deferred("_attach_weapon")
+	call_deferred("_attach_faction_marker")
 	call_deferred("_setup_animations")
+	_setup_audio()
 	set_physics_process(false)
 	_settle_to_ground.call_deferred()
 
@@ -109,6 +122,54 @@ func _attach_weapon():
 		carbine.rotation_degrees = Vector3(-10, 90, 90)
 		attach.add_child(carbine)
 
+func _attach_faction_marker():
+	var skeleton = find_child("Skeleton3D", true, false) as Skeleton3D
+	if not skeleton:
+		return
+	var bone_idx = skeleton.find_bone("mixamorig_Head")
+	if bone_idx < 0:
+		bone_idx = skeleton.find_bone("mixamorig:Head")
+	if bone_idx < 0:
+		bone_idx = skeleton.find_bone("Head")
+	if bone_idx < 0:
+		return
+	var attach = BoneAttachment3D.new()
+	attach.bone_name = skeleton.get_bone_name(bone_idx)
+	skeleton.add_child(attach)
+	var marker = MeshInstance3D.new()
+	var box = BoxMesh.new()
+	box.size = Vector3(0.18, 0.18, 0.18)
+	marker.mesh = box
+	marker.position = Vector3(0.0, 0.28, 0.0)
+	var mat = StandardMaterial3D.new()
+	var col = FACTION_COLORS[clamp(faction, 0, FACTION_COLORS.size() - 1)]
+	mat.albedo_color = col
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.emission_energy_multiplier = 3.0
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	marker.material_override = mat
+	attach.add_child(marker)
+
+func _setup_audio():
+	_shoot_sound = AudioStreamPlayer3D.new()
+	var shoot_stream = load("res://plasma_rifle.mp3")
+	if shoot_stream:
+		_shoot_sound.stream = shoot_stream
+	_shoot_sound.max_distance = 60.0
+	_shoot_sound.pitch_scale = randf_range(1.1, 1.3)
+	_shoot_sound.volume_db = -4.0
+	add_child(_shoot_sound)
+
+	_step_sound = AudioStreamPlayer3D.new()
+	var step_stream = load("res://bullet-gunshot-impact-390253.mp3")
+	if step_stream:
+		_step_sound.stream = step_stream
+	_step_sound.max_distance = 20.0
+	_step_sound.pitch_scale = 3.0
+	_step_sound.volume_db = -18.0
+	add_child(_step_sound)
+
 func _settle_to_ground():
 	var space = get_world_3d().direct_space_state
 	var q = PhysicsRayQueryParameters3D.create(
@@ -178,27 +239,29 @@ func _tick_alert(delta):
 		_enter_patrol()
 
 func _tick_chase(delta):
-	if not _player:
+	if not _target or not is_instance_valid(_target):
+		_target = null
 		_enter_patrol()
 		return
-	var to_player = (_player.global_position - global_position) * Vector3(1, 0, 1)
-	if to_player.length() <= attack_range:
+	var to_target = (_target.global_position - global_position) * Vector3(1, 0, 1)
+	if to_target.length() <= attack_range:
 		state = State.ATTACK
 		_attack_timer = 0.5
 		return
 	_play_anim("run")
-	_move_toward(to_player.normalized(), run_speed, delta)
+	_move_toward(to_target.normalized(), run_speed, delta)
 
 func _tick_attack(delta):
-	if not _player:
+	if not _target or not is_instance_valid(_target):
+		_target = null
 		_enter_patrol()
 		return
-	var to_player = (_player.global_position - global_position) * Vector3(1, 0, 1)
-	if to_player.length() > attack_range * 1.25:
+	var to_target = (_target.global_position - global_position) * Vector3(1, 0, 1)
+	if to_target.length() > attack_range * 1.25:
 		state = State.CHASE
 		return
 
-	_face_dir(to_player.normalized(), delta * 4.0)
+	_face_dir(to_target.normalized(), delta * 4.0)
 
 	if _reloading:
 		_play_anim("reload")
@@ -210,7 +273,6 @@ func _tick_attack(delta):
 		velocity.z = 0.0
 		return
 
-	# Strafe left/right slowly while attacking
 	var strafe_dir = global_transform.basis.x * (1.0 if fmod(_state_timer, 4.0) < 2.0 else -1.0)
 	velocity.x = strafe_dir.x * walk_speed * 0.5
 	velocity.z = strafe_dir.z * walk_speed * 0.5
@@ -225,7 +287,7 @@ func _tick_attack(delta):
 		_shot_count += 1
 		if _shot_count >= shots_before_reload:
 			_reloading = true
-			_state_timer = 2.2  # Reload duration
+			_state_timer = 2.2
 
 func _tick_seek_cover(delta):
 	var to_cover = (_cover_pos - global_position) * Vector3(1, 0, 1)
@@ -249,53 +311,71 @@ func _tick_hit(delta):
 # ── Perception ────────────────────────────────────────────────────────────────
 
 func _check_visibility():
-	if not _player:
-		return
-	var to_player = _player.global_position - global_position
-	var dist = to_player.length()
+	if _target and not is_instance_valid(_target):
+		_target = null
 
-	if dist > sight_range:
-		if state in [State.CHASE, State.ATTACK]:
-			_enter_alert()
-		return
+	# Player is highest priority target for all factions
+	if _player:
+		var to_player = _player.global_position - global_position
+		var dist = to_player.length()
+		if dist <= sight_range:
+			var fwd = -global_transform.basis.z
+			if rad_to_deg(fwd.angle_to(to_player.normalized())) <= sight_fov_deg * 0.5:
+				var hit = _los(global_position + Vector3.UP * 1.6, _player.global_position + Vector3.UP * 1.0)
+				if hit.is_empty() or hit.collider == _player:
+					_target = _player
+					_react_to_target()
+					return
 
-	var forward = -global_transform.basis.z
-	if rad_to_deg(forward.angle_to(to_player.normalized())) > sight_fov_deg * 0.5:
-		return
+	# No player in sight — check opposing faction
+	var opp = "faction_1" if faction == 0 else "faction_0"
+	var best_dist = sight_range
+	var best_enemy: Node3D = null
+	for e in get_tree().get_nodes_in_group(opp):
+		if not is_instance_valid(e) or e == self:
+			continue
+		var dist = (e.global_position - global_position).length()
+		if dist < best_dist:
+			var hit = _los(global_position + Vector3.UP * 1.6, e.global_position + Vector3.UP * 1.6)
+			if hit.is_empty() or hit.collider == e:
+				best_dist = dist
+				best_enemy = e
+	if best_enemy:
+		_target = best_enemy
+		_react_to_target()
 
+func _los(from: Vector3, to: Vector3) -> Dictionary:
 	var space = get_world_3d().direct_space_state
-	var q = PhysicsRayQueryParameters3D.create(
-		global_position + Vector3.UP * 1.6,
-		_player.global_position + Vector3.UP * 1.0
-	)
+	var q = PhysicsRayQueryParameters3D.create(from, to)
 	q.exclude = [self]
-	var hit = space.intersect_ray(q)
-	if hit.is_empty() or hit.collider == _player:
-		_react_to_player()
+	return space.intersect_ray(q)
 
-func _react_to_player():
+func _react_to_target():
+	if not _target:
+		return
 	if state in [State.PATROL, State.ALERT]:
 		state = State.CHASE
-		_alert_squad()
+		if _target == _player:
+			_alert_squad()
 	elif state == State.CHASE:
-		if (_player.global_position - global_position).length() <= attack_range:
+		if (_target.global_position - global_position).length() <= attack_range:
 			state = State.ATTACK
 			_attack_timer = 0.5
 
 # ── Combat ────────────────────────────────────────────────────────────────────
 
 func _fire():
-	if not _player:
+	if not _target or not is_instance_valid(_target):
 		return
+	if _shoot_sound:
+		_shoot_sound.pitch_scale = randf_range(1.0, 1.4)
+		_shoot_sound.play()
 	var from = global_position + Vector3.UP * 1.6
-	var to = _player.global_position + Vector3.UP * 1.0
-	var space = get_world_3d().direct_space_state
-	var q = PhysicsRayQueryParameters3D.create(from, to)
-	q.exclude = [self]
-	var hit = space.intersect_ray(q)
-	if hit and hit.collider == _player:
-		if _player.has_method("take_damage"):
-			_player.take_damage(attack_damage)
+	var to = _target.global_position + Vector3.UP * 1.0
+	var hit = _los(from, to)
+	if hit and hit.collider == _target:
+		if _target.has_method("take_damage"):
+			_target.take_damage(attack_damage)
 
 func take_damage(amount: float):
 	if state == State.DEAD:
@@ -307,7 +387,6 @@ func take_damage(amount: float):
 	_pre_hit_state = state
 	state = State.HIT
 	_state_timer = 0.45
-	# 60% chance to break for cover when hit
 	if randf() < 0.6 and state != State.SEEK_COVER:
 		_seek_nearest_cover()
 
@@ -336,7 +415,8 @@ func _seek_nearest_cover():
 # ── Squad coordination ────────────────────────────────────────────────────────
 
 func _alert_squad():
-	for node in get_tree().get_nodes_in_group("enemy"):
+	# Only alert same-faction members
+	for node in get_tree().get_nodes_in_group("faction_%d" % faction):
 		if node == self:
 			continue
 		var dist = (node.global_position - global_position).length()
@@ -347,6 +427,7 @@ func alert_to_player(player: Node3D):
 	if state in [State.DEAD, State.CHASE, State.ATTACK]:
 		return
 	_player = player
+	_target = player
 	state = State.CHASE
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -355,6 +436,11 @@ func _move_toward(dir: Vector3, speed: float, delta: float):
 	velocity.x = dir.x * speed
 	velocity.z = dir.z * speed
 	_face_dir(dir, delta * 6.0)
+	_step_timer -= delta
+	var step_interval = 0.5 if speed < run_speed else 0.32
+	if _step_timer <= 0.0 and _step_sound and _step_sound.stream:
+		_step_timer = step_interval
+		_step_sound.play()
 
 func _face_dir(dir: Vector3, weight: float):
 	if dir.length_squared() < 0.001:

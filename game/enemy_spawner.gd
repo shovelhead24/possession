@@ -19,7 +19,9 @@ func _spawn_all():
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	for squad_x in SQUAD_POSITIONS:
+	for squad_idx in range(SQUAD_POSITIONS.size()):
+		var squad_x = SQUAD_POSITIONS[squad_idx]
+		var squad_faction = squad_idx % 2  # even=red(0), odd=purple(1)
 		for i in range(SQUAD_SIZE):
 			var angle = (i / float(SQUAD_SIZE)) * TAU
 			var offset = Vector3(cos(angle) * SPREAD * randf_range(0.4, 1.0),
@@ -28,10 +30,11 @@ func _spawn_all():
 			var pos = Vector3(squad_x + randf_range(-8.0, 8.0), 0.0, offset.z)
 			pos.y = _get_height(pos)
 			var soldier = EnemySoldierScene.instantiate()
+			soldier.faction = squad_faction
 			get_parent().add_child(soldier)
 			soldier.global_position = pos
 
-	print("EnemySpawner: spawned %d soldiers in %d squads" % [SQUAD_POSITIONS.size() * SQUAD_SIZE, SQUAD_POSITIONS.size()])
+	print("EnemySpawner: spawned %d soldiers in %d squads (alternating factions)" % [SQUAD_POSITIONS.size() * SQUAD_SIZE, SQUAD_POSITIONS.size()])
 
 func _get_height(pos: Vector3) -> float:
 	if _terrain_manager and _terrain_manager.has_method("get_height_at_position"):

@@ -1,6 +1,9 @@
-[gd_scene load_steps=21 format=3 uid="uid://test_combat_001"]
+[gd_scene load_steps=24 format=3 uid="uid://test_combat_001"]
 
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_player_script"]
+[ext_resource type="Script" path="res://stress_spawner.gd" id="9_stress_spawner"]
+[ext_resource type="Script" path="res://battle_base.gd" id="10_battle_base"]
+[ext_resource type="Script" path="res://warthog.gd" id="11_warthog"]
 [ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_plasma_sound"]
 [ext_resource type="PackedScene" uid="uid://c11xpbdax3vl4" path="res://halo_-_carbine/scene.gltf" id="3_carbine"]
 [ext_resource type="PackedScene" uid="uid://bxpvnpcqydlw6" path="res://halo_railgun_redesigned/scene.gltf" id="4_railgun"]
@@ -221,3 +224,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 1.0, -8)
 
 [node name="Soldier5" parent="." instance=ExtResource("8_soldier")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 1.0, 0)
+
+[node name="StressSpawner" type="Node3D" parent="."]
+script = ExtResource("9_stress_spawner")
+
+[node name="BattleBase" type="Node3D" parent="."]
+script = ExtResource("10_battle_base")
+
+[node name="Warthog1" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.0, -8)
+script = ExtResource("11_warthog")
+
+[node name="Warthog2" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.0, 8)
+script = ExtResource("11_warthog")
+faction = 1
