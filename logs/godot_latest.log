@@ -122,16 +122,61 @@ WARNING: Can't change the size of a `SubViewport` with a `SubViewportContainer` 
    at: _internal_set_size (scene/main/viewport.cpp:5417)
    GDScript backtrace (most recent call first):
        [0] _ready (res://player.gd:116)
+EnemySoldier: bones = ["mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head", "mixamorig_HeadTop_End", "mixamorig_LeftShoulder", "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandThumb1", "mixamorig_LeftHandThumb2", "mixamorig_LeftHandThumb3", "mixamorig_LeftHandThumb4", "mixamorig_LeftHandIndex1", "mixamorig_LeftHandIndex2", "mixamorig_LeftHandIndex3", "mixamorig_LeftHandIndex4", "mixamorig_LeftHandMiddle1", "mixamorig_LeftHandMiddle2", "mixamorig_LeftHandMiddle3", "mixamorig_LeftHandMiddle4", "mixamorig_LeftHandRing1", "mixamorig_LeftHandRing2", "mixamorig_LeftHandRing3", "mixamorig_LeftHandRing4", "mixamorig_LeftHandPinky1", "mixamorig_LeftHandPinky2", "mixamorig_LeftHandPinky3", "mixamorig_LeftHandPinky4", "mixamorig_RightShoulder", "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand", "mixamorig_RightHandThumb1", "mixamorig_RightHandThumb2", "mixamorig_RightHandThumb3", "mixamorig_RightHandThumb4", "mixamorig_RightHandIndex1", "mixamorig_RightHandIndex2", "mixamorig_RightHandIndex3", "mixamorig_RightHandIndex4", "mixamorig_RightHandMiddle1", "mixamorig_RightHandMiddle2", "mixamorig_RightHandMiddle3", "mixamorig_RightHandMiddle4", "mixamorig_RightHandRing1", "mixamorig_RightHandRing2", "mixamorig_RightHandRing3", "mixamorig_RightHandRing4", "mixamorig_RightHandPinky1", "mixamorig_RightHandPinky2", "mixamorig_RightHandPinky3", "mixamorig_RightHandPinky4", "mixamorig_LeftUpLeg", "mixamorig_LeftLeg", "mixamorig_LeftFoot", "mixamorig_LeftToeBase", "mixamorig_LeftToe_End", "mixamorig_RightUpLeg", "mixamorig_RightLeg", "mixamorig_RightFoot", "mixamorig_RightToeBase", "mixamorig_RightToe_End"]
+EnemySoldier: RightHand bone not found
+EnemySoldier: AnimationPlayer found, existing libs: [&""]
 Loading resource: res://shooter animation/rifle aiming idle.fbx
 Loading resource: res://.godot/imported/rifle aiming idle.fbx-c6dcb9011911aea7941342f288076bc4.res
+EnemySoldier: loaded library 'idle' anims: [&"mixamo_com"]
 Loading resource: res://shooter animation/walking.fbx
 Loading resource: res://.godot/imported/walking.fbx-a7bf949ab81c79a13863a3ad7b7cac31.res
+EnemySoldier: loaded library 'walk' anims: [&"mixamo_com"]
 Loading resource: res://shooter animation/rifle run.fbx
 Loading resource: res://.godot/imported/rifle run.fbx-2ad1b33204561d08f2ed07a338ece453.res
+EnemySoldier: loaded library 'run' anims: [&"mixamo_com"]
 Loading resource: res://shooter animation/hit reaction.fbx
 Loading resource: res://.godot/imported/hit reaction.fbx-351b3adf664d6a14db13dbd3abe1f73a.res
+EnemySoldier: loaded library 'hit' anims: [&"mixamo_com"]
 Loading resource: res://shooter animation/firing rifle.fbx
 Loading resource: res://.godot/imported/firing rifle.fbx-213cef818547265bf406b761d89dcf53.res
+EnemySoldier: loaded library 'fire' anims: [&"mixamo_com"]
+EnemySoldier: final libs: [&"", &"fire", &"hit", &"idle", &"run", &"walk"]
+EnemySoldier: bones = ["mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head", "mixamorig_HeadTop_End", "mixamorig_LeftShoulder", "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandThumb1", "mixamorig_LeftHandThumb2", "mixamorig_LeftHandThumb3", "mixamorig_LeftHandThumb4", "mixamorig_LeftHandIndex1", "mixamorig_LeftHandIndex2", "mixamorig_LeftHandIndex3", "mixamorig_LeftHandIndex4", "mixamorig_LeftHandMiddle1", "mixamorig_LeftHandMiddle2", "mixamorig_LeftHandMiddle3", "mixamorig_LeftHandMiddle4", "mixamorig_LeftHandRing1", "mixamorig_LeftHandRing2", "mixamorig_LeftHandRing3", "mixamorig_LeftHandRing4", "mixamorig_LeftHandPinky1", "mixamorig_LeftHandPinky2", "mixamorig_LeftHandPinky3", "mixamorig_LeftHandPinky4", "mixamorig_RightShoulder", "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand", "mixamorig_RightHandThumb1", "mixamorig_RightHandThumb2", "mixamorig_RightHandThumb3", "mixamorig_RightHandThumb4", "mixamorig_RightHandIndex1", "mixamorig_RightHandIndex2", "mixamorig_RightHandIndex3", "mixamorig_RightHandIndex4", "mixamorig_RightHandMiddle1", "mixamorig_RightHandMiddle2", "mixamorig_RightHandMiddle3", "mixamorig_RightHandMiddle4", "mixamorig_RightHandRing1", "mixamorig_RightHandRing2", "mixamorig_RightHandRing3", "mixamorig_RightHandRing4", "mixamorig_RightHandPinky1", "mixamorig_RightHandPinky2", "mixamorig_RightHandPinky3", "mixamorig_RightHandPinky4", "mixamorig_LeftUpLeg", "mixamorig_LeftLeg", "mixamorig_LeftFoot", "mixamorig_LeftToeBase", "mixamorig_LeftToe_End", "mixamorig_RightUpLeg", "mixamorig_RightLeg", "mixamorig_RightFoot", "mixamorig_RightToeBase", "mixamorig_RightToe_End"]
+EnemySoldier: RightHand bone not found
+EnemySoldier: AnimationPlayer found, existing libs: [&""]
+EnemySoldier: loaded library 'idle' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'walk' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'run' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'hit' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'fire' anims: [&"mixamo_com"]
+EnemySoldier: final libs: [&"", &"fire", &"hit", &"idle", &"run", &"walk"]
+EnemySoldier: bones = ["mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head", "mixamorig_HeadTop_End", "mixamorig_LeftShoulder", "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandThumb1", "mixamorig_LeftHandThumb2", "mixamorig_LeftHandThumb3", "mixamorig_LeftHandThumb4", "mixamorig_LeftHandIndex1", "mixamorig_LeftHandIndex2", "mixamorig_LeftHandIndex3", "mixamorig_LeftHandIndex4", "mixamorig_LeftHandMiddle1", "mixamorig_LeftHandMiddle2", "mixamorig_LeftHandMiddle3", "mixamorig_LeftHandMiddle4", "mixamorig_LeftHandRing1", "mixamorig_LeftHandRing2", "mixamorig_LeftHandRing3", "mixamorig_LeftHandRing4", "mixamorig_LeftHandPinky1", "mixamorig_LeftHandPinky2", "mixamorig_LeftHandPinky3", "mixamorig_LeftHandPinky4", "mixamorig_RightShoulder", "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand", "mixamorig_RightHandThumb1", "mixamorig_RightHandThumb2", "mixamorig_RightHandThumb3", "mixamorig_RightHandThumb4", "mixamorig_RightHandIndex1", "mixamorig_RightHandIndex2", "mixamorig_RightHandIndex3", "mixamorig_RightHandIndex4", "mixamorig_RightHandMiddle1", "mixamorig_RightHandMiddle2", "mixamorig_RightHandMiddle3", "mixamorig_RightHandMiddle4", "mixamorig_RightHandRing1", "mixamorig_RightHandRing2", "mixamorig_RightHandRing3", "mixamorig_RightHandRing4", "mixamorig_RightHandPinky1", "mixamorig_RightHandPinky2", "mixamorig_RightHandPinky3", "mixamorig_RightHandPinky4", "mixamorig_LeftUpLeg", "mixamorig_LeftLeg", "mixamorig_LeftFoot", "mixamorig_LeftToeBase", "mixamorig_LeftToe_End", "mixamorig_RightUpLeg", "mixamorig_RightLeg", "mixamorig_RightFoot", "mixamorig_RightToeBase", "mixamorig_RightToe_End"]
+EnemySoldier: RightHand bone not found
+EnemySoldier: AnimationPlayer found, existing libs: [&""]
+EnemySoldier: loaded library 'idle' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'walk' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'run' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'hit' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'fire' anims: [&"mixamo_com"]
+EnemySoldier: final libs: [&"", &"fire", &"hit", &"idle", &"run", &"walk"]
+EnemySoldier: bones = ["mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head", "mixamorig_HeadTop_End", "mixamorig_LeftShoulder", "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandThumb1", "mixamorig_LeftHandThumb2", "mixamorig_LeftHandThumb3", "mixamorig_LeftHandThumb4", "mixamorig_LeftHandIndex1", "mixamorig_LeftHandIndex2", "mixamorig_LeftHandIndex3", "mixamorig_LeftHandIndex4", "mixamorig_LeftHandMiddle1", "mixamorig_LeftHandMiddle2", "mixamorig_LeftHandMiddle3", "mixamorig_LeftHandMiddle4", "mixamorig_LeftHandRing1", "mixamorig_LeftHandRing2", "mixamorig_LeftHandRing3", "mixamorig_LeftHandRing4", "mixamorig_LeftHandPinky1", "mixamorig_LeftHandPinky2", "mixamorig_LeftHandPinky3", "mixamorig_LeftHandPinky4", "mixamorig_RightShoulder", "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand", "mixamorig_RightHandThumb1", "mixamorig_RightHandThumb2", "mixamorig_RightHandThumb3", "mixamorig_RightHandThumb4", "mixamorig_RightHandIndex1", "mixamorig_RightHandIndex2", "mixamorig_RightHandIndex3", "mixamorig_RightHandIndex4", "mixamorig_RightHandMiddle1", "mixamorig_RightHandMiddle2", "mixamorig_RightHandMiddle3", "mixamorig_RightHandMiddle4", "mixamorig_RightHandRing1", "mixamorig_RightHandRing2", "mixamorig_RightHandRing3", "mixamorig_RightHandRing4", "mixamorig_RightHandPinky1", "mixamorig_RightHandPinky2", "mixamorig_RightHandPinky3", "mixamorig_RightHandPinky4", "mixamorig_LeftUpLeg", "mixamorig_LeftLeg", "mixamorig_LeftFoot", "mixamorig_LeftToeBase", "mixamorig_LeftToe_End", "mixamorig_RightUpLeg", "mixamorig_RightLeg", "mixamorig_RightFoot", "mixamorig_RightToeBase", "mixamorig_RightToe_End"]
+EnemySoldier: RightHand bone not found
+EnemySoldier: AnimationPlayer found, existing libs: [&""]
+EnemySoldier: loaded library 'idle' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'walk' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'run' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'hit' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'fire' anims: [&"mixamo_com"]
+EnemySoldier: final libs: [&"", &"fire", &"hit", &"idle", &"run", &"walk"]
+EnemySoldier: bones = ["mixamorig_Hips", "mixamorig_Spine", "mixamorig_Spine1", "mixamorig_Spine2", "mixamorig_Neck", "mixamorig_Head", "mixamorig_HeadTop_End", "mixamorig_LeftShoulder", "mixamorig_LeftArm", "mixamorig_LeftForeArm", "mixamorig_LeftHand", "mixamorig_LeftHandThumb1", "mixamorig_LeftHandThumb2", "mixamorig_LeftHandThumb3", "mixamorig_LeftHandThumb4", "mixamorig_LeftHandIndex1", "mixamorig_LeftHandIndex2", "mixamorig_LeftHandIndex3", "mixamorig_LeftHandIndex4", "mixamorig_LeftHandMiddle1", "mixamorig_LeftHandMiddle2", "mixamorig_LeftHandMiddle3", "mixamorig_LeftHandMiddle4", "mixamorig_LeftHandRing1", "mixamorig_LeftHandRing2", "mixamorig_LeftHandRing3", "mixamorig_LeftHandRing4", "mixamorig_LeftHandPinky1", "mixamorig_LeftHandPinky2", "mixamorig_LeftHandPinky3", "mixamorig_LeftHandPinky4", "mixamorig_RightShoulder", "mixamorig_RightArm", "mixamorig_RightForeArm", "mixamorig_RightHand", "mixamorig_RightHandThumb1", "mixamorig_RightHandThumb2", "mixamorig_RightHandThumb3", "mixamorig_RightHandThumb4", "mixamorig_RightHandIndex1", "mixamorig_RightHandIndex2", "mixamorig_RightHandIndex3", "mixamorig_RightHandIndex4", "mixamorig_RightHandMiddle1", "mixamorig_RightHandMiddle2", "mixamorig_RightHandMiddle3", "mixamorig_RightHandMiddle4", "mixamorig_RightHandRing1", "mixamorig_RightHandRing2", "mixamorig_RightHandRing3", "mixamorig_RightHandRing4", "mixamorig_RightHandPinky1", "mixamorig_RightHandPinky2", "mixamorig_RightHandPinky3", "mixamorig_RightHandPinky4", "mixamorig_LeftUpLeg", "mixamorig_LeftLeg", "mixamorig_LeftFoot", "mixamorig_LeftToeBase", "mixamorig_LeftToe_End", "mixamorig_RightUpLeg", "mixamorig_RightLeg", "mixamorig_RightFoot", "mixamorig_RightToeBase", "mixamorig_RightToe_End"]
+EnemySoldier: RightHand bone not found
+EnemySoldier: AnimationPlayer found, existing libs: [&""]
+EnemySoldier: loaded library 'idle' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'walk' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'run' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'hit' anims: [&"mixamo_com"]
+EnemySoldier: loaded library 'fire' anims: [&"mixamo_com"]
+EnemySoldier: final libs: [&"", &"fire", &"hit", &"idle", &"run", &"walk"]
 Player: Took 8.0 damage! Health: 92.0/100.0
 Player: Took 8.0 damage! Health: 84.0/100.0
 Player: Took 8.0 damage! Health: 76.0/100.0
@@ -142,6 +187,8 @@ Player: Took 8.0 damage! Health: 44.0/100.0
 Player: Took 8.0 damage! Health: 36.0/100.0
 Player: Took 8.0 damage! Health: 28.0/100.0
 Player: Took 8.0 damage! Health: 20.0/100.0
+Bullet hit: Ground
+Bullet hit: Ground
 Player: Took 8.0 damage! Health: 12.0/100.0
 Player: Took 8.0 damage! Health: 4.0/100.0
 Player: Took 8.0 damage! Health: 0.0/100.0
@@ -152,28 +199,3 @@ Player: Took 8.0 damage! Health: 84.0/100.0
 Player: Took 8.0 damage! Health: 76.0/100.0
 Player: Took 8.0 damage! Health: 68.0/100.0
 Player: Took 8.0 damage! Health: 60.0/100.0
-Player: Took 8.0 damage! Health: 52.0/100.0
-Player: Took 8.0 damage! Health: 44.0/100.0
-Player: Took 8.0 damage! Health: 36.0/100.0
-Player: Took 8.0 damage! Health: 28.0/100.0
-Player: Took 8.0 damage! Health: 20.0/100.0
-Player: Took 8.0 damage! Health: 12.0/100.0
-Player: Took 8.0 damage! Health: 4.0/100.0
-Player: Took 8.0 damage! Health: 0.0/100.0
-Player: DEAD!
-Player: Respawned with 100.0 HP
-Player: Took 8.0 damage! Health: 92.0/100.0
-Player: Took 8.0 damage! Health: 84.0/100.0
-Player: Took 8.0 damage! Health: 76.0/100.0
-Player: Took 8.0 damage! Health: 68.0/100.0
-Player: Took 8.0 damage! Health: 60.0/100.0
-Player: Took 8.0 damage! Health: 52.0/100.0
-Player: Took 8.0 damage! Health: 44.0/100.0
-Player: Took 8.0 damage! Health: 36.0/100.0
-Player: Took 8.0 damage! Health: 28.0/100.0
-Player: Took 8.0 damage! Health: 20.0/100.0
-Player: Took 8.0 damage! Health: 12.0/100.0
-Player: Took 8.0 damage! Health: 4.0/100.0
-Player: Took 8.0 damage! Health: 0.0/100.0
-Player: DEAD!
-Player: Respawned with 100.0 HP
