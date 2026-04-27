@@ -163,6 +163,9 @@ func _enter_vehicle():
 	_player_saved_pos = _player.global_position
 	if _player.has_method("set_physics_process"):
 		_player.set_physics_process(false)
+	var pcol := _player.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if pcol:
+		pcol.disabled = true
 	if _player.has_node("Head"):
 		_player.get_node("Head").rotation.x = 0.0
 	print("Warthog: player entered")
@@ -170,7 +173,10 @@ func _enter_vehicle():
 func _exit_vehicle():
 	_occupied = false
 	if _player:
-		_player.global_position = global_position + global_transform.basis.x * 3.0 + Vector3.UP * 0.5
+		_player.global_position = global_position + global_transform.basis.x * 3.0 + Vector3.UP * 1.2
+		var pcol := _player.get_node_or_null("CollisionShape3D") as CollisionShape3D
+		if pcol:
+			pcol.disabled = false
 		if _player.has_method("set_physics_process"):
 			_player.set_physics_process(true)
 	print("Warthog: player exited")
