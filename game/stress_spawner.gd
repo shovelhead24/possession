@@ -50,7 +50,7 @@ func _spawn_wave():
 		var pos = Vector3(cos(angle) * r, 1.0, sin(angle) * r)
 		var soldier = EnemySoldierScene.instantiate()
 		soldier.faction = randi() % 2
+		soldier.position = pos
 		get_parent().add_child(soldier)
-		soldier.global_position = pos
 		_total_spawned += 1
 	print("StressSpawner: wave spawned — total enemies now %d" % _total_spawned)
