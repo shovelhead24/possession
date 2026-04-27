@@ -43,7 +43,9 @@ func _ready():
 func _setup_animations():
 	_anim_player = find_child("AnimationPlayer", true, false)
 	if not _anim_player:
+		print("EnemySoldier: no AnimationPlayer found")
 		return
+	print("EnemySoldier: AnimationPlayer found, existing libs: ", _anim_player.get_animation_library_list())
 	var clips := {
 		"idle": "res://shooter animation/rifle aiming idle.fbx",
 		"walk": "res://shooter animation/walking.fbx",
@@ -52,16 +54,36 @@ func _setup_animations():
 		"fire": "res://shooter animation/firing rifle.fbx",
 	}
 	for lib_name in clips:
-		var lib = load(clips[lib_name])
-		if lib and not _anim_player.has_animation_library(lib_name):
-			_anim_player.add_animation_library(lib_name, lib)
+		var res = load(clips[lib_name])
+		if res == null:
+			print("EnemySoldier: failed to load ", clips[lib_name])
+			continue
+		if res is AnimationLibrary:
+			if not _anim_player.has_animation_library(lib_name):
+				_anim_player.add_animation_library(lib_name, res)
+				print("EnemySoldier: loaded library '", lib_name, "' anims: ", res.get_animation_list())
+		else:
+			# Still imported as Scene — extract AnimationPlayer from it
+			var inst = res.instantiate()
+			var src = inst.find_child("AnimationPlayer", true, false) as AnimationPlayer
+			if src:
+				for existing_lib in src.get_animation_library_list():
+					var src_lib = src.get_animation_library(existing_lib)
+					var dest_name = lib_name if existing_lib == "" else lib_name + "_" + existing_lib
+					if not _anim_player.has_animation_library(dest_name):
+						_anim_player.add_animation_library(dest_name, src_lib)
+						print("EnemySoldier: extracted lib '", dest_name, "' from scene")
+			else:
+				print("EnemySoldier: ", clips[lib_name], " is a Scene with no AnimationPlayer")
+			inst.queue_free()
+	print("EnemySoldier: final libs: ", _anim_player.get_animation_library_list())
 	_play_anim("idle")
 
 func _play_anim(lib_name: String):
 	if not _anim_player:
 		return
-	# Mixamo names the clip "mixamo.com" inside each library
-	for candidate in [lib_name + "/mixamo.com", lib_name + "/Take 001", lib_name]:
+	for candidate in [lib_name + "/mixamo.com", lib_name + "/Take 001", lib_name,
+					   lib_name + "_/mixamo.com", lib_name + "_/Take 001"]:
 		if _anim_player.has_animation(candidate):
 			if _anim_player.current_animation != candidate:
 				_anim_player.play(candidate)
@@ -70,12 +92,19 @@ func _play_anim(lib_name: String):
 func _attach_weapon():
 	var skeleton = find_child("Skeleton3D", true, false) as Skeleton3D
 	if not skeleton:
+		print("EnemySoldier: no Skeleton3D found")
 		return
+	# Print all bone names so we can find the right one
+	var all_bones = []
+	for i in skeleton.get_bone_count():
+		all_bones.append(skeleton.get_bone_name(i))
+	print("EnemySoldier: bones = ", all_bones)
 	# Try common Mixamo right-hand bone names
 	var bone_idx = skeleton.find_bone("mixamorig:RightHand")
 	if bone_idx < 0:
 		bone_idx = skeleton.find_bone("RightHand")
 	if bone_idx < 0:
+		print("EnemySoldier: RightHand bone not found")
 		return
 	var attach = BoneAttachment3D.new()
 	attach.bone_name = skeleton.get_bone_name(bone_idx)
