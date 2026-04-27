@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://test_combat_001"]
+[gd_scene load_steps=21 format=3 uid="uid://test_combat_001"]
 
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_player_script"]
 [ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_plasma_sound"]
@@ -21,6 +21,15 @@ size = Vector2(1000.0, 1000.0)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.3, 0.35, 0.3, 1.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cover"]
+size = Vector3(1.5, 1.5, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cover"]
+size = Vector3(1.5, 1.5, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cover"]
+albedo_color = Color(0.45, 0.40, 0.35, 1.0)
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_weapon"]
 sky_top_color = Color(0.04, 0.07, 0.14, 1)
@@ -64,6 +73,61 @@ shadow_enabled = true
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_world")
+
+[node name="Cover1" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.75, -9)
+groups = ["cover"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cover1"]
+shape = SubResource("BoxShape3D_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Cover1"]
+mesh = SubResource("BoxMesh_cover")
+surface_material_override/0 = SubResource("StandardMaterial3D_cover")
+
+[node name="Cover2" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.75, 9)
+groups = ["cover"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cover2"]
+shape = SubResource("BoxShape3D_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Cover2"]
+mesh = SubResource("BoxMesh_cover")
+surface_material_override/0 = SubResource("StandardMaterial3D_cover")
+
+[node name="Cover3" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.75, -13)
+groups = ["cover"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cover3"]
+shape = SubResource("BoxShape3D_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Cover3"]
+mesh = SubResource("BoxMesh_cover")
+surface_material_override/0 = SubResource("StandardMaterial3D_cover")
+
+[node name="Cover4" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.75, 13)
+groups = ["cover"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cover4"]
+shape = SubResource("BoxShape3D_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Cover4"]
+mesh = SubResource("BoxMesh_cover")
+surface_material_override/0 = SubResource("StandardMaterial3D_cover")
+
+[node name="Cover5" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 0.75, 0)
+groups = ["cover"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cover5"]
+shape = SubResource("BoxShape3D_cover")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Cover5"]
+mesh = SubResource("BoxMesh_cover")
+surface_material_override/0 = SubResource("StandardMaterial3D_cover")
 
 [node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0, 0)
@@ -144,16 +208,16 @@ transform = Transform3D(0.8, 0.2, 0.4, 0, 0.9, -0.3, -0.4, 0.2, 0.8, 0, 2, 1)
 light_energy = 1.4
 
 [node name="Soldier1" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1.0, -6)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 1.0, -6)
 
 [node name="Soldier2" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 1.0, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 1.0, 4)
 
 [node name="Soldier3" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 1.0, 8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 1.0, 10)
 
 [node name="Soldier4" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35, 1.0, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 1.0, -8)
 
 [node name="Soldier5" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 1.0, 0)
