@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://test_combat_001"]
+[gd_scene load_steps=23 format=3 uid="uid://test_combat_001"]
 
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_player_script"]
 [ext_resource type="Script" path="res://stress_spawner.gd" id="9_stress_spawner"]
@@ -10,7 +10,6 @@
 [ext_resource type="AudioStream" uid="uid://du8skrifkyur" path="res://quake railgun sound effect.mp3" id="5_railgun_sound"]
 [ext_resource type="PackedScene" path="res://fp_arms/scene.gltf" id="6_fp_arms"]
 [ext_resource type="Script" path="res://fp_arms_controller.gd" id="7_fp_arms_ctrl"]
-[ext_resource type="PackedScene" uid="uid://uxgenokivtbp" path="res://enemy_soldier.tscn" id="8_soldier"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
 
@@ -210,20 +209,6 @@ omni_range = 3.0
 transform = Transform3D(0.8, 0.2, 0.4, 0, 0.9, -0.3, -0.4, 0.2, 0.8, 0, 2, 1)
 light_energy = 1.4
 
-[node name="Soldier1" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 1.0, -6)
-
-[node name="Soldier2" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 1.0, 4)
-
-[node name="Soldier3" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, 1.0, 10)
-
-[node name="Soldier4" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 55, 1.0, -8)
-
-[node name="Soldier5" parent="." instance=ExtResource("8_soldier")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 1.0, 0)
 
 [node name="StressSpawner" type="Node3D" parent="."]
 script = ExtResource("9_stress_spawner")
