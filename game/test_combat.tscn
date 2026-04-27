@@ -232,6 +232,8 @@ demo_cycle = true
 
 [node name="BattleBase" type="Node3D" parent="."]
 script = ExtResource("10_battle_base")
+defender_count = 0
+attacker_count = 0
 
 [node name="Warthog1" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.0, -8)
