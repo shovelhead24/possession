@@ -139,14 +139,21 @@ func _ready():
 	# Initial chunk load
 	call_deferred("update_chunks")
 
-	# Spawn objective marker
+	# Spawn objective marker and enemies
 	call_deferred("_spawn_objective_manager")
+	call_deferred("_spawn_enemy_spawner")
 
 func _spawn_objective_manager():
 	var om = Node3D.new()
 	om.set_script(load("res://objective_manager.gd"))
 	om.name = "ObjectiveManager"
 	add_child(om)
+
+func _spawn_enemy_spawner():
+	var es = Node3D.new()
+	es.set_script(load("res://enemy_spawner.gd"))
+	es.name = "EnemySpawner"
+	add_child(es)
 
 func setup_noise_generator():
 	noise = FastNoiseLite.new()
