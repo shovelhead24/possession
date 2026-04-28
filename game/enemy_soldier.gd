@@ -156,7 +156,7 @@ func _attach_weapon():
 		var carbine = carbine_scene.instantiate()
 		carbine.scale = Vector3(0.03, 0.03, 0.03)
 		carbine.position = Vector3(0.05, 0.02, -0.05)
-		carbine.rotation_degrees = Vector3(90, 0, 180)
+		carbine.rotation_degrees = Vector3(90, -90, 0)
 		attach.add_child(carbine)
 
 func _attach_faction_marker():
