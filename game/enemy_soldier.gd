@@ -29,8 +29,8 @@ enum State { PATROL, ALERT, CHASE, ATTACK, SEEK_COVER, HIT, DEAD }
 const FACTION_COLORS: Array = [Color(1.0, 0.15, 0.15), Color(0.7, 0.1, 1.0)]
 
 var state: State = State.PATROL
-var _player: Node3D = null   # the human player (always relevant for alerts/cover)
-var _target: Node3D = null   # current combat target (player or opposing soldier)
+var _player: Node3D = null
+var _target: Node3D = null
 var _spawn_pos: Vector3
 var _patrol_target: Vector3
 var _cover_pos: Vector3
@@ -43,19 +43,22 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _anim_player: AnimationPlayer = null
 var _cycle_step: int = 0
 var _cycle_timer: float = 0.0
-var _demo_facing: float = PI  # radians — soldier initially faces -Z
+var _demo_facing: float = PI   # radians — initially faces -Z
+var _demo_circle_angle: float = 0.0
+const DEMO_CIRCLE_RADIUS: float = 8.0
 
 const DEMO_STEPS: Array = [
-	["idle",     Vector3.ZERO,           2.0],
-	["walk",     Vector3( 0, 0, -1),     3.0],  # walk forward
-	["run",      Vector3( 0, 0, -1),     2.5],  # run forward
-	["idle",     Vector3.ZERO,           1.0],
-	["strafe_l", Vector3(-1, 0,  0),     2.0],  # strafe left, keep facing
-	["strafe_r", Vector3( 1, 0,  0),     2.0],  # strafe right, keep facing
-	["idle",     Vector3.ZERO,           1.0],
-	["fire",     Vector3.ZERO,           2.0],
-	["reload",   Vector3.ZERO,           2.2],
-	["hit",      Vector3.ZERO,           1.0],
+	["idle",       Vector3.ZERO,    2.0],
+	["walk",       Vector3(0,0,-1), 3.0],
+	["run",        Vector3(0,0,-1), 2.5],
+	["run_circle", Vector3.ZERO,    8.0],
+	["idle",       Vector3.ZERO,    1.0],
+	["strafe_l",   Vector3(-1,0,0), 2.0],
+	["strafe_r",   Vector3( 1,0,0), 2.0],
+	["idle",       Vector3.ZERO,    1.0],
+	["fire",       Vector3.ZERO,    2.0],
+	["reload",     Vector3.ZERO,    2.2],
+	["hit",        Vector3.ZERO,    1.0],
 ]
 var _shoot_sound: AudioStreamPlayer3D = null
 var _step_sound: AudioStreamPlayer3D = null
@@ -97,6 +100,7 @@ func _setup_animations():
 			continue
 		if res is AnimationLibrary:
 			if not _anim_player.has_animation_library(lib_name):
+				_strip_position_tracks(res)
 				_anim_player.add_animation_library(lib_name, res)
 		else:
 			var inst = res.instantiate()
@@ -106,9 +110,20 @@ func _setup_animations():
 					var src_lib = src.get_animation_library(existing_lib)
 					var dest_name = lib_name if existing_lib == "" else lib_name + "_" + existing_lib
 					if not _anim_player.has_animation_library(dest_name):
+						_strip_position_tracks(src_lib)
 						_anim_player.add_animation_library(dest_name, src_lib)
 			inst.queue_free()
 	_play_anim("idle")
+
+func _strip_position_tracks(lib: AnimationLibrary) -> void:
+	for anim_name in lib.get_animation_list():
+		var anim := lib.get_animation(anim_name)
+		var i := 0
+		while i < anim.get_track_count():
+			if anim.track_get_type(i) == Animation.TYPE_POSITION_3D:
+				anim.remove_track(i)
+			else:
+				i += 1
 
 func _play_anim(lib_name: String):
 	if not _anim_player:
@@ -217,12 +232,22 @@ func _tick_demo_cycle(delta: float):
 	var step: Array = DEMO_STEPS[_cycle_step]
 	var anim: String = step[0]
 	var dir: Vector3 = step[1]
-	_play_anim(anim)
-	var speed := run_speed if anim == "run" else walk_speed * 0.5
-	velocity.x = dir.x * speed
-	velocity.z = dir.z * speed
-	if dir.length_squared() > 0.001 and anim not in ["strafe_l", "strafe_r"]:
-		_demo_facing = atan2(dir.x, dir.z)
+
+	if anim == "run_circle":
+		_demo_circle_angle += delta * (run_speed / DEMO_CIRCLE_RADIUS)
+		var cdir := Vector3(sin(_demo_circle_angle), 0.0, cos(_demo_circle_angle))
+		_demo_facing = atan2(cdir.x, cdir.z)
+		velocity.x = cdir.x * run_speed
+		velocity.z = cdir.z * run_speed
+		_play_anim("run")
+	else:
+		_play_anim(anim)
+		var speed := run_speed if anim == "run" else walk_speed * 0.5
+		velocity.x = dir.x * speed
+		velocity.z = dir.z * speed
+		if dir.length_squared() > 0.001 and anim not in ["strafe_l", "strafe_r"]:
+			_demo_facing = atan2(dir.x, dir.z)
+
 	rotation.y = _demo_facing
 	_cycle_timer -= delta
 	if _cycle_timer <= 0.0:
@@ -355,7 +380,6 @@ func _check_visibility():
 	if _target and not is_instance_valid(_target):
 		_target = null
 
-	# Player is highest priority target for all factions
 	if _player:
 		var to_player = _player.global_position - global_position
 		var dist = to_player.length()
@@ -368,7 +392,6 @@ func _check_visibility():
 					_react_to_target()
 					return
 
-	# No player in sight — check opposing faction
 	var opp = "faction_1" if faction == 0 else "faction_0"
 	var best_dist = sight_range
 	var best_enemy: Node3D = null
@@ -456,7 +479,6 @@ func _seek_nearest_cover():
 # ── Squad coordination ────────────────────────────────────────────────────────
 
 func _alert_squad():
-	# Only alert same-faction members
 	for node in get_tree().get_nodes_in_group("faction_%d" % faction):
 		if node == self:
 			continue
