@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="PartDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://pipeline/part_def.gd" id="1_partdef"]
+
+[resource]
+script = ExtResource("1_partdef")
+label = "Placeholder Hand R"
+body_plan = "biped"
+slot = "right_hand"
+bone_name = "mixamorig_RightHand"
+offset_scale = Vector3(1, 1, 1)

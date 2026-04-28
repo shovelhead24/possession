@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://pipeline_biped_tpl"]
+
+[ext_resource type="PackedScene" path="res://soldier.fbx" id="1_soldier"]
+
+[node name="BipedTemplate" type="Node3D"]
+
+[node name="Armature" parent="." instance=ExtResource("1_soldier")]
