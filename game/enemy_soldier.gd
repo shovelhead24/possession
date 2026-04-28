@@ -43,22 +43,24 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _anim_player: AnimationPlayer = null
 var _cycle_step: int = 0
 var _cycle_timer: float = 0.0
-var _demo_facing: float = PI   # radians — initially faces -Z
+var _demo_facing: float = 0.0  # start facing +Z toward player
 var _demo_circle_angle: float = 0.0
 const DEMO_CIRCLE_RADIUS: float = 8.0
 
+# Optional 4th field overrides _demo_facing when the step begins (NAN = derive from dir)
 const DEMO_STEPS: Array = [
-	["idle",       Vector3.ZERO,    2.0],
-	["walk",       Vector3(0,0,-1), 3.0],
-	["run",        Vector3(0,0,-1), 2.5],
-	["run_circle", Vector3.ZERO,    8.0],
-	["idle",       Vector3.ZERO,    1.0],
-	["strafe_l",   Vector3(-1,0,0), 2.0],
-	["strafe_r",   Vector3( 1,0,0), 2.0],
-	["idle",       Vector3.ZERO,    1.0],
-	["fire",       Vector3.ZERO,    2.0],
-	["reload",     Vector3.ZERO,    2.2],
-	["hit",        Vector3.ZERO,    1.0],
+	["idle",       Vector3.ZERO,    1.0,  0.0],  # face player (+Z)
+	["idle",       Vector3.ZERO,    1.5,  PI],   # turn 180 in place
+	["walk",       Vector3(0,0,-1), 3.0,  NAN],
+	["run",        Vector3(0,0,-1), 2.5,  NAN],
+	["run_circle", Vector3.ZERO,    8.0,  NAN],
+	["idle",       Vector3.ZERO,    1.0,  NAN],
+	["strafe_l",   Vector3(-1,0,0), 2.0,  NAN],
+	["strafe_r",   Vector3( 1,0,0), 2.0,  NAN],
+	["idle",       Vector3.ZERO,    1.0,  NAN],
+	["fire",       Vector3.ZERO,    2.0,  NAN],
+	["reload",     Vector3.ZERO,    2.2,  NAN],
+	["hit",        Vector3.ZERO,    1.0,  NAN],
 ]
 var _shoot_sound: AudioStreamPlayer3D = null
 var _step_sound: AudioStreamPlayer3D = null
@@ -253,7 +255,10 @@ func _tick_demo_cycle(delta: float):
 	_cycle_timer -= delta
 	if _cycle_timer <= 0.0:
 		_cycle_step = (_cycle_step + 1) % DEMO_STEPS.size()
-		_cycle_timer = DEMO_STEPS[_cycle_step][2]
+		var next: Array = DEMO_STEPS[_cycle_step]
+		_cycle_timer = next[2]
+		if next.size() > 3 and not is_nan(float(next[3])):
+			_demo_facing = float(next[3])
 
 func _physics_process(delta):
 	if state == State.DEAD:
