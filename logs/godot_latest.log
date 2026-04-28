@@ -70,7 +70,6 @@ Loading resource: res://soldier_3.png
 Loading resource: res://.godot/imported/soldier_3.png-9fa340ab928f73002542c6f281db93f7.s3tc.ctex
 Loading resource: res://soldier_9.png
 Loading resource: res://.godot/imported/soldier_9.png-9933c688b25564743b0c60af31acd6d8.s3tc.ctex
-Loading resource: res://warthog.gd
 Loading resource: res://plasma_rifle.mp3
 Loading resource: res://.godot/imported/plasma_rifle.mp3-dbd184ee77489d3cc2801c42116d8589.mp3str
 Loading resource: res://halo_-_carbine/scene.gltf
@@ -137,7 +136,7 @@ Loading resource: res://shooter animation/firing rifle.fbx
 Loading resource: res://.godot/imported/firing rifle.fbx-213cef818547265bf406b761d89dcf53.res
 Loading resource: res://shooter animation/reloading.fbx
 Loading resource: res://.godot/imported/reloading.fbx-9ff329fabbdb33a4a09caabe676607dc.scn
-Loading resource: res://shooter animation/strafe left.fbx
-Loading resource: res://.godot/imported/strafe left.fbx-2bac5f524bf217d3deaab3cb4d526a20.scn
 Loading resource: res://shooter animation/strafe right.fbx
 Loading resource: res://.godot/imported/strafe right.fbx-d1eaf0efea9ac1b8ebd649153ca57b1a.scn
+Loading resource: res://shooter animation/strafe left.fbx
+Loading resource: res://.godot/imported/strafe left.fbx-2bac5f524bf217d3deaab3cb4d526a20.scn
