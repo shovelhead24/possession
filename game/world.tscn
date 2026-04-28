@@ -107,7 +107,7 @@ transform = Transform3D(-0.18099334836006, 0.0, 0.0105832144618, 0.0, 0.18130250
 script = ExtResource("9_fp_arms_ctrl")
 
 [node name="Carbine" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("5_carbine")]
-transform = Transform3D(0.03492816910148, -0.00105113256723, -0.00197918131016, 0.00105652993079, 0.03498397767544, 0.00006561513146, -0.00197630538605, 0.00012522521138, -0.03494392335415, -0.25700005888939, 0.18000002205372, 0.31000000238419)
+transform = Transform3D(0.035, 0, 0, 0, 0, 0.035, 0, -0.035, 0, -0.257, 0.18, 0.31)
 
 [node name="Railgun" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("6_railgun")]
 transform = Transform3D(0.000000000264243, 0.000000000528486, 0.00350000513717, 0.000000000305977, 0.00350000513717, -0.000000000528486, 0.00350000513717, -0.000000000305977, -0.000000000264243, -0.24999988079071, 0.22999995946884, 0.28999817371368)
