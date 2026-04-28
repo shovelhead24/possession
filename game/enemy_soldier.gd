@@ -91,8 +91,8 @@ func _setup_animations():
 		"hit":      "res://shooter animation/hit reaction.fbx",
 		"fire":     "res://shooter animation/firing rifle.fbx",
 		"reload":   "res://shooter animation/reloading.fbx",
-		"strafe_l": "res://shooter animation/strafe left.fbx",
-		"strafe_r": "res://shooter animation/strafe right.fbx",
+		"strafe_l": "res://shooter animation/strafe right.fbx",
+		"strafe_r": "res://shooter animation/strafe left.fbx",
 	}
 	for lib_name in clips:
 		var res = load(clips[lib_name])
@@ -248,7 +248,8 @@ func _tick_demo_cycle(delta: float):
 		if dir.length_squared() > 0.001 and anim not in ["strafe_l", "strafe_r"]:
 			_demo_facing = atan2(dir.x, dir.z)
 
-	rotation.y = _demo_facing
+	var angle_diff := wrapf(_demo_facing - rotation.y, -PI, PI)
+	rotation.y += clamp(angle_diff, -6.0 * delta, 6.0 * delta)
 	_cycle_timer -= delta
 	if _cycle_timer <= 0.0:
 		_cycle_step = (_cycle_step + 1) % DEMO_STEPS.size()
