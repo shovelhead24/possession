@@ -420,7 +420,7 @@ func _fire():
 			_target.take_damage(attack_damage)
 
 func take_damage(amount: float):
-	if state == State.DEAD:
+	if state == State.DEAD or demo_cycle:
 		return
 	health -= amount
 	if health <= 0.0:
