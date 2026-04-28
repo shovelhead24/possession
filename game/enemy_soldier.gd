@@ -43,17 +43,16 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _anim_player: AnimationPlayer = null
 var _cycle_step: int = 0
 var _cycle_timer: float = 0.0
+var _demo_facing: float = PI  # radians — soldier initially faces -Z
 
 const DEMO_STEPS: Array = [
 	["idle",     Vector3.ZERO,           2.0],
-	["walk",     Vector3( 1, 0,  0),     2.5],
-	["walk",     Vector3( 0, 0,  1),     2.5],
-	["walk",     Vector3(-1, 0,  0),     2.5],
-	["walk",     Vector3( 0, 0, -1),     2.5],
-	["run",      Vector3( 1, 0,  0),     2.0],
-	["run",      Vector3(-1, 0,  0),     2.0],
-	["strafe_l", Vector3(-1, 0,  0),     2.0],
-	["strafe_r", Vector3( 1, 0,  0),     2.0],
+	["walk",     Vector3( 0, 0, -1),     3.0],  # walk forward
+	["run",      Vector3( 0, 0, -1),     2.5],  # run forward
+	["idle",     Vector3.ZERO,           1.0],
+	["strafe_l", Vector3(-1, 0,  0),     2.0],  # strafe left, keep facing
+	["strafe_r", Vector3( 1, 0,  0),     2.0],  # strafe right, keep facing
+	["idle",     Vector3.ZERO,           1.0],
 	["fire",     Vector3.ZERO,           2.0],
 	["reload",   Vector3.ZERO,           2.2],
 	["hit",      Vector3.ZERO,           1.0],
@@ -218,13 +217,13 @@ func _tick_demo_cycle(delta: float):
 	var step: Array = DEMO_STEPS[_cycle_step]
 	var anim: String = step[0]
 	var dir: Vector3 = step[1]
-	var duration: float = step[2]
 	_play_anim(anim)
 	var speed := run_speed if anim == "run" else walk_speed * 0.5
 	velocity.x = dir.x * speed
 	velocity.z = dir.z * speed
-	if dir.length_squared() > 0.001:
-		_face_dir(dir, delta * 6.0)
+	if dir.length_squared() > 0.001 and anim not in ["strafe_l", "strafe_r"]:
+		_demo_facing = atan2(dir.x, dir.z)
+	rotation.y = _demo_facing
 	_cycle_timer -= delta
 	if _cycle_timer <= 0.0:
 		_cycle_step = (_cycle_step + 1) % DEMO_STEPS.size()
