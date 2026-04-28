@@ -151,12 +151,14 @@ func _attach_weapon():
 	var attach = BoneAttachment3D.new()
 	attach.bone_name = skeleton.get_bone_name(bone_idx)
 	skeleton.add_child(attach)
+	# Debug: print bone global basis so we can tune carbine rotation
+	call_deferred("_debug_print_hand_basis", attach)
 	var carbine_scene = load("res://halo_-_carbine/scene.gltf")
 	if carbine_scene:
 		var carbine = carbine_scene.instantiate()
 		carbine.scale = Vector3(0.03, 0.03, 0.03)
 		carbine.position = Vector3(0.05, 0.02, -0.05)
-		carbine.rotation_degrees = Vector3(-10, 90, 90)
+		carbine.rotation_degrees = Vector3(90, 0, 0)
 		attach.add_child(carbine)
 
 func _attach_faction_marker():
@@ -529,3 +531,7 @@ func _pick_patrol_target():
 	var r = randf_range(8.0, patrol_radius)
 	_patrol_target = _spawn_pos + Vector3(cos(angle) * r, 0.0, sin(angle) * r)
 	_state_timer = randf_range(2.0, 4.0)
+
+func _debug_print_hand_basis(attach: Node3D):
+	var b = attach.global_transform.basis
+	print("RightHand bone basis — X:", b.x, " Y:", b.y, " Z:", b.z)
