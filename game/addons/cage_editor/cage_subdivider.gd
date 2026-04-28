@@ -68,7 +68,7 @@ static func _step(verts: PackedVector3Array, faces: Array) -> Array:
 	var new_v := PackedVector3Array()
 	new_v.resize(nv)
 	for vi in nv:
-		var n := vf[vi].size()
+		var n: int = vf[vi].size()
 		if n == 0:
 			new_v[vi] = verts[vi]
 			continue
@@ -106,8 +106,8 @@ static func _step(verts: PackedVector3Array, faces: Array) -> Array:
 			var a: int = face[i]
 			var b: int = face[(i + 1) % ns]
 			var pa: int = face[(i - 1 + ns) % ns]
-			var e1 := eidx[_ek(a, b)]
-			var e0 := eidx[_ek(pa, a)]
+			var e1: int = eidx[_ek(a, b)]
+			var e0: int = eidx[_ek(pa, a)]
 			new_f.append(PackedInt32Array([a, e1, fpi, e0]))
 
 	return [new_v, new_f]
