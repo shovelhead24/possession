@@ -14,8 +14,10 @@ var _face_drag_mirror_origins: Array = []
 func _init() -> void:
 	create_material("wire", Color(1.0, 0.55, 0.1), false, true)
 	create_material("wire_sel", Color(0.2, 1.0, 0.45), false, true)
+	create_material("face_marker", Color(0.15, 0.85, 0.85), false, true)
+	create_material("face_marker_sel", Color(0.2, 1.0, 0.45), false, true)
 	create_handle_material("handles")
-	create_handle_material("face_handles")
+	create_handle_material("face_handles", true)  # billboard so they show through mesh
 
 func _get_gizmo_name() -> String:
 	return "CageMesh"
@@ -63,11 +65,28 @@ func _redraw(gizmo: EditorNode3DGizmo) -> void:
 	# Vertex handles (primary)
 	gizmo.add_handles(cage.vertices, get_material("handles", gizmo), [], false, false)
 
-	# Face centroid handles (secondary)
+	# Face centroid markers — teal crosses drawn on top (visible through mesh)
 	var face_centers := PackedVector3Array()
+	var fmarkers := PackedVector3Array()
+	var fmarkers_sel := PackedVector3Array()
 	for fi in cage.faces.size():
-		face_centers.append(cage.face_center(fi))
-	gizmo.add_handles(face_centers, get_material("face_handles", gizmo), [], false, true)
+		var c := cage.face_center(fi)
+		face_centers.append(c)
+		var s := 0.07
+		var pts := [c + Vector3(-s,0,0), c + Vector3(s,0,0),
+					c + Vector3(0,-s,0), c + Vector3(0,s,0),
+					c + Vector3(0,0,-s), c + Vector3(0,0,s)]
+		if fi == cage.selected_face:
+			for p in pts: fmarkers_sel.append(p)
+		else:
+			for p in pts: fmarkers.append(p)
+	if fmarkers.size() > 0:
+		gizmo.add_lines(fmarkers, get_material("face_marker", gizmo), false)
+	if fmarkers_sel.size() > 0:
+		gizmo.add_lines(fmarkers_sel, get_material("face_marker_sel", gizmo), false)
+
+	# Secondary handles at face centers (invisible click targets)
+	gizmo.add_handles(face_centers, get_material("face_handles", gizmo), [], true, true)
 
 func _get_handle_name(_gizmo: EditorNode3DGizmo, id: int, secondary: bool) -> String:
 	return "Face %d" % id if secondary else "Vertex %d" % id
