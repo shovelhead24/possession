@@ -31,6 +31,7 @@ func _rebuild() -> void:
 	if vertices.size() == 0 or faces.is_empty():
 		return
 	_preview.mesh = CageSubdivider.subdivide(vertices, faces, subdivision_levels)
+	update_gizmos()
 
 func _ensure_preview() -> void:
 	if _preview and is_instance_valid(_preview):
