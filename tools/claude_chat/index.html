@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Claude</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.hdr{background:#1b1b24;border-bottom:1px solid #28283a;padding:7px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;min-height:44px}
+.logo{font-weight:700;font-size:15px;color:#a890f0;letter-spacing:.02em;margin-right:4px}
+.model-tag{font-size:11px;color:#555;background:#202028;border:1px solid #303040;border-radius:10px;padding:2px 8px;cursor:default}
+.effort-sel{background:#202028;color:#c0bfe0;border:1px solid #303040;border-radius:4px;padding:3px 7px;font-size:12px;cursor:pointer;margin-left:auto}
+.effort-sel:focus{outline:none;border-color:#7060c0}
+.btn-sys{background:none;border:1px solid #303040;color:#666;border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit}
+.btn-sys:hover{border-color:#5a5a7a;color:#999}
+.session-dot{width:7px;height:7px;border-radius:50%;background:#333;flex-shrink:0;cursor:help}
+.session-dot.active{background:#4a9a4a}
+
+/* ── System prompt ─────────────────────────────────────────────────────── */
+.sys-panel{background:#17171f;border-bottom:1px solid #252530;padding:7px 14px;display:none;flex-shrink:0}
+.sys-panel textarea{width:100%;background:#1e1e2a;color:#b0b0cc;border:1px solid #303040;border-radius:4px;padding:7px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;max-height:110px}
+.sys-panel textarea:focus{outline:none;border-color:#6050b0}
+
+/* ── Status bar ─────────────────────────────────────────────────────────── */
+.status{background:#161620;border-bottom:1px solid #222230;padding:3px 14px;font-size:11px;color:#555;display:flex;align-items:center;gap:12px;min-height:22px;flex-shrink:0}
+.s-tok{color:#4e9ab5}.s-cache{color:#7a6ea0}.s-cost{color:#6a9a60}
+.s-warn{color:#d07030;font-weight:500}.s-rate-ok{color:#408040}.s-rate-bad{color:#d04040}
+.s-bar{display:flex;align-items:center;gap:4px;margin-left:auto}
+.s-bar-track{width:72px;height:3px;background:#222;border-radius:2px;overflow:hidden}
+.s-bar-fill{height:100%;border-radius:2px;transition:width .4s}
+
+/* ── Messages ───────────────────────────────────────────────────────────── */
+.msgs{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:9px}
+.msg{max-width:90%;display:flex;flex-direction:column;gap:4px}
+.msg.user{align-self:flex-end}
+.msg.assistant{align-self:flex-start;max-width:94%}
+
+.bubble{padding:10px 14px;border-radius:7px;line-height:1.6;word-break:break-word}
+.user .bubble{background:#252345;color:#d0cef0}
+.assistant .bubble{background:#1b1b26;border:1px solid #2b2b3e;color:#dddcee}
+.assistant .bubble.streaming::after{content:'▋';animation:blink .7s step-end infinite;color:#7060c0}
+@keyframes blink{50%{opacity:0}}
+
+.bubble pre{background:#101018;border:1px solid #252535;border-radius:5px;padding:10px 12px;margin:8px 0;overflow-x:auto}
+.bubble code{font-family:'Cascadia Code','Consolas',monospace;font-size:12.5px}
+.bubble p{margin:5px 0}.bubble p:first-child{margin-top:0}.bubble p:last-child{margin-bottom:0}
+.bubble h1,.bubble h2,.bubble h3{color:#b8a8f8;margin:10px 0 4px}
+.bubble h1{font-size:16px}.bubble h2{font-size:15px}.bubble h3{font-size:14px}
+.bubble ul,.bubble ol{padding-left:20px;margin:5px 0}.bubble li{margin:2px 0}
+.bubble strong{color:#eeeeff}
+
+/* ── Thinking ───────────────────────────────────────────────────────────── */
+.think-wrap{border:1px solid #2e1f52;border-radius:6px;overflow:hidden}
+.think-hdr{background:#1a1230;padding:5px 10px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.think-hdr:hover{background:#201440}
+.think-hdr span{font-size:11px;color:#8060b0;flex:1}
+.think-hdr .chevron{font-size:10px;color:#6040a0;transition:transform .2s}
+.think-hdr.open .chevron{transform:rotate(90deg)}
+.think-body{background:#120e1e;padding:10px 12px;font-size:11.5px;color:#8868b8;font-family:'Cascadia Code','Consolas',monospace;line-height:1.6;white-space:pre-wrap;max-height:280px;overflow-y:auto;display:none;border-top:1px solid #2e1f52}
+.think-body.open{display:block}
+
+/* ── Tool calls ─────────────────────────────────────────────────────────── */
+.tool-wrap{border:1px solid #2a2a3e;border-radius:5px;overflow:hidden;margin:2px 0}
+.tool-hdr{background:#1a1a28;padding:4px 10px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.tool-hdr:hover{background:#202030}
+.tool-name{font-size:11px;color:#7080a0;font-family:'Cascadia Code','Consolas',monospace}
+.tool-body{background:#111118;padding:8px 10px;font-size:11px;color:#606880;font-family:'Cascadia Code','Consolas',monospace;white-space:pre-wrap;max-height:120px;overflow:auto;display:none;border-top:1px solid #2a2a3e}
+.tool-body.open{display:block}
+
+/* ── Message images ─────────────────────────────────────────────────────── */
+.msg-imgs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.msg-img{max-width:200px;max-height:150px;border-radius:5px;object-fit:cover;border:1px solid #2e2e44;cursor:pointer}
+
+/* ── Error ──────────────────────────────────────────────────────────────── */
+.err-bubble{background:#201010;border:1px solid #502020;color:#e07070;padding:10px 14px;border-radius:7px;font-size:13px}
+
+/* ── Input area ─────────────────────────────────────────────────────────── */
+.inp{border-top:1px solid #252530;padding:10px 14px;background:#161620;flex-shrink:0}
+.inp-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.btn-clear{background:none;border:1px solid #2a2a3a;color:#555;border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit}
+.btn-clear:hover{border-color:#802020;color:#c04040}
+.hint{font-size:11px;color:#363648}
+.pending{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.p-wrap{position:relative}
+.p-img{width:52px;height:52px;object-fit:cover;border-radius:4px;border:1px solid #2e2e44}
+.p-rm{position:absolute;top:-4px;right:-4px;background:#902020;color:#fff;border:none;border-radius:50%;width:15px;height:15px;font-size:9px;line-height:15px;text-align:center;cursor:pointer;padding:0}
+.inp-row{display:flex;gap:7px;align-items:flex-end}
+textarea#ti{flex:1;background:#1e1e2c;color:#dddcee;border:1px solid #303040;border-radius:6px;padding:9px 12px;font-size:14px;resize:none;min-height:42px;max-height:180px;font-family:inherit;line-height:1.4}
+textarea#ti:focus{outline:none;border-color:#6050b0}
+.btn-att{background:#1e1e2c;color:#666;border:1px solid #303040;border-radius:6px;padding:9px 11px;cursor:pointer;font-size:15px;line-height:1}
+.btn-att:hover{background:#252535;color:#999}
+.btn-send{background:#3e2f80;color:#d0c8ff;border:none;border-radius:6px;padding:9px 18px;cursor:pointer;font-weight:600;font-family:inherit;font-size:13px;white-space:nowrap;transition:background .15s}
+.btn-send:hover{background:#4e3f90}
+.btn-send:disabled{background:#1e1e2c;color:#444;cursor:not-allowed}
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#303040;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#505060}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <span class="logo">Claude</span>
+  <span class="model-tag" id="modelTag">—</span>
+  <button class="btn-sys" onclick="toggleSys()">System ▾</button>
+  <select class="effort-sel" id="effortSel" title="Effort level — higher = slower but deeper thinking">
+    <option value="low">Fast (low)</option>
+    <option value="medium" selected>Normal (medium)</option>
+    <option value="high">Think (high)</option>
+    <option value="xhigh">Think+ (xhigh)</option>
+    <option value="max">Max</option>
+  </select>
+  <div class="session-dot" id="sessDot" title="No session"></div>
+</div>
+
+<div class="sys-panel" id="sysPanel">
+  <textarea id="sysTa" placeholder="System prompt (appended to Claude Code's default)…"></textarea>
+</div>
+
+<div class="status" id="status"><span style="color:#333">ready</span></div>
+
+<div class="msgs" id="msgs"></div>
+
+<div class="inp">
+  <div class="inp-top">
+    <button class="btn-clear" onclick="clearChat()">New chat</button>
+    <span class="hint">Ctrl+V to paste image · Shift+Enter for newline</span>
+  </div>
+  <div class="pending" id="pending"></div>
+  <div class="inp-row">
+    <button class="btn-att" onclick="document.getElementById('fi').click()" title="Attach image">📎</button>
+    <input type="file" id="fi" accept="image/*" multiple style="display:none" onchange="addFiles(this.files)">
+    <textarea id="ti" placeholder="Message…" rows="1"
+      onkeydown="onKey(event)" oninput="resize(this)" onpaste="onPaste(event)"></textarea>
+    <button class="btn-send" id="sendBtn" onclick="send()">Send</button>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let sessionId = null;
+let pendingImgs = [];
+let streaming = false;
+let totalCost = 0;
+
+// ── Startup ────────────────────────────────────────────────────────────────
+document.getElementById('ti').focus();
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer?.files) addFiles(e.dataTransfer.files); });
+
+function toggleSys() {
+    const p = document.getElementById('sysPanel');
+    p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    if (p.style.display === 'block') document.getElementById('sysTa').focus();
+}
+
+// ── Input helpers ──────────────────────────────────────────────────────────
+function resize(ta) { ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,180)+'px'; }
+function onKey(e) { if (e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();} }
+function onPaste(e) {
+    for (const item of (e.clipboardData?.items||[])) {
+        if (item.type.startsWith('image/')) { e.preventDefault(); addImg(item.getAsFile()); }
+    }
+}
+function addFiles(files) { for (const f of files) if (f.type.startsWith('image/')) addImg(f); document.getElementById('fi').value=''; }
+function addImg(file) {
+    const r = new FileReader();
+    r.onload = e => {
+        const id = Date.now()+Math.random();
+        pendingImgs.push({id, data: e.target.result.split(',')[1], media_type: file.type, url: e.target.result});
+        renderPending();
+    };
+    r.readAsDataURL(file);
+}
+function renderPending() {
+    document.getElementById('pending').innerHTML = pendingImgs.map(i =>
+        `<div class="p-wrap"><img src="${i.url}" class="p-img"><button class="p-rm" onclick="rmImg('${i.id}')">×</button></div>`
+    ).join('');
+}
+function rmImg(id) { pendingImgs=pendingImgs.filter(i=>i.id!=id); renderPending(); }
+
+// ── Send ───────────────────────────────────────────────────────────────────
+async function send() {
+    if (streaming) return;
+    const ta = document.getElementById('ti');
+    const text = ta.value.trim();
+    if (!text && pendingImgs.length===0) return;
+
+    const imgs = [...pendingImgs];
+    pendingImgs=[]; renderPending();
+    ta.value=''; ta.style.height='auto';
+
+    appendUser(text, imgs);
+    const aId = 'a'+Date.now();
+    appendAssistant(aId);
+
+    streaming=true;
+    document.getElementById('sendBtn').disabled=true;
+
+    let curThink='', curText='', toolBufs={};
+
+    try {
+        const r = await fetch('/chat', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                message: text,
+                images: imgs.map(i=>({data:i.data, media_type:i.media_type})),
+                session_id: sessionId,
+                effort: document.getElementById('effortSel').value,
+                system: document.getElementById('sysTa').value
+            })
+        });
+
+        const reader = r.body.getReader();
+        const dec = new TextDecoder();
+        let buf='';
+
+        while (true) {
+            const {value,done} = await reader.read();
+            if (done) break;
+            buf += dec.decode(value,{stream:true});
+            const lines = buf.split('\n'); buf=lines.pop();
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                try {
+                    const ev = JSON.parse(line.slice(6));
+                    switch (ev.type) {
+                        case 'init':
+                            sessionId = ev.session_id;
+                            document.getElementById('modelTag').textContent = ev.model || '—';
+                            setSessDot(true);
+                            break;
+                        case 'rate_limit':
+                            showRateLimit(ev);
+                            break;
+                        case 'message_start':
+                            setStatus({usage: ev.usage});
+                            break;
+                        case 'thinking_start':
+                            startThink(aId);
+                            break;
+                        case 'thinking_delta':
+                            curThink += ev.text;
+                            updateThink(aId, curThink);
+                            break;
+                        case 'thinking_end':
+                            break;
+                        case 'tool_start':
+                            startTool(aId, ev.index, ev.name);
+                            toolBufs[ev.index]='';
+                            break;
+                        case 'tool_delta':
+                            toolBufs[ev.index]=(toolBufs[ev.index]||'')+ev.json;
+                            updateTool(aId, ev.index, toolBufs[ev.index]);
+                            break;
+                        case 'tool_end':
+                            break;
+                        case 'text_delta':
+                            curText += ev.text;
+                            updateText(aId, curText);
+                            break;
+                        case 'usage':
+                            setStatus({output_tokens: ev.output_tokens});
+                            break;
+                        case 'result':
+                            totalCost += ev.cost||0;
+                            setStatus({cost: ev.cost, total_cost: totalCost, duration_ms: ev.duration_ms, input_tokens: ev.input_tokens, output_tokens: ev.output_tokens, cache_read: ev.cache_read});
+                            break;
+                        case 'error':
+                            document.getElementById(aId+'-text').innerHTML=`<div class="err-bubble">⚠ ${esc(ev.error)}</div>`;
+                            break;
+                        case 'done':
+                            if (ev.session_id) { sessionId=ev.session_id; setSessDot(true); }
+                            finishText(aId);
+                            break;
+                    }
+                } catch(_){}
+            }
+        }
+    } catch(e) {
+        document.getElementById(aId+'-text').innerHTML=`<div class="err-bubble">⚠ ${esc(e.message)}</div>`;
+    }
+
+    streaming=false;
+    document.getElementById('sendBtn').disabled=false;
+}
+
+// ── DOM builders ───────────────────────────────────────────────────────────
+function appendUser(text, imgs) {
+    const d=document.createElement('div'); d.className='msg user';
+    const imgHtml = imgs.length ? `<div class="msg-imgs">${imgs.map(i=>`<img src="${i.url}" class="msg-img" onclick="window.open('${i.url}')">`).join('')}</div>` : '';
+    d.innerHTML=`<div class="bubble">${imgHtml}${text?`<span>${esc(text)}</span>`:''}</div>`;
+    document.getElementById('msgs').appendChild(d); scrollEnd();
+}
+
+function appendAssistant(id) {
+    const d=document.createElement('div'); d.className='msg assistant'; d.id=id;
+    d.innerHTML=`<div id="${id}-extras"></div><div class="bubble streaming" id="${id}-text"></div>`;
+    document.getElementById('msgs').appendChild(d); scrollEnd();
+}
+
+function startThink(id) {
+    const ex=document.getElementById(id+'-extras');
+    const w=document.createElement('div'); w.className='think-wrap';
+    w.innerHTML=`<div class="think-hdr" id="${id}-thdr" onclick="togThink('${id}')">
+        <span>💭 Thinking…</span><span class="chevron">▶</span></div>
+        <div class="think-body" id="${id}-tbody"></div>`;
+    ex.appendChild(w); scrollEnd();
+}
+function updateThink(id,text) {
+    const el=document.getElementById(id+'-tbody'); if(el){el.textContent=text; scrollEnd();}
+}
+function togThink(id) {
+    const h=document.getElementById(id+'-thdr'); const b=document.getElementById(id+'-tbody');
+    if(!h||!b) return; h.classList.toggle('open'); b.classList.toggle('open');
+}
+
+function startTool(id, idx, name) {
+    const ex=document.getElementById(id+'-extras');
+    const w=document.createElement('div'); w.className='tool-wrap'; w.id=`${id}-tool-${idx}`;
+    w.innerHTML=`<div class="tool-hdr" onclick="togTool('${id}',${idx})">
+        <span>🔧</span><span class="tool-name">${esc(name)}</span><span style="font-size:10px;color:#404050;margin-left:auto">▶</span></div>
+        <div class="tool-body" id="${id}-toolbody-${idx}"></div>`;
+    ex.appendChild(w); scrollEnd();
+}
+function updateTool(id,idx,json) {
+    const el=document.getElementById(`${id}-toolbody-${idx}`);
+    if(el) { try{el.textContent=JSON.stringify(JSON.parse(json),null,2);}catch{el.textContent=json;} }
+}
+function togTool(id,idx) {
+    const b=document.getElementById(`${id}-toolbody-${idx}`); if(b) b.classList.toggle('open');
+}
+
+function updateText(id,text) {
+    const el=document.getElementById(id+'-text');
+    if(el){el.innerHTML=md(text); el.classList.add('streaming'); scrollEnd();}
+}
+function finishText(id) {
+    const el=document.getElementById(id+'-text'); if(el) el.classList.remove('streaming');
+}
+
+// ── Status bar ─────────────────────────────────────────────────────────────
+let _status={};
+function setStatus(patch) {
+    Object.assign(_status,patch);
+    const {input_tokens,output_tokens,cache_read,cost,total_cost,duration_ms}=_status;
+    let parts=[];
+    if(input_tokens)  parts.push(`<span class="s-tok">↑${fmt(input_tokens)}</span>`);
+    if(output_tokens) parts.push(`<span class="s-tok">↓${fmt(output_tokens)}</span>`);
+    if(cache_read)    parts.push(`<span class="s-cache">⚡${fmt(cache_read)} cached</span>`);
+    if(cost!=null)    parts.push(`<span class="s-cost">$${cost.toFixed(4)}</span>`);
+    if(total_cost>0)  parts.push(`<span class="s-cost" style="opacity:.6">total $${total_cost.toFixed(3)}</span>`);
+    if(duration_ms)   parts.push(`<span style="color:#404050">${(duration_ms/1000).toFixed(1)}s</span>`);
+    document.getElementById('status').innerHTML=parts.join('')||'<span style="color:#333">ready</span>';
+}
+function fmt(n){return n>=1000?(n/1000).toFixed(1)+'k':n;}
+
+let _rl={};
+function showRateLimit(ev) {
+    _rl=ev;
+    if(ev.status==='allowed') return; // only show banner when not-allowed
+    const t=new Date(ev.resetsAt*1000).toLocaleTimeString();
+    const st=document.getElementById('status');
+    st.innerHTML=`<span class="s-rate-bad">⛔ Rate limited (${ev.limitType}) — resets ${t}</span>`;
+}
+
+function setSessDot(active) {
+    const d=document.getElementById('sessDot');
+    d.classList.toggle('active',active);
+    d.title=active?`Session: ${sessionId}`:'No session';
+}
+
+// ── Clear ──────────────────────────────────────────────────────────────────
+function clearChat() {
+    sessionId=null; totalCost=0; _status={}; _rl={};
+    document.getElementById('msgs').innerHTML='';
+    document.getElementById('status').innerHTML='<span style="color:#333">ready</span>';
+    setSessDot(false);
+    document.getElementById('modelTag').textContent='—';
+}
+
+function scrollEnd() { const m=document.getElementById('msgs'); m.scrollTop=m.scrollHeight; }
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+
+// ── Markdown ───────────────────────────────────────────────────────────────
+function md(raw) {
+    const out=[];
+    const re=/```(\w*)\n?([\s\S]*?)```/g;
+    let last=0,m;
+    while((m=re.exec(raw))!==null){
+        if(m.index>last) out.push({t:'text',s:raw.slice(last,m.index)});
+        out.push({t:'code',lang:m[1],s:m[2].replace(/\n$/,'')});
+        last=m.index+m[0].length;
+    }
+    if(last<raw.length) out.push({t:'text',s:raw.slice(last)});
+
+    return out.map(p=>{
+        if(p.t==='code') return `<pre><code>${esc(p.s)}</code></pre>`;
+        let t=esc(p.s);
+        t=t.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+        t=t.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+        t=t.replace(/\*([^*\s][^*\n]*)\*/g,'<em>$1</em>');
+        t=t.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+        t=t.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+        t=t.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+        t=t.replace(/((?:^[-*] .+(?:\n|$))+)/gm,b=>'<ul>'+b.replace(/^[-*] (.+)$/gm,'<li>$1</li>')+'</ul>');
+        t=t.replace(/((?:^\d+\. .+(?:\n|$))+)/gm,b=>'<ol>'+b.replace(/^\d+\. (.+)$/gm,'<li>$1</li>')+'</ol>');
+        return t.split(/\n\n+/).map(para=>{
+            para=para.trim();
+            if(!para) return '';
+            if(/^<(h[1-3]|ul|ol|pre)/.test(para)) return para;
+            return `<p>${para.replace(/\n/g,'<br>')}</p>`;
+        }).join('');
+    }).join('');
+}
+</script>
+</body>
+</html>
