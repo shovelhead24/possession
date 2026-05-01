@@ -143,12 +143,13 @@ textarea#ti:focus{outline:none;border-color:#6050b0}
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
-let sessionId = null;
+let sessionId = localStorage.getItem('claudeSessionId') || null;
 let pendingImgs = [];
 let streaming = false;
 let totalCost = 0;
 
 // ── Startup ────────────────────────────────────────────────────────────────
+if (sessionId) setSessDot(true);
 document.getElementById('ti').focus();
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer?.files) addFiles(e.dataTransfer.files); });
@@ -373,11 +374,13 @@ function setSessDot(active) {
     const d=document.getElementById('sessDot');
     d.classList.toggle('active',active);
     d.title=active?`Session: ${sessionId}`:'No session';
+    if (active && sessionId) localStorage.setItem('claudeSessionId', sessionId);
+    else localStorage.removeItem('claudeSessionId');
 }
 
 // ── Clear ──────────────────────────────────────────────────────────────────
 function clearChat() {
-    sessionId=null; totalCost=0; _status={}; _rl={};
+    sessionId=null; totalCost=0; _status={}; _rl={}; localStorage.removeItem('claudeSessionId');
     document.getElementById('msgs').innerHTML='';
     document.getElementById('status').innerHTML='<span style="color:#333">ready</span>';
     setSessDot(false);

@@ -11,6 +11,10 @@ app.use(express.static(__dirname));
 const VALID_EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
 const DEFAULT_CWD = 'C:/Games/possession';
 
+// Spawn claude.exe directly — avoids PATH and cmd.exe quoting issues entirely
+const APPDATA = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+const CLAUDE_EXE = path.join(APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
+
 app.post('/chat', (req, res) => {
     const { message = '', images = [], session_id, effort = 'medium', cwd = DEFAULT_CWD } = req.body;
 
@@ -41,10 +45,10 @@ app.post('/chat', (req, res) => {
     // Heartbeat — keeps the SSE connection alive and prevents premature close
     res.write(': ping\n\n');
 
-    // Write message via stdin — avoids shell arg-splitting of multi-word messages on Windows
-    const flags = `--print --output-format stream-json --include-partial-messages --verbose --effort ${safeEffort}${session_id ? ' --resume ' + session_id : ''}`;
-    const proc = spawn('cmd.exe', ['/c', `chcp 65001 >nul 2>&1 & claude ${flags}`],
-        { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+    const flagArr = ['--print', '--output-format', 'stream-json', '--include-partial-messages',
+                     '--verbose', '--effort', safeEffort];
+    if (session_id) flagArr.push('--resume', session_id);
+    const proc = spawn(CLAUDE_EXE, flagArr, { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
     proc.stdin.write(fullMsg, 'utf8');
     proc.stdin.end();
 
@@ -67,8 +71,8 @@ app.post('/chat', (req, res) => {
     proc.stderr.on('data', chunk => { stderrBuf += chunk.toString(); });
 
     let done = false;
-    req.on('close', () => {
-        if (!done) setTimeout(() => { if (!done) proc.kill(); }, 500);
+    res.on('close', () => {
+        if (!done) proc.kill();
     });
 
     proc.on('close', (code) => {
@@ -143,9 +147,5 @@ const PORT = parseInt(process.env.PORT || '5001');
 app.listen(PORT, () => {
     const url = `http://localhost:${PORT}`;
     console.log(`\nClaude Chat (Pro)  →  ${url}\n`);
-    require('child_process').exec('where claude', (err, stdout) => {
-        if (err) console.warn('WARNING: `claude` not found in PATH — chats will fail\n');
-        else console.log(`claude found: ${stdout.trim()}\n`);
-    });
     require('child_process').exec(`start ${url}`);
 });
