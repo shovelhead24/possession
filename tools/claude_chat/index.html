@@ -13,15 +13,58 @@ body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-seri
 .model-tag{font-size:11px;color:#555;background:#202028;border:1px solid #303040;border-radius:10px;padding:2px 8px;cursor:default}
 .effort-sel{background:#202028;color:#c0bfe0;border:1px solid #303040;border-radius:4px;padding:3px 7px;font-size:12px;cursor:pointer;margin-left:auto}
 .effort-sel:focus{outline:none;border-color:#7060c0}
-.btn-sys{background:none;border:1px solid #303040;color:#666;border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit}
-.btn-sys:hover{border-color:#5a5a7a;color:#999}
+.btn-hdr{background:none;border:1px solid #303040;color:#666;border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit}
+.btn-hdr:hover{border-color:#5a5a7a;color:#999}
+.btn-hdr.active{border-color:#6050b0;color:#a090e0;background:#1e1c30}
 .session-dot{width:7px;height:7px;border-radius:50%;background:#333;flex-shrink:0;cursor:help}
 .session-dot.active{background:#4a9a4a}
 
+/* ── Slide panels (sys, sessions, perms) ─────────────────────────────────── */
+.slide-panel{background:#17171f;border-bottom:1px solid #252530;flex-shrink:0;display:none}
+.slide-panel.open{display:block}
+.slide-panel .panel-inner{padding:10px 14px}
+
 /* ── System prompt ─────────────────────────────────────────────────────── */
-.sys-panel{background:#17171f;border-bottom:1px solid #252530;padding:7px 14px;display:none;flex-shrink:0}
-.sys-panel textarea{width:100%;background:#1e1e2a;color:#b0b0cc;border:1px solid #303040;border-radius:4px;padding:7px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;max-height:110px}
-.sys-panel textarea:focus{outline:none;border-color:#6050b0}
+#sysPanel textarea{width:100%;background:#1e1e2a;color:#b0b0cc;border:1px solid #303040;border-radius:4px;padding:7px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;max-height:110px}
+#sysPanel textarea:focus{outline:none;border-color:#6050b0}
+
+/* ── Sessions panel ─────────────────────────────────────────────────────── */
+#sessPanel .panel-inner{padding:0}
+.sess-list{max-height:220px;overflow-y:auto}
+.sess-new{display:flex;align-items:center;gap:8px;padding:9px 14px;color:#6888c0;font-size:12px;cursor:pointer;border-bottom:1px solid #1e1e2a}
+.sess-new:hover{background:#1c1c28;color:#8aa8e0}
+.sess-item{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;border-bottom:1px solid #1c1c26;position:relative}
+.sess-item:hover{background:#1c1c28}
+.sess-item.current{background:#1e1c30;border-left:2px solid #6050b0}
+.sess-dot{width:6px;height:6px;border-radius:50%;background:#333;flex-shrink:0}
+.sess-item.current .sess-dot{background:#6050b0}
+.sess-info{flex:1;min-width:0}
+.sess-name{font-size:12px;color:#c0c0d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;outline:none}
+.sess-name:focus{background:#252535;border-radius:2px;padding:0 3px;color:#e0e0f0}
+.sess-preview{font-size:11px;color:#404058;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.sess-date{font-size:10px;color:#363648;flex-shrink:0}
+.sess-del{background:none;border:none;color:#333;font-size:13px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;opacity:0}
+.sess-item:hover .sess-del{opacity:1;color:#803030}
+.sess-del:hover{color:#e04040!important}
+
+/* ── Permissions panel ──────────────────────────────────────────────────── */
+#permsPanel .panel-inner{padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.perms-row{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #252530}
+.perms-title{font-size:12px;color:#666}
+.skip-toggle{display:flex;align-items:center;gap:6px;font-size:11px;color:#666;cursor:pointer}
+.skip-toggle input{accent-color:#6050b0;cursor:pointer}
+.skip-toggle.active{color:#d07030}
+.perm-list{max-height:130px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.perm-item{display:flex;align-items:center;gap:6px;background:#1b1b28;border:1px solid #2a2a3e;border-radius:4px;padding:4px 8px}
+.perm-txt{flex:1;font-size:11px;color:#8080a0;font-family:'Cascadia Code','Consolas',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.perm-del{background:none;border:none;color:#444;cursor:pointer;font-size:13px;line-height:1;padding:0 2px}
+.perm-del:hover{color:#e04040}
+.perm-add{display:flex;gap:6px}
+.perm-add input{flex:1;background:#1e1e2a;color:#b0b0cc;border:1px solid #303040;border-radius:4px;padding:5px 8px;font-size:11px;font-family:'Cascadia Code','Consolas',monospace}
+.perm-add input:focus{outline:none;border-color:#6050b0}
+.perm-add button{background:#252535;color:#8080b0;border:1px solid #303040;border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer}
+.perm-add button:hover{border-color:#6050b0;color:#a090d0}
+.perm-empty{font-size:11px;color:#383848;padding:4px 0}
 
 /* ── Status bar ─────────────────────────────────────────────────────────── */
 .status{background:#161620;border-bottom:1px solid #222230;padding:3px 14px;font-size:11px;color:#555;display:flex;align-items:center;gap:12px;min-height:22px;flex-shrink:0}
@@ -69,12 +112,24 @@ body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-seri
 .tool-body{background:#111118;padding:8px 10px;font-size:11px;color:#606880;font-family:'Cascadia Code','Consolas',monospace;white-space:pre-wrap;max-height:120px;overflow:auto;display:none;border-top:1px solid #2a2a3e}
 .tool-body.open{display:block}
 
+/* ── Permission blocked card ────────────────────────────────────────────── */
+.perm-block{background:#1a1500;border:1px solid #504010;border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.perm-block-txt{flex:1;font-size:12px;color:#c09040;min-width:0}
+.perm-block-label{font-size:10px;color:#806020;margin-bottom:3px}
+.perm-block-pat{font-family:'Cascadia Code','Consolas',monospace;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.perm-block-btns{display:flex;gap:6px;flex-shrink:0}
+.btn-allow{background:#2a2000;border:1px solid #605010;color:#c09040;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer}
+.btn-allow:hover{border-color:#907020;color:#e0b060}
+
 /* ── Message images ─────────────────────────────────────────────────────── */
 .msg-imgs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
 .msg-img{max-width:200px;max-height:150px;border-radius:5px;object-fit:cover;border:1px solid #2e2e44;cursor:pointer}
 
 /* ── Error ──────────────────────────────────────────────────────────────── */
 .err-bubble{background:#201010;border:1px solid #502020;color:#e07070;padding:10px 14px;border-radius:7px;font-size:13px}
+
+/* ── System notice ──────────────────────────────────────────────────────── */
+.sys-notice{align-self:center;font-size:11px;color:#363648;padding:4px 10px;border:1px solid #222230;border-radius:10px}
 
 /* ── Input area ─────────────────────────────────────────────────────────── */
 .inp{border-top:1px solid #252530;padding:10px 14px;background:#161620;flex-shrink:0}
@@ -107,8 +162,10 @@ textarea#ti:focus{outline:none;border-color:#6050b0}
 <div class="hdr">
   <span class="logo">Claude</span>
   <span class="model-tag" id="modelTag">—</span>
-  <button class="btn-sys" onclick="toggleSys()">System ▾</button>
-  <select class="effort-sel" id="effortSel" title="Effort level — higher = slower but deeper thinking">
+  <button class="btn-hdr" id="btnSys"  onclick="togglePanel('sys')">System ▾</button>
+  <button class="btn-hdr" id="btnSess" onclick="togglePanel('sess')">Chats ▾</button>
+  <button class="btn-hdr" id="btnPerms" onclick="togglePanel('perms')">Perms ▾</button>
+  <select class="effort-sel" id="effortSel" title="Effort level">
     <option value="low">Fast (low)</option>
     <option value="medium" selected>Normal (medium)</option>
     <option value="high">Think (high)</option>
@@ -118,8 +175,35 @@ textarea#ti:focus{outline:none;border-color:#6050b0}
   <div class="session-dot" id="sessDot" title="No session"></div>
 </div>
 
-<div class="sys-panel" id="sysPanel">
-  <textarea id="sysTa" placeholder="System prompt (appended to Claude Code's default)…"></textarea>
+<!-- System prompt panel -->
+<div class="slide-panel" id="sysPanel">
+  <div class="panel-inner">
+    <textarea id="sysTa" placeholder="System prompt (appended to Claude Code's default)…"></textarea>
+  </div>
+</div>
+
+<!-- Sessions panel -->
+<div class="slide-panel" id="sessPanel">
+  <div class="sess-new" onclick="newChat()">+ New Chat</div>
+  <div class="sess-list" id="sessList"></div>
+</div>
+
+<!-- Permissions panel -->
+<div class="slide-panel" id="permsPanel">
+  <div class="panel-inner">
+    <div class="perms-row">
+      <span class="perms-title">Allowlist (user settings.json)</span>
+      <label class="skip-toggle" id="skipToggle" title="Skip all permission checks (dangerously-skip-permissions)">
+        <input type="checkbox" id="skipChk" onchange="toggleSkipPerms(this.checked)">
+        Skip all checks
+      </label>
+    </div>
+    <div class="perm-list" id="permList"></div>
+    <div class="perm-add">
+      <input id="permInput" placeholder='e.g. Write(C:\Games\possession\**)' onkeydown="if(event.key==='Enter')addPerm()">
+      <button onclick="addPerm()">+ Add</button>
+    </div>
+  </div>
 </div>
 
 <div class="status" id="status"><span style="color:#333">ready</span></div>
@@ -128,7 +212,7 @@ textarea#ti:focus{outline:none;border-color:#6050b0}
 
 <div class="inp">
   <div class="inp-top">
-    <button class="btn-clear" onclick="clearChat()">New chat</button>
+    <button class="btn-clear" onclick="newChat()">New chat</button>
     <span class="hint">Ctrl+V to paste image · Shift+Enter for newline</span>
   </div>
   <div class="pending" id="pending"></div>
@@ -144,20 +228,169 @@ textarea#ti:focus{outline:none;border-color:#6050b0}
 <script>
 // ── State ──────────────────────────────────────────────────────────────────
 let sessionId = localStorage.getItem('claudeSessionId') || null;
+let sessions  = JSON.parse(localStorage.getItem('claudeSessions') || '[]');
 let pendingImgs = [];
 let streaming = false;
 let totalCost = 0;
+let lastUserMsg = '';
 
 // ── Startup ────────────────────────────────────────────────────────────────
 if (sessionId) setSessDot(true);
+renderSessions();
+loadPermissions();
+loadConfig();
 document.getElementById('ti').focus();
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer?.files) addFiles(e.dataTransfer.files); });
 
-function toggleSys() {
-    const p = document.getElementById('sysPanel');
-    p.style.display = p.style.display === 'block' ? 'none' : 'block';
-    if (p.style.display === 'block') document.getElementById('sysTa').focus();
+// ── Panel toggles ──────────────────────────────────────────────────────────
+const PANELS = { sys: 'sysPanel', sess: 'sessPanel', perms: 'permsPanel' };
+const BTNS   = { sys: 'btnSys', sess: 'btnSess', perms: 'btnPerms' };
+let activePanel = null;
+
+function togglePanel(name) {
+    const opening = activePanel !== name;
+    // close all
+    Object.values(PANELS).forEach(id => document.getElementById(id).classList.remove('open'));
+    Object.values(BTNS).forEach(id => document.getElementById(id).classList.remove('active'));
+    activePanel = null;
+    if (opening) {
+        document.getElementById(PANELS[name]).classList.add('open');
+        document.getElementById(BTNS[name]).classList.add('active');
+        activePanel = name;
+        if (name === 'sys') document.getElementById('sysTa').focus();
+        if (name === 'perms') loadPermissions();
+    }
+}
+
+// ── Sessions ───────────────────────────────────────────────────────────────
+function saveSessions() { localStorage.setItem('claudeSessions', JSON.stringify(sessions)); }
+
+function addOrUpdateSession(id, preview) {
+    const existing = sessions.find(s => s.id === id);
+    if (existing) {
+        if (preview) existing.preview = preview.slice(0, 60);
+        existing.updated = Date.now();
+    } else {
+        sessions.unshift({ id, name: fmtDate(Date.now()), created: Date.now(), preview: (preview||'').slice(0, 60) });
+    }
+    saveSessions();
+    renderSessions();
+}
+
+function renderSessions() {
+    const list = document.getElementById('sessList');
+    if (!sessions.length) {
+        list.innerHTML = '<div style="padding:10px 14px;font-size:11px;color:#363648">No saved sessions.</div>';
+        return;
+    }
+    list.innerHTML = sessions.map(s => `
+      <div class="sess-item${s.id === sessionId ? ' current' : ''}" onclick="switchSession('${s.id}')">
+        <div class="sess-dot"></div>
+        <div class="sess-info">
+          <div class="sess-name" contenteditable="true"
+            onblur="renameSession('${s.id}', this.textContent)"
+            onclick="event.stopPropagation()"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}"
+          >${esc(s.name)}</div>
+          <div class="sess-preview">${esc(s.preview||'')}</div>
+        </div>
+        <div class="sess-date">${fmtDate(s.created)}</div>
+        <button class="sess-del" onclick="deleteSession(event,'${s.id}')" title="Delete">×</button>
+      </div>`).join('');
+}
+
+function switchSession(id) {
+    sessionId = id;
+    localStorage.setItem('claudeSessionId', id);
+    setSessDot(true);
+    totalCost = 0; _status = {};
+    document.getElementById('msgs').innerHTML = '';
+    document.getElementById('modelTag').textContent = '—';
+    appendNotice('— session resumed —');
+    renderSessions();
+    togglePanel('sess'); // close panel
+}
+
+function renameSession(id, name) {
+    const s = sessions.find(s => s.id === id);
+    if (s) { s.name = name.trim() || fmtDate(s.created); saveSessions(); }
+}
+
+function deleteSession(e, id) {
+    e.stopPropagation();
+    sessions = sessions.filter(s => s.id !== id);
+    saveSessions();
+    if (sessionId === id) { sessionId = null; setSessDot(false); localStorage.removeItem('claudeSessionId'); }
+    renderSessions();
+}
+
+function newChat() {
+    sessionId = null; totalCost = 0; _status = {};
+    localStorage.removeItem('claudeSessionId');
+    document.getElementById('msgs').innerHTML = '';
+    document.getElementById('status').innerHTML = '<span style="color:#333">ready</span>';
+    document.getElementById('modelTag').textContent = '—';
+    setSessDot(false);
+    if (activePanel === 'sess') togglePanel('sess');
+}
+
+function fmtDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+}
+
+// ── Permissions ────────────────────────────────────────────────────────────
+async function loadPermissions() {
+    try {
+        const r = await fetch('/permissions');
+        const { allow } = await r.json();
+        renderPermList(allow);
+    } catch (_) {}
+}
+
+async function loadConfig() {
+    try {
+        const r = await fetch('/config');
+        const cfg = await r.json();
+        const chk = document.getElementById('skipChk');
+        chk.checked = cfg.skipPerms !== false;
+        document.getElementById('skipToggle').classList.toggle('active', chk.checked);
+    } catch (_) {}
+}
+
+function renderPermList(allow) {
+    const list = document.getElementById('permList');
+    if (!allow.length) {
+        list.innerHTML = '<div class="perm-empty">No entries. All non-skipped tool calls will be blocked.</div>';
+        return;
+    }
+    list.innerHTML = allow.map(p => `
+      <div class="perm-item">
+        <span class="perm-txt" title="${esc(p)}">${esc(p)}</span>
+        <button class="perm-del" onclick="removePerm('${esc(p)}')" title="Remove">×</button>
+      </div>`).join('');
+}
+
+async function addPerm() {
+    const inp = document.getElementById('permInput');
+    const pattern = inp.value.trim();
+    if (!pattern) return;
+    inp.value = '';
+    const r = await fetch('/permissions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
+    const { allow } = await r.json();
+    renderPermList(allow);
+}
+
+async function removePerm(pattern) {
+    const r = await fetch('/permissions', { method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
+    const { allow } = await r.json();
+    renderPermList(allow);
+}
+
+async function toggleSkipPerms(val) {
+    document.getElementById('skipToggle').classList.toggle('active', val);
+    await fetch('/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ skipPerms: val }) });
 }
 
 // ── Input helpers ──────────────────────────────────────────────────────────
@@ -195,6 +428,7 @@ async function send() {
     const imgs = [...pendingImgs];
     pendingImgs=[]; renderPending();
     ta.value=''; ta.style.height='auto';
+    lastUserMsg = text;
 
     appendUser(text, imgs);
     const aId = 'a'+Date.now();
@@ -235,48 +469,28 @@ async function send() {
                             sessionId = ev.session_id;
                             document.getElementById('modelTag').textContent = ev.model || '—';
                             setSessDot(true);
+                            addOrUpdateSession(ev.session_id, lastUserMsg);
                             break;
-                        case 'rate_limit':
-                            showRateLimit(ev);
-                            break;
-                        case 'message_start':
-                            setStatus({usage: ev.usage});
-                            break;
-                        case 'thinking_start':
-                            startThink(aId);
-                            break;
-                        case 'thinking_delta':
-                            curThink += ev.text;
-                            updateThink(aId, curThink);
-                            break;
-                        case 'thinking_end':
-                            break;
-                        case 'tool_start':
-                            startTool(aId, ev.index, ev.name);
-                            toolBufs[ev.index]='';
-                            break;
-                        case 'tool_delta':
-                            toolBufs[ev.index]=(toolBufs[ev.index]||'')+ev.json;
-                            updateTool(aId, ev.index, toolBufs[ev.index]);
-                            break;
-                        case 'tool_end':
-                            break;
-                        case 'text_delta':
-                            curText += ev.text;
-                            updateText(aId, curText);
-                            break;
-                        case 'usage':
-                            setStatus({output_tokens: ev.output_tokens});
+                        case 'rate_limit':     showRateLimit(ev); break;
+                        case 'message_start':  setStatus({usage: ev.usage}); break;
+                        case 'thinking_start': startThink(aId); break;
+                        case 'thinking_delta': curThink+=ev.text; updateThink(aId,curThink); break;
+                        case 'tool_start':     startTool(aId,ev.index,ev.name); toolBufs[ev.index]=''; break;
+                        case 'tool_delta':     toolBufs[ev.index]=(toolBufs[ev.index]||'')+ev.json; updateTool(aId,ev.index,toolBufs[ev.index]); break;
+                        case 'text_delta':     curText+=ev.text; updateText(aId,curText); break;
+                        case 'usage':          setStatus({output_tokens:ev.output_tokens}); break;
+                        case 'permission_blocked':
+                            showPermBlocked(aId, ev);
                             break;
                         case 'result':
-                            totalCost += ev.cost||0;
-                            setStatus({cost: ev.cost, total_cost: totalCost, duration_ms: ev.duration_ms, input_tokens: ev.input_tokens, output_tokens: ev.output_tokens, cache_read: ev.cache_read});
+                            totalCost+=ev.cost||0;
+                            setStatus({cost:ev.cost,total_cost:totalCost,duration_ms:ev.duration_ms,input_tokens:ev.input_tokens,output_tokens:ev.output_tokens,cache_read:ev.cache_read});
                             break;
                         case 'error':
                             document.getElementById(aId+'-text').innerHTML=`<div class="err-bubble">⚠ ${esc(ev.error)}</div>`;
                             break;
                         case 'done':
-                            if (ev.session_id) { sessionId=ev.session_id; setSessDot(true); }
+                            if (ev.session_id) { sessionId=ev.session_id; setSessDot(true); addOrUpdateSession(ev.session_id, lastUserMsg); }
                             finishText(aId);
                             break;
                     }
@@ -305,6 +519,11 @@ function appendAssistant(id) {
     document.getElementById('msgs').appendChild(d); scrollEnd();
 }
 
+function appendNotice(txt) {
+    const d=document.createElement('div'); d.className='sys-notice'; d.textContent=txt;
+    document.getElementById('msgs').appendChild(d); scrollEnd();
+}
+
 function startThink(id) {
     const ex=document.getElementById(id+'-extras');
     const w=document.createElement('div'); w.className='think-wrap';
@@ -313,15 +532,13 @@ function startThink(id) {
         <div class="think-body" id="${id}-tbody"></div>`;
     ex.appendChild(w); scrollEnd();
 }
-function updateThink(id,text) {
-    const el=document.getElementById(id+'-tbody'); if(el){el.textContent=text; scrollEnd();}
-}
+function updateThink(id,text) { const el=document.getElementById(id+'-tbody'); if(el){el.textContent=text; scrollEnd();} }
 function togThink(id) {
     const h=document.getElementById(id+'-thdr'); const b=document.getElementById(id+'-tbody');
     if(!h||!b) return; h.classList.toggle('open'); b.classList.toggle('open');
 }
 
-function startTool(id, idx, name) {
+function startTool(id,idx,name) {
     const ex=document.getElementById(id+'-extras');
     const w=document.createElement('div'); w.className='tool-wrap'; w.id=`${id}-tool-${idx}`;
     w.innerHTML=`<div class="tool-hdr" onclick="togTool('${id}',${idx})">
@@ -333,17 +550,41 @@ function updateTool(id,idx,json) {
     const el=document.getElementById(`${id}-toolbody-${idx}`);
     if(el) { try{el.textContent=JSON.stringify(JSON.parse(json),null,2);}catch{el.textContent=json;} }
 }
-function togTool(id,idx) {
-    const b=document.getElementById(`${id}-toolbody-${idx}`); if(b) b.classList.toggle('open');
+function togTool(id,idx) { const b=document.getElementById(`${id}-toolbody-${idx}`); if(b) b.classList.toggle('open'); }
+
+function showPermBlocked(id, ev) {
+    const ex=document.getElementById(id+'-extras');
+    const w=document.createElement('div');
+    w.innerHTML=`<div class="perm-block">
+      <div class="perm-block-txt">
+        <div class="perm-block-label">Permission blocked</div>
+        <div class="perm-block-pat">${esc(ev.pattern||ev.target)}</div>
+      </div>
+      <div class="perm-block-btns">
+        <button class="btn-allow" onclick="allowAndRetry('${esc(ev.pattern)}')">Allow &amp; Retry</button>
+        <button class="btn-allow" onclick="addPerm2('${esc(ev.pattern)}')">Allow</button>
+      </div>
+    </div>`;
+    ex.appendChild(w); scrollEnd();
+}
+
+async function allowAndRetry(pattern) {
+    await fetch('/permissions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
+    // re-send last message
+    document.getElementById('ti').value = lastUserMsg;
+    resize(document.getElementById('ti'));
+    send();
+}
+
+async function addPerm2(pattern) {
+    await fetch('/permissions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
 }
 
 function updateText(id,text) {
     const el=document.getElementById(id+'-text');
     if(el){el.innerHTML=md(text); el.classList.add('streaming'); scrollEnd();}
 }
-function finishText(id) {
-    const el=document.getElementById(id+'-text'); if(el) el.classList.remove('streaming');
-}
+function finishText(id) { const el=document.getElementById(id+'-text'); if(el) el.classList.remove('streaming'); }
 
 // ── Status bar ─────────────────────────────────────────────────────────────
 let _status={};
@@ -364,31 +605,21 @@ function fmt(n){return n>=1000?(n/1000).toFixed(1)+'k':n;}
 let _rl={};
 function showRateLimit(ev) {
     _rl=ev;
-    if(ev.status==='allowed') return; // only show banner when not-allowed
+    if(ev.status==='allowed') return;
     const t=new Date(ev.resetsAt*1000).toLocaleTimeString();
-    const st=document.getElementById('status');
-    st.innerHTML=`<span class="s-rate-bad">⛔ Rate limited (${ev.limitType}) — resets ${t}</span>`;
+    document.getElementById('status').innerHTML=`<span class="s-rate-bad">⛔ Rate limited (${ev.limitType}) — resets ${t}</span>`;
 }
 
 function setSessDot(active) {
     const d=document.getElementById('sessDot');
     d.classList.toggle('active',active);
     d.title=active?`Session: ${sessionId}`:'No session';
-    if (active && sessionId) localStorage.setItem('claudeSessionId', sessionId);
+    if(active&&sessionId) localStorage.setItem('claudeSessionId',sessionId);
     else localStorage.removeItem('claudeSessionId');
 }
 
-// ── Clear ──────────────────────────────────────────────────────────────────
-function clearChat() {
-    sessionId=null; totalCost=0; _status={}; _rl={}; localStorage.removeItem('claudeSessionId');
-    document.getElementById('msgs').innerHTML='';
-    document.getElementById('status').innerHTML='<span style="color:#333">ready</span>';
-    setSessDot(false);
-    document.getElementById('modelTag').textContent='—';
-}
-
 function scrollEnd() { const m=document.getElementById('msgs'); m.scrollTop=m.scrollHeight; }
-function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+function esc(t){const d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
 
 // ── Markdown ───────────────────────────────────────────────────────────────
 function md(raw) {
