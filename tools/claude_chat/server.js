@@ -150,7 +150,7 @@ app.post('/chat', (req, res) => {
     proc.on('close', (code) => {
         done = true;
         for (const f of tempFiles) try { fs.unlinkSync(f); } catch (_) {}
-        if (stderrBuf) { process.stderr.write(`[claude stderr]\n${stderrBuf}\n`); send({ type: 'debug_stderr', text: stderrBuf.slice(0, 1000) }); }
+        if (stderrBuf) process.stderr.write(`[claude stderr]\n${stderrBuf}\n`);
         if (!permSent && !newSessionId && stderrBuf) {
             send({ type: 'error', error: `claude exited (code ${code}): ${stderrBuf.trim().slice(0, 500)}` });
         }
@@ -215,7 +215,7 @@ function handleEvent(ev, send, blockTypes, setSession) {
                         ? block.content.map(c => c.text||'').join('')
                         : (block.content||'');
                     if (text.includes("requested permissions") || text.includes("hasn't been granted")) {
-                        const m = text.match(/permissions? to (\w+) to (.+?)[,\.]/i);
+                        const m = text.match(/permissions? to (\w+) to (.+?),/i);
                         if (m) {
                             const action = m[1].charAt(0).toUpperCase() + m[1].slice(1);
                             const target = m[2].trim();
@@ -229,7 +229,6 @@ function handleEvent(ev, send, blockTypes, setSession) {
             break;
         }
         default:
-            send({ type: 'debug_event', raw: ev });
             break;
     }
 }
