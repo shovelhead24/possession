@@ -489,6 +489,9 @@ async function send() {
                         case 'debug_stderr':
                             document.getElementById(aId+'-text').innerHTML += `<pre style="font-size:10px;color:#806040;background:#1a1000;padding:8px;border-radius:4px;white-space:pre-wrap">[stderr] ${esc(ev.text)}</pre>`;
                             break;
+                        case 'debug_event':
+                            document.getElementById(aId+'-text').innerHTML += `<pre style="font-size:10px;color:#406080;background:#001018;padding:8px;border-radius:4px;white-space:pre-wrap">[event] ${esc(JSON.stringify(ev.raw,null,2))}</pre>`;
+                            break;
                         case 'error':
                             document.getElementById(aId+'-text').innerHTML=`<div class="err-bubble">⚠ ${esc(ev.error)}</div>`;
                             break;

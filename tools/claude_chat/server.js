@@ -206,6 +206,9 @@ function handleEvent(ev, send, blockTypes, setSession) {
                    input_tokens: ev.usage?.input_tokens, output_tokens: ev.usage?.output_tokens,
                    cache_read: ev.usage?.cache_read_input_tokens });
             break;
+        default:
+            send({ type: 'debug_event', raw: ev });
+            break;
     }
 }
 
