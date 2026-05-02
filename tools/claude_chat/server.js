@@ -206,6 +206,28 @@ function handleEvent(ev, send, blockTypes, setSession) {
                    input_tokens: ev.usage?.input_tokens, output_tokens: ev.usage?.output_tokens,
                    cache_read: ev.usage?.cache_read_input_tokens });
             break;
+        case 'user': {
+            // Tool results come back as user events — scan for permission errors
+            const content = ev.message?.content || [];
+            for (const block of content) {
+                if (block.type === 'tool_result') {
+                    const text = Array.isArray(block.content)
+                        ? block.content.map(c => c.text||'').join('')
+                        : (block.content||'');
+                    if (text.includes("requested permissions") || text.includes("hasn't been granted")) {
+                        const m = text.match(/permissions? to (\w+) to (.+?)[,\.]/i);
+                        if (m) {
+                            const action = m[1].charAt(0).toUpperCase() + m[1].slice(1);
+                            const target = m[2].trim();
+                            send({ type: 'permission_blocked', action, target, pattern: `${action}(${target})` });
+                        } else {
+                            send({ type: 'permission_blocked', action: 'Tool', target: text.slice(0,120), pattern: '' });
+                        }
+                    }
+                }
+            }
+            break;
+        }
         default:
             send({ type: 'debug_event', raw: ev });
             break;
