@@ -486,6 +486,9 @@ async function send() {
                             totalCost+=ev.cost||0;
                             setStatus({cost:ev.cost,total_cost:totalCost,duration_ms:ev.duration_ms,input_tokens:ev.input_tokens,output_tokens:ev.output_tokens,cache_read:ev.cache_read});
                             break;
+                        case 'debug_stderr':
+                            document.getElementById(aId+'-text').innerHTML += `<pre style="font-size:10px;color:#806040;background:#1a1000;padding:8px;border-radius:4px;white-space:pre-wrap">[stderr] ${esc(ev.text)}</pre>`;
+                            break;
                         case 'error':
                             document.getElementById(aId+'-text').innerHTML=`<div class="err-bubble">⚠ ${esc(ev.error)}</div>`;
                             break;

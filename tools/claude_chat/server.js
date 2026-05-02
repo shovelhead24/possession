@@ -27,7 +27,7 @@ function writeChatConfig(c) {
 }
 
 function readUserSettings() {
-    try { return JSON.parse(fs.readFileSync(USER_SETTINGS_PATH, 'utf8')); }
+    try { return JSON.parse(fs.readFileSync(USER_SETTINGS_PATH, 'utf8').replace(/^﻿/, '')); }
     catch { return {}; }
 }
 
@@ -117,6 +117,7 @@ app.post('/chat', (req, res) => {
     const blockTypes = {};
     let newSessionId = null;
     let stderrBuf = '';
+    let permSent = false;
 
     proc.stdout.on('data', chunk => {
         buf += chunk.toString('utf8');
@@ -129,7 +130,19 @@ app.post('/chat', (req, res) => {
         }
     });
 
-    proc.stderr.on('data', chunk => { stderrBuf += chunk.toString(); });
+    proc.stderr.on('data', chunk => {
+        stderrBuf += chunk.toString();
+        // Detect permission blocks in real-time as stderr arrives
+        if (!permSent) {
+            const permMatch = stderrBuf.match(/Claude requested permissions? to (\w+) to (.+?),/i);
+            if (permMatch) {
+                permSent = true;
+                const action = permMatch[1].charAt(0).toUpperCase() + permMatch[1].slice(1);
+                const target = permMatch[2].trim();
+                send({ type: 'permission_blocked', action, target, pattern: `${action}(${target})` });
+            }
+        }
+    });
 
     let done = false;
     res.on('close', () => { if (!done) proc.kill(); });
@@ -137,18 +150,10 @@ app.post('/chat', (req, res) => {
     proc.on('close', (code) => {
         done = true;
         for (const f of tempFiles) try { fs.unlinkSync(f); } catch (_) {}
-        if (stderrBuf) process.stderr.write(`[claude stderr]\n${stderrBuf}\n`);
-
-        // Surface permission blocks as a structured event
-        const permMatch = stderrBuf.match(/Claude requested permissions? to (\w+) to (.+?),/i);
-        if (permMatch) {
-            const action = permMatch[1].charAt(0).toUpperCase() + permMatch[1].slice(1);
-            const target = permMatch[2].trim();
-            send({ type: 'permission_blocked', action, target, pattern: `${action}(${target})` });
-        } else if (!newSessionId && stderrBuf) {
+        if (stderrBuf) { process.stderr.write(`[claude stderr]\n${stderrBuf}\n`); send({ type: 'debug_stderr', text: stderrBuf.slice(0, 1000) }); }
+        if (!permSent && !newSessionId && stderrBuf) {
             send({ type: 'error', error: `claude exited (code ${code}): ${stderrBuf.trim().slice(0, 500)}` });
         }
-
         send({ type: 'done', session_id: newSessionId });
         res.end();
     });
