@@ -66,6 +66,11 @@ body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-seri
 .perm-add button:hover{border-color:#6050b0;color:#a090d0}
 .perm-empty{font-size:11px;color:#383848;padding:4px 0}
 
+/* ── Timestamps ─────────────────────────────────────────────────────────── */
+.msg-time{font-size:10px;color:#363648;margin-top:2px;padding:0 2px}
+.msg.user .msg-time{text-align:right}
+.msg.assistant .msg-time{text-align:left}
+
 /* ── Status bar ─────────────────────────────────────────────────────────── */
 .status{background:#161620;border-bottom:1px solid #222230;padding:3px 14px;font-size:11px;color:#555;display:flex;align-items:center;gap:12px;min-height:22px;flex-shrink:0}
 .s-tok{color:#4e9ab5}.s-cache{color:#7a6ea0}.s-cost{color:#6a9a60}
@@ -506,16 +511,20 @@ async function send() {
 }
 
 // ── DOM builders ───────────────────────────────────────────────────────────
+function nowStr() {
+    return new Date().toLocaleTimeString(undefined, {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
 function appendUser(text, imgs) {
     const d=document.createElement('div'); d.className='msg user';
     const imgHtml = imgs.length ? `<div class="msg-imgs">${imgs.map(i=>`<img src="${i.url}" class="msg-img" onclick="window.open('${i.url}')">`).join('')}</div>` : '';
-    d.innerHTML=`<div class="bubble">${imgHtml}${text?`<span>${esc(text)}</span>`:''}</div>`;
+    d.innerHTML=`<div class="bubble">${imgHtml}${text?`<span>${esc(text)}</span>`:''}</div><div class="msg-time">${nowStr()}</div>`;
     document.getElementById('msgs').appendChild(d); scrollEnd();
 }
 
 function appendAssistant(id) {
     const d=document.createElement('div'); d.className='msg assistant'; d.id=id;
-    d.innerHTML=`<div id="${id}-extras"></div><div class="bubble streaming" id="${id}-text"></div>`;
+    d.innerHTML=`<div id="${id}-extras"></div><div class="bubble streaming" id="${id}-text"></div><div class="msg-time" id="${id}-time"></div>`;
     document.getElementById('msgs').appendChild(d); scrollEnd();
 }
 
@@ -553,38 +562,81 @@ function updateTool(id,idx,json) {
 function togTool(id,idx) { const b=document.getElementById(`${id}-toolbody-${idx}`); if(b) b.classList.toggle('open'); }
 
 function showPermBlocked(id, ev) {
-    const ex=document.getElementById(id+'-extras');
-    const w=document.createElement('div');
-    w.innerHTML=`<div class="perm-block">
-      <div class="perm-block-txt">
-        <div class="perm-block-label">Permission blocked</div>
-        <div class="perm-block-pat">${esc(ev.pattern||ev.target)}</div>
+    const ex = document.getElementById(id+'-extras');
+    const uid = 'pb' + Date.now();
+    const pattern = ev.pattern || '';
+    const label = permLabel(ev.action, ev.target);
+    const w = document.createElement('div');
+    w.id = uid;
+    // store pattern as data attribute to avoid escaping issues in onclick
+    w.dataset.pattern = pattern;
+    w.innerHTML = `<div class="perm-block">
+      <div class="perm-block-top">
+        <div class="perm-block-txt">
+          <div class="perm-block-label">Permission blocked</div>
+          <div class="perm-block-pat">${esc(ev.pattern||ev.target)}</div>
+        </div>
+        <div class="perm-block-btns">
+          <button class="btn-allow" onclick="permAlwaysAllow('${uid}')">Always allow ${esc(label)}</button>
+          <button class="btn-once" onclick="permAllowOnce()">Allow once</button>
+          <button class="btn-deny" onclick="permToggleDeny('${uid}')">Deny ▾</button>
+        </div>
       </div>
-      <div class="perm-block-btns">
-        <button class="btn-allow" onclick="allowAndRetry('${esc(ev.pattern)}')">Allow &amp; Retry</button>
-        <button class="btn-allow" onclick="addPerm2('${esc(ev.pattern)}')">Allow</button>
+      <div class="perm-deny-row" id="${uid}-deny">
+        <input placeholder="Reason (optional)…" id="${uid}-reason">
+        <button onclick="permDeny('${uid}')">Send denial</button>
       </div>
     </div>`;
     ex.appendChild(w); scrollEnd();
 }
 
-async function allowAndRetry(pattern) {
-    await fetch('/permissions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
-    // re-send last message
+function permLabel(action, target) {
+    if (!action) return 'this';
+    if (action === 'Write' || action === 'Edit') return action.toLowerCase() + ' to this path';
+    if (action === 'Bash' && target && target.includes('curl')) return 'curl to this address';
+    if (action === 'Bash') return 'this command';
+    return action.toLowerCase();
+}
+
+async function permAlwaysAllow(uid) {
+    const pattern = document.getElementById(uid).dataset.pattern;
+    if (pattern) await fetch('/permissions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
     document.getElementById('ti').value = lastUserMsg;
     resize(document.getElementById('ti'));
     send();
 }
 
-async function addPerm2(pattern) {
-    await fetch('/permissions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
+async function permAllowOnce() {
+    // temporarily enable skip-perms, retry, then restore
+    await fetch('/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ skipPerms: true }) });
+    document.getElementById('ti').value = lastUserMsg;
+    resize(document.getElementById('ti'));
+    await send();
+    await fetch('/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ skipPerms: false }) });
+}
+
+function permToggleDeny(uid) {
+    const row = document.getElementById(uid+'-deny');
+    row.classList.toggle('open');
+    if (row.classList.contains('open')) document.getElementById(uid+'-reason').focus();
+}
+
+function permDeny(uid) {
+    const reason = document.getElementById(uid+'-reason').value.trim();
+    const msg = reason ? `Permission denied. Reason: ${reason}` : 'Permission denied.';
+    document.getElementById('ti').value = msg;
+    resize(document.getElementById('ti'));
+    send();
 }
 
 function updateText(id,text) {
     const el=document.getElementById(id+'-text');
     if(el){el.innerHTML=md(text); el.classList.add('streaming'); scrollEnd();}
 }
-function finishText(id) { const el=document.getElementById(id+'-text'); if(el) el.classList.remove('streaming'); }
+function finishText(id) {
+    const el=document.getElementById(id+'-text'); if(el) el.classList.remove('streaming');
+    const t=document.getElementById(id+'-time'); if(t) t.textContent=nowStr();
+}
 
 // ── Status bar ─────────────────────────────────────────────────────────────
 let _status={};
