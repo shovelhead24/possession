@@ -118,13 +118,16 @@ body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-seri
 .tool-body.open{display:block}
 
 /* ── Permission blocked card ────────────────────────────────────────────── */
-.perm-block{background:#1a1500;border:1px solid #504010;border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.perm-block-txt{flex:1;font-size:12px;color:#c09040;min-width:0}
-.perm-block-label{font-size:10px;color:#806020;margin-bottom:3px}
-.perm-block-pat{font-family:'Cascadia Code','Consolas',monospace;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.perm-block-btns{display:flex;gap:6px;flex-shrink:0}
-.btn-allow{background:#2a2000;border:1px solid #605010;color:#c09040;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer}
-.btn-allow:hover{border-color:#907020;color:#e0b060}
+.perm-block{background:#1a1500;border:1px solid #504010;border-radius:6px;overflow:hidden}
+.perm-block-q{padding:10px 14px 6px;font-size:12px;color:#c09040}
+.perm-block-q strong{font-family:'Cascadia Code','Consolas',monospace;font-weight:normal;color:#e0b060}
+.perm-opt{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;border-top:1px solid #2a1c00;font-size:12px;color:#a08040;user-select:none}
+.perm-opt:hover{background:#251c00;color:#e0b060}
+.perm-opt-num{font-size:11px;color:#5a4010;width:14px;flex-shrink:0}
+.perm-block-input{display:flex;border-top:1px solid #2a1c00}
+.perm-block-input input{flex:1;background:transparent;border:none;color:#907040;padding:8px 14px;font-size:12px;font-family:inherit;outline:none}
+.perm-block-input input::placeholder{color:#4a3810}
+.perm-block-input input:focus{background:#1e1800}
 
 /* ── Message images ─────────────────────────────────────────────────────── */
 .msg-imgs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
@@ -564,38 +567,20 @@ function togTool(id,idx) { const b=document.getElementById(`${id}-toolbody-${idx
 function showPermBlocked(id, ev) {
     const ex = document.getElementById(id+'-extras');
     const uid = 'pb' + Date.now();
-    const pattern = ev.pattern || '';
-    const label = permLabel(ev.action, ev.target);
     const w = document.createElement('div');
     w.id = uid;
-    // store pattern as data attribute to avoid escaping issues in onclick
-    w.dataset.pattern = pattern;
+    w.dataset.pattern = ev.pattern || '';
     w.innerHTML = `<div class="perm-block">
-      <div class="perm-block-top">
-        <div class="perm-block-txt">
-          <div class="perm-block-label">Permission blocked</div>
-          <div class="perm-block-pat">${esc(ev.pattern||ev.target)}</div>
-        </div>
-        <div class="perm-block-btns">
-          <button class="btn-allow" onclick="permAlwaysAllow('${uid}')">Always allow ${esc(label)}</button>
-          <button class="btn-once" onclick="permAllowOnce()">Allow once</button>
-          <button class="btn-deny" onclick="permToggleDeny('${uid}')">Deny ▾</button>
-        </div>
-      </div>
-      <div class="perm-deny-row" id="${uid}-deny">
-        <input placeholder="Reason (optional)…" id="${uid}-reason">
-        <button onclick="permDeny('${uid}')">Send denial</button>
+      <div class="perm-block-q">Allow <strong>${esc(ev.pattern||ev.target)}</strong>?</div>
+      <div class="perm-opt" onclick="permAlwaysAllow('${uid}')"><span class="perm-opt-num">1</span> Yes, always allow this</div>
+      <div class="perm-opt" onclick="permAllowOnce()"><span class="perm-opt-num">2</span> Yes, allow once</div>
+      <div class="perm-opt" onclick="permFocusDeny('${uid}')"><span class="perm-opt-num">3</span> No</div>
+      <div class="perm-block-input">
+        <input id="${uid}-reason" placeholder="Tell Claude what to do instead…"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();permDeny('${uid}');}">
       </div>
     </div>`;
     ex.appendChild(w); scrollEnd();
-}
-
-function permLabel(action, target) {
-    if (!action) return 'this';
-    if (action === 'Write' || action === 'Edit') return action.toLowerCase() + ' to this path';
-    if (action === 'Bash' && target && target.includes('curl')) return 'curl to this address';
-    if (action === 'Bash') return 'this command';
-    return action.toLowerCase();
 }
 
 async function permAlwaysAllow(uid) {
@@ -607,7 +592,6 @@ async function permAlwaysAllow(uid) {
 }
 
 async function permAllowOnce() {
-    // temporarily enable skip-perms, retry, then restore
     await fetch('/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ skipPerms: true }) });
     document.getElementById('ti').value = lastUserMsg;
     resize(document.getElementById('ti'));
@@ -615,10 +599,8 @@ async function permAllowOnce() {
     await fetch('/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ skipPerms: false }) });
 }
 
-function permToggleDeny(uid) {
-    const row = document.getElementById(uid+'-deny');
-    row.classList.toggle('open');
-    if (row.classList.contains('open')) document.getElementById(uid+'-reason').focus();
+function permFocusDeny(uid) {
+    document.getElementById(uid+'-reason').focus();
 }
 
 function permDeny(uid) {
