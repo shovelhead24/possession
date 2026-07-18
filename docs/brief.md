@@ -41,13 +41,13 @@ From the April brainstorm. Ratifying (or striking) these is decision **D1** beca
 
 **⚠ Conflict to resolve (D4):** the brainstorm says *"curvature is mathematical, not geometric"*, but [moments/ring_curve.md](moments/ring_curve.md) and [moments/night_sky.md](moments/night_sky.md) demand the curve be **geometrically honest — explicitly not a skybox trick**, with far-side city lights that are *reachable*. The resolution is probably "honest in what it renders and where you can walk, mathematical in how it's stored" — but that's exactly what issue [#2](https://github.com/shovelhead24/possession/issues/2) has to pin down with a prototype.
 
-## 3. Ring Dimensions — DECIDED 2026-07-18 (circumference), width still PROPOSED
+## 3. Ring Dimensions — DECIDED 2026-07-18 (circumference), width OPEN with new latitude
 
-**Circumference: 20,000 km** — see [.decisions/world.md](../.decisions/world.md#ring-circumference-20000km). Chosen for traversal feel, not physics: walking 360° takes ~23 days nonstop at the current 10 m/s, so transport modes are structurally integral, and the transport ladder mirrors the progression tiers (walk → horse → vehicle/boat → flyer → ancient rim transit). Playable surface ≈ 200,000 km² ≈ Great Britain.
+**Circumference: 2,000 km** (radius ~318 km) — see [.decisions/world.md](../.decisions/world.md#ring-circumference-2000km). Superseded a same-day 20,000 km decision once it became clear the oversized-far-side cheat can't survive a player flying toward it: at 2,000 km, *all* sky geometry is honest — far side ~0.9°+ overhead, terrain 50 km ahead risen ~4 km — and interior/space flight stays consistent. Walking 360° ≈ 2.3 days nonstop, so transport still matters (walk → horse → vehicle/boat → flyer → rim transit). Day length remains a free tuning value (honest spin-days would be ~19 min; nothing in-game can witness the lie).
 
-**Cosmology is cheated by decision:** day length and far-side visual size are design/tuning values, not spin-physics outputs (honest numbers at this radius: ~1-hour days, hairline far side). Near-field curve stays real; the night-sky far side renders oversized. This amends the "not a skybox trick" language in two moment docs.
+**Vibe check pending (issue #9):** skybox mock demos — far-off city on the upcurve + mountains 50 km ahead — at 1,500 / 2,000 / 3,000 km configs, plus night-sky band at candidate widths. Number may tune within the band; scale class is settled.
 
-**Width ~10 km remains PROPOSED** — revisit with the curve mockup and the D3 bake-resolution work (at 20,000 km the bake wants multi-resolution: coarse base + high-res regional bakes around authored sites).
+**Width is now a live design axis, not a file-size tradeoff.** The old 10 km was chosen to cap storage at megastructure scale; at 2,000 km circumference even 50 km width is ~100,000 km² (bake ~1 GB compressed at 8 m/px, less with multi-res). Candidates 10–50 km; opportunities and costs of width are a D2b decision after the mocks.
 
 ## 4. Systems Map
 
@@ -84,7 +84,8 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 
 - [ ] **D1** — Ratify/strike the six design principles (§1)
 - [ ] **D1b** — Ratify interaction-fidelity tiers (§6)
-- [x] **D2 (part)** — Circumference: 20,000 km (2026-07-18, `.decisions/world.md`). Width ~10 km still open ← curve mockup
+- [x] **D2 (part)** — Circumference: 2,000 km (2026-07-18, `.decisions/world.md`; superseded same-day 20,000 km). Sky geometry honest, day length free
+- [ ] **D2b** — Ring width (10–50 km candidates) ← needs skybox vibe mocks (issue #9) + width-opportunity call
 - [ ] **D3** — Terrain data model: function + overlay persistence, chunk realization (issue #1) ← needs D2
 - [ ] **D4** — Curvature rendering approach (issue #2) ← needs R2, D2
 - [ ] **D5** — What couch co-op means mechanically (issue #3) ← needs R3

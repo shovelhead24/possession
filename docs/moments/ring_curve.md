@@ -9,7 +9,7 @@ Disorientation, then awe. The world is wrong in a way that is beautiful. You are
 ## Mechanic
 None. You walk. You see it. The game does nothing else.
 
-> **Amended 2026-07-18** (see `.decisions/world.md#cosmology-cheated`): the *near-field* curve the player walks on stays geometrically real; the distant upward sweep is stylized/exaggerated, since the honest curve at 20,000 km circumference is too subtle to read.
+> **Note 2026-07-18** (see `.decisions/world.md#ring-circumference-2000km`): circumference set at 2,000 km partly to keep this moment honest — terrain 50 km ahead sits ~4 km above you, mountains-then-ocean-then-sky for real. No stylization needed.
 
 ## What It Must Do
 - Hit without fanfare. No sting, no UI callout.

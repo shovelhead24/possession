@@ -9,7 +9,7 @@ You are not where the action is. There is somewhere to go. The ring is inhabited
 ## Mechanic
 None. You stop. You look up. The game does nothing.
 
-> **Amended 2026-07-18** (see `.decisions/world.md#cosmology-cheated`): at the decided 20,000 km circumference the real far side would be a hairline. The far side is deliberately rendered oversized — artistic license, mutually agreed. "The lights are reachable" still holds: the place exists and transport can get you there.
+> **Note 2026-07-18** (see `.decisions/world.md#ring-circumference-2000km`): circumference set at 2,000 km partly to keep this moment geometrically honest — the far side reads ~0.9° overhead (about two full moons; wider if ring width grows). No skybox cheat needed. An earlier same-day 20,000 km decision that required an oversized-far-side cheat was superseded.
 
 ## What It Must Do
 - Be geometrically honest — the far side is visible because the ring curves, not because of a skybox.

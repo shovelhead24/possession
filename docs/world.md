@@ -12,7 +12,7 @@ The ringworld itself. This is the biggest, least-settled part of the project —
 
 ## Open Questions (fill in as we plan)
 
-- ~~How big is the playable ring?~~ **Answered 2026-07-18:** circumference 20,000 km, width ~10 km (width still soft) — see `.decisions/world.md`. Day/night and far-side visibility are cheated by decision, not simulated.
+- ~~How big is the playable ring?~~ **Answered 2026-07-18:** circumference 2,000 km (honest sky geometry; supersedes a same-day 20,000 km call). Width open, 10–50 km candidates — see `.decisions/world.md` and brief D2b. Day length stays a designed value.
 - How many distinct biomes, and how do they read as regions of a ring rather than a flat map?
 - What's the relationship between the "medieval army" / "settlement" moments and where they sit on the ring — is settlement placement authored or procedural?
 - Where do the ancient/alien structures sit in the progression tiers (Survival → Medieval → Ancient Alien) — are they visible from tier 1 but only enterable later?
