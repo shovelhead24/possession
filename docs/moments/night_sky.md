@@ -9,6 +9,8 @@ You are not where the action is. There is somewhere to go. The ring is inhabited
 ## Mechanic
 None. You stop. You look up. The game does nothing.
 
+> **Amended 2026-07-18** (see `.decisions/world.md#cosmology-cheated`): at the decided 20,000 km circumference the real far side would be a hairline. The far side is deliberately rendered oversized — artistic license, mutually agreed. "The lights are reachable" still holds: the place exists and transport can get you there.
+
 ## What It Must Do
 - Be geometrically honest — the far side is visible because the ring curves, not because of a skybox.
 - Make the lights readable as cities from a distance.

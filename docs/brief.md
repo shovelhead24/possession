@@ -41,14 +41,13 @@ From the April brainstorm. Ratifying (or striking) these is decision **D1** beca
 
 **⚠ Conflict to resolve (D4):** the brainstorm says *"curvature is mathematical, not geometric"*, but [moments/ring_curve.md](moments/ring_curve.md) and [moments/night_sky.md](moments/night_sky.md) demand the curve be **geometrically honest — explicitly not a skybox trick**, with far-side city lights that are *reachable*. The resolution is probably "honest in what it renders and where you can walk, mathematical in how it's stored" — but that's exactly what issue [#2](https://github.com/shovelhead24/possession/issues/2) has to pin down with a prototype.
 
-## 3. Ring Dimensions — OPEN (D2, gates nearly everything)
+## 3. Ring Dimensions — DECIDED 2026-07-18 (circumference), width still PROPOSED
 
-The only number on record: **ring width ~10km** (brainstorm; "still enormous"). Circumference: no proposal. Halo canon (10,000km) is off the table — the far side must be reachable on foot per the night-sky moment.
+**Circumference: 20,000 km** — see [.decisions/world.md](../.decisions/world.md#ring-circumference-20000km). Chosen for traversal feel, not physics: walking 360° takes ~23 days nonstop at the current 10 m/s, so transport modes are structurally integral, and the transport ladder mirrors the progression tiers (walk → horse → vehicle/boat → flyer → ancient rim transit). Playable surface ≈ 200,000 km² ≈ Great Britain.
 
-Deciding this needs:
-- A curve mockup at candidate radii — what radius makes the overhead arc *look* like the moment docs describe? (Small radius = dramatic curve but a small world; large = honest but invisible.)
-- A walk-time budget — how long should "walk to the far side" take? That's a design feeling, not a tech constraint.
-- Godot float-precision limits (R1 below) — at what coordinate magnitude does physics/rendering degrade, and does that force floating origin regardless?
+**Cosmology is cheated by decision:** day length and far-side visual size are design/tuning values, not spin-physics outputs (honest numbers at this radius: ~1-hour days, hairline far side). Near-field curve stays real; the night-sky far side renders oversized. This amends the "not a skybox trick" language in two moment docs.
+
+**Width ~10 km remains PROPOSED** — revisit with the curve mockup and the D3 bake-resolution work (at 20,000 km the bake wants multi-resolution: coarse base + high-res regional bakes around authored sites).
 
 ## 4. Systems Map
 
@@ -85,7 +84,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 
 - [ ] **D1** — Ratify/strike the six design principles (§1)
 - [ ] **D1b** — Ratify interaction-fidelity tiers (§6)
-- [ ] **D2** — Ring dimensions: width, circumference, radius (§3) ← needs R1 + curve mockup
+- [x] **D2 (part)** — Circumference: 20,000 km (2026-07-18, `.decisions/world.md`). Width ~10 km still open ← curve mockup
 - [ ] **D3** — Terrain data model: function + overlay persistence, chunk realization (issue #1) ← needs D2
 - [ ] **D4** — Curvature rendering approach (issue #2) ← needs R2, D2
 - [ ] **D5** — What couch co-op means mechanically (issue #3) ← needs R3
