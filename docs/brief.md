@@ -59,6 +59,7 @@ From the April brainstorm. Ratifying (or striking) these is decision **D1** beca
 | Combat/AI | [combat.md](combat.md) | most-built system | squad layer shape (post-slice) | — |
 | Characters | [characters.md](characters.md) | pipeline + cage editor built | quadruped support (wolves/deer) | — |
 | Progression/RPG | [progression.md](progression.md) | nothing built | D7 how much of the RPG stack the slice needs | — |
+| Dialogue/NPCs | [dialogue.md](dialogue.md) | proposal only | LLM bake pipeline (local vs API), voice consistency | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
 
 ## 5. Progression & the RPG Stack — PROPOSED, scope warning
@@ -81,6 +82,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 | R4 | Statistical world sim precedents: Dwarf Fortress army abstraction, Kenshi, Mount & Blade battles, RimWorld storyteller pacing | D7 |
 | R5 | Streaming under a fast-falling camera (the landing) — async mesh generation limits in Godot | #4 |
 | R6 | Pocket-reality interiors: occlusion-funnel implementations (Metro tunnels, GoW boat corridors) | later |
+| R7 | LLM dialogue baking: batch pipeline cost/quality (local vs API) per 100k grounded lines, voice-consistency techniques, validation-gate patterns | dialogue.md |
 
 ## 8. Decision Backlog (ordered)
 
