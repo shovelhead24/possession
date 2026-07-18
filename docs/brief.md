@@ -65,6 +65,8 @@ From the April brainstorm. Ratifying (or striking) these is decision **D1** beca
 
 The brainstorm's full stack — Facts → Pressures → Intentions → Actions → Encounters, plus "throwing a bone" stagnation detection and competence-vector player modeling — is coherent and matches the theme. It is also **enormous**. The scope question (D7) isn't "is this good" but "how much does the first playable slice need" — plausibly *none of it*: deer/wolves are ambient AI, the first settlement can be static, and pressures can arrive with the medieval tier.
 
+**2026-07-18 refinement (see progression.md):** no mission layer, ever — architecturally (bake produces space, runtime produces time) and thematically (missions violate witnessing-over-heroism). Instead: the runtime mirror stack R0–R5 with the player as an ordinary intention-holding entity, a self-authored journal the bone-throwing system reads as signal, and an *arc director* that schedules the authored spine as world-logic inevitabilities, not tasks.
+
 ## 6. Interaction Fidelity — PROPOSED, cheap to ratify
 
 Interaction tiers 0–4 (static signal → passive react → binary → stateful node → narrative anchor) with the frame-budget table from the brainstorm. This is a *constraint*, not a system — it costs nothing now and prevents scope leaks later (no harvestable ferns). Candidate for ratifying alongside D1.
