@@ -11,6 +11,30 @@ The highest-stakes system in the game. Plan before prototyping; naive code only 
 - Object-pooled props at near LODs (`prop_pool.gd`)
 - Terrain shader blending grass/stone/snow/sand by world height (`terrain_shader.gdshader`)
 
+## Bake Pipeline — PROPOSED (D3 sketch, 2026-07-18)
+
+Prebaked world (settled direction from the brief session): **bake = build artifact, recipe = source.** Git versions generator code + seed + hand-edit deltas; the binary bake is reproducible and never committed.
+
+**Layered bake DAG** — layers mirror the fiction (builders → nature → civilization → you), each a pure function of upstream outputs + seed + params:
+
+| Layer | Pass | Establishes |
+|---|---|---|
+| L0 | Builders' shape: shell, walls, macro-terrain | the designed ring |
+| L1 | Hydrology/erosion: rainfall → flow → carve/fill | every drop has a destination |
+| L2 | Climate: altitude, water, wall shadow, spinward wind | temperature/moisture fields |
+| L3 | Biomes: classify climate × soil × slope | legal biome adjacency |
+| L4 | Scatter density fields (never instances) | vegetation/rock/fauna weights |
+| L5 | Civilization: settlements → pathfound roads → history/ruins | inhabited, plausible geography |
+| L6 | Narrative anchors: 12 moment sites as constraints (some push upstream) | authored sites hold |
+| L7 | Hand-edit overlays (the April brush editor is this layer) | art direction |
+
+- **Content-addressed caching:** hash layer inputs → only downstream of a change rebakes. Layer bisection localizes artifacts to the pass that made them.
+- **Per-region compose files:** regions override layer *params* (arid here, dense settlement there) over shared layer code.
+
+**Coherence = contracts + bake gates, not review:** each layer declares pre/postconditions and preserved invariants; validators run per-layer at bake time and fail with coordinates + a debug map. Cross-layer gates on the final artifact turn non-negotiables into computable tests: "see it → reach it" (vista sampling vs navmesh), settlement-graph connectivity, moment-site preconditions, slope/road-grade/ford legality. The runtime detail octave gets an amplitude budget so synthesized detail can't violate baked contracts.
+
+**Verification ladder (in place of formal proof):** bake gates every bake → property tests across N random seeds nightly (low-res) → golden-seed layer-hash regression (silent world changes become visible diffs). Formal proof (Lean) evaluated and scoped out: it would verify a hand-maintained model, not the shipping code, and finite artifact-checking answers the actual question. Sole candidate if ever revisited: the ring-coordinate wrap/origin-shift math module. The gate suite is also what makes cheap-subagent layer code safe to accept.
+
 ## Open Questions (the planning pass must answer)
 
 - **Ring dimensions** — playable width and circumference in km. Everything downstream needs this number.
