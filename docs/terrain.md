@@ -42,6 +42,8 @@ Prebaked world (settled direction from the brief session): **bake = build artifa
 
 Nested-sandbox view (each level can't break the one beneath): substrate → layer protocol → layer params/maps → regional compose → hand-edit overlay. Engine implementations stay deliberately naive; latitude lives in interfaces, and the cache + golden-seed diff make unforeseen bottom-layer changes survivable rather than requiring prophecy.
 
+**Detail sub-docs:** [terrain/layerbuf-v0.md](terrain/layerbuf-v0.md) — field registry draft (per-layer emitted fields, params, syncopation cascade examples). Next: `terrain/substrate.md` (ring coords, tile addressing, resolution pyramid).
+
 **Verification ladder (in place of formal proof):** bake gates every bake → property tests across N random seeds nightly (low-res) → golden-seed layer-hash regression (silent world changes become visible diffs). Formal proof (Lean) evaluated and scoped out: it would verify a hand-maintained model, not the shipping code, and finite artifact-checking answers the actual question. Sole candidate if ever revisited: the ring-coordinate wrap/origin-shift math module. The gate suite is also what makes cheap-subagent layer code safe to accept.
 
 ## Open Questions (the planning pass must answer)
