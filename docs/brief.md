@@ -1,0 +1,103 @@
+# Possession — Design Brief
+
+The single entry point for design and technical planning. Everything here is one of: **FIXED** (non-negotiable, see [vision.md](vision.md)), **PROPOSED** (usually from the April 2026 brainstorm, needs ratification), or **OPEN** (no candidate answer yet).
+
+## How This Document Works
+
+Decisions cascade downward:
+
+1. **This brief** — the why and the what. Holds proposals and the decision backlog.
+2. **`docs/<area>.md`** — the shape of each system: what exists, what's settled, open questions.
+3. **`.decisions/<area>.md`** — settled technical choices, dated, supersedable.
+4. **`docs/<area>/`** sub-docs — detailed sketches, code examples, prototype notes, as an area gets hydrated.
+
+When a decision lands: record it in `.decisions/`, update the area doc, tick it off the backlog here. Tuning values (distances, LOD tables, thresholds) never get recorded during planning — only after an implementation pass settles them.
+
+Sources: the May 2026 design session ([vision.md](vision.md), [moments/](moments/)) and the April 2026 architecture brainstorm ([research/chatgpt-brainstorm-2026-04.md](research/chatgpt-brainstorm-2026-04.md)).
+
+---
+
+## 1. Design Principles — PROPOSED, ratify first
+
+From the April brainstorm. Ratifying (or striking) these is decision **D1** because everything below leans on them:
+
+1. **You do not simulate the world. You simulate the player's relationship to the world.**
+2. "We do not simulate detail — we acknowledge it."
+3. **The Fern Rule:** interaction fidelity ≤ visual fidelity × system importance. Nothing may invite more interaction than it can meaningfully express.
+4. "A low-fidelity cell is a promise of possibility, not a place."
+5. "Encounters are not content. They are consequences."
+6. "The world never rewards the player directly. It reshapes opportunity gradients." (Already echoed in vision.md's theme.)
+
+## 2. World Architecture — PROPOSED
+
+- **World = function, not data:** `WorldState = f(global_seed, lat, lon, t)`. No baked worlds. Persist only player impact, rare anomalies, narrative anchors — as overlays on the function. (The April terrain editor's per-vertex edit overlays are already this pattern.)
+- **Three-tier representation:**
+  - **Tier 0 — mathematical:** climate bands, biomes, faction flows; functions + low-res grids.
+  - **Tier 1 — statistical:** settlements, factions, ecosystems; ticked at hours/days.
+  - **Tier 2 — realized:** geometry, NPCs, physics; exists only ~2–5km around each player. Collapses upward when unloaded.
+- **Fidelity cells** carry summaries (terrain class, faction influence, pressures, anomaly probabilities) plus information topology (`InfoOpacity`, `SignalAmplification` — dense forest is information-poor, ridges are information-rich).
+- **Floating origin + local frames** — absolute position is fake at ring scale.
+- **Interiors are pocket realities** — narratively continuous, not spatially continuous. Occlusion funnel → context swap → spatial lie. "Depth is a feeling, not a measurement."
+
+**⚠ Conflict to resolve (D4):** the brainstorm says *"curvature is mathematical, not geometric"*, but [moments/ring_curve.md](moments/ring_curve.md) and [moments/night_sky.md](moments/night_sky.md) demand the curve be **geometrically honest — explicitly not a skybox trick**, with far-side city lights that are *reachable*. The resolution is probably "honest in what it renders and where you can walk, mathematical in how it's stored" — but that's exactly what issue [#2](https://github.com/shovelhead24/possession/issues/2) has to pin down with a prototype.
+
+## 3. Ring Dimensions — OPEN (D2, gates nearly everything)
+
+The only number on record: **ring width ~10km** (brainstorm; "still enormous"). Circumference: no proposal. Halo canon (10,000km) is off the table — the far side must be reachable on foot per the night-sky moment.
+
+Deciding this needs:
+- A curve mockup at candidate radii — what radius makes the overhead arc *look* like the moment docs describe? (Small radius = dramatic curve but a small world; large = honest but invisible.)
+- A walk-time budget — how long should "walk to the far side" take? That's a design feeling, not a tech constraint.
+- Godot float-precision limits (R1 below) — at what coordinate magnitude does physics/rendering degrade, and does that force floating origin regardless?
+
+## 4. Systems Map
+
+| Area | Doc | State | Next decision | Issue |
+|---|---|---|---|---|
+| Terrain/landscape | [terrain.md](terrain.md) | April prototype works | D2 dimensions, D3 data model | #1 |
+| Rendering/curve | [rendering.md](rendering.md) | clouds/sky built; curve unsolved | D4 curvature approach | #2, #5, #8 |
+| Co-op | [co-op.md](co-op.md) | nothing built | D5 what co-op means mechanically | #3 |
+| Combat/AI | [combat.md](combat.md) | most-built system | squad layer shape (post-slice) | — |
+| Characters | [characters.md](characters.md) | pipeline + cage editor built | quadruped support (wolves/deer) | — |
+| Progression/RPG | [progression.md](progression.md) | nothing built | D7 how much of the RPG stack the slice needs | — |
+| Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
+
+## 5. Progression & the RPG Stack — PROPOSED, scope warning
+
+The brainstorm's full stack — Facts → Pressures → Intentions → Actions → Encounters, plus "throwing a bone" stagnation detection and competence-vector player modeling — is coherent and matches the theme. It is also **enormous**. The scope question (D7) isn't "is this good" but "how much does the first playable slice need" — plausibly *none of it*: deer/wolves are ambient AI, the first settlement can be static, and pressures can arrive with the medieval tier.
+
+## 6. Interaction Fidelity — PROPOSED, cheap to ratify
+
+Interaction tiers 0–4 (static signal → passive react → binary → stateful node → narrative anchor) with the frame-budget table from the brainstorm. This is a *constraint*, not a system — it costs nothing now and prevents scope leaks later (no harvestable ferns). Candidate for ratifying alongside D1.
+
+## 7. Research Agenda
+
+| # | Question | Informs |
+|---|---|---|
+| R1 | Godot 4 large-coordinate limits under GL Compatibility: where float precision breaks, floating-origin patterns, whether double-precision builds are even compatible with the potato target | D2, D3 |
+| R2 | Ring curvature rendering precedents: vertex-bend shaders, how Halo faked its ring, planet renderers; what "geometrically honest" costs | D4 |
+| R3 | Split-screen cost on Intel UHD in GL Compat — measured, not guessed | D5, D6 |
+| R4 | Statistical world sim precedents: Dwarf Fortress army abstraction, Kenshi, Mount & Blade battles, RimWorld storyteller pacing | D7 |
+| R5 | Streaming under a fast-falling camera (the landing) — async mesh generation limits in Godot | #4 |
+| R6 | Pocket-reality interiors: occlusion-funnel implementations (Metro tunnels, GoW boat corridors) | later |
+
+## 8. Decision Backlog (ordered)
+
+- [ ] **D1** — Ratify/strike the six design principles (§1)
+- [ ] **D1b** — Ratify interaction-fidelity tiers (§6)
+- [ ] **D2** — Ring dimensions: width, circumference, radius (§3) ← needs R1 + curve mockup
+- [ ] **D3** — Terrain data model: function + overlay persistence, chunk realization (issue #1) ← needs D2
+- [ ] **D4** — Curvature rendering approach (issue #2) ← needs R2, D2
+- [ ] **D5** — What couch co-op means mechanically (issue #3) ← needs R3
+- [ ] **D6** — Performance budget + benchmark scene (issue #8) ← needs R3
+- [ ] **D7** — RPG-stack scope for the first slice (§5) ← needs D8
+- [ ] **D8** — Define the first playable slice (§9)
+
+## 9. First Slice — PROPOSED
+
+**Crash site → wilderness → the deer → the wolves at night → crest the ridge → the ring curve reveal.**
+
+One unbroken stretch of walking that tests: terrain streaming, the curve render, day/night, ambient animal AI (both flavors — peaceful and predator), terrain-as-savior (wolves resolve through navigation, not combat), and the tone (no HUD noise, no fanfare). Requires **zero** combat systems, zero settlements, zero RPG stack — and it's three of the twelve moments, including the one that defines the game. If the slice doesn't produce awe on a Dell Latitude, the numbers change until it does.
+
+---
+*Living document. Sections get hydrated down into area docs as decisions land.*

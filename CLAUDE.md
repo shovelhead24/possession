@@ -10,7 +10,8 @@ Commit message style: short imperative summary, no body needed.
 
 Replaces the old `.planning/` GSD framework (abandoned — too token-heavy for this project).
 
-- `docs/` — high-level, mostly-static: vision, stack, world/scale. Changes rarely and deliberately.
+- `docs/brief.md` — master design brief and decision backlog; the entry point for planning. Decisions hydrate from it down into area docs, then `.decisions/`, then code.
+- `docs/` — high-level, mostly-static: vision, stack, per-system area docs, `moments/` director's notes, `research/` source material.
 - `.decisions/` — per-system technical decisions, tuned over time (see below).
 - GitHub Issues/Projects — day-to-day task tracking.
 
