@@ -1,6 +1,9 @@
 # macOS artifacts
 .DS_Store
 
+# Personal Claude Code overrides (permissions, local prefs)
+.claude/settings.local.json
+
 # Godot exports / binaries
 *.exe
 *.x86_64
