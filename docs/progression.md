@@ -32,6 +32,18 @@ No missions, architecturally enforced: the bake DAG (terrain.md) produces *space
 
 Player-facing surface: a **self-authored journal** — the player pins their own goals (rumors, a marked far-side light, the pilot's object); the bone-throwing system reads pins as signal for where to leak information and tilt generation. The world never assigns; it answers in gradients. Per-player in co-op (asymmetric knowledge → two journals over the same terrain).
 
+### Tempo — pacing as shared clocks (PROPOSED 2026-07-19)
+
+LayerBuf's twin in time ("the conductor"): systems are *consumers* of shared tempo signals, never directly wired to each other. Few writers (player-state model, arc phase, biome, regional pressure), many readers (AI tick rates, spawn budgets, rumor frequency, weather, music).
+
+Clock hierarchy: **arc clock** (global, counts in day/night *cycles* — day length tuning now has a consumer) → **regional clocks** (statistical-tier tick rates, pressure-heated) → **encounter clocks** (combat tempo/threat rhythm) → **micro clocks** (AI decision ticks — grenade timing, "cleverness tick"). Example: aggressive play → encounter tempo → slower/worse enemy decisions, reading as *morale under pressure*, not a difficulty dial — because the connection is laundered through the clock. Biome tempo is InfoOpacity's temporal sibling (forest slow and dreadful, ridge fast and legible).
+
+### Arc director rules (PROPOSED 2026-07-19)
+
+- Director and intentions stay separate: intentions are distributed/bottom-up, the director is sparse/top-down. The director **schedules facts and sets tempo, never commands entities** — the simulation reacts honestly as deadlines approach (scheduled city burn → prices, rumors, refugees, shifted faction intentions).
+- **Inevitabilities are scheduled as defaults, never scripted as outcomes.** Causality must run through simulated preconditions, so interception is possible in principle — the *hail mary* is a property of honest causality, never designed, never advertised (no UI, no timer, no hint). Default fires in ~99% of playthroughs; theme intact.
+- **Fixed beats vs negotiable inevitabilities:** the crash, THE city (protagonist two's origin), the relay being on, the armada's arrival are load-bearing drumline — not interceptable. Negotiable inevitabilities (a second city, a settlement, the medieval battle) are where hail marys live.
+
 **Slice consequence:** the first slice (brief §9) runs with zero of this stack — it is the cheapest possible test of the no-mission bet. If task-free walking through the world is compelling, the thesis holds before we build R0–R5 at all.
 
 ## Tone Guard

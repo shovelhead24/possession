@@ -19,6 +19,10 @@ The most-built side of the codebase (April sprint). Mostly needs consolidation a
 - **Damage/health model** — placeholder now; couch co-op raises downed/revive questions.
 - **The Medieval Army moment** — a battle that runs *without the player* at watchable scale on potato hardware. Big sim/LOD question.
 
+## Tempo Consumers (PROPOSED 2026-07-19)
+
+Enemy AI decision ticks (grenade timing, decision quality/"cleverness", squad coordination rate) consume shared tempo clocks rather than querying player state directly — see progression.md "Tempo". Pressure reads as morale (worse, slower decisions), not as a difficulty dial. Design AI states with tick-rate as an external input from day one so the conductor can drive them later without rework.
+
 ## Constraints
 
 - Enemy soldiers share the player's carbine model. Character pipeline (docs/characters.md) is how enemy variety gets cheap.
