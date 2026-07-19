@@ -19,7 +19,7 @@ GL Compatibility (OpenGL 3.3) on Intel UHD is the hard floor. Every rendering am
 
 - **Ring curvature** (issue #2) — vertex bend vs real geometry vs skybox impostor past playable range; where the seam sits; night-side cities of Moment 7
 - **Performance budget** (issue #8) — no defined FPS target or benchmark scene yet; split-screen co-op means budgeting two viewports from day one
-- **Fog strategy** — historically used to hide the streaming edge; ring curvature changes what "the horizon" even is
+- **Fog/haze strategy** — historically a perf trick to hide the streaming edge; now a design material with three jobs: on a ring interior there is no horizon, *the air is the horizon* (knowledge.md — haze gates distance knowledge, night lights punch through), it stays the perf budget's best friend, and it's the tuning surface for D4 curve rendering (how much upcurve through how much air = vibes × framerate). The #9 mocks should treat haze as a first-class variable, not an afterthought
 - **Snow blend mechanism** (issue #5) — old unfixed bug, thresholds have drifted since; make the mechanism trustworthy before tuning values
 
 ## Hard Lessons
