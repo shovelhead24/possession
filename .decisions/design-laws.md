@@ -43,3 +43,9 @@ Laws a future session could violate silently — the core reason this log exists
 **Status:** active
 **Decision:** Player knowledge (knowledge.md) is read by the bone-thrower and dialogue selection only. World simulation and realization never read it.
 **Why:** The ring doesn't know you're watching. Indifference enforced by API surface, not by discipline.
+
+### interaction-fidelity — Tiers 0-4 ratified as a constraint, not a system
+**Date:** 2026-07-19
+**Status:** active
+**Decision:** Closes brief D1b. Every object's allowed interaction is capped by `Interaction Fidelity ≤ Visual Fidelity × System Importance`. Five tiers, by purpose: 0 static signal (read-only, e.g. distant skyline) · 1 passive reactivity (1-2 non-persistent animation states, e.g. fern bends and resets) · 2 binary interaction (2-3 states, may persist locally, e.g. door open/closed) · 3 stateful system node (multiple states, memory, feeds other systems, e.g. generator, camp) · 4 narrative/system anchor (rare, highly legible, e.g. relay pylon). The Fern Rule is tier 1's worked example: low-poly + background-importance means bend/rustle/shadow-disturb only — never health, damage, harvesting, or AI attention hooks. Frame budget scales with tier (0 frames at tier 0 up through richer blending at tier 3+, detailed in research/chatgpt-brainstorm-2026-04.md).
+**Why:** Already load-bearing before ratification — it's the reasoning behind "no harvestable ferns" and every "acknowledge, don't simulate" call so far. Ratifying it as a constraint (not a system to build) costs nothing now and forecloses scope leaks later: an artist can't accidentally promise interactivity a background asset can't back up.

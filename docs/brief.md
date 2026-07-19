@@ -80,9 +80,9 @@ The brainstorm's full stack — Facts → Pressures → Intentions → Actions �
 
 **2026-07-18 refinement (see simulation.md):** no mission layer, ever — architecturally (bake produces space, runtime produces time) and thematically (missions violate witnessing-over-heroism). Instead: the runtime mirror stack R0–R5 with the player as an ordinary intention-holding entity, a self-authored journal the bone-throwing system reads as signal, and an *arc director* that schedules the authored spine as world-logic inevitabilities, not tasks.
 
-## 6. Interaction Fidelity — PROPOSED, cheap to ratify
+## 6. Interaction Fidelity — RATIFIED 2026-07-19 (`.decisions/design-laws.md`)
 
-Interaction tiers 0–4 (static signal → passive react → binary → stateful node → narrative anchor) with the frame-budget table from the brainstorm. This is a *constraint*, not a system — it costs nothing now and prevents scope leaks later (no harvestable ferns). Candidate for ratifying alongside D1.
+Interaction tiers 0–4 (static signal → passive react → binary → stateful node → narrative anchor) with the frame-budget table from the brainstorm. This is a *constraint*, not a system — it costs nothing now and prevents scope leaks later (no harvestable ferns).
 
 ## 7. Research Agenda
 
@@ -100,7 +100,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 ## 8. Decision Backlog (ordered)
 
 - [x] **D1** — Six principles + four session laws ratified (2026-07-19, `.decisions/design-laws.md`)
-- [ ] **D1b** — Ratify interaction-fidelity tiers (§6) — still open, mechanical, low-risk
+- [x] **D1b** — Interaction-fidelity tiers ratified (2026-07-19, `.decisions/design-laws.md`)
 - [x] **D2 (part)** — Circumference: 2,000 km (2026-07-18, `.decisions/world.md`; superseded same-day 20,000 km). Sky geometry honest, day length free
 - [ ] **D2b** — Ring width (10–50 km candidates) ← needs skybox vibe mocks (issue #9) + width-opportunity call
 - [x] **D3 (architecture)** — Prebaked layer DAG + gates, recipe-versioned (2026-07-19, `.decisions/terrain.md`); substrate spec + streaming detail remain in issue #1

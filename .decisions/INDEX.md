@@ -2,7 +2,7 @@
 
 One line per area file — decisions are the source of truth, this is just a map. Load this, then open only the file(s) you need. Don't grep the whole directory.
 
-- design-laws.md — cross-system laws: six ratified principles; no missions; intensity not valence; observation never rerolls; world never reads knowledge
+- design-laws.md — cross-system laws: six ratified principles; no missions; intensity not valence; observation never rerolls; world never reads knowledge; layer-backpropagation; diegetic tools not HUD; interaction-fidelity tiers 0-4 (Fern Rule)
 - civilization.md — ordinary building interiors are real/continuous (window combat, fire spread); dungeons keep pocket-reality
 - coop.md — drop-in co-op possesses an existing NPC (proximity-weighted), not a new spawn
 - dialogue.md — LLM dialogue is bake-time only, zero runtime LLM
