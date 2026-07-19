@@ -1,6 +1,6 @@
 # Possession — Knowledge Pyramid
 
-Area doc (2026-07-19 session). The player's knowledge of the world is itself stored at fidelity levels over the same tile addressing as bake and simulation — the third pyramid (see progression.md "Fidelity & realization"). Per-player.
+Area doc (2026-07-19 session). The player's knowledge of the world is itself stored at fidelity levels over the same tile addressing as bake and simulation — the third pyramid (see simulation.md "Fidelity & realization"). Per-player.
 
 ## The Ring-Specific Foundation
 

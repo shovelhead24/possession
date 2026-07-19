@@ -16,7 +16,7 @@ New area doc (2026-07-19 session). Core proposal: **LLM-baked dialogue** — off
 
 **Arc branches are finite, so bake them:** the drumline (fixed beats) enumerates a small set of arc-phase pools ("before the city" / "after"). Negotiable inevitabilities bake both branches — the hail-mary timeline's dialogue ships in the data whether or not any player ever hears it.
 
-**Rumors close the bone-thrower loop:** the leak mechanism *is* dialogue selection — baked rumor variants at graded accuracy, selected at runtime by pressure state and the player's journal pins (see progression.md).
+**Rumors close the bone-thrower loop:** the leak mechanism *is* dialogue selection — baked rumor variants at graded accuracy, selected at runtime by pressure state and the player's journal pins (see simulation.md).
 
 **Storage:** trivial. 200 settlements × 20 NPCs × 50 lines ≈ 200k lines ≈ ~20 MB text.
 

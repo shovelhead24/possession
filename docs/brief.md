@@ -59,6 +59,7 @@ From the April brainstorm. Ratifying (or striking) these is decision **D1** beca
 | Combat/AI | [combat.md](combat.md) | most-built system | squad layer shape (post-slice) | — |
 | Characters | [characters.md](characters.md) | pipeline + cage editor built | quadruped support (wolves/deer) | — |
 | Progression/RPG | [progression.md](progression.md) | nothing built | D7 how much of the RPG stack the slice needs | — |
+| Simulation/runtime | [simulation.md](simulation.md) | architecture proposed | graduation to .decisions (see backlog) | — |
 | Dialogue/NPCs | [dialogue.md](dialogue.md) | proposal only | LLM bake pipeline (local vs API), voice consistency | — |
 | Knowledge/journal/map | [knowledge.md](knowledge.md) | proposal only | journal UI shape, staleness pacing | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
@@ -67,7 +68,7 @@ From the April brainstorm. Ratifying (or striking) these is decision **D1** beca
 
 The brainstorm's full stack — Facts → Pressures → Intentions → Actions → Encounters, plus "throwing a bone" stagnation detection and competence-vector player modeling — is coherent and matches the theme. It is also **enormous**. The scope question (D7) isn't "is this good" but "how much does the first playable slice need" — plausibly *none of it*: deer/wolves are ambient AI, the first settlement can be static, and pressures can arrive with the medieval tier.
 
-**2026-07-18 refinement (see progression.md):** no mission layer, ever — architecturally (bake produces space, runtime produces time) and thematically (missions violate witnessing-over-heroism). Instead: the runtime mirror stack R0–R5 with the player as an ordinary intention-holding entity, a self-authored journal the bone-throwing system reads as signal, and an *arc director* that schedules the authored spine as world-logic inevitabilities, not tasks.
+**2026-07-18 refinement (see simulation.md):** no mission layer, ever — architecturally (bake produces space, runtime produces time) and thematically (missions violate witnessing-over-heroism). Instead: the runtime mirror stack R0–R5 with the player as an ordinary intention-holding entity, a self-authored journal the bone-throwing system reads as signal, and an *arc director* that schedules the authored spine as world-logic inevitabilities, not tasks.
 
 ## 6. Interaction Fidelity — PROPOSED, cheap to ratify
 

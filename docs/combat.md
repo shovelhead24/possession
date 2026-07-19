@@ -21,7 +21,7 @@ The most-built side of the codebase (April sprint). Mostly needs consolidation a
 
 ## Tempo Consumers (PROPOSED 2026-07-19)
 
-Enemy AI decision ticks (grenade timing, decision quality/"cleverness", squad coordination rate) consume shared tempo clocks rather than querying player state directly — see progression.md "Tempo". Pressure reads as morale (worse, slower decisions), not as a difficulty dial. Design AI states with tick-rate as an external input from day one so the conductor can drive them later without rework.
+Enemy AI decision ticks (grenade timing, decision quality/"cleverness", squad coordination rate) consume shared tempo clocks rather than querying player state directly — see simulation.md "Tempo". Pressure reads as morale (worse, slower decisions), not as a difficulty dial. Design AI states with tick-rate as an external input from day one so the conductor can drive them later without rework.
 
 ## Constraints
 
