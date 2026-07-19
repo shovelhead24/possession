@@ -1,0 +1,224 @@
+extends Node3D
+# Ring scale vibe mock — issue #9. Standalone: open this scene, F6.
+# Honest geometry: camera stands on the interior of a cylinder of radius R.
+# Config keys: 1/2/3 circumference, Q/W/E width, Up/Down haze, T sun speed, P pause sun, F flip sun, R rebuild.
+
+const CIRCUMFERENCES := [1_500_000.0, 2_097_152.0, 3_000_000.0]  # m (2^21 = substrate proposal)
+const WIDTHS := [10_000.0, 32_768.0, 50_000.0]                    # m (2^15 = substrate proposal)
+const SUN_PERIODS := [0.0, 1140.0, 60.0, 8.0]                     # s per full day: off, ~19min honest, fast, terminator-sweep
+const STRIP_ARC := 100_000.0      # near-field strip: +/- this many meters of arc
+const STRIP_SEGS := 320
+const STRIP_ROWS := 80
+const BAND_SEGS := 1024
+const BAND_ROWS := 8
+const WALL_HEIGHT := 3_000.0
+const WALL_RAMP := 2_500.0        # lat meters over which wall rises
+const RIDGE_ARC := 50_000.0       # money-shot ridge distance spinward
+const RIDGE_AMP := 1_500.0
+const NOISE_AMP := 1_100.0
+
+var c_idx := 1
+var w_idx := 1
+var haze_density := 0.000012      # 1/m — ~85km extinction-ish start point
+var sun_speed_idx := 1
+var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
+var sun_paused := false
+
+var _cam: Camera3D
+var _hud: Label
+var _mat: ShaderMaterial
+var _band: MeshInstance3D
+var _strip: MeshInstance3D
+var _noise := FastNoiseLite.new()
+var _look := Vector2.ZERO
+var _captured := false
+var _env: Environment
+
+func _ready() -> void:
+	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_noise.fractal_octaves = 4
+	_noise.frequency = 1.0 / 9_000.0
+
+	_cam = Camera3D.new()
+	_cam.position = Vector3(0, 120, 0)
+	_cam.near = 0.5
+	_cam.far = 3_000_000.0
+	add_child(_cam)
+	_cam.make_current()
+
+	_env = Environment.new()
+	_env.background_mode = Environment.BG_COLOR
+	_env.background_color = Color(0.45, 0.62, 0.82)
+	var we := WorldEnvironment.new()
+	we.environment = _env
+	add_child(we)
+
+	var shader := load("res://mocks/ring_vibes.gdshader") as Shader
+	_mat = ShaderMaterial.new()
+	_mat.shader = shader
+	_mat.set_shader_parameter("city_tex", _make_city_texture())
+
+	var hud_layer := CanvasLayer.new()
+	add_child(hud_layer)
+	_hud = Label.new()
+	_hud.position = Vector2(12, 12)
+	_hud.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	_hud.add_theme_constant_override("outline_size", 4)
+	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	hud_layer.add_child(_hud)
+
+	_rebuild()
+
+func _radius() -> float:
+	return CIRCUMFERENCES[c_idx] / TAU
+
+# Ring-space to local: theta=0 under camera, floor y=0, spinward = +x, lat = z.
+func _ring_pos(theta: float, lat: float, h: float) -> Vector3:
+	var r: float = _radius() - h
+	return Vector3(r * sin(theta), _radius() - r * cos(theta), lat)
+
+func _terrain_h(arc: float, lat: float, w: float) -> float:
+	# feather noise to zero at strip ends so the seam with the flat band hides
+	var feather: float = clampf(1.0 - abs(arc) / STRIP_ARC, 0.0, 1.0)
+	var h: float = maxf(_noise.get_noise_2d(arc, lat), 0.0) * NOISE_AMP * smoothstep(0.0, 0.15, feather)
+	var ridge_d: float = (arc - RIDGE_ARC) / 9_000.0
+	h += RIDGE_AMP * exp(-ridge_d * ridge_d) * feather
+	var wall_t: float = smoothstep(w * 0.5 - WALL_RAMP, w * 0.5, abs(lat))
+	return h + wall_t * WALL_HEIGHT
+
+func _rebuild() -> void:
+	if _band: _band.queue_free()
+	if _strip: _strip.queue_free()
+	var w: float = WIDTHS[w_idx]
+	var r: float = _radius()
+
+	# Far band: whole ring, flat, sunk 80m so the strip covers it near the camera
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in BAND_SEGS + 1:
+		var theta: float = TAU * float(i) / float(BAND_SEGS)
+		for j in BAND_ROWS + 1:
+			var lat: float = w * (float(j) / float(BAND_ROWS) - 0.5)
+			var wall_t: float = smoothstep(w * 0.5 - WALL_RAMP, w * 0.5, abs(lat))
+			st.set_uv(Vector2(float(i) / float(BAND_SEGS), float(j) / float(BAND_ROWS)))
+			st.add_vertex(_ring_pos(theta, lat, -80.0 + wall_t * WALL_HEIGHT))
+	_grid_indices(st, BAND_SEGS, BAND_ROWS)
+	st.generate_normals()
+	_band = MeshInstance3D.new()
+	_band.mesh = st.commit()
+	_band.material_override = _mat
+	add_child(_band)
+
+	# Near strip: +/-STRIP_ARC with mountains, ridge, walls
+	st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in STRIP_SEGS + 1:
+		var arc: float = STRIP_ARC * (2.0 * float(i) / float(STRIP_SEGS) - 1.0)
+		for j in STRIP_ROWS + 1:
+			var lat: float = w * (float(j) / float(STRIP_ROWS) - 0.5)
+			st.set_uv(Vector2(0.001, 0.5))  # off the city texture clusters
+			st.add_vertex(_ring_pos(arc / r, lat, _terrain_h(arc, lat, w)))
+	_grid_indices(st, STRIP_SEGS, STRIP_ROWS)
+	st.generate_normals()
+	_strip = MeshInstance3D.new()
+	_strip.mesh = st.commit()
+	_strip.material_override = _mat
+	add_child(_strip)
+	_update_hud()
+
+func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:
+	for i in segs:
+		for j in rows:
+			var a: int = i * (rows + 1) + j
+			var b: int = a + rows + 1
+			st.add_index(a); st.add_index(b); st.add_index(a + 1)
+			st.add_index(a + 1); st.add_index(b); st.add_index(b + 1)
+
+func _make_city_texture() -> ImageTexture:
+	var img := Image.create_empty(2048, 64, false, Image.FORMAT_RGB8)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for c in 70:
+		var cx := rng.randi_range(64, 2047)  # keep lon~0 (camera region) wilderness
+		var cy := rng.randi_range(8, 55)
+		var n := rng.randi_range(40, 260)
+		var spread := rng.randf_range(3.0, 14.0)
+		for p in n:
+			var px := clampi(cx + int(rng.randfn(0.0, spread)), 0, 2047)
+			var py := clampi(cy + int(rng.randfn(0.0, spread * 0.35)), 0, 63)
+			var warm := rng.randf_range(0.75, 1.0)
+			img.set_pixel(px, py, Color(warm, warm * 0.82, warm * 0.5))
+	return ImageTexture.create_from_image(img)
+
+func _process(delta: float) -> void:
+	var period: float = SUN_PERIODS[sun_speed_idx]
+	if period > 0.0 and not sun_paused:
+		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle), 0)
+	_mat.set_shader_parameter("to_sun", to_sun)
+	_mat.set_shader_parameter("haze_density", haze_density)
+	# camera-local day factor drives the sky color
+	var day: float = clampf(to_sun.y, 0.0, 1.0)
+	var sky := Color(0.45, 0.62, 0.82).lerp(Color(0.015, 0.02, 0.05), 1.0 - day)
+	_env.background_color = sky
+	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
+	_fly(delta)
+
+func _fly(delta: float) -> void:
+	# fly only while mouse captured; config keys only while released — no key conflicts
+	if not _captured: return
+	var speed: float = 800.0 if Input.is_key_pressed(KEY_SHIFT) else 60.0
+	var dir := Vector3.ZERO
+	if Input.is_key_pressed(KEY_W): dir -= _cam.global_basis.z
+	if Input.is_key_pressed(KEY_S): dir += _cam.global_basis.z
+	if Input.is_key_pressed(KEY_A): dir -= _cam.global_basis.x
+	if Input.is_key_pressed(KEY_D): dir += _cam.global_basis.x
+	if Input.is_key_pressed(KEY_SPACE): dir += Vector3.UP
+	if Input.is_key_pressed(KEY_CTRL): dir -= Vector3.UP
+	if dir != Vector3.ZERO:
+		_cam.position += dir.normalized() * speed * delta
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and not _captured:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		_captured = true
+		_update_hud()
+	if event is InputEventMouseMotion and _captured:
+		_look -= event.relative * 0.0022
+		_look.y = clampf(_look.y, -1.55, 1.55)
+		_cam.rotation = Vector3(_look.y, _look.x, 0)
+	if event is InputEventKey and event.pressed:
+		if event.keycode == KEY_ESCAPE:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+			_captured = false
+			_update_hud()
+			return
+		# always-available keys
+		match event.keycode:
+			KEY_UP: haze_density *= 1.5; _update_hud()
+			KEY_DOWN: haze_density /= 1.5; _update_hud()
+			KEY_T: sun_speed_idx = (sun_speed_idx + 1) % SUN_PERIODS.size(); _update_hud()
+			KEY_P: sun_paused = not sun_paused
+			KEY_F: sun_angle = fmod(sun_angle + PI, TAU)
+			KEY_R: _rebuild()
+		if _captured: return
+		# config keys only while mouse is released
+		match event.keycode:
+			KEY_1: c_idx = 0; _rebuild()
+			KEY_2: c_idx = 1; _rebuild()
+			KEY_3: c_idx = 2; _rebuild()
+			KEY_Q: w_idx = 0; _rebuild()
+			KEY_W: w_idx = 1; _rebuild()
+			KEY_E: w_idx = 2; _rebuild()
+
+func _update_hud() -> void:
+	var c: float = CIRCUMFERENCES[c_idx]
+	var w: float = WIDTHS[w_idx]
+	var r: float = _radius()
+	var rise20: float = 20_000.0 * 20_000.0 / (2.0 * r)
+	var rise50: float = 50_000.0 * 50_000.0 / (2.0 * r)
+	var band_deg: float = rad_to_deg(2.0 * atan((w * 0.5) / (2.0 * r)))
+	var mode := "FLY (WASD + Space/Ctrl, Shift boost, ESC to release)" if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly)"
+	_hud.text = "C = %.0f km   W = %.1f km   R = %.1f km\nrise @20km = %.0f m   @50km = %.0f m   far-side band = %.2f deg (moon = 0.52)\nhaze = %.2e /m   sun period = %s s\n[Up/Dn] haze  [T] sun speed  [P] pause sun  [F] flip day/night  [R] rebuild\nmode: %s" % [
+		c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg, haze_density,
+		("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])), mode]
