@@ -21,7 +21,7 @@ Deliberately ~2001 / Halo CE class (`.decisions/rendering.md#texture-fidelity-ba
 
 ## Open Questions
 
-- **Ring curvature** (issue #2) — vertex bend vs real geometry vs skybox impostor past playable range; where the seam sits; night-side cities of Moment 7
+- **Ring curvature** (issue #2, D4) — not single-technique per [research/r2-ring-curvature.md](research/r2-ring-curvature.md): real arc-displaced terrain mesh near-field (ties to substrate's ring-arc coordinates), painted/impostor far-field (Tier 0 static-signal rule covers it), haze-based seam between them. Vertex-bend shaders ruled out as the seam technique — no positional truth, and the April manifold/z-fighting lesson lives exactly at that kind of boundary. GL Compat is not a blocker (vertex displacement is core). Night-side cities of Moment 7 land in the far-field impostor layer.
 - **Performance budget** (issue #8) — no defined FPS target or benchmark scene yet; split-screen co-op means budgeting two viewports from day one
 - **Fog/haze strategy** — historically a perf trick to hide the streaming edge; now a design material with three jobs: on a ring interior there is no horizon, *the air is the horizon* (knowledge.md — haze gates distance knowledge, night lights punch through), it stays the perf budget's best friend, and it's the tuning surface for D4 curve rendering (how much upcurve through how much air = vibes × framerate). The #9 mocks should treat haze as a first-class variable, not an afterthought
 - **Snow blend mechanism** (issue #5) — old unfixed bug, thresholds have drifted since; make the mechanism trustworthy before tuning values

@@ -89,7 +89,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 | # | Question | Informs |
 |---|---|---|
 | R1 | ✅ Done — [research/r1-godot-large-worlds.md](research/r1-godot-large-worlds.md). Verdict: floating origin mandatory; double-precision builds ruled out (custom compile + perf penalty + undocumented GL Compat support); precision no longer constrains ring size, but co-op needs a player tether or per-viewport origins | D2, D3, D5 |
-| R2 | Ring curvature rendering precedents: vertex-bend shaders, how Halo faked its ring, planet renderers; what "geometrically honest" costs | D4 |
+| R2 | ✅ Done — [research/r2-ring-curvature.md](research/r2-ring-curvature.md). Verdict: no single technique — real arc-displaced terrain near-field + painted/impostor far-field (Tier 0 rule) + haze seam; vertex-bend shaders lack positional truth, full cube-sphere LOD solves a problem we don't have (ring curves one axis, not two); GL Compat is not a blocker (vertex displacement is core, not compute) | D4 |
 | R3 | Split-screen cost on Intel UHD in GL Compat — measured, not guessed | D5, D6 |
 | R4 | Statistical world sim precedents: Dwarf Fortress army abstraction, Kenshi, Mount & Blade battles, RimWorld storyteller pacing | D7 |
 | R5 | Streaming under a fast-falling camera (the landing) — async mesh generation limits in Godot | #4 |
