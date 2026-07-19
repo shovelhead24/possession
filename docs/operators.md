@@ -1,0 +1,23 @@
+# Possession — Operator Glossary
+
+The pseudo-code operators coined across design sessions, gathered so they don't drift. One line each; the linked doc owns the semantics. These are the API sketch the eventual code pass implements.
+
+| Operator | Signature (informal) | Semantics | Owner doc |
+|---|---|---|---|
+| field expressions | `deer_habitat = meadow × water_proximity` | LayerBuf fields composed by arithmetic over rasters | terrain/layerbuf-v0.md |
+| syncopation | `anomaly(type, pos, radius, params)` | perturbs *inputs* to later bake layers; never scripts outcomes | terrain/layerbuf-v0.md |
+| `bake(layer, inputs, seed, params)` | pure fn → fields + content hash | cache hit iff input hash unchanged | terrain.md |
+| `gate(artifact) → violations[]` | bake-time validator | fails with coordinates + debug map; non-negotiables as computable tests | terrain.md |
+| `realize(fact, seed)` | `softmax_T(site_scores)` sample, seed = `hash(world_seed, entity_id, fact_version, time_bucket)` | coarse fact → concrete entities; observation never rerolls, only events do | progression.md |
+| `summarize(realization)` | collapse-up | conservation law: `summarize(realize(f)) ≈ f ⊕ events` — counts survive fidelity transitions | progression.md |
+| temperature | `T = f(InfoOpacity)` | readable zones realize predictably (cold); info-poor zones diffuse (hot) | progression.md |
+| clock mixing | `rate = clamp(Π registered_modifiers)` | few writers, many readers; writer set grows additively | progression.md |
+| intention join | `intent = commit(read_space, read_time)` | the intention boundary — bufs never talk buf-to-buf; entities join them | progression.md |
+| null write | *(deliberate absence)* | a system's refusal to write tempo/intensity is a designed, testable act (the deer) | progression.md |
+| `schedule(fact, +cycles)` | arc director | defaults not outcomes; causality stays simulated → hail marys exist unadvertised | progression.md |
+| intensity | scalar from player-side observables, post hoc | conductor budgets intensity, never valence; valence labels = telemetry only | progression.md |
+| `observe(vantage, time, weather)` | LoS over heightfield + haze; night boosts lights | K-gains flood visible tiles; ridges are honest towers | knowledge.md |
+| `hear(rumor)` | K2 claim insert, accuracy ~ SignalAmplification decay | claims carry provenance, may be wrong | knowledge.md |
+| `traverse(tile)` | K4 + freshness stamp | staleness = computed `fact_version` gap, never stored | knowledge.md |
+
+Registry rule: new operators get a row here when coined; renames are migrations, not edits.

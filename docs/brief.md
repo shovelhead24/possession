@@ -60,6 +60,7 @@ From the April brainstorm. Ratifying (or striking) these is decision **D1** beca
 | Characters | [characters.md](characters.md) | pipeline + cage editor built | quadruped support (wolves/deer) | — |
 | Progression/RPG | [progression.md](progression.md) | nothing built | D7 how much of the RPG stack the slice needs | — |
 | Dialogue/NPCs | [dialogue.md](dialogue.md) | proposal only | LLM bake pipeline (local vs API), voice consistency | — |
+| Knowledge/journal/map | [knowledge.md](knowledge.md) | proposal only | journal UI shape, staleness pacing | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
 
 ## 5. Progression & the RPG Stack — PROPOSED, scope warning
