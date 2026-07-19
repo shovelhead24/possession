@@ -101,6 +101,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 - [ ] **D6** — Performance budget + benchmark scene (issue #8) ← needs R3
 - [ ] **D7** — RPG-stack scope for the first slice (§5) ← needs D8
 - [ ] **D8** — Define the first playable slice (§9)
+- [ ] **D9** — Freeze substrate v1 ([terrain/substrate.md](terrain/substrate.md)): ratify power-of-two dimensions (C = 2²¹ m, W = 2¹⁵ m) ← needs #9 mocks to confirm the band feel
 
 ## 9. First Slice — PROPOSED
 
