@@ -61,7 +61,8 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 | Progression/RPG | [progression.md](progression.md) | nothing built | D7 how much of the RPG stack the slice needs | — |
 | Simulation/runtime | [simulation.md](simulation.md) | architecture proposed | graduation to .decisions (see backlog) | — |
 | Dialogue/NPCs | [dialogue.md](dialogue.md) | proposal only | LLM bake pipeline (local vs API), voice consistency | — |
-| Knowledge/journal/map | [knowledge.md](knowledge.md) | proposal only | journal UI shape, staleness pacing | — |
+| Knowledge/journal/map | [knowledge.md](knowledge.md) | decided: sky-as-map | journal UI shape, staleness pacing | — |
+| Factions | [factions.md](factions.md) | proposal only | who woke the relay; join vs be-known | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
 
 ## 5. Progression & the RPG Stack — PROPOSED, scope warning

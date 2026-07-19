@@ -43,3 +43,10 @@ Clock hierarchy: **arc clock** (global, counts in day/night *cycles*) → **regi
 Bake writes habitat, never animals (L1 spring → L2 moisture → L3 meadow pocket → L4 `deer_habitat`; L6 stamps the crash corridor near deer habitat — "deer before wolves" as placement bias, not trigger). Runtime realizes a herd from habitat × a coarse persistent herd fact; deer micro-clock runs slow. **The deer's key TempoBuf integration is a null write** — zero intensity, no encounter-clock touch, no music wake: silence is systems refraining, not absent. Stagnation detection reads progress observables, not event rate, so pastoral quiet never triggers a bone. The wolves later realize from the *same* fields at night with hunger pressure and write the encounter clock hard — same substrate, opposite tempo signature; the corruption is mechanical, not scripted.
 
 **Slice consequence:** the first slice (brief §9) runs with zero of this stack — the cheapest test of the no-mission bet. The deer clearing's null write is an assertable acceptance test: if anything twitches when the player meets the herd, the implementation violated the moment.
+
+## Open Questions (warm threads)
+
+- **Mixing-rule combinator spec:** TempoBuf's one frozen interface — exact combinator (clamped product? sum-then-clamp?), modifier registration schema, per-clock bounds. Deserves the substrate treatment before any consumer code exists.
+- **Precondition audit for negotiable inevitabilities:** for each scheduled default, verify an honest causal chain exists in the sim (interceptable preconditions) — else it's a cutscene in simulation clothes. This is a bake-gate for *time*; define the audit checklist.
+- **Player-state model shared by conductor + bone-thrower:** aggression and stagnation are read by both — design the observable set once, not twice.
+- **Cycle length bounds:** the arc counts in day/night cycles; pacing math and moment staging both constrain day length — capture bounds when #9 mocks test the terminator sweep.
