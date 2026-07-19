@@ -44,6 +44,15 @@ Clock hierarchy: **arc clock** (global, counts in day/night *cycles* — day len
 
 **Worked example — the deer (2026-07-19):** bake writes habitat, never animals (L1 spring → L2 moisture → L3 meadow pocket → L4 `deer_habitat`; L6 stamps the crash corridor near deer habitat, making "deer before wolves" a placement bias, not a trigger). Runtime realizes a herd from habitat × a coarse persistent herd fact; deer micro-clock runs slow. **The deer's key TempoBuf integration is a null write** — zero intensity, no encounter-clock touch, no music wake: silence is systems refraining, not absent. Stagnation detection reads progress observables, not event rate, so pastoral quiet never triggers a bone. The wolves later realize from the *same* fields (`wolf_range = forest edge × deer_habitat`) at night with hunger pressure and write the encounter clock hard — same substrate, opposite tempo signature; the corruption is mechanical, not scripted.
 
+### Fidelity & realization — seeded softmax (PROPOSED 2026-07-19)
+
+*(Growing candidate for extraction into its own simulation.md area doc.)*
+
+- **Realization = seeded softmax over coarse facts:** candidate sites scored from LayerBuf fields, softmaxed, sampled with seed `hash(world_seed, entity_id, fact_version, time_bucket)`. Re-visits, reloads, and save-scums reproduce the same realization — **observation never rerolls the world; only events do** (fact_version increments on migration/predation/season, never on being looked at). Statistical inevitability without farmable randomness; witnessing stays honest.
+- **Temperature = readability:** softmax temperature driven by information topology — readable zones (low InfoOpacity) run cold: sharp, learnable patterns (the herd at the spring at dawn); information-poor zones run hot and diffuse. Biome legibility and sampling math are one mechanism.
+- **Conservation gate:** `summarize(realize(fact)) ≈ fact` plus event deltas — realize 6 deer, 2 die, collapse-up writes 4, never resamples 6. Counts/resources conserved across fidelity transitions; runtime sibling of the bake gates, same verification ladder.
+- **Three pyramids, one addressing scheme:** storage (bake tiles), simulation (fidelity cells), and **knowledge** — the player's journal/map is a personal fidelity pyramid over the same tiles (rumor = coarse, map fragment = medium, visited = fine), with InfoOpacity governing refinement rate. Exploration = pulling regions up your own resolution pyramid; co-op asymmetric knowledge = two knowledge pyramids, one world.
+
 ### Arc director rules (PROPOSED 2026-07-19)
 
 - Director and intentions stay separate: intentions are distributed/bottom-up, the director is sparse/top-down. The director **schedules facts and sets tempo, never commands entities** — the simulation reacts honestly as deadlines approach (scheduled city burn → prices, rumors, refugees, shifted faction intentions).
