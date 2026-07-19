@@ -17,9 +17,9 @@ Sources: the May 2026 design session ([vision.md](vision.md), [moments/](moments
 
 ---
 
-## 1. Design Principles — PROPOSED, ratify first
+## 1. Design Principles — RATIFIED 2026-07-19 (`.decisions/design-laws.md`)
 
-From the April brainstorm. Ratifying (or striking) these is decision **D1** because everything below leans on them:
+From the April brainstorm, ratified as law after two days of load-bearing use — along with four session-coined laws (no missions; intensity not valence; observation never rerolls; world never reads knowledge):
 
 1. **You do not simulate the world. You simulate the player's relationship to the world.**
 2. "We do not simulate detail — we acknowledge it."
@@ -88,11 +88,13 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 
 ## 8. Decision Backlog (ordered)
 
-- [ ] **D1** — Ratify/strike the six design principles (§1)
-- [ ] **D1b** — Ratify interaction-fidelity tiers (§6)
+- [x] **D1** — Six principles + four session laws ratified (2026-07-19, `.decisions/design-laws.md`)
+- [ ] **D1b** — Ratify interaction-fidelity tiers (§6) — still open, mechanical, low-risk
 - [x] **D2 (part)** — Circumference: 2,000 km (2026-07-18, `.decisions/world.md`; superseded same-day 20,000 km). Sky geometry honest, day length free
 - [ ] **D2b** — Ring width (10–50 km candidates) ← needs skybox vibe mocks (issue #9) + width-opportunity call
-- [ ] **D3** — Terrain data model: function + overlay persistence, chunk realization (issue #1) ← needs D2
+- [x] **D3 (architecture)** — Prebaked layer DAG + gates, recipe-versioned (2026-07-19, `.decisions/terrain.md`); substrate spec + streaming detail remain in issue #1
+- [x] **Dialogue boundary** — baked-only, zero runtime LLM (2026-07-19, `.decisions/dialogue.md`); pipeline open pending R7
+- [x] **Knowledge/map** — no omniscient map, sky-as-map (2026-07-19, `.decisions/knowledge.md`; ratified ahead of UI sketch)
 - [ ] **D4** — Curvature rendering approach (issue #2) ← needs R2, D2
 - [ ] **D5** — What couch co-op means mechanically (issue #3) ← needs R3
 - [ ] **D6** — Performance budget + benchmark scene (issue #8) ← needs R3

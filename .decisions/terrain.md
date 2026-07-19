@@ -1,0 +1,7 @@
+# Terrain / World Bake
+
+### bake-architecture — Prebaked layered world; recipe is source, bake is artifact
+**Date:** 2026-07-19
+**Status:** active
+**Decision:** The world is prebaked, not runtime-generated (supersedes the April brainstorm's "no baked worlds" — that rule was scale-dependent and died with the 2,000 km decision). Architecture: layered bake DAG (L0 builders' shape → L7 hand edits) of pure functions with content-addressed caching; per-region compose parameter overrides; coherence via per-layer contracts + bake gates (non-negotiables as computable tests, e.g. see-it-reach-it); runtime adds only bounded detail octaves + deterministic scatter from baked density fields — instances are never data. Git versions generator code + seed + edit deltas; the binary bake is a reproducible build artifact, never committed. Substrate policy: generous interfaces, naive engines — coordinate/tiling scheme and additive-only field registry (LayerBuf) are the over-engineered frozen parts; layer implementations stay naive. Details: docs/terrain.md, docs/terrain/layerbuf-v0.md.
+**Why:** Collapses runtime cost on potato hardware (bitmap sample beats noise stack, flat cost), makes authored moment sites edits-to-data rather than procgen coaxing, gives determinism and debuggability (layer bisection), and fits solo+AI development — cheap subagents iterate layer code against hard gates offline. Resolutions, layer count evolution, and all tuning values deliberately unrecorded.
