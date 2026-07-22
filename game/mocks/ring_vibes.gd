@@ -38,6 +38,7 @@ var _env: Environment
 const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_DETAIL := "res://mocks/dem/millstreet_detail.dat"
+const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 var _dem := PackedByteArray()
 var _dem_w := 0
 var _dem_h := 0
@@ -45,6 +46,7 @@ var _dem_mpp := 23.45
 var _dem_cam := Vector2i.ZERO
 var _dem_name := ""
 var _detail_tex: ImageTexture = null
+var _sat_tex: ImageTexture = null
 var _strip_mat: ShaderMaterial = null
 var dem_scale := 3.0
 var _strip_arc := STRIP_ARC
@@ -79,6 +81,9 @@ func _ready() -> void:
 		_strip_mat = ShaderMaterial.new()
 		_strip_mat.shader = load("res://mocks/ring_vibes_strip.gdshader") as Shader
 		_strip_mat.set_shader_parameter("detail_tex", _detail_tex)
+		if _sat_tex:
+			_strip_mat.set_shader_parameter("sat_tex", _sat_tex)
+			_strip_mat.set_shader_parameter("has_sat", true)
 
 	var hud_layer := CanvasLayer.new()
 	add_child(hud_layer)
@@ -117,8 +122,14 @@ func _load_dem() -> void:
 		if img.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_DETAIL)) == OK:
 			img.generate_mipmaps()
 			_detail_tex = ImageTexture.create_from_image(img)
+	if FileAccess.file_exists(DEM_SAT):
+		var simg := Image.new()
+		if simg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_SAT)) == OK:
+			simg.generate_mipmaps()
+			_sat_tex = ImageTexture.create_from_image(simg)
 	print("ring_vibes: DEM loaded — ", _dem_name, " ", _dem_w, "x", _dem_h,
-		"  detail_tex: ", "yes" if _detail_tex else "no")
+		"  detail_tex: ", "yes" if _detail_tex else "no",
+		"  sat_tex: ", "yes" if _sat_tex else "no")
 
 func _dem_sample(arc: float, lat: float) -> float:
 	# arc -> east (+px x), lat -> north (-px y), anchored at the Millstreet marker; bilinear; -1 = outside
