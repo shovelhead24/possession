@@ -26,6 +26,12 @@ Laws a future session could violate silently — the core reason this log exists
 **Decision:** Realization is a pure function: seed = hash(world_seed, entity_id, fact_version, time_bucket). Revisits, reloads, and save-scums reproduce identical realizations; fact_version increments on world events only, never on observation.
 **Why:** Statistical inevitability without farmable randomness. What the player witnessed was *the* state of the world, not a dice roll they happened to catch — witnessing stays honest, and save-scumming dies by construction.
 
+### layer-backpropagation — A blocker or ambiguity in one layer amends the layer beneath it
+**Date:** 2026-07-22
+**Status:** active
+**Decision:** When a decision at one layer (narrative, R-stack, any consumer) creates a blocker or ambiguity that only a lower layer (substrate, bake, LayerBuf) can resolve, that lower layer gets amended immediately — not worked around, not deferred. First instance: the leave-ending portal needed a hub location reaching toward the spin axis; the substrate didn't have one, so `docs/terrain/substrate.md` was amended same-day with the axis-singularity gate (see "Axis Structures" there) rather than the portal being hand-waved as "just floats somewhere."
+**Why:** This is the design-time expression of "generous interfaces, naive engines" (`.decisions/terrain.md`) — cost-of-change stays cheap only if lower layers are actually kept current when upper layers expose a gap, rather than accumulating silent debt the substrate doc doesn't know about.
+
 ### world-never-reads-knowledge — The knowledge pyramid has exactly two consumers
 **Date:** 2026-07-19
 **Status:** active

@@ -39,5 +39,6 @@ NPCs may *ask* for help — honest simulation, people ask. But: no quest log ent
 - Faction count/scale: bounded by communication speed on the ring (rumor decay × horse range) — tuning, not planning; L5 should derive it
 - Who woke the relay — a live faction, a dead one, or neither? (Narrative decision, upstream of history-pass authoring)
 - City-states: the night-sky cities vs THE city (protagonist two's) — same faction class or distinct?
+- **Human survivor faction?** vision.md flags an open tension: scattered crew from the player's own beacon-response mission, found later, could be its own faction class distinct from native ring cultures — undecided, not adopted.
 - Player faction membership: can you *join*, or only be known? (Witnessing lean says: known, never enrolled — but tier-2 politics may want more)
 - Do factions war across the walls/sea, or is the chain strictly linear?

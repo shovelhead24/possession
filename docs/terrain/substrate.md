@@ -36,11 +36,20 @@ Every power-of-two tile size then divides both axes exactly; pyramid, Morton cod
 - Sky geometry camera-locked (April manifold lesson); re-anchor boundaries are the modern home of that bug class — test explicitly
 - Co-op: shared frame + tether vs per-viewport frames — **unresolved, owned by D5**
 
+## Axis Structures (added 2026-07-22 — backpropagated from the ending design)
+
+The leave-ending portal (vision.md "The Choice", moments/the_return.md) sits at a fixed hub site reaching toward the spin axis — a location type the substrate didn't have a name for until the narrative needed one. It fits without new coordinate machinery: `alt` was already defined as extending toward the spin axis, so the hub is just a very tall `alt` value (approaching `R`, the full radius) at one specific `(lon, lat)`.
+
+**But `alt → R` is a genuine coordinate singularity:** at the spin axis itself, every `lat` value converges to the same physical point (the pole problem, exactly as in lat/long sphere coordinates). Consequence: `lat` becomes meaningless in the immediate volume around the hub structure, and any system that assumes `lat` varies independently of physical position will misbehave there. Treat as a named exception zone, not something to discover as a bug later.
+
+**Substrate gate 5 (added):** near-axis behavior — verify no system (movement, LOD selection, tile addressing) divides by `(R − alt)` or otherwise assumes non-degenerate `lat` within some small radius of the axis; the hub structure's own geometry should be authored directly, not derived from ring-surface tiling logic.
+
 ## Substrate Gates (the falsifiable part)
 
 1. **Seam invariance:** rebake with seam convention shifted → bit-identical world
 2. **Round-trip:** logical → engine → logical within ε everywhere, including across the seam and re-anchor boundaries
 3. **Edge continuity:** adjacent tiles' shared-edge samples bit-equal at every level
 4. **Unique addressing:** every (lon, lat) maps to exactly one tile per level
+5. **Near-axis safety:** no division or tiling assumption breaks as `alt → R` (see "Axis Structures" above)
 
 This module (wrap helpers + frame transform) is the sole candidate ever flagged for formal proof (see terrain.md verification ladder); exhaustive seam/property tests are the v0 requirement.

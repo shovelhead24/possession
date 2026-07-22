@@ -27,6 +27,10 @@ These can be changed, but only by mutual agreement.
 
 RE2 structure: same world, asymmetric knowledge, shared grief. Names TBD — names come last.
 
+**Opening premise (2026-07-22):** a distress beacon transmits from the ring — unanswered for centuries. The player's ship answers it and is shot down on approach; the crash *is* the answer, the escape pod is how you survive it. Rhymes with the ending: the game opens with answering someone else's call and closes with the player becoming one — see "The Choice" below. Open, deliberately unresolved: who or what shot the ship down — possibly linked to who woke the relay (also deferred).
+
+**Open tension — companions/survivors (2026-07-22, undecided):** does Protagonist One encounter other human survivors from the same ship or mission? For: justifies a player base (or bases), gives the player their own faction dynamic. Against: dilutes the solitary "stripped, alone, prey" framing of tier 1. Not resolved — one synthesis worth weighing, not adopted: if the beacon was answered by a small response mission rather than a lone ship, scattered crew could be found *later*, during tier 2, recontextualizing "discover people" as sometimes discovering your own people among the natives — without softening tier-1 solitude.
+
 ## Layer Stack (high to low)
 
 - **Thematic** — you arrived late to something enormous. The ring is indifferent. Witnessing over heroism.
@@ -59,6 +63,12 @@ Ringing the bell is not cowardly. But it tests your courage in a suddenly much m
 **The leave ending, staged (2026-07-22):** the mechanism itself is simple to operate — the entire difficulty is the journey to reach it, not solving it once there; no puzzle, no skill check, you just ring it. What plays over ringing it is a procedurally assembled vignette montage built from the actual world state at that moment (see simulation.md "Ending Vignette Assembly") — what you did, who you helped or didn't, what you still believe that's gone stale. Staged to a reference track (Garbage, "Cherry Lips (Go with the Flow)" — bittersweet, ambiguous, not triumphant) with the game's own title card appearing for the first time at the song's bell section — three bells at once: the song's, the diegetic one, the name. Same withholding logic as "names come last," applied to the game's own name. Closes on an extended held black screen before any credits — reflection, not a cut. See [moments/the_return.md](moments/the_return.md); decisions in `.decisions/ending.md`. (The stay/destroy-relay ending is untouched by any of this.)
 
 **Structural bookend:** the landing sequence (opening) and this ending are both fixed, authored, non-systemic sequences — everything between them is emergent simulation. The game is authored at both ends and alive in the middle.
+
+**The mechanism, concretely (2026-07-22):** a portal, generated at a fixed hub location — a spire or structure reaching from the ring floor toward the spin axis. You fly through it. That is "ringing the bell." (Substrate consequence: the axis is a coordinate singularity — see `docs/terrain/substrate.md`.)
+
+**Post-credits (2026-07-22, tentative — timing may move earlier if needed):** the humans of the player's own world arrive at the ring with their own armada, following the signal the player's return created. Distinct from [The Armada](moments/armada.md) (mid-game, an unrelated ancient civilization arriving because someone used ring tech to call home, indifferent to the player) — this one exists *because of* the player, and is a deliberate content-deferral device: a sequel/DLC hook, not built now. See [moments/human_armada.md](moments/human_armada.md).
+
+**Save continuation & replay (2026-07-22, tentative):** an ended playthrough's save (solo or co-op) stays loadable — when DLC content ships, play resumes from the same position rather than restarting. A subsequent run offers carrying a few chosen inventory items forward, and reuses the same world seed so early terrain/behavior is genuinely recognizable — divergence should come from the non-linear systems responding differently to new choices, not from a reshuffled map. Exercises the additive-only LayerBuf/field-registry laws already in place (`.decisions/terrain.md`) rather than requiring new architecture.
 
 ## Tone References
 

@@ -4,7 +4,7 @@ Companion to vision.md's "The Choice" — the "ring the bell, leave" branch, sta
 
 ## What You See
 
-You reach the mechanism — proximity is the whole journey; operating it is not a puzzle. You ring it. The screen doesn't cut. A song plays (reference: Garbage, "Cherry Lips") scored over a montage assembled from what actually happened in *your* playthrough — not a fixed cutscene. At the song's bell section, the game's title appears for the first time. It ends on a long held black screen.
+A portal, generated at a fixed hub location — a spire or structure reaching from the ring floor toward the spin axis. You reach it; proximity is the whole journey, nothing about the site itself is a puzzle. You fly through. The screen doesn't cut. A song plays (reference: Garbage, "Cherry Lips") scored over a montage assembled from what actually happened in *your* playthrough — not a fixed cutscene. At the song's bell section, the game's title appears for the first time. It ends on a long held black screen. (Post-credits: [The Human Armada](human_armada.md) — tentative, may move earlier.)
 
 ## What You Feel
 
@@ -12,7 +12,7 @@ Ambiguous, not triumphant. Bittersweet. You don't know if you did the right thin
 
 ## Mechanic
 
-- **Mechanism:** trivial to operate once in close proximity — no skill check. All difficulty was reaching it. (A real bell doesn't test your dexterity; you just pull the rope.)
+- **Mechanism:** a portal at a fixed hub site (spire/structure toward the spin axis) — trivial to operate once in close proximity, no skill check. All difficulty was reaching it. (A real bell doesn't test your dexterity; you just pull the rope.) Substrate note: the axis is a coordinate singularity (all `lat` values degenerate to one point at `alt = R`) — see `docs/terrain/substrate.md`.
 - **Vignette assembly:** runtime selects from a precondition-tagged pool against R0 persistent facts (and per-player knowledge — see knowledge.md) at the moment of ringing. Same pattern as dialogue's arc-phase branch selection (dialogue.md) — reused, not reinvented. A consistency gate must hold: no vignette may contradict a current fact (the runtime sibling of the bake gates, one more rung on the same verification ladder).
 - **Staging:** once triggered, this is a fixed authored sequence, off the tempo director's leash — symmetric with the landing sequence's fixed opening.
 - **Title card:** first appearance of the game's title, timed to the song's bell section. Same withholding logic as "names come last."
