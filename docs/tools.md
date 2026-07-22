@@ -82,7 +82,9 @@ Criteria: systems touched × buildable cheapness × theme fit.
 4. **Wall transit as hail-mary artery** — evacuation-scale delivery the director's scheduled inevitabilities can't ignore. Expensive, but it's the tool that touches the arc itself.
 5. **Glider one-way commitment** — cheap, spatial, and produces stories by geometry alone.
 
-**Flagged weakest, honestly:** saloon piano (charming, low systemic payoff, real animation/audio cost); radio (probably breaks knowledge-pyramid pacing — quarantined until proven safe); rope (tarpit unless abstracted).
+**Flagged weakest, honestly:** radio (probably breaks knowledge-pyramid pacing — quarantined until proven safe); rope (tarpit unless abstracted).
+
+**Saloon piano — pardoned by user decree (2026-07-22):** ranked weakest systemically, kept anyway — as the flagship of an emergent-comedy principle: *comedy obeys the same laws as everything else or it isn't funny here.* No authored jokes, no wacky NPCs, no joke quests (impossible anyway — no missions). The humor budget is entirely systems playing ridiculous inputs completely straight: the piano as a legitimate tempo-writer for a room, the boar derailing a solemn negotiation because pressure said so, flamingos betraying your ambush. Surprise survives because nothing is *authored to be funny* — the simulation just refuses to break character. Same law as the deer moment, pointed at absurdity instead of awe.
 
 ## Open Questions
 
