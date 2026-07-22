@@ -39,6 +39,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_DETAIL := "res://mocks/dem/millstreet_detail.dat"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
+const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
 var _dem := PackedByteArray()
 var _dem_w := 0
 var _dem_h := 0
@@ -47,7 +48,17 @@ var _dem_cam := Vector2i.ZERO
 var _dem_name := ""
 var _detail_tex: ImageTexture = null
 var _sat_tex: ImageTexture = null
+var _roads_tex: ImageTexture = null
 var _strip_mat: ShaderMaterial = null
+
+# Drive mode: car lives in ring coordinates, no physics — terrain sampled analytically
+var _drive := false
+var _car: Node3D = null
+var _car_arc := 0.0
+var _car_lat := 0.0
+var _car_heading := 0.0
+var _car_speed := 0.0
+var _hud_timer := 0.0
 var dem_scale := 3.0
 var _strip_arc := STRIP_ARC
 var _strip_segs := STRIP_SEGS
@@ -84,6 +95,9 @@ func _ready() -> void:
 		if _sat_tex:
 			_strip_mat.set_shader_parameter("sat_tex", _sat_tex)
 			_strip_mat.set_shader_parameter("has_sat", true)
+		if _roads_tex:
+			_strip_mat.set_shader_parameter("road_tex", _roads_tex)
+			_strip_mat.set_shader_parameter("has_roads", true)
 
 	var hud_layer := CanvasLayer.new()
 	add_child(hud_layer)
@@ -127,6 +141,11 @@ func _load_dem() -> void:
 		if simg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_SAT)) == OK:
 			simg.generate_mipmaps()
 			_sat_tex = ImageTexture.create_from_image(simg)
+	if FileAccess.file_exists(DEM_ROADS):
+		var rimg := Image.new()
+		if rimg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_ROADS)) == OK:
+			rimg.generate_mipmaps()
+			_roads_tex = ImageTexture.create_from_image(rimg)
 	print("ring_vibes: DEM loaded — ", _dem_name, " ", _dem_w, "x", _dem_h,
 		"  detail_tex: ", "yes" if _detail_tex else "no",
 		"  sat_tex: ", "yes" if _sat_tex else "no")
@@ -259,7 +278,91 @@ func _process(delta: float) -> void:
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _strip_mat:
 		_strip_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
-	_fly(delta)
+	if _drive:
+		_drive_tick(delta)
+	else:
+		_fly(delta)
+
+func _make_car() -> Node3D:
+	var root := Node3D.new()
+	var body := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(2.0, 1.0, 4.2)
+	body.mesh = bm
+	var bmat := StandardMaterial3D.new()
+	bmat.albedo_color = Color(0.33, 0.36, 0.30)
+	body.material_override = bmat
+	body.position.y = 0.9
+	root.add_child(body)
+	var glass := MeshInstance3D.new()
+	var gm := BoxMesh.new()
+	gm.size = Vector3(1.7, 0.5, 1.1)
+	glass.mesh = gm
+	var gmat := StandardMaterial3D.new()
+	gmat.albedo_color = Color(0.45, 0.75, 0.80)  # frutiger windscreen, obviously
+	glass.material_override = gmat
+	glass.position = Vector3(0, 1.55, -0.5)
+	root.add_child(glass)
+	var wmat := StandardMaterial3D.new()
+	wmat.albedo_color = Color(0.10, 0.10, 0.10)
+	for wp in [Vector3(-1.05, 0.45, 1.4), Vector3(1.05, 0.45, 1.4), Vector3(-1.05, 0.45, -1.4), Vector3(1.05, 0.45, -1.4)]:
+		var wheel := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.height = 0.35
+		cm.top_radius = 0.45
+		cm.bottom_radius = 0.45
+		wheel.mesh = cm
+		wheel.rotation_degrees = Vector3(0, 0, 90)
+		wheel.position = wp
+		wheel.material_override = wmat
+		root.add_child(wheel)
+	add_child(root)
+	return root
+
+func _car_pos(arc: float, lat: float) -> Vector3:
+	return _ring_pos(arc / _radius(), lat, _terrain_h(arc, lat, WIDTHS[w_idx]))
+
+func _drive_tick(delta: float) -> void:
+	var accel := 0.0
+	if Input.is_key_pressed(KEY_W): accel += 16.0
+	if Input.is_key_pressed(KEY_S): accel -= 22.0
+	_car_speed = clampf(_car_speed + accel * delta, -12.0, 45.0)
+	_car_speed *= 1.0 - 0.35 * delta  # drag
+	var steer := 0.0
+	if Input.is_key_pressed(KEY_A): steer -= 1.0
+	if Input.is_key_pressed(KEY_D): steer += 1.0
+	_car_heading += steer * 1.5 * delta * clampf(abs(_car_speed) / 12.0, 0.0, 1.0) * signf(_car_speed)
+	_car_arc += cos(_car_heading) * _car_speed * delta
+	_car_lat += sin(_car_heading) * _car_speed * delta
+	var pos := _car_pos(_car_arc, _car_lat)
+	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
+	var up := (Vector3(0, _radius(), 0) - pos).normalized()
+	_car.global_position = pos + up * 0.4
+	if not pos.is_equal_approx(ahead):
+		_car.look_at(ahead + up * 0.4, up)
+	var fwd := (ahead - pos).normalized()
+	var cam_target: Vector3 = pos + up * 4.0 - fwd * 11.0
+	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-5.0 * delta))
+	_cam.look_at(pos + up * 2.0, up)
+	_hud_timer += delta
+	if _hud_timer > 0.25:
+		_hud_timer = 0.0
+		_update_hud()
+
+func _toggle_drive() -> void:
+	_drive = not _drive
+	if _drive:
+		if not _car:
+			_car = _make_car()
+		_car.visible = true
+		_car_speed = 0.0
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		_captured = false
+	else:
+		if _car:
+			_car.visible = false
+		_cam.rotation = Vector3(_look.y, _look.x, 0)
+	_update_hud()
 
 func _fly(delta: float) -> void:
 	# fly only while mouse captured; config keys only while released — no key conflicts
@@ -280,7 +383,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_captured = true
 		_update_hud()
-	if event is InputEventMouseMotion and _captured:
+	if event is InputEventMouseMotion and _captured and not _drive:
 		_look -= event.relative * 0.0022
 		_look.y = clampf(_look.y, -1.55, 1.55)
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
@@ -302,7 +405,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				if _dem_w > 0:
 					dem_scale = 1.0 if dem_scale >= 5.0 else dem_scale + 1.0
 					_rebuild()
-		if _captured: return
+			KEY_V:
+				if _dem_w > 0:
+					_toggle_drive()
+		if _captured or _drive: return
 		# config keys only while mouse is released
 		match event.keycode:
 			KEY_1: c_idx = 0; _rebuild()
@@ -319,7 +425,9 @@ func _update_hud() -> void:
 	var rise20: float = 20_000.0 * 20_000.0 / (2.0 * r)
 	var rise50: float = 50_000.0 * 50_000.0 / (2.0 * r)
 	var band_deg: float = rad_to_deg(2.0 * atan((w * 0.5) / (2.0 * r)))
-	var mode := "FLY (WASD + Space/Ctrl, Shift boost, ESC to release)" if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly)"
+	var mode := "FLY (WASD + Space/Ctrl, Shift boost, ESC to release)" if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] drive)"
+	if _drive:
+		mode = "DRIVE  %d km/h  (WASD steer, [V] back to fly)" % int(abs(_car_speed) * 3.6)
 	var dem_line := "DEM: none (noise terrain)" if _dem_w == 0 else "DEM: %s   height x%.0f ([H] cycles)" % [_dem_name, dem_scale]
 	# note: GDScript has no %e — haze shown as extinction distance instead (nicer to reason about anyway)
 	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0

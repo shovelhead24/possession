@@ -9,6 +9,10 @@ GL Compatibility (OpenGL 3.3) on Intel UHD is the hard floor. Every rendering am
 - Lighting test scene with CSV metric logging (`lighting_test.tscn`, `lighting_test_controller.gd`) — was made the default scene during the April lighting work
 - Day/night cycle
 
+## Texture Fidelity Baseline — DECIDED 2026-07-23
+
+Deliberately ~2001 / Halo CE class (`.decisions/rendering.md#texture-fidelity-baseline`): coarse readable albedo, strong silhouettes, Frutiger-Aero accents on high-importance objects. Modern budget buys draw distance, honest ring geometry, and atmosphere — never texel density. Same scoped-resolution logic as the simulation, applied to pixels.
+
 ## Constraints of GL Compatibility (plan around these)
 
 - No compute shaders, no Forward+ clustering — light count and technique ceilings are low

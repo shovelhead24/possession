@@ -10,6 +10,8 @@ uniform vec3 sky_color = vec3(0.45, 0.62, 0.82);
 uniform sampler2D detail_tex : filter_linear;
 uniform sampler2D sat_tex : source_color, filter_linear;
 uniform bool has_sat = false;
+uniform sampler2D road_tex : filter_linear;
+uniform bool has_roads = false;
 uniform float sat_gain = 1.35;
 uniform float dem_scale = 3.0;
 uniform float normal_strength = 1.0;
@@ -59,8 +61,18 @@ void fragment() {
 		col *= mix(vec3(1.0), vec3(0.90 + 0.14 * h1, 0.94 + 0.10 * h2, 0.82 + 0.12 * h1), lowland);
 	}
 
-	vec3 lit = col * (0.05 + 0.95 * diffuse);
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
+	if (has_roads) {
+		float road = texture(road_tex, UV).r;
+		col = mix(col, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
+	}
+	// near-field micro detail (early-Xbox honesty: two hash scales, fades out by ~400 m)
+	float n1 = fract(sin(dot(floor(v_world_pos.xz * 1.6), vec2(12.9898, 78.233))) * 43758.5453);
+	float n2 = fract(sin(dot(floor(v_world_pos.xz * 0.4), vec2(93.9898, 67.345))) * 24634.6345);
+	float near_f = 1.0 - smoothstep(120.0, 420.0, dist);
+	col *= 1.0 + ((n1 - 0.5) * 0.14 + (n2 - 0.5) * 0.10) * near_f;
+
+	vec3 lit = col * (0.05 + 0.95 * diffuse);
 	float fog = 1.0 - exp(-haze_density * dist);
 	ALBEDO = mix(lit, sky_color, fog);
 }
