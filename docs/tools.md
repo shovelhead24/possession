@@ -64,6 +64,26 @@ Grouped by recovery band (civilization.md); every entry lists intended use → a
 - **Wall transit** (reactivatable, lore.md) — fast travel → moving *cargo* and *people*: evacuate a settlement ahead of a negotiable inevitability the director scheduled (the hail-mary artery — deliverable by transit what could never be delivered on foot).
 - **Air-defense node** (reactivatable) — area denial → pointed at the *mid-game armada's* landing craft? Probably futile (lore.md: armadas intercept the interceptors) — but "probably" is where hail marys live.
 
+**Round 2 additions (2026-07-22):**
+- **Snare line** — passive hunting → perimeter alarm at night (a micro-clock interrupt while you sleep); catch the wolf that's been tracking *you*.
+- **Hunting horn** — call/drive game → audio lie: a horn where no army is, heard by faction knowledge models (the flare's acoustic sibling, cheaper than the radio and probably safe where the radio isn't).
+- **Bicycle** — silent personal transport, no fuel economy → tech archaeology on wheels: where a bike is *usable* reveals road quality, which reveals recovery band, which is knowledge acquired through your legs.
+- **Glider** — wall-foot updraft descent (highlands → plains) → the poor man's sky survey: altitude is K-gain, and a one-way trip is a commitment device — you can see where you'll land but not how you'll get back.
+- **Smoke pot** — combat cover → writes a visible false claim into everyone's `observe()` for a mile around; wind-dependent, so terrain knowledge gates the lie's quality.
+- **Rope** — climbing aid, binding → flagged honestly: rope physics is a notorious engineering tarpit; keep uses abstracted (anchor-point verbs, not simulated slack) or cut it.
+
+## Ranking — author's cut (2026-07-22)
+
+Criteria: systems touched × buildable cheapness × theme fit.
+
+1. **Mortar** — fires at your *knowledge*, not your sight; staleness becomes ballistics. Three systems for the price of one weapon.
+2. **Horse as felt tempo-consumer** — panics before you see the wolves. Empathy hardware on a potato budget.
+3. **Flare as decoy** — a lie injected into faction knowledge via the same physics as truth. Nearly free to build.
+4. **Wall transit as hail-mary artery** — evacuation-scale delivery the director's scheduled inevitabilities can't ignore. Expensive, but it's the tool that touches the arc itself.
+5. **Glider one-way commitment** — cheap, spatial, and produces stories by geometry alone.
+
+**Flagged weakest, honestly:** saloon piano (charming, low systemic payoff, real animation/audio cost); radio (probably breaks knowledge-pyramid pacing — quarantined until proven safe); rope (tarpit unless abstracted).
+
 ## Open Questions
 
 - Which HUD elements convert first for the first slice (brief §9) — does the deer/wolves/ridge slice need any tool at all, or does it deliberately ship with none?
