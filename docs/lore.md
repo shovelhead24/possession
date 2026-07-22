@@ -42,5 +42,5 @@ Working synthesis (not decided): 1 as emotional truth, 2 as how it's encountered
 
 - Is the AI (in any fragment) still capable of communication, or purely environmental/systemic presence?
 - Does the portal-anchor site (where the ring-scale portal was generated) exist as a visitable ruin/landmark?
-- How much of this ever surfaces in dialogue/rumor pools (dialogue.md) vs. staying pure environmental storytelling?
+- ~~How much surfaces in dialogue?~~ **Answered 2026-07-22:** knowable, exclusively via the existing noisy/fragmented dialogue-bake channel (dialogue.md "Lore Delivery via Noise") — never a clean exposition dump.
 - Naming — AI, the event, recovery-band labels — all deliberately deferred, "names come last."

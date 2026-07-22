@@ -24,6 +24,10 @@ New area doc (2026-07-19 session). Core proposal: **LLM-baked dialogue** — off
 
 Player agency lives in interceptable simulation preconditions; the world's *response* is systemic — pressures, prices, rumor selection — never per-choice hand-written content. Authoring cost stays flat because accommodation is selected, not authored; baked branches exist only where the finite drumline forks.
 
+## Lore Delivery via Noise (2026-07-22)
+
+Deep backstory (lore.md's Displacement, the rogue AI) is knowable to the ring's inhabitants — delivered exclusively through this existing bake/selection machinery, never exposition. Many NPCs, biased, fragmented, factionally spun (cosmology axis, factions.md), sometimes flatly contradictory: the noise *is* the intended texture — read as ambient vibe, not an infodump. The same channel, same aesthetic, also carries consequence-of-player-action (dialogue selection already reads pressure state) — ambient worldbuilding and emergent-consequence feedback are delivered identically on purpose, so neither reads as a notification (consistent with intensity-not-valence, no-HUD).
+
 ## Open Questions
 
 - Generation pipeline: local model vs API batch; cost/quality per 100k lines; regeneration cadence when upstream layers change (dialogue is a downstream bake layer — cache rules apply)

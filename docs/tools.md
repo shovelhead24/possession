@@ -31,6 +31,39 @@ Tool and vehicle availability is gated by a region's `recovery_band` (civilizati
 
 Alongside the transport ladder (world.md) and the progression tiers (progression.md), tools form a **perception ladder** — what you can *know at range* grows the same way what you can *reach* grows. The hookshot (moments/hookshot.md) was always this pattern's flagship instance, just not yet generalized.
 
+## The Artery Rule (2026-07-22)
+
+If free expression is the heart, tools are the arteries — so **a tool only earns a slot if it has at least two unscripted uses**, discovered through the systems (fire, tempo, knowledge, animals, factions, terrain), never assigned by content. One-use tools are keys wearing costumes; keys are missions wearing costumes. The second use is never tutorialized — finding it *is* the content.
+
+## Catalog Sketch — goodies × vignettes (2026-07-22, examples not commitments)
+
+Grouped by recovery band (civilization.md); every entry lists intended use → at least one emergent use.
+
+**Regressed band:**
+- **Spear** — hunting reach → plant it in a river ford as a deer-drive stake; throw it to spook a wolf pack off a kill you want.
+- **Baseball bat** (pre-collapse relic — someone's heirloom) — melee → knock burning debris away from a structure you want saved; the *pathos object*: a child's sports gear as a war club says centuries of decline without one line of dialogue.
+- **Fishing rod** — food → cast across a gap to snag something unreachable; fish at dawn beside an NPC who talks more freely to someone holding a rod (dialogue selection reading context).
+- **Fire (torch/embers)** — light/warmth → drive game toward a cliff; burn a wooden bridge behind you mid-pursuit; start a grassfire upwind of a battle you were only supposed to watch.
+
+**Frontier band:**
+- **Binoculars** — `observe()` at range → read a battle's tempo from a ridge before choosing a side (or not choosing); spot which chimney smokes at dawn to learn who's home.
+- **Horse** — transport → a knowledge tool: it panics before you see the wolves (fauna fields feeding a tempo signal you can *feel through the saddle*).
+- **Truck** — hauling → mobile cover in a firefight; ram a palisade gate; the beach-joyride-flamingos vignette (world.md) is this band's postcard.
+- **Flare** (consumable) — signal → decoy: fired far away, watchers reposition toward it (faction knowledge models reacting to false information — lying through the rumor physics).
+- **Saloon piano** (stretch, but the principle) — nothing → tempo writer for a whole room; play badly and watch the mood consumer shift. Ambient tools count.
+
+**Enclave band:**
+- **NVGs** — night sight → *reads the night-sky map better than eyes* (knowledge.md: night is the acquisition channel — enclave tech literally accelerates the knowledge pyramid); gated late so the wolves moment keeps its darkness.
+- **Drone** — scouting → remote `observe()` decoupled from your body: your K-pyramid grows where you aren't; bait air-defense nodes into revealing themselves by flying it where you'd rather not walk.
+- **Mortar** — indirect fire → the first weapon that works *entirely off the knowledge pyramid*: you shell coordinates you know, not targets you see. Stale K4 = shelling yesterday's camp. Knowledge staleness becomes ballistics.
+- **RIB / submarine** — water traversal → the sea (world.md) as a knowledge shadow: approach any coast unseen; the sub is the only tool that hides from the *night sky's* omniscience in reverse — nobody can watch you from above.
+- **Radio** (if enclave has one) — comms → rumor injection at range: SignalAmplification without walking. The knowledge pyramid's first broadcast-speed writer — handle with care, may be too strong.
+
+**Ancient tier:**
+- **Hookshot** — traversal (moments/hookshot.md) → vertical hunting, wall ascent, yanking a rider off a horse (?); the flagship, already designed.
+- **Wall transit** (reactivatable, lore.md) — fast travel → moving *cargo* and *people*: evacuate a settlement ahead of a negotiable inevitability the director scheduled (the hail-mary artery — deliverable by transit what could never be delivered on foot).
+- **Air-defense node** (reactivatable) — area denial → pointed at the *mid-game armada's* landing craft? Probably futile (lore.md: armadas intercept the interceptors) — but "probably" is where hail marys live.
+
 ## Open Questions
 
 - Which HUD elements convert first for the first slice (brief §9) — does the deer/wolves/ridge slice need any tool at all, or does it deliberately ship with none?
