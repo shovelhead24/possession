@@ -20,5 +20,6 @@ The pseudo-code operators coined across design sessions, gathered so they don't 
 | `hear(rumor)` | K2 claim insert, accuracy ~ SignalAmplification decay | claims carry provenance, may be wrong | knowledge.md |
 | `traverse(tile)` | K4 + freshness stamp | staleness = computed `fact_version` gap, never stored | knowledge.md |
 | `assemble_ending(facts, knowledge)` | precondition-tagged pool → montage | one-shot at the leave ending; reuses dialogue's branch-selection pattern; consistency-gated against current facts | simulation.md, moments/the_return.md |
+| `select_possession_host(candidates, proximity, eligibility)` | proximity-weighted softmax over eligible R2 entities | drop-in co-op join target; same family as `realize()` — no new machinery | co-op.md, .decisions/coop.md |
 
 Registry rule: new operators get a row here when coined; renames are migrations, not edits.

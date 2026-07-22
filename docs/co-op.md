@@ -16,6 +16,7 @@
 - **Story moments in co-op** — moments are built around *witnessing* (one player watches the city burn; the other is elsewhere). Do moments fire per-player? What does the other player see?
 - **The ending is resolved, not open:** either player alone can end the session for both (unilateral, no consent gate — `.decisions/ending.md#ending-coop-unilateral`, moments/the_return.md). A template for handling asymmetric-knowledge moments generally: shared facts, interleaved per-player knowledge, no negotiation UI.
 - **Solo play** — is the second protagonist AI, absent, or swappable?
+  - **Drop-in join, resolved (2026-07-22):** a player joining an already-progressed solo save takes control of an existing nearby NPC entity — proximity-weighted, availability-filtered selection reusing the `realize()` pattern (`select_possession_host`, operators.md) — rather than spawning a character or waiting in an idle companion slot. Distinct from **day-one co-op**, which still starts both players as the authored Protagonist One/Two. See `.decisions/coop.md#coop-join-npc-possession`.
 
 ## Not in Scope (yet)
 

@@ -3,6 +3,7 @@
 One line per area file — decisions are the source of truth, this is just a map. Load this, then open only the file(s) you need. Don't grep the whole directory.
 
 - design-laws.md — cross-system laws: six ratified principles; no missions; intensity not valence; observation never rerolls; world never reads knowledge
+- coop.md — drop-in co-op possesses an existing NPC (proximity-weighted), not a new spawn
 - dialogue.md — LLM dialogue is bake-time only, zero runtime LLM
 - ending.md — leave-ending mechanism (proximity-easy, vignette-assembled) + presentation (fixed sequence, delayed title, black screen close)
 - engine.md — Godot-level gotchas: reload via quit(), not reload_current_scene()

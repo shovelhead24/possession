@@ -32,6 +32,12 @@ Laws a future session could violate silently — the core reason this log exists
 **Decision:** When a decision at one layer (narrative, R-stack, any consumer) creates a blocker or ambiguity that only a lower layer (substrate, bake, LayerBuf) can resolve, that lower layer gets amended immediately — not worked around, not deferred. First instance: the leave-ending portal needed a hub location reaching toward the spin axis; the substrate didn't have one, so `docs/terrain/substrate.md` was amended same-day with the axis-singularity gate (see "Axis Structures" there) rather than the portal being hand-waved as "just floats somewhere."
 **Why:** This is the design-time expression of "generous interfaces, naive engines" (`.decisions/terrain.md`) — cost-of-change stays cheap only if lower layers are actually kept current when upper layers expose a gap, rather than accumulating silent debt the substrate doc doesn't know about.
 
+### diegetic-tools-not-hud — QoL/information systems must be physical, ownable tools, not HUD
+**Date:** 2026-07-22
+**Status:** active
+**Decision:** Any convenience that would normally be a free HUD element (zoom, bearing-to-waypoint, dialect legibility, night vision) is instead represented as a found, ownable, losable in-world tool. See docs/tools.md.
+**Why:** Extends the Fern Rule (interaction fidelity must be earned) and the knowledge-pyramid's no-omniscient-map precedent (already true of the journal before this was named) into a general UI law. Side effects, all desirable: tools become collectibles, form a natural acquisition tree (a third ladder alongside transport and progression tiers), and are the concrete substrate of the replay-value thesis — mastery as route/acquisition-order knowledge, which only works because same-seed NG+ keeps the world knowable.
+
 ### world-never-reads-knowledge — The knowledge pyramid has exactly two consumers
 **Date:** 2026-07-19
 **Status:** active
