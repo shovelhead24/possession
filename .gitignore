@@ -18,3 +18,4 @@ game/shooter animation/Ch44_nonPBR.fbx
 
 # Maya source files — not importable by Godot
 game/t90 tank/
+game/mocks/dem/
