@@ -17,7 +17,7 @@ Rules recap: fields are named rasters (or sparse lists) with units + metadata; a
 | `height_base` | f32 m | designed macro terrain |
 | `wall_profile` | f32 m (per-lon curve) | rim wall height/shape |
 | `bedrock_class` | u8 enum | granite / sediment / regolith / **builder-alloy** (erodibility ~0) |
-| `anomaly_list` | sparse {type, lon, lat, radius, params} | **the syncopations** — see below |
+| `anomaly_list` | sparse {type, lon, lat, radius, params} | **the syncopations** — see below; the growing anomaly-*type* registry lives in docs/locations.md (types are content, not schema) |
 
 Params: macro noise octaves, mountain-intent maps, authored + sparse-procedural anomaly seeds.
 
@@ -54,6 +54,8 @@ Params: `spinward_wind` (vector + strength — a ring has one prevailing wind an
 |---|---|---|
 | `biome_id` | u8 | classified from climate × sediment × slope |
 | `biome_blend` | u8×4 weights | transition bands |
+| `info_opacity` | f32 [0,1] | information topology (backprop 2026-07-22 — referenced by knowledge.md and softmax temperature since day one, never registered until the biome catalog forced it) |
+| `signal_amplification` | f32 [0,1] | how far information propagates; drives rumor decay and acoustic reach |
 
 Params: the classification matrix (biome × thresholds), adjacency-legality table (bake gate input), transition widths.
 
@@ -64,6 +66,8 @@ Params: the classification matrix (biome × thresholds), adjacency-legality tabl
 | `tree_density`, `grass_density`, `rock_density` | f32 [0,1] | runtime scatters deterministically from these |
 | `deer_habitat` | f32 [0,1] | meadow × water proximity — **the deer moment is a field** |
 | `wolf_range` | f32 [0,1] | forest edge × deer_habitat — **so is the wolves moment** |
+| `fish_density` | f32 [0,1] | rivers/lagoons/sea — food economy + water readability (wildlife.md) |
+| fauna habitat fields, general | f32 [0,1] each | boar/horse/flock/megafauna added per species as wildlife.md solidifies — additive-only, same pattern as deer/wolf |
 
 ## L5 — Civilization
 
