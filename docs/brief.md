@@ -95,6 +95,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 | R5 | Streaming under a fast-falling camera (the landing) — async mesh generation limits in Godot | #4 |
 | R6 | Pocket-reality interiors: occlusion-funnel implementations (Metro tunnels, GoW boat corridors) | later |
 | R7 | LLM dialogue baking: batch pipeline cost/quality (local vs API) per 100k grounded lines, voice-consistency techniques, validation-gate patterns | dialogue.md |
+| R8 | ✅ Done — [research/r8-real-dem-sources.md](research/r8-real-dem-sources.md). Verdict: real DEMs fetchable directly, no auth (Terrarium tiles + Copernicus GLO-30 both live-tested); splicing = L0 input option; Earth-zoo lore makes it diegetic | D3 detail, L0 |
 
 ## 8. Decision Backlog (ordered)
 

@@ -19,7 +19,7 @@ Rules recap: fields are named rasters (or sparse lists) with units + metadata; a
 | `bedrock_class` | u8 enum | granite / sediment / regolith / **builder-alloy** (erodibility ~0) |
 | `anomaly_list` | sparse {type, lon, lat, radius, params} | **the syncopations** — see below; the growing anomaly-*type* registry lives in docs/locations.md (types are content, not schema) |
 
-Params: macro noise octaves, mountain-intent maps, authored + sparse-procedural anomaly seeds.
+Params: macro noise octaves, mountain-intent maps, authored + sparse-procedural anomaly seeds, `splice_dem` patches (real-Earth DEM cuts — source/rect/blend-margin; sources + licensing in research/r8-real-dem-sources.md; diegetically sound per lore.md's Earth zoo — the builders sampled Earth). L1 erosion welds splice seams; downstream layers are splice-agnostic.
 
 ## L1 — Hydrology / Erosion
 
