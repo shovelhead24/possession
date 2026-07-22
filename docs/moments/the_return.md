@@ -31,8 +31,17 @@ Ambiguous, not triumphant. Bittersweet. You don't know if you did the right thin
 - Cut straight to a credits crawl or main menu from the black screen.
 - Reuse this staging for the stay/destroy-relay ending — that ending is untouched by this design.
 
+## Co-op: unilateral shared trigger (2026-07-22)
+
+**Either player rings the bell alone; it ends the session for both.** No split ending, no consent gate, no vote UI — resolves the earlier open question by rejecting the split. Consistent with every other refusal-to-accommodate in the design (no missions, no valence, arc never waits): the partner who reaches it first *is* a second, human arc director, indifferent the same way the world is. The negotiation ("wait, not yet") happens entirely at the couch, off-system — the strongest version of "couch co-op first."
+
+Falls out of existing systems for free:
+- **Physical blocking:** if players collide, one can stand between the other and the mechanism — no new mechanic, pure emergence from movement/collision already required anyway.
+- **Merged vignette threads:** R0 facts are shared/global; knowledge pyramids are per-player. The montage interleaves both players' witnessed fragments around the one shared fact set — "same world, asymmetric knowledge, shared grief" made literal in the credits.
+
+**Honest risk, not fully resolved:** unilateral ending can read as thrilling or as robbed-of-an-ending depending on execution; mitigated by the mechanism being reachable only after the whole journey (never a five-second impulse), but this wants a real co-op playtest before it's load-bearing.
+
 ## Open Questions
 
-- **Co-op split:** can one protagonist stay while the other rings the bell? A literal fork of the two-protagonist structure — big swing, not resolved here.
-- If both players are required, do their knowledge pyramids interleave into one montage, or does the sequence run each player's thread separately?
+- **Telegraphing:** should either player have any signal their partner is nearing the mechanism (environmental/visual only, never a UI prompt — consistent with "no UI, no hint" elsewhere), or is discovering it happened only when the screen changes part of the point?
 - Whether the reference track's shape (structure, tempo, the bell section's timing) gets formalized into an original score brief now, or waits until content exists to score.

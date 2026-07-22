@@ -14,6 +14,7 @@
 - **Streaming for two cameras** — current terrain streams around one position. Divergent players = two stream centers or a tether distance.
 - **Input** — KB/M + gamepad mix; PS5 controller support already exists from April.
 - **Story moments in co-op** — moments are built around *witnessing* (one player watches the city burn; the other is elsewhere). Do moments fire per-player? What does the other player see?
+- **The ending is resolved, not open:** either player alone can end the session for both (unilateral, no consent gate — `.decisions/ending.md#ending-coop-unilateral`, moments/the_return.md). A template for handling asymmetric-knowledge moments generally: shared facts, interleaved per-player knowledge, no negotiation UI.
 - **Solo play** — is the second protagonist AI, absent, or swappable?
 
 ## Not in Scope (yet)
