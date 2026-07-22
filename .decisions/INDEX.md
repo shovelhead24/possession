@@ -4,6 +4,7 @@ One line per area file — decisions are the source of truth, this is just a map
 
 - design-laws.md — cross-system laws: six ratified principles; no missions; intensity not valence; observation never rerolls; world never reads knowledge
 - dialogue.md — LLM dialogue is bake-time only, zero runtime LLM
+- ending.md — leave-ending mechanism (proximity-easy, vignette-assembled) + presentation (fixed sequence, delayed title, black screen close)
 - engine.md — Godot-level gotchas: reload via quit(), not reload_current_scene()
 - knowledge.md — no omniscient map; the knowledge pyramid is the map, the night sky acquires it
 - terrain.md — prebaked layered world: bake DAG + gates, recipe-versioned, generous interfaces / naive engines

@@ -56,6 +56,10 @@ The armada arrives because someone tried to contact home using ancient tech on t
 
 Ringing the bell is not cowardly. But it tests your courage in a suddenly much more dramatic way.
 
+**The leave ending, staged (2026-07-22):** the mechanism itself is simple to operate — the entire difficulty is the journey to reach it, not solving it once there; no puzzle, no skill check, you just ring it. What plays over ringing it is a procedurally assembled vignette montage built from the actual world state at that moment (see simulation.md "Ending Vignette Assembly") — what you did, who you helped or didn't, what you still believe that's gone stale. Staged to a reference track (Garbage, "Cherry Lips (Go with the Flow)" — bittersweet, ambiguous, not triumphant) with the game's own title card appearing for the first time at the song's bell section — three bells at once: the song's, the diegetic one, the name. Same withholding logic as "names come last," applied to the game's own name. Closes on an extended held black screen before any credits — reflection, not a cut. See [moments/the_return.md](moments/the_return.md); decisions in `.decisions/ending.md`. (The stay/destroy-relay ending is untouched by any of this.)
+
+**Structural bookend:** the landing sequence (opening) and this ending are both fixed, authored, non-systemic sequences — everything between them is emergent simulation. The game is authored at both ends and alive in the middle.
+
 ## Tone References
 
 - 2001: A Space Odyssey — something was already happening

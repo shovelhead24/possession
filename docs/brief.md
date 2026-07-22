@@ -63,6 +63,7 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 | Dialogue/NPCs | [dialogue.md](dialogue.md) | proposal only | LLM bake pipeline (local vs API), voice consistency | — |
 | Knowledge/journal/map | [knowledge.md](knowledge.md) | decided: sky-as-map | journal UI shape, staleness pacing | — |
 | Factions | [factions.md](factions.md) | proposal only | who woke the relay; join vs be-known | — |
+| Ending (leave branch) | [moments/the_return.md](moments/the_return.md) | decided: mechanism + staging | co-op split ending | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
 
 ## 5. Progression & the RPG Stack — PROPOSED, scope warning

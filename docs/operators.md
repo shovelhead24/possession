@@ -19,5 +19,6 @@ The pseudo-code operators coined across design sessions, gathered so they don't 
 | `observe(vantage, time, weather)` | LoS over heightfield + haze; night boosts lights | K-gains flood visible tiles; ridges are honest towers | knowledge.md |
 | `hear(rumor)` | K2 claim insert, accuracy ~ SignalAmplification decay | claims carry provenance, may be wrong | knowledge.md |
 | `traverse(tile)` | K4 + freshness stamp | staleness = computed `fact_version` gap, never stored | knowledge.md |
+| `assemble_ending(facts, knowledge)` | precondition-tagged pool → montage | one-shot at the leave ending; reuses dialogue's branch-selection pattern; consistency-gated against current facts | simulation.md, moments/the_return.md |
 
 Registry rule: new operators get a row here when coined; renames are migrations, not edits.
