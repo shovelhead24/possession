@@ -9,6 +9,8 @@ Scale and indifference in one image. You are irrelevant to what is about to happ
 ## Mechanic
 None. The armada arrives whether you're ready or not. There is no trigger the player controls.
 
+**Power-scale context (lore.md):** the ring's automated air defense can kill a lone ship (it killed the player's) but cannot touch armada-scale forces — this armada "intercepts the interceptors" easily, unlike the player's arrival.
+
 ## What It Must Do
 - Happen during something mundane — the contrast is the moment.
 - Show ships that are visibly not interested in the player.

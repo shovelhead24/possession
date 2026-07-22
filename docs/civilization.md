@@ -20,8 +20,12 @@ New L5 field, computed like biome classification (L3), not rolled:
 A city needs to *read* as dense, not *be* dense:
 
 1. **Procedural exterior mass** — a modular building kit generated the way the character pipeline turns `PartDef` recipes into bodies (`game/pipeline/`) — a structure-pipeline sibling, not new invention.
-2. **Ambient crowd at Tier 0–1 fidelity** (Fern Rule, terrain.md's mined brainstorm) — silhouettes and passive reactivity, no AI, no per-NPC cost.
-3. **1–3 hand-authored pocket-reality interiors per city** (occlusion-funnel/context-swap technique — docs/research/chatgpt-brainstorm-2026-04.md "Interiors as Pocket Realities"; still just a research note, not yet built into any implementation doc — see brief.md R6) — the only bespoke-detail spend; this is where real dialogue and named NPCs live.
+2. **Ambient crowd at Tier 0–1 fidelity** (Fern Rule, terrain.md's mined brainstorm) — silhouettes and passive reactivity, no AI, no per-NPC cost. Most buildings stay this tier — shells only, not enterable at all.
+3. **A small number of REAL, physically continuous interiors per city (2026-07-22, revised)** — *not* pocket-reality. See `.decisions/civilization.md#building-interiors-real-not-pocket`: ordinary buildings need to be in the same coordinate space as the street outside, so you can shoot through a window from either side and a fire visibly consumes the structure from the outside. Cost stays bounded the same way as before — this tier is reserved for the handful of buildings the game actually wants combat/fire interaction in, not applied to the whole city.
+
+**Dungeons are the opposite case and keep the pocket-reality treatment** (occlusion-funnel/context-swap/spatial-lie — docs/research/chatgpt-brainstorm-2026-04.md "Interiors as Pocket Realities," brief.md R6): they *want* to be bigger than their entrance suggests and have no need for ext/int visual continuity. Real buildings tell the truth about their size; dungeons are allowed to lie, because nobody's shooting out of a cave mouth into the street.
+
+**Fire as a stateful system node:** a burning building is the same Tier-3 pattern already named in the interaction-fidelity tiers (generator/camp/alert-state examples, terrain.md's mined brainstorm) — a burn-state fact with a spread clock (TempoBuf-adjacent), not a new category. The taxonomy fit is real; the fire-spread/structural-collapse engineering itself is still open work, not solved by naming it.
 
 "Depth is a feeling, not a measurement" is the literal cost control, not just a nice line — it serves authoring time and the potato-hardware frame budget in the same direction, no tradeoff between them.
 
