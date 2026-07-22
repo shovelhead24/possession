@@ -33,6 +33,24 @@ def main():
     os.makedirs(DEST, exist_ok=True)
     with open(os.path.join(DEST, "millstreet.r16"), "wb") as f:
         f.write(raw)
+
+    # Detail texture: R/G = normal perturbation (east/north gradients), B = height/4m.
+    # Saved as PNG bytes in a .dat so Godot's importer ignores it; loaded manually at runtime.
+    import numpy as np
+    arr = np.frombuffer(raw, dtype="<u2").reshape(h, w).astype(np.float64) / 16.0
+    gpx = np.gradient(arr, axis=1) / m_per_px   # east+
+    gpy = np.gradient(arr, axis=0) / m_per_px   # south+
+    s = 1.2  # slope normalization (~50 deg full-scale)
+    r_ch = np.clip(128 + (-gpx / s) * 127, 0, 255).astype(np.uint8)
+    g_ch = np.clip(128 + (gpy / s) * 127, 0, 255).astype(np.uint8)
+    b_ch = np.clip(arr / 4.0, 0, 255).astype(np.uint8)
+    detail = Image.merge("RGB", [Image.fromarray(c) for c in (r_ch, g_ch, b_ch)])
+    import io
+    buf = io.BytesIO()
+    detail.save(buf, format="PNG")
+    with open(os.path.join(DEST, "millstreet_detail.dat"), "wb") as f:
+        f.write(buf.getvalue())
+    print("wrote millstreet_detail.dat (%d MB png-in-dat)" % (len(buf.getvalue()) // 1_000_000))
     meta = {"w": w, "h": h, "m_per_px": round(m_per_px, 3), "camera_px": cam_px,
             "name": "Millstreet (Cork-Kerry route, Terrarium z%d)" % fd.ZOOM}
     with open(os.path.join(DEST, "millstreet.json"), "w") as f:
