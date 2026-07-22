@@ -30,7 +30,7 @@ void fragment() {
 	float diffuse = max(nl, 0.0);
 
 	float hgt = d.b * 1020.0;               // meters (pre-exaggeration — ramp uses real heights)
-	float slope = length(pert.xz);
+	float slope = length(pert.xz) / max(dem_scale, 1.0);  // material from REAL slope, not exaggerated
 
 	vec3 sand  = vec3(0.55, 0.52, 0.40);
 	vec3 grass = vec3(0.31, 0.40, 0.23);
@@ -38,13 +38,16 @@ void fragment() {
 	vec3 rock  = vec3(0.44, 0.40, 0.35);
 
 	vec3 col = mix(grass, turf, smoothstep(180.0, 450.0, hgt));
-	col = mix(col, rock, smoothstep(0.9, 2.2, slope));
+	col = mix(col, rock, smoothstep(0.45, 1.1, slope));
 	col = mix(sand, col, smoothstep(1.0, 7.0, hgt));  // shoreline
-	// field patchwork: hashed cells darken lowland into tillage/pasture mosaic
-	vec2 cell = floor(v_world_pos.xz / 260.0);
-	float hash = fract(sin(dot(cell, vec2(127.1, 311.7))) * 43758.5453);
-	float fields = step(0.55, hash) * smoothstep(400.0, 100.0, hgt) * (1.0 - smoothstep(0.7, 1.4, slope));
-	col = mix(col, col * 0.62, fields * 0.8);
+	// field mosaic: continuous per-cell tint variation, two scales, subtle — pasture patchwork not camo
+	vec2 c1 = floor(v_world_pos.xz / 230.0);
+	vec2 c2 = floor((v_world_pos.xz + vec2(87.0, 41.0)) / 520.0);
+	float h1 = fract(sin(dot(c1, vec2(127.1, 311.7))) * 43758.5453);
+	float h2 = fract(sin(dot(c2, vec2(269.5, 183.3))) * 43758.5453);
+	float lowland = smoothstep(380.0, 120.0, hgt) * (1.0 - smoothstep(0.35, 0.8, slope));
+	vec3 tint = mix(vec3(1.0), vec3(0.90 + 0.14 * h1, 0.94 + 0.10 * h2, 0.82 + 0.12 * h1), lowland);
+	col *= tint;
 
 	vec3 lit = col * (0.05 + 0.95 * diffuse);
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);

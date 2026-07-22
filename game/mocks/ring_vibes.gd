@@ -19,7 +19,7 @@ const NOISE_AMP := 1_100.0
 
 var c_idx := 1
 var w_idx := 1
-var haze_density := 0.000012      # 1/m — ~85km extinction-ish start point
+var haze_density := 0.000008      # 1/m — ~125km extinction default (Up/Dn tunes)
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
 var sun_paused := false
@@ -310,6 +310,8 @@ func _update_hud() -> void:
 	var band_deg: float = rad_to_deg(2.0 * atan((w * 0.5) / (2.0 * r)))
 	var mode := "FLY (WASD + Space/Ctrl, Shift boost, ESC to release)" if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly)"
 	var dem_line := "DEM: none (noise terrain)" if _dem_w == 0 else "DEM: %s   height x%.0f ([H] cycles)" % [_dem_name, dem_scale]
-	_hud.text = "C = %.0f km   W = %.1f km   R = %.1f km\nrise @20km = %.0f m   @50km = %.0f m   far-side band = %.2f deg (moon = 0.52)\nhaze = %.2e /m   sun period = %s s\n%s\n[Up/Dn] haze  [T] sun speed  [P] pause sun  [F] flip day/night  [R] rebuild\nmode: %s" % [
-		c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg, haze_density,
+	# note: GDScript has no %e — haze shown as extinction distance instead (nicer to reason about anyway)
+	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0
+	_hud.text = "C = %.0f km   W = %.1f km   R = %.1f km\nrise @20km = %.0f m   @50km = %.0f m   far-side band = %.2f deg (moon = 0.52)\nhaze extinction ~%.0f km   sun period = %s s\n%s\n[Up/Dn] haze  [T] sun speed  [P] pause sun  [F] flip day/night  [R] rebuild\nmode: %s" % [
+		c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg, haze_km,
 		("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])), dem_line, mode]
