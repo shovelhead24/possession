@@ -31,6 +31,20 @@ Every tier-2 culture holds a cosmology *about the ring*: relationship to the anc
 - Gives the relay-already-on mystery a suspect pool (an instrumental faction *did something*)
 - Makes the armada a theological catastrophe per-culture, not just a plot beat — baked arc-phase dialogue branches diverge by cosmology
 
+## Dynamics Catalog (2026-07-22 generation round, PROPOSED)
+
+Patterns the R-stack should be able to produce — each is pressures/intentions machinery plus one existing system, no new mechanics:
+
+- **Pinch-toll escalation** — toll rises → caravans reroute → smuggler paths form through worse terrain → an opportunity gradient nobody authored (the player finds the smuggler path *because* politics made it).
+- **Stolen-tool provenance** — tools are facts with histories: the binoculars you traded in one settlement turn up on a raider's body two regions later. Your past decisions literally circulate.
+- **Misattributed reactivation** — you wake an ancient system (lore.md); rumor physics attributes it to whichever faction the tellers already fear. Your action becomes *their* politics — reputation machinery generating wars you caused but don't own.
+- **Refugee wave** — a scheduled inevitability fires → refugees flow along the chain → host-settlement pressure spikes → camps form at pinches → new friction. The director schedules one fact; the chain topology does the rest.
+- **Upstream dam** — water rights along a shared river: pressure propagation that is *literally* downstream. Hydrology as casus belli.
+- **Herd-following nomads** — a faction whose territory is a moving herd fact; their arrival anywhere is market + friction in one caravan.
+- **Post-armada schisms** — the mid-game armada breaks every cosmology differently (taboo faction vindicated, instrumental faction shattered, cargo-cult faction *converts*) — one event, per-culture consequences, all via the cosmology axis.
+
+**Ranking — author's cut:** 1. Misattributed reactivation (the player as unwitting political author — the possession theme wearing politics). 2. Stolen-tool provenance (consequence you can hold in your hands). 3. Refugee-wave-to-pinch-camps (the director and the chain topology shaking hands). 4. Pinch-toll smuggler paths (opportunity gradients from pure economics).
+
 ## The No-Missions Boundary
 
 NPCs may *ask* for help — honest simulation, people ask. But: no quest log entry, no reward contract, no tracking UI. The ask is an encounter (R4); caring is the player's journal pin. Factions never court the player as a content dispenser.

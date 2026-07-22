@@ -66,6 +66,10 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 | Tools/QoL | [tools.md](tools.md) | decided: diegetic-not-HUD | which HUD elements convert first for the slice | — |
 | Civilization/tech recovery | [civilization.md](civilization.md) | decided: causal field, real-vs-pocket interiors | surviving-enclave economy; band count/names | — |
 | Ancient backstory (AI, Displacement) | [lore.md](lore.md) | decided: Displacement, air-defense answer; AI arc open | AI's current status/goals; relay-mystery link | — |
+| Wildlife | [wildlife.md](wildlife.md) | catalog proposed | ecology depth; anachronism range | — |
+| Biomes | [biomes.md](biomes.md) | catalog proposed | lat-vs-lon arrangement; v1 count | — |
+| Locations | [locations.md](locations.md) | archetypes proposed | procedural vs L6 one-off split | — |
+| Macro geography | [geography.md](geography.md) | arc sketch proposed | enclave distance; armada landfall; P2 start | — |
 | Ending (leave branch) | [moments/the_return.md](moments/the_return.md) | decided: portal mechanism, co-op unilateral, staging | telegraphing; NG+ carryover UI | — |
 | Post-credits / sequel hook | [moments/human_armada.md](moments/human_armada.md) | tentative tease only | timing; save-continuity requirements | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
