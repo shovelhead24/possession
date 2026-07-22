@@ -6,6 +6,7 @@ The pseudo-code operators coined across design sessions, gathered so they don't 
 |---|---|---|---|
 | field expressions | `deer_habitat = meadow × water_proximity` | LayerBuf fields composed by arithmetic over rasters | terrain/layerbuf-v0.md |
 | syncopation | `anomaly(type, pos, radius, params)` | perturbs *inputs* to later bake layers; never scripts outcomes | terrain/layerbuf-v0.md |
+| `classify_recovery(tech_level, connectivity, resources)` | continuous field → discrete band | same pattern as L3 biome classification, reused for tech-recovery bands | civilization.md |
 | `bake(layer, inputs, seed, params)` | pure fn → fields + content hash | cache hit iff input hash unchanged | terrain.md |
 | `gate(artifact) → violations[]` | bake-time validator | fails with coordinates + debug map; non-negotiables as computable tests | terrain.md |
 | `realize(fact, seed)` | `softmax_T(site_scores)` sample, seed = `hash(world_seed, entity_id, fact_version, time_bucket)` | coarse fact → concrete entities; observation never rerolls, only events do | simulation.md |

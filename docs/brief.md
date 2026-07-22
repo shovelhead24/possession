@@ -64,6 +64,7 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 | Knowledge/journal/map | [knowledge.md](knowledge.md) | decided: sky-as-map | journal UI shape, staleness pacing | — |
 | Factions | [factions.md](factions.md) | proposal only | who woke the relay; join vs be-known | — |
 | Tools/QoL | [tools.md](tools.md) | decided: diegetic-not-HUD | which HUD elements convert first for the slice | — |
+| Civilization/tech recovery | [civilization.md](civilization.md) | proposal only | surviving-enclave economy; band count/names | — |
 | Ending (leave branch) | [moments/the_return.md](moments/the_return.md) | decided: portal mechanism, co-op unilateral, staging | telegraphing; NG+ carryover UI | — |
 | Post-credits / sequel hook | [moments/human_armada.md](moments/human_armada.md) | tentative tease only | timing; save-continuity requirements | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |

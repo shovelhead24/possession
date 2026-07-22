@@ -23,6 +23,10 @@ Two different economies: **tools** are permanent, ownable, occupy the "what can 
 
 Pairs with same-seed NG+ (`.decisions/ending.md#ending-postcredits-deferral`): mastery is route/acquisition-order knowledge, not a stat curve. "I remember the spyglass is on that cliff" is the entire reward loop for a second playthrough — the world must stay knowable for foreknowledge to be worth anything, which is exactly why the seed doesn't change.
 
+## Regional Gating (2026-07-22)
+
+Tool and vehicle availability is gated by a region's `recovery_band` (civilization.md) — bows/improvised melee in regressed zones, trucks/horses in frontier zones, boats/aircraft/drones/mortars/NVGs only near a surviving enclave. Not random placement: the tech spectrum is a bake-time causal field, same discipline as biomes.
+
 ## A Third Ladder
 
 Alongside the transport ladder (world.md) and the progression tiers (progression.md), tools form a **perception ladder** — what you can *know at range* grows the same way what you can *reach* grows. The hookshot (moments/hookshot.md) was always this pattern's flagship instance, just not yet generalized.

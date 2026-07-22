@@ -75,8 +75,10 @@ Consumes: `sediment` (arable), `ford_candidates`, pinch topology (from `wall_pro
 | `road_graph` | sparse polylines | pathfound over cost surface; crossings snap to fords |
 | `landuse_mask` | u8 | fields, pasture, quarry |
 | `ruin_sites` | sparse | history pass: prior epochs, some settlements rolled back/abandoned |
+| `tech_level` | f32 [0,1] | connectivity × resources × collapse severity × syncopation noise — see civilization.md |
+| `recovery_band` | u8 enum | classified from `tech_level` (same pattern as L3 biome classification); placeholder names only |
 
-Params: population budget, spacing, road cost weights, history epoch count.
+Params: population budget, spacing, road cost weights, history epoch count, recovery-band classification thresholds.
 
 ## L6 — Narrative Anchors
 

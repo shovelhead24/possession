@@ -13,6 +13,7 @@ On a 2,000 km × ~30 km band, faction adjacency is a **chain**, not a map: at mo
 ## Identity Baked, Behavior Live — PROPOSED
 
 - **L5 history pass generates faction identity from geography:** watersheds seed polities; grievances are baked facts with coordinates (the battlefield ruin between two factions is *why* they hate each other); borders follow bake terrain.
+- **Tech/recovery level is a sibling field, not a faction property** — see [civilization.md](civilization.md). A faction's territory has whatever `recovery_band` its geography earned; two factions at war can be at genuinely different tech levels, which is itself a source of conflict asymmetry.
 - **Runtime factions are ordinary R2 entities:** pressures → intentions → actions. Regional clocks heat during wars (tempo). Armies are counted (conservation gate).
 
 ## Reputation = the Knowledge Pyramid Inverted — PROPOSED

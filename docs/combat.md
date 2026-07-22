@@ -6,8 +6,8 @@ The most-built side of the codebase (April sprint). Mostly needs consolidation a
 
 - Enemy soldiers: AI states with cover behavior, mixamo animation set (strafe, reload, hit reaction, firing), carbine attached via BoneAttachment3D to mixamorig_RightHand at `Vector3(90, -90, 0)` (`enemy_controller.gd`, `enemy_soldier.tscn`)
 - Factions and a battle-base spawner system (`battle_base.gd`, `enemy_spawner.gd`)
-- Weapons: plasma carbine + railgun, first-person arms viewport, weapon switch
-- Warthog-style vehicle with enter/exit, driver camera, physics driving (`warthog.tscn`, `warthog_controller.gd`)
+- Weapons: plasma carbine + railgun, first-person arms viewport, weapon switch (dev-loadout; tier-1 starts with none per progression.md)
+- Warthog-style vehicle with enter/exit, driver camera, physics driving (`warthog.tscn`, `warthog_controller.gd`) — the full aspirational range (trucks, ribs, ferries, submarines, drones, helicopter dropships) is gated by regional `recovery_band`, see civilization.md
 - Demo-cycle test mode for observing a single soldier's animation/AI states in isolation
 
 ## Open Questions
