@@ -21,7 +21,7 @@ A city needs to *read* as dense, not *be* dense:
 
 1. **Procedural exterior mass** — a modular building kit generated the way the character pipeline turns `PartDef` recipes into bodies (`game/pipeline/`) — a structure-pipeline sibling, not new invention.
 2. **Ambient crowd at Tier 0–1 fidelity** (Fern Rule, terrain.md's mined brainstorm) — silhouettes and passive reactivity, no AI, no per-NPC cost.
-3. **1–3 hand-authored pocket-reality interiors per city** (occlusion-funnel/context-swap technique, already in terrain.md unused) — the only bespoke-detail spend; this is where real dialogue and named NPCs live.
+3. **1–3 hand-authored pocket-reality interiors per city** (occlusion-funnel/context-swap technique — docs/research/chatgpt-brainstorm-2026-04.md "Interiors as Pocket Realities"; still just a research note, not yet built into any implementation doc — see brief.md R6) — the only bespoke-detail spend; this is where real dialogue and named NPCs live.
 
 "Depth is a feeling, not a measurement" is the literal cost control, not just a nice line — it serves authoring time and the potato-hardware frame budget in the same direction, no tradeoff between them.
 
