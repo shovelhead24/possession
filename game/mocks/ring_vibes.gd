@@ -17,8 +17,8 @@ const RIDGE_ARC := 50_000.0       # money-shot ridge distance spinward
 const RIDGE_AMP := 1_500.0
 const NOISE_AMP := 1_100.0
 
-var c_idx := 1
-var w_idx := 1
+var c_idx := 2   # locked 2026-07-23: widest circumference (3,000 km)
+var w_idx := 2   # locked 2026-07-23: widest width (50 km)
 var haze_density := 0.000008      # 1/m — ~125km extinction default (Up/Dn tunes)
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
@@ -51,15 +51,20 @@ var _sat_tex: ImageTexture = null
 var _roads_tex: ImageTexture = null
 var _strip_mat: ShaderMaterial = null
 
+enum Mode { FLY, DRIVE, WALK }
+var _mode: Mode = Mode.FLY
+const WALK_SPEED := 10.0   # reused from game/player.gd's SPEED for consistency with the real game
+const WALK_RUN_MULT := 2.0
+const EYE_HEIGHT := 1.7
+
 # Drive mode: car lives in ring coordinates, no physics — terrain sampled analytically
-var _drive := false
 var _car: Node3D = null
 var _car_arc := 0.0
 var _car_lat := 0.0
 var _car_heading := 0.0
 var _car_speed := 0.0
 var _hud_timer := 0.0
-var dem_scale := 3.0
+var dem_scale := 1.0  # locked 2026-07-23: lowest/no exaggeration
 var _strip_arc := STRIP_ARC
 var _strip_segs := STRIP_SEGS
 var _strip_rows := STRIP_ROWS
@@ -237,12 +242,14 @@ func _build_strip(arc_ext: float, segs: int, rows: int, h_off: float, w: float, 
 	return mi
 
 func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:
+	# fixed 2026-07-23: original order wound the front face DOWN for this ring convention,
+	# which is why cull_disabled was needed (and why flying underneath still showed "ground").
 	for i in segs:
 		for j in rows:
 			var a: int = i * (rows + 1) + j
 			var b: int = a + rows + 1
-			st.add_index(a); st.add_index(b); st.add_index(a + 1)
-			st.add_index(a + 1); st.add_index(b); st.add_index(b + 1)
+			st.add_index(a); st.add_index(a + 1); st.add_index(b)
+			st.add_index(a + 1); st.add_index(b + 1); st.add_index(b)
 
 func _make_city_texture() -> ImageTexture:
 	var img := Image.create_empty(2048, 64, false, Image.FORMAT_RGB8)
@@ -278,10 +285,10 @@ func _process(delta: float) -> void:
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _strip_mat:
 		_strip_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
-	if _drive:
-		_drive_tick(delta)
-	else:
-		_fly(delta)
+	match _mode:
+		Mode.DRIVE: _drive_tick(delta)
+		Mode.WALK: _walk_tick(delta)
+		_: _fly(delta)
 
 func _make_car() -> Node3D:
 	var root := Node3D.new()
@@ -349,9 +356,30 @@ func _drive_tick(delta: float) -> void:
 		_hud_timer = 0.0
 		_update_hud()
 
-func _toggle_drive() -> void:
-	_drive = not _drive
-	if _drive:
+func _walk_tick(delta: float) -> void:
+	var speed: float = WALK_SPEED * (WALK_RUN_MULT if Input.is_key_pressed(KEY_SHIFT) else 1.0)
+	var move := Vector2.ZERO
+	if Input.is_key_pressed(KEY_W): move.y -= 1.0
+	if Input.is_key_pressed(KEY_S): move.y += 1.0
+	if Input.is_key_pressed(KEY_A): move.x -= 1.0
+	if Input.is_key_pressed(KEY_D): move.x += 1.0
+	if move != Vector2.ZERO:
+		move = move.normalized()
+	var yaw: float = _look.x
+	var fwd := Vector3(sin(yaw), 0, cos(yaw))
+	var right := Vector3(cos(yaw), 0, -sin(yaw))
+	var d: Vector3 = (fwd * -move.y + right * move.x) * speed * delta
+	var w: float = WIDTHS[w_idx]
+	# naive approximation (valid at human-walking scale, negligible ring curvature over meters):
+	# world x/z map directly onto arc/lat, same functions the car and terrain mesh use.
+	var new_x: float = _cam.position.x + d.x
+	var new_z: float = clampf(_cam.position.z + d.z, -w * 0.5 + 50.0, w * 0.5 - 50.0)
+	_cam.position = Vector3(new_x, _terrain_h(new_x, new_z, w) + EYE_HEIGHT, new_z)
+	_cam.rotation = Vector3(_look.y, _look.x, 0)
+
+func _set_mode(m: Mode) -> void:
+	_mode = m
+	if m == Mode.DRIVE:
 		if not _car:
 			_car = _make_car()
 		_car.visible = true
@@ -361,6 +389,9 @@ func _toggle_drive() -> void:
 	else:
 		if _car:
 			_car.visible = false
+		if m == Mode.WALK:
+			var w: float = WIDTHS[w_idx]
+			_cam.position.y = _terrain_h(_cam.position.x, _cam.position.z, w) + EYE_HEIGHT
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
 	_update_hud()
 
@@ -383,7 +414,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_captured = true
 		_update_hud()
-	if event is InputEventMouseMotion and _captured and not _drive:
+	if event is InputEventMouseMotion and _captured and _mode != Mode.DRIVE:
 		_look -= event.relative * 0.0022
 		_look.y = clampf(_look.y, -1.55, 1.55)
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
@@ -407,8 +438,9 @@ func _unhandled_input(event: InputEvent) -> void:
 					_rebuild()
 			KEY_V:
 				if _dem_w > 0:
-					_toggle_drive()
-		if _captured or _drive: return
+					var order := [Mode.FLY, Mode.DRIVE, Mode.WALK]
+					_set_mode(order[(order.find(_mode) + 1) % 3])
+		if _captured or _mode == Mode.DRIVE: return
 		# config keys only while mouse is released
 		match event.keycode:
 			KEY_1: c_idx = 0; _rebuild()
@@ -425,9 +457,11 @@ func _update_hud() -> void:
 	var rise20: float = 20_000.0 * 20_000.0 / (2.0 * r)
 	var rise50: float = 50_000.0 * 50_000.0 / (2.0 * r)
 	var band_deg: float = rad_to_deg(2.0 * atan((w * 0.5) / (2.0 * r)))
-	var mode := "FLY (WASD + Space/Ctrl, Shift boost, ESC to release)" if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] drive)"
-	if _drive:
-		mode = "DRIVE  %d km/h  (WASD steer, [V] back to fly)" % int(abs(_car_speed) * 3.6)
+	var mode := "FLY (WASD + Space/Ctrl, Shift boost, ESC to release, [V] cycle mode)" if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] cycle drive/walk)"
+	if _mode == Mode.DRIVE:
+		mode = "DRIVE  %d km/h  (WASD steer, [V] cycle mode)" % int(abs(_car_speed) * 3.6)
+	elif _mode == Mode.WALK:
+		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	var dem_line := "DEM: none (noise terrain)" if _dem_w == 0 else "DEM: %s   height x%.0f ([H] cycles)" % [_dem_name, dem_scale]
 	# note: GDScript has no %e — haze shown as extinction distance instead (nicer to reason about anyway)
 	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0

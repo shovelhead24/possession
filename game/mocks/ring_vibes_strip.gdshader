@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode unshaded, cull_disabled;
+render_mode unshaded;
 // DEM near-strip: per-pixel normal perturbation baked from the full-res heightmap
 // (lighting detail at data resolution even where the mesh is coarser) + a
 // slope/height color ramp + Irish field patchwork. Same manual sun/haze as the band.

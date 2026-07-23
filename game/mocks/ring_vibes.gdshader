@@ -1,5 +1,7 @@
 shader_type spatial;
-render_mode unshaded, cull_disabled;
+render_mode unshaded;
+// cull_back (default) restored 2026-07-23 now that winding is fixed — terrain is invisible
+// from underneath, which is the point (tells you immediately you're below the surface).
 // Ring vibe mock: manual N.L lighting from an in-plane sun so the terminator
 // crosses the band honestly; manual distance haze with weaker extinction for
 // city emission (night lights punch through — knowledge.md "air is the horizon").
