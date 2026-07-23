@@ -27,6 +27,6 @@ InfoOpacity/SignalAmplification were referenced by knowledge.md and the softmax-
 
 ## Open Questions
 
-- Lat vs lon arrangement: which biomes band *across* the ring (wall-shadow driven) vs. stretch *along* it (climate-band driven)?
+- Lat vs lon arrangement: which biomes band *across* the ring (wall-shadow driven) vs. stretch *along* it (climate-band driven)? **Working finding, not decided** (terrain/splice-portfolio.md): the first five verified real-DEM splice candidates cluster into highland/pass and headland/coast, suggesting Highland and Coast/lagoon are cross-ring (lat) bands rather than long spinward stretches. Needs more candidates before promotion out of "working."
 - Does the sea have weather states (the cloud system from April is sitting right there)?
 - Biome count budget for v1 — the slice needs exactly two (valley + night-forest edge).

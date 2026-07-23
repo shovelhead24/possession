@@ -5,7 +5,7 @@ Area doc (2026-07-19 session). Tier-2's "people, factions, bows, horses, politic
 ## Chain Topology — PROPOSED
 
 On a 2,000 km × ~30 km band, faction adjacency is a **chain**, not a map: at most two arc-neighbors each, plus wall/coast variation. Consequences:
-- Wars have *fronts*, and fronts sit at pinch points (world.md's gating terrain)
+- Wars have *fronts*, and fronts sit at pinch points (world.md's gating terrain) — `priests_leap` (terrain/splice-portfolio.md) is a verified real-world example of exactly this geometry: a single mountain-pass chokepoint, not a hand-authored one
 - Trade is caravan chains; refugees flow along the arc
 - Rumor propagates linearly with SignalAmplification decay — politics and the knowledge system share physics
 - **Placename gradients:** culture seeds drift dialect-by-dialect along the arc (dialogue bake) — walking spinward sounds like language changing

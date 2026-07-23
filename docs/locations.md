@@ -12,7 +12,7 @@ Area doc (2026-07-22 generation round, all PROPOSED). Locations are where syncop
 - **Wall-breach stair** — access to wall-top transit; a climb that converts the wall from horizon-fixture to place (world.md's walls-as-destinations, concretized).
 - **Ford towns** — `ford_candidates` made civic: bridges are wealth, chokepoints, and casus belli in one.
 - **Drowned town** — sea-edge salvage; the sub's reason to exist; rooms fish swim through.
-- **Lighthouse / beacon tower** — knowledge infrastructure: a manned light is a rumor hub and a K3 trade node — locals sell *bearings*, not maps. The knowledge economy gets architecture.
+- **Lighthouse / beacon tower** — knowledge infrastructure: a manned light is a rumor hub and a K3 trade node — locals sell *bearings*, not maps. The knowledge economy gets architecture. Real-world grounding: `mizen_head` and `loop_head` (terrain/splice-portfolio.md) both carry genuine signal-station/lighthouse sites.
 - **Battlefield ruin** — a baked grievance with coordinates (factions.md); scavengers, ghosts-by-reputation, and the reason two banners hate each other, visitable.
 - **THE city (after)** — protagonist two's wound as walkable space; also the game's largest honest ruin.
 - **The enclave city (living)** — still gated on the unsolved economy question (civilization.md) — listed, not designed.
