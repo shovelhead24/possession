@@ -242,14 +242,15 @@ func _build_strip(arc_ext: float, segs: int, rows: int, h_off: float, w: float, 
 	return mi
 
 func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:
-	# fixed 2026-07-23: original order wound the front face DOWN for this ring convention,
-	# which is why cull_disabled was needed (and why flying underneath still showed "ground").
+	# 2026-07-23: attempted a winding flip + cull_back here, got the direction wrong (rendered
+	# almost nothing). Reverted to the original order + cull_disabled (double-sided, known-working)
+	# rather than guess again. Walk mode (ground-snapped) is the real fix for "finding the floor."
 	for i in segs:
 		for j in rows:
 			var a: int = i * (rows + 1) + j
 			var b: int = a + rows + 1
-			st.add_index(a); st.add_index(a + 1); st.add_index(b)
-			st.add_index(a + 1); st.add_index(b + 1); st.add_index(b)
+			st.add_index(a); st.add_index(b); st.add_index(a + 1)
+			st.add_index(a + 1); st.add_index(b); st.add_index(b + 1)
 
 func _make_city_texture() -> ImageTexture:
 	var img := Image.create_empty(2048, 64, false, Image.FORMAT_RGB8)
