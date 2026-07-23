@@ -23,6 +23,16 @@ The first five candidates split into two clusters, not a spread — mountain-pas
 - `mizen_head` and `loop_head` both have real lighthouse/signal-station infrastructure on site — direct grounding for [locations.md](../locations.md)'s Lighthouse/beacon-tower archetype and geography.md's ~18–25% "the sea" stretch (lighthouse chain).
 - `priests_leap` is a real mountain-pass pinch point — candidate grounding for geography.md's ~60–75% highland/wall country stretch.
 
-## Next Batch (requested, not yet fetched)
+## Batch 2 — Desert, Plateau, Jungle, Delta, Temperate Hills, Metro
 
-Desert, plateau/steppe, jungle, delta, Vermont-style temperate hill country, and 1-2 suitably-sized metro areas — see fetch_dem.py once added.
+| Name | Location | Verified stats | Biome affinity | Notes |
+|---|---|---|---|---|
+| `monument_valley` | Monument Valley, UT/AZ, USA | elev 1430-2063m, 632m relief, 0% sea | Desert (pinch rain-shadow) | clean read, no caveats |
+| `mongolia_steppe` | Orkhon Valley, Mongolia | elev 1312-2355m, 1043m relief, 0% sea | Grass steppe | more relief than the "huge flat sightlines" catalog description implies — a flatter sub-box nearby is probably the truer steppe read; this one leans hill-country-with-steppe-floor |
+| `costa_rica_jungle` | Arenal area, Costa Rica | elev 73-2134m, 2061m relief, 0% sea | **not yet in the biome catalog** | mountainous rainforest (Arenal volcano massif in-frame), not flat-basin jungle; closest existing entry (Conifer night-forest) is the wrong temperature/tone — candidate for a new tropical entry rather than a forced fit |
+| `ebro_delta` | Ebro Delta, Spain | elev 1-735m, sea 73%, **p99 elev 575m** | Delta marsh | **not verified-flat** — p99 this high means a real chunk of the box is nearby upland (Els Ports foothills), not delta plain. Needs re-centering further SE (~40.62, 0.80) and a smaller pad before treating as a clean flat-marsh reference. Left in `LOCATIONS` as a first pass, flagged in its code comment. |
+| `vermont` | Stowe/Mad River Valley, VT, USA | elev 86-1338m, 1253m relief, 0% sea | **not yet in the biome catalog** | temperate rolling hills, pastoral/settled tone — River Valley is the nearest existing entry but that one's tuned toward frontier/ford-town flavor, not this. Candidate for its own entry if the pastoral-Americana tone is wanted distinct from River Valley. |
+| `cork_city` | Cork City, Ireland | elev 1-176m, 175m relief, ~0% sea | Metro/city archetype | real hill relief around the center, organic (non-grid) street layout — contrast case to Savannah |
+| `savannah` | Savannah, GA, USA | p99 elev 21m (confirmed flat — the 318m box max is a Terrarium decode artifact, not real terrain), ~11% sea/marsh | Metro/city archetype | historic planned grid, contrast case to Cork |
+
+Road-grid character for the two metro candidates (Cork's organic layout vs. Savannah's planned squares) is asserted from well-documented real-world knowledge, not independently re-verified here — Overpass/OSM access wasn't reachable from this environment this session.

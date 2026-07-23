@@ -66,6 +66,71 @@ LOCATIONS = {
         markers=[(52.5589, -9.9257, "Loop Head")],
         label="Loop Head",
     ),
+    "monument_valley": dict(
+        # Desert biome candidate; verified elev 1430-2063m (632m relief), 0% sea.
+        lat_min=36.909, lat_max=37.089, lon_min=-110.2375, lon_max=-109.9575, zoom=12,
+        camera=(36.9990, -110.0975),
+        markers=[(36.9990, -110.0975, "Monument Valley")],
+        label="Monument Valley, UT/AZ",
+    ),
+    "mongolia_steppe": dict(
+        # Grass steppe biome candidate (Orkhon Valley region); verified elev
+        # 1312-2355m (1043m relief — more relief than pure flat steppe; a
+        # flatter sub-box nearby may read closer to "huge sightlines").
+        lat_min=47.05, lat_max=47.35, lon_min=102.50, lon_max=103.10, zoom=12,
+        camera=(47.20, 102.80),
+        markers=[(47.20, 102.80, "Orkhon Valley")],
+        label="Mongolian steppe, Orkhon Valley",
+    ),
+    "costa_rica_jungle": dict(
+        # Jungle candidate — not yet in the biome catalog (closest is
+        # Conifer night-forest, which is temperate/cold, wrong fit). Verified
+        # elev 73-2134m (2061m relief) — Arenal volcano massif in-frame,
+        # mountainous rainforest rather than flat basin jungle.
+        lat_min=10.36, lat_max=10.54, lon_min=-84.88, lon_max=-84.62, zoom=12,
+        camera=(10.45, -84.75),
+        markers=[(10.45, -84.75, "Arenal area")],
+        label="Costa Rica (Arenal), mountainous rainforest",
+    ),
+    "ebro_delta": dict(
+        # Delta marsh biome candidate. Verified elev 1-735m, sea 73% — but
+        # p99 elevation is 575m, meaning a real chunk of the box is nearby
+        # upland (Els Ports foothills), not delta plain. Re-center further
+        # SE (~40.62, 0.80) and shrink pad before treating this as a clean
+        # flat-marsh reference; current box is a first pass, not verified-flat.
+        lat_min=40.590, lat_max=40.740, lon_min=0.600, lon_max=0.800, zoom=12,
+        camera=(40.665, 0.700),
+        markers=[(40.665, 0.700, "Ebro Delta")],
+        label="Ebro Delta, Spain",
+    ),
+    "vermont": dict(
+        # Temperate rolling-hill country — not yet in the biome catalog as
+        # its own entry (River Valley is the closest but that's tuned toward
+        # the frontier/ford-town flavor, not pastoral). Verified elev
+        # 86-1338m (1253m relief), 0% sea.
+        lat_min=44.38, lat_max=44.56, lon_min=-72.88, lon_max=-72.62, zoom=12,
+        camera=(44.47, -72.75),
+        markers=[(44.47, -72.75, "Stowe/Mad River Valley")],
+        label="Vermont (Stowe/Mad River Valley)",
+    ),
+    "cork_city": dict(
+        # Metro candidate — small city (~200k metro), real hill relief around
+        # the center. Verified elev 1-176m (175m relief), ~0% sea.
+        lat_min=51.8535, lat_max=51.9435, lon_min=-8.5556, lon_max=-8.3956, zoom=12,
+        camera=(51.8985, -8.4756),
+        markers=[(51.8985, -8.4756, "Cork City")],
+        label="Cork City, Ireland",
+    ),
+    "savannah": dict(
+        # Metro candidate — historic planned grid, contrast to Cork's organic
+        # layout. Verified flat (p99 elev 21m over a 7x8km box) — the 318m
+        # single-pixel max is a Terrarium decode artifact, not real terrain;
+        # ~11% sea/marsh in-frame is real (coastal Georgia lowland).
+        lat_min=32.0509, lat_max=32.1109, lon_min=-81.1312, lon_max=-81.0512, zoom=12,
+        camera=(32.0809, -81.0912),
+        markers=[(32.0809, -81.0912, "Savannah")],
+        label="Savannah, GA",
+    ),
 }
 DEFAULT_LOCATION = "millstreet"
 
