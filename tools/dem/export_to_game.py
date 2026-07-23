@@ -1,10 +1,17 @@
 """Export the stitched heightmap into the Godot mock as raw u16 + meta json.
 Artifact stays out of git (game/mocks/dem/ is ignored) — recipe is source.
-Run after fetch_dem.py: python export_to_game.py
+Run after fetch_dem.py: python export_to_game.py [location]
+
+location must match whatever you last ran fetch_dem.py with (default
+"millstreet" for both, so the old one-location workflow is unchanged).
+Note: ring_vibes.gd currently only loads files named "millstreet.*" — to make
+a different location the active one in the mock, either rename the exported
+files or update the DEM_* constants at the top of ring_vibes.gd.
 """
 import json
 import math
 import os
+import sys
 
 from PIL import Image
 
@@ -14,7 +21,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.normpath(os.path.join(HERE, "..", "..", "game", "mocks", "dem"))
 
 
-def main():
+def main(name):
+    fd.set_location(name)
+    loc = fd.LOCATIONS[name]
+
     img = Image.open(os.path.join(HERE, "out", "heightmap_16bit.png"))
     if img.mode != "I;16":
         img = img.convert("I;16")
@@ -26,12 +36,12 @@ def main():
     center_lat = (fd.LAT_MIN + fd.LAT_MAX) / 2.0
     m_per_px = 156543.03392 * math.cos(math.radians(center_lat)) / (2 ** fd.ZOOM)
 
-    mill_lat, mill_lon, _ = fd.MARKERS[1]
-    mx, my = fd.tile_xy(mill_lat, mill_lon, fd.ZOOM)
+    cam_lat, cam_lon = loc["camera"]
+    mx, my = fd.tile_xy(cam_lat, cam_lon, fd.ZOOM)
     cam_px = [int((mx - x0) * 256), int((my - y0) * 256)]
 
     os.makedirs(DEST, exist_ok=True)
-    with open(os.path.join(DEST, "millstreet.r16"), "wb") as f:
+    with open(os.path.join(DEST, f"{name}.r16"), "wb") as f:
         f.write(raw)
 
     # Detail texture: R/G = normal perturbation (east/north gradients), B = height/4m.
@@ -48,16 +58,17 @@ def main():
     import io
     buf = io.BytesIO()
     detail.save(buf, format="PNG")
-    with open(os.path.join(DEST, "millstreet_detail.dat"), "wb") as f:
+    with open(os.path.join(DEST, f"{name}_detail.dat"), "wb") as f:
         f.write(buf.getvalue())
-    print("wrote millstreet_detail.dat (%d MB png-in-dat)" % (len(buf.getvalue()) // 1_000_000))
+    print("wrote %s_detail.dat (%d MB png-in-dat)" % (name, len(buf.getvalue()) // 1_000_000))
     meta = {"w": w, "h": h, "m_per_px": round(m_per_px, 3), "camera_px": cam_px,
-            "name": "Millstreet (Cork-Kerry route, Terrarium z%d)" % fd.ZOOM}
-    with open(os.path.join(DEST, "millstreet.json"), "w") as f:
+            "name": "%s (Terrarium z%d)" % (loc["label"], fd.ZOOM)}
+    with open(os.path.join(DEST, f"{name}.json"), "w") as f:
         json.dump(meta, f, indent=1)
-    print("wrote %s (%d MB) + millstreet.json  m/px=%.2f  camera_px=%s"
-          % (DEST, len(raw) // 1_000_000, m_per_px, cam_px))
+    print("wrote %s (%d MB) + %s.json  m/px=%.2f  camera_px=%s"
+          % (DEST, len(raw) // 1_000_000, name, m_per_px, cam_px))
 
 
 if __name__ == "__main__":
-    main()
+    loc_name = sys.argv[1] if len(sys.argv) > 1 else fd.DEFAULT_LOCATION
+    main(loc_name)

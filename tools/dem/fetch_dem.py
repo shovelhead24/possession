@@ -3,7 +3,9 @@ Pulls Terrarium elevation tiles for a lat/lon bbox, stitches, decodes to meters,
 writes a 16-bit heightmap + an 8-bit preview (hillshade if numpy present).
 Recipe-not-artifact rule: this script is committed; out/ is gitignored.
 
-Usage: python fetch_dem.py  (defaults to the Cork->Millstreet->Kerry route bbox)
+Usage: python fetch_dem.py [location]
+  location defaults to "millstreet" if omitted (unchanged behavior).
+  See LOCATIONS below for the full candidate list.
 """
 import math
 import os
@@ -15,16 +17,77 @@ from PIL import Image, ImageDraw
 URL = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
 OUT = os.path.join(os.path.dirname(__file__), "out")
 
-# Default: Cork -> Boggeraghs -> Millstreet -> north Kerry route, padded
-LAT_MIN, LAT_MAX = 51.82, 52.50
-LON_MIN, LON_MAX = -9.55, -8.42
-ZOOM = 12
+# Splice candidates: bbox (padded to a single-viewpoint patch), zoom, marker
+# pins for the preview image, and the camera anchor export_to_game.py spawns
+# above. Add new candidates here as they're scouted/verified.
+LOCATIONS = {
+    "millstreet": dict(
+        lat_min=51.82, lat_max=52.50, lon_min=-9.55, lon_max=-8.42, zoom=12,
+        camera=(52.0603, -9.0633),
+        markers=[
+            (51.8892, -8.5243, "start"),
+            (52.0603, -9.0633, "Millstreet"),
+            (52.4301, -9.4701, "end"),
+        ],
+        label="Millstreet (Cork-Kerry route)",
+    ),
+    "priests_leap": dict(
+        # Cork/Kerry border mountain pass overlooking Bantry Bay; verified peak
+        # 690m (~ Hungry Hill 685m), bay inlet visible in-frame.
+        lat_min=51.640, lat_max=51.795, lon_min=-9.505, lon_max=-9.220, zoom=12,
+        camera=(51.7186, -9.3606),
+        markers=[
+            (51.772483, -9.239598, "NE corner"),
+            (51.660478, -9.483205, "SW corner"),
+            (51.7186, -9.3606, "Priest's Leap"),
+        ],
+        label="Priest's Leap / Caha Mountains over Bantry Bay",
+    ),
+    "mizen_head": dict(
+        # SW tip of Ireland; verified peak 456m, 82% sea in-frame.
+        lat_min=51.351, lat_max=51.551, lon_min=-10.023, lon_max=-9.623, zoom=12,
+        camera=(51.4508, -9.8229),
+        markers=[(51.4508, -9.8229, "Mizen Head")],
+        label="Mizen Head",
+    ),
+    "slea_head": dict(
+        # Dingle Peninsula, west of Kerry; verified peak 771m, 69% sea in-frame.
+        lat_min=52.006, lat_max=52.186, lon_min=-10.668, lon_max=-10.228, zoom=12,
+        camera=(52.0964, -10.4478),
+        markers=[(52.0964, -10.4478, "Slea Head")],
+        label="Slea Head / Dingle Peninsula",
+    ),
+    "loop_head": dict(
+        # Clare, mouth of the Shannon Estuary; verified peak 655m (likely
+        # inland hills within the padded box, not the headland itself),
+        # 78% sea in-frame.
+        lat_min=52.469, lat_max=52.649, lon_min=-10.106, lon_max=-9.746, zoom=12,
+        camera=(52.5589, -9.9257),
+        markers=[(52.5589, -9.9257, "Loop Head")],
+        label="Loop Head",
+    ),
+}
+DEFAULT_LOCATION = "millstreet"
 
-MARKERS = [  # (lat, lon, label)
-    (51.8892, -8.5243, "start"),
-    (52.0603, -9.0633, "Millstreet"),
-    (52.4301, -9.4701, "end"),
-]
+# Active bbox — mutated by set_location(); siblings (export_to_game.py,
+# fetch_osm_roads.py, fetch_s2.py) import these as module attributes, so
+# set_location() must run before they read them. Defaults preserve the
+# original Millstreet-only behavior for anything that doesn't call it.
+LAT_MIN, LAT_MAX = LOCATIONS[DEFAULT_LOCATION]["lat_min"], LOCATIONS[DEFAULT_LOCATION]["lat_max"]
+LON_MIN, LON_MAX = LOCATIONS[DEFAULT_LOCATION]["lon_min"], LOCATIONS[DEFAULT_LOCATION]["lon_max"]
+ZOOM = LOCATIONS[DEFAULT_LOCATION]["zoom"]
+MARKERS = LOCATIONS[DEFAULT_LOCATION]["markers"]
+LOCATION_NAME = DEFAULT_LOCATION
+
+
+def set_location(name):
+    global LAT_MIN, LAT_MAX, LON_MIN, LON_MAX, ZOOM, MARKERS, LOCATION_NAME
+    loc = LOCATIONS[name]
+    LAT_MIN, LAT_MAX = loc["lat_min"], loc["lat_max"]
+    LON_MIN, LON_MAX = loc["lon_min"], loc["lon_max"]
+    ZOOM = loc["zoom"]
+    MARKERS = loc["markers"]
+    LOCATION_NAME = name
 
 
 def tile_xy(lat, lon, z):
@@ -42,6 +105,7 @@ def fetch(z, x, y, cache_dir):
 
 
 def main():
+    print(f"location: {LOCATION_NAME} ({LOCATIONS[LOCATION_NAME]['label']})")
     os.makedirs(OUT, exist_ok=True)
     cache = os.path.join(OUT, "tiles")
     os.makedirs(cache, exist_ok=True)
@@ -107,4 +171,9 @@ def main():
 
 
 if __name__ == "__main__":
+    name = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_LOCATION
+    if name not in LOCATIONS:
+        print(f"unknown location {name!r}. options: {', '.join(LOCATIONS)}")
+        sys.exit(1)
+    set_location(name)
     main()
