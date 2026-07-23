@@ -4,10 +4,10 @@ Cross-session scratchpad for loose ends that don't have a natural home yet — n
 
 ## Needs your action (laptop/hardware-side)
 
-- **Delete `.planning/`** (issue #6) — everything worth salvaging is already mined (snow bug → issue #5, terrain editor spec → issue #7 backlog, quit()-reload gotcha → `.decisions/engine.md`). The remote session's bulk-delete got blocked by its permission classifier; trivial for you to `git rm -r .planning/` locally.
-- **Run `tools/dem/fetch_osm_roads.py`-style check for `cork_city` / `savannah`** — the remote session couldn't reach the Overpass API (proxy blocked it), so the two metro splice candidates' road-grid character (organic vs. planned-grid) is asserted from real-world knowledge, not independently verified against actual OSM data yet.
-- **Re-center `ebro_delta`** (`tools/dem/fetch_dem.py`) — current box still catches nearby upland (Els Ports foothills, p99 elev 575m), not a clean flat-marsh reference. Try centering further SE (~40.62, 0.80) with a smaller pad.
-- **Try a flatter sub-box for `mongolia_steppe`** — current box has more relief (1043m) than the "huge flat sightlines" Grass steppe read wants; a truer steppe patch is probably nearby.
+- ~~Delete `.planning/`~~ **Done 2026-07-23** — issue #6 closed.
+- ~~Re-center `ebro_delta`~~ **Done 2026-07-23** — verified flat (p99 37m), see splice-portfolio.md.
+- ~~Flatter `mongolia_steppe` box~~ **Done 2026-07-23** — relief down from 1043m to 326m, see splice-portfolio.md.
+- **Run `tools/dem/fetch_osm_roads.py`-style check for `cork_city` / `savannah`** — this laptop *does* have working Overpass access (proven earlier this session), so this is doable, just not yet done — the two metro splice candidates' road-grid character (organic vs. planned-grid) is still asserted from real-world knowledge, not independently verified against actual OSM data.
 
 ## Open design threads (unresolved mid-conversation)
 

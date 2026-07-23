@@ -74,13 +74,15 @@ LOCATIONS = {
         label="Monument Valley, UT/AZ",
     ),
     "mongolia_steppe": dict(
-        # Grass steppe biome candidate (Orkhon Valley region); verified elev
-        # 1312-2355m (1043m relief — more relief than pure flat steppe; a
-        # flatter sub-box nearby may read closer to "huge sightlines").
-        lat_min=47.05, lat_max=47.35, lon_min=102.50, lon_max=103.10, zoom=12,
-        camera=(47.20, 102.80),
-        markers=[(47.20, 102.80, "Orkhon Valley")],
-        label="Mongolian steppe, Orkhon Valley",
+        # Grass steppe biome candidate. RE-CENTERED 2026-07-23: original Orkhon
+        # Valley box had 1043m relief (river-valley hills, not flat steppe).
+        # This box is open steppe east of the Khangai foothills — verified
+        # elev 1302-1749m, only 326m relief (p99-p1), 0% sea. Genuine flat
+        # steppe read.
+        lat_min=46.90, lat_max=47.10, lon_min=106.20, lon_max=106.80, zoom=12,
+        camera=(47.00, 106.50),
+        markers=[(47.00, 106.50, "Open steppe")],
+        label="Mongolian steppe (central, east of Khangai)",
     ),
     "costa_rica_jungle": dict(
         # Jungle candidate — not yet in the biome catalog (closest is
@@ -93,14 +95,13 @@ LOCATIONS = {
         label="Costa Rica (Arenal), mountainous rainforest",
     ),
     "ebro_delta": dict(
-        # Delta marsh biome candidate. Verified elev 1-735m, sea 73% — but
-        # p99 elevation is 575m, meaning a real chunk of the box is nearby
-        # upland (Els Ports foothills), not delta plain. Re-center further
-        # SE (~40.62, 0.80) and shrink pad before treating this as a clean
-        # flat-marsh reference; current box is a first pass, not verified-flat.
-        lat_min=40.590, lat_max=40.740, lon_min=0.600, lon_max=0.800, zoom=12,
-        camera=(40.665, 0.700),
-        markers=[(40.665, 0.700, "Ebro Delta")],
+        # Delta marsh biome candidate. RE-CENTERED 2026-07-23: original box
+        # caught Els Ports foothills (p99 575m). This box sits on the actual
+        # delta plain — verified elev -8 to 100m, p99 37m, 85% sea/wetland.
+        # Genuine clean flat-marsh reference now.
+        lat_min=40.630, lat_max=40.740, lon_min=0.680, lon_max=0.870, zoom=12,
+        camera=(40.685, 0.775),
+        markers=[(40.685, 0.775, "Ebro Delta plain")],
         label="Ebro Delta, Spain",
     ),
     "vermont": dict(
