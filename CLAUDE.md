@@ -14,6 +14,7 @@ Replaces the old `.planning/` GSD framework (abandoned — too token-heavy for t
 - `docs/` — high-level, mostly-static: vision, stack, per-system area docs, `moments/` director's notes, `research/` source material.
 - `.decisions/` — per-system technical decisions, tuned over time (see below).
 - GitHub Issues/Projects — day-to-day task tracking.
+- `TODO.md` (repo root) — cross-session scratchpad for loose ends without a home yet (blocked items, mid-conversation open threads). Not a duplicate of area docs' own Open Questions sections. Prune as things resolve.
 
 Don't lock volatile tuning values (render distance, LOD tables, shader thresholds) into either `docs/` or `.decisions/` while they're still being matched to a naive/prototype implementation — those get recorded once an implementation pass actually settles them, not during planning.
 
