@@ -60,6 +60,7 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 | Characters | [characters.md](characters.md) | pipeline + cage editor built | quadruped support (wolves/deer) | — |
 | Progression/RPG | [progression.md](progression.md) | nothing built | D7 how much of the RPG stack the slice needs | — |
 | Simulation/runtime | [simulation.md](simulation.md) | architecture proposed | graduation to .decisions (see backlog) | — |
+| Cost ledger (cross-cutting) | [cost-ledger.md](cost-ledger.md) | v0 first pass | fire-spread's cost regime undecided; bake-time budget doesn't exist yet | — |
 | Dialogue/NPCs | [dialogue.md](dialogue.md) | proposal only | LLM bake pipeline (local vs API), voice consistency | — |
 | Knowledge/journal/map | [knowledge.md](knowledge.md) | decided: sky-as-map | journal UI shape, staleness pacing | — |
 | Factions | [factions.md](factions.md) | proposal only | who woke the relay; join vs be-known | — |

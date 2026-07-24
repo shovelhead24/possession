@@ -25,7 +25,7 @@ A city needs to *read* as dense, not *be* dense:
 
 **Dungeons are the opposite case and keep the pocket-reality treatment** (occlusion-funnel/context-swap/spatial-lie — docs/research/chatgpt-brainstorm-2026-04.md "Interiors as Pocket Realities," brief.md R6): they *want* to be bigger than their entrance suggests and have no need for ext/int visual continuity. Real buildings tell the truth about their size; dungeons are allowed to lie, because nobody's shooting out of a cave mouth into the street.
 
-**Fire as a stateful system node:** a burning building is the same Tier-3 pattern already named in the interaction-fidelity tiers (generator/camp/alert-state examples, terrain.md's mined brainstorm) — a burn-state fact with a spread clock (TempoBuf-adjacent), not a new category. The taxonomy fit is real; the fire-spread/structural-collapse engineering itself is still open work, not solved by naming it.
+**Fire as a stateful system node:** a burning building is the same Tier-3 pattern already named in the interaction-fidelity tiers (generator/camp/alert-state examples, terrain.md's mined brainstorm) — a burn-state fact with a spread clock (TempoBuf-adjacent), not a new category. The taxonomy fit is real; the fire-spread/structural-collapse engineering itself is still open work, not solved by naming it. Cost-wise (cost-ledger.md), it's the one node whose regime isn't decided — bake-only scar vs. live diffusion spread are wildly different cost profiles, and that call should come before any engineering estimate.
 
 "Depth is a feeling, not a measurement" is the literal cost control, not just a nice line — it serves authoring time and the potato-hardware frame budget in the same direction, no tradeoff between them.
 

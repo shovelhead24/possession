@@ -1,6 +1,6 @@
 # Possession — Simulation Architecture
 
-The runtime half of the world: bake layers produce *space* (terrain.md), this stack produces *time*. Extracted from progression.md 2026-07-19. Sibling docs: [knowledge.md](knowledge.md) (the player's pyramid), [dialogue.md](dialogue.md) (baked voice), [operators.md](operators.md) (operator registry).
+The runtime half of the world: bake layers produce *space* (terrain.md), this stack produces *time*. Extracted from progression.md 2026-07-19. Sibling docs: [knowledge.md](knowledge.md) (the player's pyramid), [dialogue.md](dialogue.md) (baked voice), [operators.md](operators.md) (operator registry), [cost-ledger.md](cost-ledger.md) (function-class/cost-regime index — R1-R3's Agent-tick class is the runtime-continuous budget's main resident).
 
 ## Runtime Layer Stack — the player-POV sandbox (PROPOSED 2026-07-18)
 
