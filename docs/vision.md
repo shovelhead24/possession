@@ -77,6 +77,9 @@ Ringing the bell is not cowardly. But it tests your courage in a suddenly much m
 - Halo CE — couch co-op, the golden triangle, terrain as strategy
 - Metroid — alone, stripped, climbing back
 - RE2 — two people, same world, different experience
+- Apocalypse Now / No Country for Old Men (2026-07-26) — proof that unresolved moral ambiguity and emotional devastation aren't in tension: neither film answers its own darkness, both land because the craft (score, silence, restraint) is generous exactly where the meaning refuses to be
+
+**Cautionary, not aspirational: Far Cry 2 (2026-07-26).** Same Heart-of-Darkness-shaped indifference we're reaching for, but it fails in two separable ways worth naming so we don't repeat them: (1) **indifference without awe** — pure cynicism, no sublime counterweight, whereas our tone list above is awe-first indifference (the ring is indifferent *and* beautiful); (2) **systemic expression with no reflection** — decades of emergent player behavior, and the ending barely acknowledges the specific shape of what you did. Both are already answered elsewhere in this doc set: (1) by the awe-heavy moment list below, (2) by the ending's fact-driven vignette assembly (`.decisions/ending.md`) — but worth keeping the diagnosis explicit since our core theme carries the same risk Far Cry 2 didn't avoid.
 
 ## Moments
 

@@ -11,7 +11,7 @@ New area doc (2026-07-22). Core thesis: any convenience that would normally be a
 ## Worked Tools
 
 - **Binoculars/spyglass** — no new mechanic, a handheld interface to the existing `observe(vantage, time, weather)` operator (knowledge.md). Plausible dual-purpose as a combat scope.
-- **Translator/codex** (tier 2–3) — extends which baked dialogue variants are legible as you move along the arc's dialect gradient (factions.md "placename gradients"). A consumer-side filter over existing dialogue-bake output; no new fields needed.
+- **Translator/codex** (tier 2–3) — extends which baked dialogue variants are legible as you move along the arc's dialect gradient (factions.md "placename gradients"). A consumer-side filter over existing dialogue-bake output; no new fields needed. **Before it unlocks (2026-07-26): untranslated speech should be stylistically legible while staying semantically illegible** — prosody (pitch, cadence, urgency, repetition) conveys "this is a warning" or "this is grief" without conveying the words. Mystery instead of gibberish, and cheaper: crafting delivery for an unlocked dialect costs far less than baking full translated content nobody can read yet.
 - **Compass/sextant** — bearing + distance to the player's *own* journal pins only. Deliberately respects no-omniscient-map: it orients you toward what you decided mattered, never toward what the world would otherwise reveal for free.
 - **Night-vision/lowlight tool** (tier 2–3, gate carefully) — must not arrive before the wolves moment does its job; tier-gating night capability is how "you are prey" stays true until the design wants it to stop being true.
 
