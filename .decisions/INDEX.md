@@ -12,4 +12,4 @@ One line per area file — decisions are the source of truth, this is just a map
 - lore.md — the Displacement (rogue AI, ring-scale portal, explains degradation + the shootdown); reactivatable ancients; Earth zoo
 - rendering.md — texture fidelity baseline: deliberately ~2001/Halo-CE; modern budget spent on scale/lighting, never texels
 - terrain.md — prebaked layered world: bake DAG + gates, recipe-versioned, generous interfaces / naive engines
-- world.md — ring scale: 2,000 km circumference (honest sky geometry); day length stays a design value
+- world.md — ring scale: 2,000 km circumference × 50 km width (honest sky geometry); day length stays a design value; open tension with substrate's power-of-two proposal

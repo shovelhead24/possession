@@ -12,6 +12,13 @@
 **Decision:** The ring's circumference is 20,000 km (radius ~3,183 km). Width stays at the proposed ~10 km (not yet locked). Playable surface ≈ 200,000 km² (≈ Great Britain).
 **Why:** Scale chosen from the traversal point of view, not physics: the ring must *not* be casually walkable (walking 360° = ~23 days nonstop at the current 10 m/s), so that transport modes are integral to the game and each progression tier changes the player's relationship to distance (walk → horse → vehicle/boat → flyer → ancient rim transit). Smaller rings (100–1,000 km) made honest physics prettier but collapsed the transport ladder.
 
+### ring-width-50km — Ring width set at 50 km (closes D2b)
+**Date:** 2026-07-25
+**Status:** active
+**Decision:** Width 50 km — the widest of the original 10/32.768/50 km candidate band. Closes brief D2b.
+**Why:** Settled by repeated hands-on testing in the `ring_vibes` mock (real DEM terrain, honest curvature, multiple flight/drive/walk sessions) rather than a single formal vibe-check pass — the width consistently read well across sessions, and the user chose to promote it rather than hold for a separate dedicated verdict. Widest option also maximizes the width-driven opportunities catalogued in world.md (cross-ring biome variety, lostness, walls-as-destinations, a sea worth a boat).
+**Open tension, not yet resolved:** `docs/terrain/substrate.md`'s D9 proposal wants power-of-two dimensions (C = 2²¹ m ≈ 2,097 km, W = 2¹⁵ m ≈ 32.768 km) for clean tile addressing — this decision keeps the plain 2,000 km / 50 km numbers instead, chosen from real testing rather than math convenience. D9 needs to either accept non-power-of-two dimensions (losing the clean-tiling property) or the substrate tiling scheme needs to be designed to tolerate it (e.g., a tile size that doesn't need to evenly divide the full circumference). Flagged for whoever picks up substrate v1 freeze.
+
 ### cosmology-honest-sky-cheated-day — Sky geometry honest; day length remains a design value
 **Date:** 2026-07-18
 **Status:** active

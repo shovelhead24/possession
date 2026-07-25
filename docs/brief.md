@@ -102,7 +102,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 - [x] **D1** — Six principles + four session laws ratified (2026-07-19, `.decisions/design-laws.md`)
 - [x] **D1b** — Interaction-fidelity tiers ratified (2026-07-19, `.decisions/design-laws.md`)
 - [x] **D2 (part)** — Circumference: 2,000 km (2026-07-18, `.decisions/world.md`; superseded same-day 20,000 km). Sky geometry honest, day length free
-- [ ] **D2b** — Ring width (10–50 km candidates) ← needs skybox vibe mocks (issue #9) + width-opportunity call
+- [x] **D2b** — Width: 50 km (2026-07-25, `.decisions/world.md#ring-width-50km`) — settled by hands-on mock testing rather than a formal #9 verdict pass; open tension with substrate's power-of-two proposal (D9) flagged in the decision
 - [x] **D3 (architecture)** — Prebaked layer DAG + gates, recipe-versioned (2026-07-19, `.decisions/terrain.md`); substrate spec + streaming detail remain in issue #1
 - [x] **Dialogue boundary** — baked-only, zero runtime LLM (2026-07-19, `.decisions/dialogue.md`); pipeline open pending R7
 - [x] **Knowledge/map** — no omniscient map, sky-as-map (2026-07-19, `.decisions/knowledge.md`; ratified ahead of UI sketch)
