@@ -122,6 +122,24 @@ LOCATIONS = {
         markers=[(51.8985, -8.4756, "Cork City")],
         label="Cork City, Ireland",
     ),
+    "guri_dam": dict(
+        # Engineered water infrastructure candidate — Embalse de Guri /
+        # Simon Bolivar Dam, Guiana Highlands, Venezuela. First candidate
+        # that's a real dam+reservoir at scale, not natural terrain — direct
+        # grounding for lore.md's reactivatable ancient systems / civilization.md's
+        # still-open surviving-enclave-economy question.
+        # Elevation stats: 207m median, 313m relief (p99-p1) -- plausible for
+        # highland terrain around a ~270m ASL reservoir. CAVEATS (2026-07-23,
+        # not yet resolved): -1048m minimum in the raw scan is almost certainly
+        # a Terrarium decode artifact (same class as the Savannah glitch), not
+        # real terrain. And elevation-based "sea fraction" can't detect a lake
+        # sitting well above sea level -- whether the reservoir is actually
+        # in-frame needs a Sentinel-2 visual check, not asserted here.
+        lat_min=7.62, lat_max=8.02, lon_min=-63.30, lon_max=-62.80, zoom=12,
+        camera=(7.8211, -63.0301),
+        markers=[(7.8211, -63.0301, "Guri Dam")],
+        label="Guri Dam / Embalse de Guri, Venezuela",
+    ),
     "savannah": dict(
         # Metro candidate — historic planned grid, contrast to Cork's organic
         # layout. Verified flat (p99 elev 21m over a 7x8km box) — the 318m

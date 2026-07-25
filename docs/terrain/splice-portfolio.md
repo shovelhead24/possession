@@ -23,6 +23,12 @@ The first five candidates split into two clusters, not a spread — mountain-pas
 - `mizen_head` and `loop_head` both have real lighthouse/signal-station infrastructure on site — direct grounding for [locations.md](../locations.md)'s Lighthouse/beacon-tower archetype and geography.md's ~18–25% "the sea" stretch (lighthouse chain).
 - `priests_leap` is a real mountain-pass pinch point — candidate grounding for geography.md's ~60–75% highland/wall country stretch.
 
+## Batch 3 — Engineered Water Infrastructure
+
+| Name | Location | Verified stats | Biome affinity | Notes |
+|---|---|---|---|---|
+| `guri_dam` | Embalse de Guri / Simón Bolívar Dam, Guiana Highlands, Venezuela | elev median 207m, 313m relief (p99-p1) | Engineered/reactivatable infrastructure | **not fully verified** — a dam+reservoir at scale, not natural terrain; direct grounding for lore.md's reactivatable ancient systems and civilization.md's open surviving-enclave-economy question. Two open caveats: (1) -1048m raw minimum is almost certainly a Terrarium decode artifact (same class as Savannah's), not real terrain; (2) elevation-based "sea fraction" can't detect a lake sitting above sea level — whether the reservoir is actually in-frame needs a Sentinel-2 visual check, not yet done. |
+
 ## Batch 2 — Desert, Plateau, Jungle, Delta, Temperate Hills, Metro
 
 | Name | Location | Verified stats | Biome affinity | Notes |

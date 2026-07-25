@@ -3,11 +3,13 @@ Reads windowed/downsampled data straight from COGs on AWS; mosaics the least-clo
 scenes onto a canvas aligned with the DEM grid; exports to the Godot mock.
 License: free incl. commercial — credit line "Contains modified Copernicus Sentinel data".
 
-Usage: python fetch_s2.py
+Usage: python fetch_s2.py [location]
+  location defaults to "millstreet" if omitted. Must match fetch_dem.py's LOCATIONS.
 """
 import io
 import json
 import os
+import sys
 import urllib.request
 
 import numpy as np
@@ -40,7 +42,8 @@ def stac_search():
         return json.loads(r.read())["features"]
 
 
-def main():
+def main(name):
+    fd.set_location(name)
     items = stac_search()
     print(f"{len(items)} candidate scenes (sorted by cloud cover)")
     canvas = np.zeros((OUT_H, OUT_W, 3), dtype=np.uint8)
@@ -85,15 +88,16 @@ def main():
             print(f"  {it['id']} skipped: {e}")
 
     img = Image.fromarray(canvas)
-    img.save(os.path.join(HERE, "out", "s2_preview.jpg"), quality=88)
+    img.save(os.path.join(HERE, "out", f"{name}_s2_preview.jpg"), quality=88)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     os.makedirs(DEST, exist_ok=True)
-    with open(os.path.join(DEST, "millstreet_sat.dat"), "wb") as f:
+    with open(os.path.join(DEST, f"{name}_sat.dat"), "wb") as f:
         f.write(buf.getvalue())
-    print(f"coverage {100.0*filled.mean():.1f}%  wrote millstreet_sat.dat "
-          f"({len(buf.getvalue())//1_000_000} MB) + out/s2_preview.jpg")
+    print(f"coverage {100.0*filled.mean():.1f}%  wrote {name}_sat.dat "
+          f"({len(buf.getvalue())//1_000_000} MB) + out/{name}_s2_preview.jpg")
 
 
 if __name__ == "__main__":
-    main()
+    loc_name = sys.argv[1] if len(sys.argv) > 1 else fd.DEFAULT_LOCATION
+    main(loc_name)
