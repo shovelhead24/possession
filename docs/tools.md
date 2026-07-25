@@ -63,6 +63,7 @@ Grouped by recovery band (civilization.md); every entry lists intended use → a
 - **Hookshot** — traversal (moments/hookshot.md) → vertical hunting, wall ascent, yanking a rider off a horse (?); the flagship, already designed.
 - **Wall transit** (reactivatable, lore.md) — fast travel → moving *cargo* and *people*: evacuate a settlement ahead of a negotiable inevitability the director scheduled (the hail-mary artery — deliverable by transit what could never be delivered on foot).
 - **Air-defense node** (reactivatable) — area denial → pointed at the *mid-game armada's* landing craft? Probably futile (lore.md: armadas intercept the interceptors) — but "probably" is where hail marys live.
+- **Temporal echo projector** (2026-07-26) — renders a tile as it stood at an earlier `fact_version` → not a new rendering system: fact history is already never deleted, only superseded (simulation.md's Datomic precedent), so "show an old snapshot" is a query, not new data. Artery rule: puzzle-use (see what changed to find what's hidden) + pure grief-use (watch the city stand, before — lands directly on Protagonist Two's arc, moments/city_destruction.md).
 
 **Round 2 additions (2026-07-22):**
 - **Snare line** — passive hunting → perimeter alarm at night (a micro-clock interrupt while you sleep); catch the wolf that's been tracking *you*.

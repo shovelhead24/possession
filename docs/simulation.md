@@ -6,7 +6,7 @@ The runtime half of the world: bake layers produce *space* (terrain.md), this st
 
 No missions, architecturally enforced: the bake DAG ends where player time begins; this mirror stack runs live:
 
-- **R0 — persistent facts:** player impact, deaths, taken objects — the only durable world mutations (selective persistence)
+- **R0 — persistent facts:** player impact, deaths, taken objects — the only durable world mutations (selective persistence). **Datomic precedent (2026-07-26):** independently reinvented Rich Hickey's Datomic model — facts as immutable, accretive tuples (entity, attribute, value, cause, transaction), never updated/deleted, only superseded. `.decisions/`'s SUPERSEDED-not-deleted discipline and K4 staleness (a timestamped observation vs. current `fact_version`) are already exactly Datomic's "as of" time-travel query, independently arrived at. Worth borrowing explicitly: **one universal fact tuple shape across every system** (terrain edits, faction events, inventory, not just knowledge/rumor) rather than bespoke per-system fact representations — a uniform shape means one generic "why"/"since when" query mechanism works everywhere. Also generalizes staleness beyond the player: any entity with a personal as-of pointer into the fact log can honestly disagree with another (two guards in the same room, one just back from months away) for free, same mechanism as K4.
 - **R1 — pressures:** derived from facts, decay and propagate
 - **R2 — intentions:** factions, key NPCs, **and the player as just another intention-holding entity** — not a special customer of a content system
 - **R3 — actions:** world-side moves to reduce pressure

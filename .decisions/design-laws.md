@@ -2,6 +2,12 @@
 
 Laws a future session could violate silently — the core reason this log exists. Each independently supersedable.
 
+### decomplect — Ask what's braided together that doesn't need to be
+**Date:** 2026-07-26
+**Status:** active
+**Decision:** A standing review question for every future system: what independent concerns have been braided ("complected," Rich Hickey's term — from Latin *complectere*, to weave together) into one piece that could instead be kept separate and composed? Not a new mechanic — a naming of a discipline already practiced without a name.
+**Why:** Every clean split this project has made was this question answered correctly in advance: tempo kept separate from perception (perception.md) rather than folded into TempoBuf; the fine rendering tile grid kept separate from the coarse simulation grid rather than forced to share one resolution; dialogue's baked content kept separate from its runtime selection (dialogue.md). Every real bug caught this session was an accidental braid nobody noticed (fetch_s2.py's output path braided to "millstreet" regardless of input; terrain winding braided to an unverified assumption about Godot's culling convention). Hickey's value-vs-place distinction is the same principle at the data level: a value (immutable, freely shareable) versus a place (mutable, silently drifting) is deliberately how "observation never rerolls the world" already works — the world's state is a value, not a place.
+
 ### principles-ratified — The six brainstorm principles are law
 **Date:** 2026-07-19
 **Status:** active
