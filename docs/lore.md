@@ -38,6 +38,10 @@ Working synthesis (not decided): 1 as emotional truth, 2 as how it's encountered
 
 **Possible, not forced, connection:** a plausible candidate for who woke the relay (factions.md's deferred mystery) — not resolved, the relay question stays explicitly deferred per prior session.
 
+## Recontextualization / Causal Chains (2026-07-25, aspirational — not designed)
+
+Seeded by perception.md's "lies carry their motive": a lie's back-reference to its generating intention is a one-hop causal link. The bigger version — facts and dialogue lines carrying backlinks to *their* generating causes, recursively, so something heard as a simple statement early on turns out, hours later, to be one node in a much longer chain — is what would let a tone shift land the way real recontextualization does (something understood plainly at first becomes retroactively more complicated once its cause is known). Doesn't need new architecture — every generated fact/dialogue line carrying one consistent backlink field, chained by lookup rather than built as a structure — but genuinely expensive to *author well* (the backlinks are cheap data; making chains mean something when followed is real narrative-bake work, LLM or otherwise). Explicitly not scoped or committed to tonight — named so it isn't lost, not designed.
+
 ## Open Questions
 
 - Is the AI (in any fragment) still capable of communication, or purely environmental/systemic presence?

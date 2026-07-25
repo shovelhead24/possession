@@ -27,7 +27,28 @@ Distance-based throttling is real but must split into two channels, not one:
 
 **A grid still earns a narrow role here:** broad-phase visibility culling (line of sight over the heightfield, above the curve horizon, not haze-blocked) to cheaply determine which regions/players could even perceive an emitted signal — before doing the expensive per-observer check. This bounds *who checks*, not *how much is simulated*.
 
-**Half-baked, not adopted:** rumor spread, sound, light, fire, and weather fronts might all be the same generic operator (emit at a point → attenuate by a medium property → threshold-detect at receivers), just parameterized differently per channel. Genuinely unsure whether unifying them saves complexity (their propagation shapes differ enormously — light is instant/isotropic, rumor is slow/route-constrained) or just adds an abstraction nobody asked for. Flagged for whoever wants to chase it, not committed to.
+**Resolved 2026-07-25 — three channels, three speeds, not one operator:**
+
+| Channel | Speed | Mechanism | Needs a grid? |
+|---|---|---|---|
+| Light | ~instant (6.7ms ring-wide) | visibility check only | No |
+| Sound | 340 m/s — genuinely delayed (a 50km boom arrives ~150s late; the real lightning/thunder gap, playable at ring scale) | analytic `distance ÷ speed`, scheduled once | No — simpler than a grid |
+| Consequence/pressure | hours–days | fact → R1 pressure, propagates via the existing region-adjacency graph (factions.md's refugee-wave/upstream-dam dynamics) | Graph, not a spatial grid |
+| Rumor/social | variable, **infamy-weighted** — bigger news travels faster/further through the chain topology, same way urgent news outruns gossip in reality | graph-walk over settlement/route connectivity, per-edge speed from local infrastructure (`tech_level`) | Graph, not a spatial grid |
+| Weather | wind speed, continuous field advection along `spinward_wind` | reuses `wind_exposure` (L2) — a moving front, visibly approaching, no per-region authoring needed | **Yes** — the one case that's genuinely grid-shaped |
+| Disease | contact/chain-graph, no sensory signal at all (never seen from a distance — only rumor or direct K4 observation) | same graph as rumor, disease-specific params; severity modulated by `tech_level` (civilization.md) — poor sanitation in regressed bands worsens outbreaks; triggers the same refugee-to-pinch-camp dynamic as a scheduled evacuation | Graph, not a spatial grid |
+
+**Verdict on "one generic solution":** the *vocabulary* (emit → attenuate → threshold-detect) is real and worth keeping as a shared mental model — it's the same family as diffusion/epidemic math, not a coincidence. The *implementation* should stay as several small, naive, topology-specific engines (broadcast / analytic delay / graph-walk / field-advection) rather than one generic operator — forcing a shared implementation across genuinely different topologies (isotropic-instant vs. contact-graph vs. wind-advected field) would mean parameterizing away the real differences, which is what "generous interfaces, naive engines" warns against. Naming the family pays off conceptually (recognize the shape fast next time); it doesn't pay off as shared code.
+
+## Lies Carry Their Motive (2026-07-25)
+
+A deliberate false K2 claim isn't just content with provenance — it's an **action (R3) serving an existing intention (R2)** the liar already holds (fear of punishment, protecting an ally, manipulating the player for a resource). That intention already exists in the system; it just isn't linked to the lie yet. **Small, precise addition:** a deliberate-lie K2 claim carries a back-reference to its generating intention. Discovering *why* someone lied — not just that they did — becomes its own discoverable fact, feeding the journal or surfacing that a "misattributed reactivation" (factions.md) was deliberate cover, not an accident.
+
+This is the same mechanism, one hop deep, as the bigger causal-chain idea in lore.md's "Recontextualization" note — a fact pointing back to what generated it. Worth keeping the two connected rather than designing them separately.
+
+## Recompute Priority (2026-07-25)
+
+A region's simulation tick priority is a function of three things, not one: **distance to player**, **distance to the event**, and **time since the event** — not just player proximity. This doesn't need new machinery: `realize()`/`summarize()`'s conservation gate already reconciles a region's accumulated facts into a consistent local state whenever a player finally arrives, regardless of how long it was ticking coarsely in the meantime. "Catching up" is already the job that mechanism does.
 
 ## Critiques / Open Considerations
 
