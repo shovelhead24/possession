@@ -1,15 +1,18 @@
 # Substrate v0 — Ring Coordinates, Tiling, Resolution Pyramid
 
-The frozen interface beneath L0 (see `.decisions/terrain.md#bake-architecture`: generous interfaces, naive engines — this is the most generous, most frozen one). Status: **PROPOSED v0** — freeze to v1 after the #9 mocks confirm circumference.
+The frozen interface beneath L0 (see `.decisions/terrain.md#bake-architecture`: generous interfaces, naive engines — this is the most generous, most frozen one). Status: **v1 dimensions settled 2026-07-25** — the earlier power-of-two-circumference proposal below was superseded once real dimensions were decided from hands-on mock testing rather than tiling elegance.
 
-## Dimensions (power-of-two proposal — needs ratification)
+## Dimensions — RESOLVED 2026-07-25
 
-Tiles must divide the circumference evenly (no tile spans the wrap seam), and 2,000,000 m = 2⁷ × 5⁶ breaks power-of-two tiling above 128 m. Proposal:
+Ring is decided at **C = 2,000 km, W = 50 km** (`.decisions/world.md#ring-circumference-2000km`, `#ring-width-50km`) — plain numbers chosen from real testing, not the earlier power-of-two proposal (2,097.152 km / 32.768 km). This looked like a real loss at first (`.decisions/world.md` flagged it as an open tension); it mostly isn't:
 
-- **C = 2²¹ m = 2,097.152 km** (radius ≈ 333.8 km) — within the decided 1,500–3,000 band, ~5% over the logged 2,000 km; `.decisions/world.md` explicitly allows in-band tuning
-- **W = 2¹⁵ m = 32.768 km nominal** (matches the 30–40 km width proposal; still awaiting D2b)
+**The wrap-seam constraint only binds the circumference axis** — width never wraps (two hard edges/walls, not a seam), so it never actually needed power-of-two-ness. An edge tile is an ordinary case; a seam-spanning tile is the thing that had to be prevented.
 
-Every power-of-two tile size then divides both axes exactly; pyramid, Morton codes, and seam math are all trivial.
+**Circumference (2,000,000 m) still has a usable power-of-two leaf size: 128 m** (2,000,000 = 2⁷ × 5⁶, so 128 m divides it exactly, 15,625 tiles around, zero remainder). Not as large as the old proposal's top-level tile, but still power-of-two — which is what preserves Morton-code/quadtree bit-packing efficiency (a plain divisor like 100 m would avoid the remainder too, but lose that property).
+
+**Leaf tile size: 128 m, both axes**, using the same grid for width even though width doesn't strictly require it (390 full 128 m tiles + one 80 m partial tile at the wall edge — an ordinary boundary case, not a seam). Higher LOD levels batch multiple 128 m leaves together at render/stream time; those batches don't need to divide the ring evenly since batching is a runtime streaming choice, not a storage-addressing one.
+
+This is a substrate/addressing decision (frozen interface), not a rendering tuning value — the actual mesh/LOD chunk sizes used for rendering remain free tuning per the usual rule, built by grouping N leaf tiles however performance testing wants.
 
 ## Logical Coordinates
 
@@ -21,7 +24,7 @@ Every power-of-two tile size then divides both axes exactly; pyramid, Morton cod
 ## Wrap Seam
 
 - Seam at lon = 0 by convention, but **unobservable by law**: no system may store or compare raw lon differences — only via helpers `lon_delta(a,b) → (−C/2, C/2]`, `lon_lerp`, `lon_dist`
-- Tiles never span the seam (guaranteed by power-of-two dimensioning)
+- Tiles never span the seam (guaranteed by the 128 m leaf size dividing the circumference exactly)
 
 ## Tile Addressing
 

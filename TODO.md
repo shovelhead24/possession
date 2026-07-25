@@ -17,7 +17,7 @@ Cross-session scratchpad for loose ends that don't have a natural home yet — n
 ## New follow-ups this round
 
 - **Height-calibration pass, needed before D4's atmosphere decision has real numbers.** No haze/boundary-layer height has ever been tuned against the real DEM terrain — every value used in `ring_vibes.gd` so far was picked ad hoc against whichever terrain (noise or real) happened to be loaded that session. Needs a dedicated test pass once ring height-scale is otherwise settled.
-- **D9 substrate freeze vs. plain dimensions.** Ring is now decided at 2,000 km × 50 km (round numbers, chosen from real testing), but `docs/terrain/substrate.md`'s D9 proposal wants power-of-two dimensions for clean tile addressing. Needs reconciling — either D9 accepts non-power-of-two dimensions, or the tiling scheme is redesigned to not require the tile size to evenly divide the full circumference.
+- ~~D9 substrate freeze vs. plain dimensions~~ **Resolved 2026-07-25** — 128 m power-of-two leaf tile divides 2,000 km exactly (15,625 around, zero remainder); width never needed power-of-two-ness since it doesn't wrap (edge tile ≠ seam tile). See `docs/terrain/substrate.md` "Dimensions — RESOLVED".
 
 ## Splice portfolio follow-ups
 

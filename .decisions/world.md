@@ -17,7 +17,7 @@
 **Status:** active
 **Decision:** Width 50 km — the widest of the original 10/32.768/50 km candidate band. Closes brief D2b.
 **Why:** Settled by repeated hands-on testing in the `ring_vibes` mock (real DEM terrain, honest curvature, multiple flight/drive/walk sessions) rather than a single formal vibe-check pass — the width consistently read well across sessions, and the user chose to promote it rather than hold for a separate dedicated verdict. Widest option also maximizes the width-driven opportunities catalogued in world.md (cross-ring biome variety, lostness, walls-as-destinations, a sea worth a boat).
-**Open tension, not yet resolved:** `docs/terrain/substrate.md`'s D9 proposal wants power-of-two dimensions (C = 2²¹ m ≈ 2,097 km, W = 2¹⁵ m ≈ 32.768 km) for clean tile addressing — this decision keeps the plain 2,000 km / 50 km numbers instead, chosen from real testing rather than math convenience. D9 needs to either accept non-power-of-two dimensions (losing the clean-tiling property) or the substrate tiling scheme needs to be designed to tolerate it (e.g., a tile size that doesn't need to evenly divide the full circumference). Flagged for whoever picks up substrate v1 freeze.
+**Tension with substrate's power-of-two proposal — resolved 2026-07-25:** `docs/terrain/substrate.md` now uses a 128 m power-of-two leaf tile (2,000,000 m circumference ÷ 128 m = 15,625 exactly, zero remainder) instead of the imagined 2²¹ m/2¹⁵ m top-level dimensions. Width never actually needed power-of-two-ness — it doesn't wrap, so an edge tile there is an ordinary case, not a seam. See substrate.md's "Dimensions — RESOLVED" section.
 
 ### atmosphere-density-falloff — Deep-cross-section atmosphere, density concentrated near the surface
 **Date:** 2026-07-25

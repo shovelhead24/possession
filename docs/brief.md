@@ -102,7 +102,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 - [x] **D1** — Six principles + four session laws ratified (2026-07-19, `.decisions/design-laws.md`)
 - [x] **D1b** — Interaction-fidelity tiers ratified (2026-07-19, `.decisions/design-laws.md`)
 - [x] **D2 (part)** — Circumference: 2,000 km (2026-07-18, `.decisions/world.md`; superseded same-day 20,000 km). Sky geometry honest, day length free
-- [x] **D2b** — Width: 50 km (2026-07-25, `.decisions/world.md#ring-width-50km`) — settled by hands-on mock testing rather than a formal #9 verdict pass; open tension with substrate's power-of-two proposal (D9) flagged in the decision
+- [x] **D2b** — Width: 50 km (2026-07-25, `.decisions/world.md#ring-width-50km`) — settled by hands-on mock testing rather than a formal #9 verdict pass
 - [x] **D3 (architecture)** — Prebaked layer DAG + gates, recipe-versioned (2026-07-19, `.decisions/terrain.md`); substrate spec + streaming detail remain in issue #1
 - [x] **Dialogue boundary** — baked-only, zero runtime LLM (2026-07-19, `.decisions/dialogue.md`); pipeline open pending R7
 - [x] **Knowledge/map** — no omniscient map, sky-as-map (2026-07-19, `.decisions/knowledge.md`; ratified ahead of UI sketch)
@@ -111,7 +111,7 @@ Interaction tiers 0–4 (static signal → passive react → binary → stateful
 - [ ] **D6** — Performance budget + benchmark scene (issue #8) ← needs R3
 - [ ] **D7** — RPG-stack scope for the first slice (§5) ← needs D8
 - [ ] **D8** — Define the first playable slice (§9)
-- [ ] **D9** — Freeze substrate v1 ([terrain/substrate.md](terrain/substrate.md)): ratify power-of-two dimensions (C = 2²¹ m, W = 2¹⁵ m) ← needs #9 mocks to confirm the band feel
+- [x] **D9** — Substrate v1 dimensions resolved (2026-07-25, [terrain/substrate.md](terrain/substrate.md)): ring stays at the decided 2,000 km/50 km (not the imagined power-of-two top-level); 128 m power-of-two leaf tile divides the circumference exactly (15,625 tiles, zero remainder) — width never needed power-of-two-ness since it doesn't wrap
 
 ## 9. First Slice — PROPOSED
 
