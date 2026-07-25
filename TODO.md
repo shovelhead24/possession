@@ -11,8 +11,13 @@ Cross-session scratchpad for loose ends that don't have a natural home yet — n
 
 ## Open design threads (unresolved mid-conversation)
 
-- **D4 curvature — atmosphere shell question, still unanswered:** does the ring have a confined atmosphere shell (thin band near the surface, vacuum/space above it) or does atmosphere fill the whole cross-section? This decides whether angle-dependent haze (airmass-style, like real atmospheric extinction) is the right frame for the near/far seam + night-sky-reveal tension, or whether that's importing physics nobody intended. Was mid-discussion when the session moved to DEM/biome work.
-- **Ring width discrepancy:** `game/mocks/ring_vibes.gd` has width locked to widest (50km) as of 2026-07-23 per its code comment, but `.decisions/world.md` still lists width as open (D2b, pending #9 vibe-check). Worth reconciling — either promote the mock default to a real decision, or note explicitly that it's provisional.
+- ~~D4 curvature — atmosphere shell question~~ **Resolved 2026-07-25** — deep-cross-section, surface-concentrated density falloff. See `.decisions/world.md#atmosphere-density-falloff`.
+- ~~Ring width discrepancy~~ **Resolved 2026-07-25** — 50km promoted to decided, `.decisions/world.md#ring-width-50km` (D2b closed). Open tension flagged there with substrate.md's power-of-two proposal (D9), not yet reconciled.
+
+## New follow-ups this round
+
+- **Height-calibration pass, needed before D4's atmosphere decision has real numbers.** No haze/boundary-layer height has ever been tuned against the real DEM terrain — every value used in `ring_vibes.gd` so far was picked ad hoc against whichever terrain (noise or real) happened to be loaded that session. Needs a dedicated test pass once ring height-scale is otherwise settled.
+- **D9 substrate freeze vs. plain dimensions.** Ring is now decided at 2,000 km × 50 km (round numbers, chosen from real testing), but `docs/terrain/substrate.md`'s D9 proposal wants power-of-two dimensions for clean tile addressing. Needs reconciling — either D9 accepts non-power-of-two dimensions, or the tiling scheme is redesigned to not require the tile size to evenly divide the full circumference.
 
 ## Splice portfolio follow-ups
 
