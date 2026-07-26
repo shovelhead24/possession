@@ -69,6 +69,11 @@ var _strip_arc := STRIP_ARC
 var _strip_segs := STRIP_SEGS
 var _strip_rows := STRIP_ROWS
 
+# First-slice creature test (slice-mock.md) — generic startle/flee proxy, deer + wolf presets
+const CreatureScript := preload("res://mocks/creature.gd")
+var _creatures: Array = []
+var _threat_active := false
+
 func _ready() -> void:
 	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	_noise.fractal_octaves = 4
@@ -291,6 +296,50 @@ func _process(delta: float) -> void:
 		Mode.WALK: _walk_tick(delta)
 		_: _fly(delta)
 
+func _terrain_height_flat(x: float, z: float) -> float:
+	# creature-space height: walk-mode approximation treats world x/z as arc/lat directly
+	return _terrain_h(x, z, WIDTHS[w_idx])
+
+func _player_pos() -> Vector3:
+	return _cam.global_position
+
+func _spawn_creatures(preset: String, n: int, dist: float) -> void:
+	if _dem_w == 0:
+		return
+	var base := _cam.global_position
+	var fwd := -_cam.global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	# deer ahead (+dist along view), wolves behind (-dist); scatter around that point
+	var center := base + fwd * (dist if preset == "deer" else -dist)
+	for i in n:
+		var c: Creature = CreatureScript.new()
+		c.configure(preset)
+		c.height_fn = _terrain_height_flat
+		c.threat_fn = _player_pos
+		if preset == "wolf":
+			c.became_threat.connect(_on_threat)
+		add_child(c)
+		var off := Vector3(randf_range(-25, 25), 0, randf_range(-25, 25))
+		var p := center + off
+		p.y = _terrain_height_flat(p.x, p.z)
+		c.global_position = p
+		_creatures.append(c)
+	_update_hud()
+
+func _clear_creatures() -> void:
+	for c in _creatures:
+		if is_instance_valid(c):
+			c.queue_free()
+	_creatures.clear()
+	_threat_active = false
+	_update_hud()
+
+func _on_threat(active: bool) -> void:
+	# null-write test surface: deer must NEVER reach here; only a wolf in APPROACH does
+	_threat_active = active
+	_update_hud()
+
 func _make_car() -> Node3D:
 	var root := Node3D.new()
 	var body := MeshInstance3D.new()
@@ -433,6 +482,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_P: sun_paused = not sun_paused
 			KEY_F: sun_angle = fmod(sun_angle + PI, TAU)
 			KEY_R: _rebuild()
+			KEY_K: _spawn_creatures("deer", 6, 60.0)   # herd ahead
+			KEY_J: _spawn_creatures("wolf", 3, 90.0)    # pack behind
+			KEY_C: _clear_creatures()
 			KEY_H:
 				if _dem_w > 0:
 					dem_scale = 1.0 if dem_scale >= 5.0 else dem_scale + 1.0
@@ -466,6 +518,10 @@ func _update_hud() -> void:
 	var dem_line := "DEM: none (noise terrain)" if _dem_w == 0 else "DEM: %s   height x%.0f ([H] cycles)" % [_dem_name, dem_scale]
 	# note: GDScript has no %e — haze shown as extinction distance instead (nicer to reason about anyway)
 	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0
-	_hud.text = "C = %.0f km   W = %.1f km   R = %.1f km\nrise @20km = %.0f m   @50km = %.0f m   far-side band = %.2f deg (moon = 0.52)\nhaze extinction ~%.0f km   sun period = %s s\n%s\n[Up/Dn] haze  [T] sun speed  [P] pause sun  [F] flip day/night  [R] rebuild\nmode: %s" % [
+	# creature/slice test line: threat state is the null-write acceptance test surface —
+	# deer must keep it OFF no matter how close you get; only a wolf in APPROACH turns it ON.
+	var threat := "THREAT (wolf closing)" if _threat_active else "calm (null-write holding)"
+	var slice_line := "[K] deer herd  [J] wolf pack  [C] clear   creatures: %d   %s" % [_creatures.size(), threat]
+	_hud.text = "C = %.0f km   W = %.1f km   R = %.1f km\nrise @20km = %.0f m   @50km = %.0f m   far-side band = %.2f deg (moon = 0.52)\nhaze extinction ~%.0f km   sun period = %s s\n%s\n%s\n[Up/Dn] haze  [T] sun speed  [P] pause sun  [F] flip day/night  [R] rebuild\nmode: %s" % [
 		c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg, haze_km,
-		("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])), dem_line, mode]
+		("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])), dem_line, slice_line, mode]
