@@ -11,5 +11,5 @@ One line per area file — decisions are the source of truth, this is just a map
 - knowledge.md — no omniscient map; the knowledge pyramid is the map, the night sky acquires it
 - lore.md — the Displacement (rogue AI, ring-scale portal, explains degradation + the shootdown); reactivatable ancients; Earth zoo
 - rendering.md — texture fidelity baseline: deliberately ~2001/Halo-CE; modern budget spent on scale/lighting, never texels
-- terrain.md — prebaked layered world: bake DAG + gates, recipe-versioned, generous interfaces / naive engines
+- terrain.md — prebaked layered world: bake DAG + gates, recipe-versioned; render-authoritative object placement; camera-relative LOD direction (proposed)
 - world.md — ring scale: 2,000 km circumference × 50 km width (honest sky geometry); day length stays a design value; deep-cross-section surface-concentrated atmosphere; open tension with substrate's power-of-two proposal
