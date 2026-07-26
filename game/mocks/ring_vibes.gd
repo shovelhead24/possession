@@ -313,7 +313,7 @@ func _spawn_creatures(preset: String, n: int, dist: float) -> void:
 	# deer ahead (+dist along view), wolves behind (-dist); scatter around that point
 	var center := base + fwd * (dist if preset == "deer" else -dist)
 	for i in n:
-		var c: Creature = CreatureScript.new()
+		var c = CreatureScript.new()
 		c.configure(preset)
 		c.height_fn = _terrain_height_flat
 		c.threat_fn = _player_pos
