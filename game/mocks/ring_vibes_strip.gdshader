@@ -68,10 +68,6 @@ void fragment() {
 		float road = texture(road_tex, UV).r;
 		col = mix(col, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
 	}
-	// rim wall: z == lat, wall rises near |z| = width/2. Override the satellite drape with
-	// clean structural grey — the wall is rim megastructure, not terrain (Halo Forerunner read).
-	float wall_t = smoothstep(ring_width * 0.5 - wall_ramp, ring_width * 0.5, abs(v_world_pos.z));
-	col = mix(col, vec3(0.60, 0.62, 0.66), wall_t);
 	// near-field micro detail (early-Xbox honesty: two hash scales, fades out by ~400 m)
 	float n1 = fract(sin(dot(floor(v_world_pos.xz * 1.6), vec2(12.9898, 78.233))) * 43758.5453);
 	float n2 = fract(sin(dot(floor(v_world_pos.xz * 0.4), vec2(93.9898, 67.345))) * 24634.6345);
