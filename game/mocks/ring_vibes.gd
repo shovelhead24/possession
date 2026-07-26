@@ -79,7 +79,7 @@ var _threat_active := false
 var _trees: MultiMeshInstance3D = null
 var _forest_noise := FastNoiseLite.new()
 var _walls: Array[MeshInstance3D] = []
-const WALL_ARC := 42_000.0   # walls built over the visible near arc; beyond is hazed
+var _wall_mat: ShaderMaterial = null
 
 func _ready() -> void:
 	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
@@ -230,39 +230,41 @@ func _rebuild() -> void:
 	_band.material_override = _mat
 	add_child(_band)
 
-	# Near strip: two-tier real DEM when present (dense inner, coarse outer), else noise mountains
+	# Near strip: non-overlapping tiers — fine centre + coarse flanks, shared edges (same rows)
 	if _dem_w > 0:
 		_strip_arc = 42_000.0
-		_strips.append(_build_strip(42_000.0, 255, 100, -3.0, w, r))   # outer, sunk under inner
-		_strips.append(_build_strip(12_000.0, 220, 300, 0.5, w, r))    # inner, ~110 m mesh
+		var rows := 160
+		_strips.append(_build_strip(-12_000.0, 12_000.0, 300, rows, w, r))   # fine centre (~80m)
+		_strips.append(_build_strip(-42_000.0, -12_000.0, 120, rows, w, r))  # coarse left flank
+		_strips.append(_build_strip(12_000.0, 42_000.0, 120, rows, w, r))    # coarse right flank
 	else:
 		_strip_arc = STRIP_ARC
-		_strips.append(_build_strip(STRIP_ARC, STRIP_SEGS, STRIP_ROWS, 0.0, w, r))
+		_strips.append(_build_strip(-STRIP_ARC, STRIP_ARC, STRIP_SEGS, STRIP_ROWS, w, r))
 	_build_walls()
 	_scatter_trees()
 	_update_hud()
 
+const WALL_BASE_H := -200.0   # absolute height (below lowest terrain), from ring centre — not terrain-relative
+const WALL_TOP_H := 4000.0     # absolute rim height toward the axis
+
 func _build_walls() -> void:
-	# dedicated vertical rim walls at lat = +/- w/2: clean impassable structure, not a ramp.
-	# Terrain (floor-only now) meets the wall base; walk mode already clamps lat inside it.
+	# rim walls: continuous around the WHOLE ring (like the band), at ABSOLUTE heights from
+	# centre — a fixed rim structure, not following the terrain and not just the local region.
 	for m in _walls:
 		m.queue_free()
 	_walls.clear()
 	var w: float = WIDTHS[w_idx]
-	var r: float = _radius()
-	var segs := 400
+	var segs := 512   # full ring, uniform (no terrain sampling) so this can be coarse + cheap
 	for side in [-1.0, 1.0]:
 		var lat: float = side * w * 0.5
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		for i in segs + 1:
-			var arc: float = WALL_ARC * (2.0 * float(i) / float(segs) - 1.0)
-			var theta: float = arc / r
-			var base: float = _terrain_h(arc, lat, w) - 30.0  # dip below floor, no gap
-			st.set_uv(Vector2(float(i) / float(segs), 1.0))
-			st.add_vertex(_ring_pos(theta, lat, base))
-			st.set_uv(Vector2(float(i) / float(segs), 0.0))
-			st.add_vertex(_ring_pos(theta, lat, base + WALL_HEIGHT))
+			var theta: float = TAU * float(i) / float(segs)
+			st.set_uv(Vector2(float(i) / float(segs) * 40.0, 1.0))
+			st.add_vertex(_ring_pos(theta, lat, WALL_BASE_H))
+			st.set_uv(Vector2(float(i) / float(segs) * 40.0, 0.0))
+			st.add_vertex(_ring_pos(theta, lat, WALL_TOP_H))
 		for i in segs:
 			var a := i * 2
 			st.add_index(a); st.add_index(a + 2); st.add_index(a + 1)
@@ -270,19 +272,20 @@ func _build_walls() -> void:
 		st.generate_normals()
 		var mi := MeshInstance3D.new()
 		mi.mesh = st.commit()
-		var wm := StandardMaterial3D.new()
-		wm.albedo_color = Color(0.58, 0.60, 0.64)
-		wm.roughness = 0.9
-		wm.cull_mode = BaseMaterial3D.CULL_DISABLED
-		mi.material_override = wm
+		if not _wall_mat:
+			_wall_mat = ShaderMaterial.new()
+			_wall_mat.shader = load("res://mocks/ring_vibes_wall.gdshader") as Shader
+		mi.material_override = _wall_mat
 		add_child(mi)
 		_walls.append(mi)
 
-func _build_strip(arc_ext: float, segs: int, rows: int, h_off: float, w: float, r: float) -> MeshInstance3D:
+func _build_strip(arc_min: float, arc_max: float, segs: int, rows: int, w: float, r: float) -> MeshInstance3D:
+	# non-overlapping tiers: pieces share exact edge verts (same rows, matched seam arc) so
+	# fine + coarse meet without overlap or gap — no more double-floor from overlapping strips.
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in segs + 1:
-		var arc: float = arc_ext * (2.0 * float(i) / float(segs) - 1.0)
+		var arc: float = lerpf(arc_min, arc_max, float(i) / float(segs))
 		for j in rows + 1:
 			var lat: float = w * (float(j) / float(rows) - 0.5)
 			if _dem_w > 0:
@@ -291,7 +294,7 @@ func _build_strip(arc_ext: float, segs: int, rows: int, h_off: float, w: float, 
 				st.set_uv(Vector2(clampf(fx, 0.0, 1.0), clampf(fy, 0.0, 1.0)))
 			else:
 				st.set_uv(Vector2(0.001, 0.5))  # off the city texture clusters
-			st.add_vertex(_ring_pos(arc / r, lat, _terrain_h(arc, lat, w) + h_off))
+			st.add_vertex(_ring_pos(arc / r, lat, _terrain_h(arc, lat, w)))
 	_grid_indices(st, segs, rows)
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
@@ -340,6 +343,9 @@ func _process(delta: float) -> void:
 		_sun.rotation = Vector3(-asin(clampf(to_sun.y, -1.0, 1.0)), 0.0, 0.0)
 		_sun.light_energy = clampf(to_sun.y, 0.0, 1.0) * 1.1
 		_sun.light_color = Color(1.0, 0.95, 0.86)
+	if _wall_mat:
+		_wall_mat.set_shader_parameter("to_sun", to_sun)
+		_wall_mat.set_shader_parameter("haze_density", haze_density)
 	if _strip_mat:
 		_strip_mat.set_shader_parameter("to_sun", to_sun)
 		_strip_mat.set_shader_parameter("haze_density", haze_density)
@@ -353,6 +359,8 @@ func _process(delta: float) -> void:
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _strip_mat:
 		_strip_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
+	if _wall_mat:
+		_wall_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	match _mode:
 		Mode.DRIVE: _drive_tick(delta)
 		Mode.WALK: _walk_tick(delta)
@@ -361,14 +369,31 @@ func _process(delta: float) -> void:
 const TREE_MODEL := "res://low_poly_red_spruce_tree_custom_textures/low_poly_red_spruce_tree_custom_textures/scene.gltf"
 const FOREST_HALF := 700.0   # patch half-extent around spawn, in BOTH arc and lat (was full 50km width!)
 
-func _find_first_mesh(node: Node) -> Mesh:
+func _rel_xform(node: Node3D, root: Node) -> Transform3D:
+	# transform of node relative to root, by walking the parent chain (works pre-tree-add)
+	var t := Transform3D.IDENTITY
+	var n: Node = node
+	while n and n != root:
+		if n is Node3D:
+			t = (n as Node3D).transform * t
+		n = n.get_parent()
+	return t
+
+func _collect_tree_surfaces(node: Node, root: Node, by_mat: Dictionary) -> void:
+	# combine ALL of the tree's meshes (trunk + foliage) into per-material SurfaceTools,
+	# baking each part's transform — a whole upright tree, not a single dropped trunk.
 	if node is MeshInstance3D and node.mesh:
-		return node.mesh
+		var xf := _rel_xform(node, root)
+		for s in node.mesh.get_surface_count():
+			var mat: Material = node.mesh.surface_get_material(s)
+			var key: int = mat.get_instance_id() if mat else 0
+			if not by_mat.has(key):
+				var stx := SurfaceTool.new()
+				stx.begin(Mesh.PRIMITIVE_TRIANGLES)
+				by_mat[key] = {"st": stx, "mat": mat}
+			by_mat[key]["st"].append_from(node.mesh, s, xf)
 	for child in node.get_children():
-		var m := _find_first_mesh(child)
-		if m:
-			return m
-	return null
+		_collect_tree_surfaces(child, root, by_mat)
 
 func _tree_mesh() -> Mesh:
 	# real low-poly spruce (gitignored, local-only like the DEM) with a cone fallback
@@ -376,10 +401,17 @@ func _tree_mesh() -> Mesh:
 		var packed := load(TREE_MODEL) as PackedScene
 		if packed:
 			var inst := packed.instantiate()
-			var m := _find_first_mesh(inst)
+			var by_mat := {}
+			_collect_tree_surfaces(inst, inst, by_mat)
 			inst.queue_free()
-			if m:
-				return m
+			if not by_mat.is_empty():
+				var out := ArrayMesh.new()
+				for key in by_mat:
+					var entry: Dictionary = by_mat[key]
+					entry["st"].commit(out)
+					if entry["mat"]:
+						out.surface_set_material(out.get_surface_count() - 1, entry["mat"])
+				return out
 	var cone := CylinderMesh.new()
 	cone.top_radius = 0.02; cone.bottom_radius = 1.7; cone.height = 5.0
 	var tm := StandardMaterial3D.new()
