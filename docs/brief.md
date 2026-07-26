@@ -71,6 +71,7 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 | Locations | [locations.md](locations.md) | archetypes proposed | procedural vs L6 one-off split | — |
 | Macro geography | [geography.md](geography.md) | arc sketch proposed | enclave distance; armada landfall; P2 start | — |
 | Perception/interaction resolution | [perception.md](perception.md) | live brainstorm, proposed | vision cone angles; hearing granularity | — |
+| Aesthetic & directorial philosophy | [aesthetic.md](aesthetic.md) | pillars proposed | palette/era direction; craft shot-list gap | — |
 | Ending (leave branch) | [moments/the_return.md](moments/the_return.md) | decided: portal mechanism, co-op unilateral, staging | telegraphing; NG+ carryover UI | — |
 | Post-credits / sequel hook | [moments/human_armada.md](moments/human_armada.md) | tentative tease only | timing; save-continuity requirements | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |

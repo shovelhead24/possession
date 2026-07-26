@@ -4,6 +4,8 @@ Area doc (2026-07-22 generation round, all PROPOSED). Earth-zoo canon (lore.md):
 
 **Artery rule, fauna edition: every species needs ≥2 systemic roles** (an ecological role + at least one player-facing interaction that isn't "shoot it").
 
+**Density is an aesthetic constraint, not just a perf one (2026-07-26):** wildlife must stay *sparse and uncanny, never lush* — every creature rare enough to be an event, reading slightly wrong. A teeming ecosystem would destroy both the haunting-emptiness and the uncanny-presence the game runs on (see aesthetic.md "The Emptiness/Life Axis"). Emptiness dominates tier 1; density climbs with the progression tiers.
+
 ## Startle/Flee — the generic primitive underneath the flamingos (2026-07-25)
 
 Self-audit: the flamingo entry was written as a specific vignette before the general rule it's an instance of was ever named — the same gap perception.md flagged for tempo. Fixing it: **startle response is one species-parameterized primitive** (skittishness threshold, flock cohesion, flee direction, whether fleeing broadcasts via `SignalAmplification`), not per-species bespoke logic. Deer, flamingos, any future skittish species are the *same* behavior at different parameter values — the flamingos-at-a-beach moment is a placement (habitat field) and a parameter set, not an authored scene. This is the test for whether something is a system or a vignette wearing systemic language: could the exact beat happen with a different species, vehicle, or location, purely from the rule firing? If yes, it's systemic even if it was first *described* as one specific picture.
