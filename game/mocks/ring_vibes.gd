@@ -214,15 +214,19 @@ func _rebuild() -> void:
 	var w: float = WIDTHS[w_idx]
 	var r: float = _radius()
 
-	# Far band: whole ring, flat, sunk 80m so the strip covers it near the camera
+	# Far band: the ring BEYOND the near strips (annulus), at ~terrain height — no overlap with
+	# the strips (was a sunk -80 shelf showing through as a dark z-fighting band under the terrain).
+	var near_arc := 42_000.0
+	var band_h: float = _terrain_h(0.0, 0.0, w)
+	var seam: float = near_arc / r
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in BAND_SEGS + 1:
-		var theta: float = TAU * float(i) / float(BAND_SEGS)
+		var theta: float = lerpf(seam, TAU - seam, float(i) / float(BAND_SEGS))
 		for j in BAND_ROWS + 1:
 			var lat: float = w * (float(j) / float(BAND_ROWS) - 0.5)
 			st.set_uv(Vector2(float(i) / float(BAND_SEGS), float(j) / float(BAND_ROWS)))
-			st.add_vertex(_ring_pos(theta, lat, -80.0))
+			st.add_vertex(_ring_pos(theta, lat, band_h))
 	_grid_indices(st, BAND_SEGS, BAND_ROWS)
 	st.generate_normals()
 	_band = MeshInstance3D.new()
@@ -411,11 +415,14 @@ func _tree_mesh() -> Mesh:
 					entry["st"].commit(out)
 					var mat: Material = entry["mat"]
 					if mat is BaseMaterial3D:
-						# alpha-scissor so foliage cards cut cleanly (no black fringe), double-sided
 						mat = mat.duplicate()
+						# alpha-scissor cuts the foliage cards; higher threshold removes the dark
+						# fringe texels. Unshaded so double-sided leaf backfaces don't render black
+						# (Godot doesn't flip normals for backfaces — the source of the black masses).
 						mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-						mat.alpha_scissor_threshold = 0.4
+						mat.alpha_scissor_threshold = 0.5
 						mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+						mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 					if mat:
 						out.surface_set_material(out.get_surface_count() - 1, mat)
 				return out
