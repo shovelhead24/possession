@@ -444,8 +444,10 @@ func _tree_mesh() -> Mesh:
 	return cone
 
 func _scatter_trees() -> void:
-	# conifers clumped by noise into woods + clearings, on the curved surface, in a PATCH
-	# near spawn (not a ring-spanning carpet). Cover for the wolves moment; the deer clearing.
+	# conifers clumped by noise into woods + clearings, on the curved surface, in a PATCH near
+	# spawn. Each trunk is RAYCAST onto the actual render mesh (once, at build) — not placed on the
+	# fine function, which diverges from the coarser render and buried whole trees. A fixed offset
+	# can't fix a variable mismatch; the raycast snaps each tree to exactly what's drawn.
 	if _dem_w == 0:
 		return
 	if _trees:
@@ -454,19 +456,16 @@ func _scatter_trees() -> void:
 	_forest_noise.frequency = 1.0 / 300.0
 	var mesh := _tree_mesh()
 	var real_model := not (mesh is CylinderMesh)  # cone fallback is a CylinderMesh
-	# scale: real gltf spruce imports small/large unpredictably; normalize to ~8m tall via aabb
 	var aabb := mesh.get_aabb()
 	var base_scale: float = (8.0 / maxf(aabb.size.y, 0.01)) if real_model else 1.0
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	var xf: Array[Transform3D] = []
 	var w: float = WIDTHS[w_idx]
 	var r: float = _radius()
 	var lat_lo: float = maxf(-FOREST_HALF, -w * 0.5 + 120.0)
 	var lat_hi: float = minf(FOREST_HALF, w * 0.5 - 120.0)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1234
+	# 1) collect candidate (arc,lat) — cheap, uses the function only for an approximate start point
+	var cands: Array[Vector2] = []
 	var arc := -FOREST_HALF
 	while arc <= FOREST_HALF:
 		var lat := lat_lo
@@ -474,28 +473,33 @@ func _scatter_trees() -> void:
 			var jx: float = arc + rng.randf_range(-12, 12)
 			var jz: float = lat + rng.randf_range(-12, 12)
 			if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < 0.6:
-				# sink base ~1.5m: trees are placed on the fine function but the render mesh is
-				# coarser, so bias downward — any mismatch reads as "planted", never "floating".
-				# (No per-frame raycast: trees are static, placed once. No disk bake: <1ms to compute.)
-				var h: float = _terrain_h(jx, jz, w) - 1.5
-				var pos := _ring_pos(jx / r, jz, h)
-				var up := _ring_up(pos)
-				var sc: float = base_scale * rng.randf_range(0.75, 1.4)
-				var basis := Basis()
-				basis.y = up
-				basis.x = up.cross(Vector3.FORWARD).normalized()
-				basis.z = basis.x.cross(up).normalized()
-				basis = basis.rotated(up, rng.randf() * TAU).scaled(Vector3(sc, sc, sc))
-				xf.append(Transform3D(basis, pos))
+				cands.append(Vector2(jx, jz))
 			lat += 22.0
 		arc += 22.0
+	# 2) wait one physics frame so the strips' trimesh collision is queryable, then raycast-snap
+	await get_tree().physics_frame
+	var xf: Array[Transform3D] = []
+	for c in cands:
+		var approx := _ring_pos(c.x / r, c.y, _terrain_h(c.x, c.y, w))
+		var up := _ring_up(approx)
+		var ground := _raycast_ground(approx, up)
+		var sc: float = base_scale * rng.randf_range(0.75, 1.4)
+		var basis := Basis()
+		basis.y = up
+		basis.x = up.cross(Vector3.FORWARD).normalized()
+		basis.z = basis.x.cross(up).normalized()
+		basis = basis.rotated(up, rng.randf() * TAU).scaled(Vector3(sc, sc, sc))
+		xf.append(Transform3D(basis, ground - up * 0.3))  # tiny sink so the base tucks in
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = mesh
 	mm.instance_count = xf.size()
 	for i in xf.size():
 		mm.set_instance_transform(i, xf[i])
 	_trees = MultiMeshInstance3D.new()
 	_trees.multimesh = mm
 	add_child(_trees)
-	print("ring_vibes: scattered ", xf.size(), " trees (", "real model" if real_model else "cone fallback", ") in ", int(FOREST_HALF * 2), "m patch")
+	print("ring_vibes: scattered ", xf.size(), " trees (", "real model" if real_model else "cone fallback", ") raycast-snapped")
 
 func _terrain_height_flat(x: float, z: float) -> float:
 	# creature-space height: walk-mode approximation treats world x/z as arc/lat directly
