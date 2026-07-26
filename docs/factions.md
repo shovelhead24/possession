@@ -4,7 +4,7 @@ Area doc (2026-07-19 session). Tier-2's "people, factions, bows, horses, politic
 
 ## Chain Topology — PROPOSED
 
-On a 2,000 km × ~30 km band, faction adjacency is a **chain**, not a map: at most two arc-neighbors each, plus wall/coast variation. Consequences:
+On a 2,000 km × 50 km band (`.decisions/world.md`), faction adjacency is a **chain**, not a map: at most two arc-neighbors each, plus wall/coast variation. Consequences:
 - Wars have *fronts*, and fronts sit at pinch points (world.md's gating terrain) — `priests_leap` (terrain/splice-portfolio.md) is a verified real-world example of exactly this geometry: a single mountain-pass chokepoint, not a hand-authored one
 - Trade is caravan chains; refugees flow along the arc
 - Rumor propagates linearly with SignalAmplification decay — politics and the knowledge system share physics
@@ -44,6 +44,10 @@ Patterns the R-stack should be able to produce — each is pressures/intentions 
 - **Post-armada schisms** — the mid-game armada breaks every cosmology differently (taboo faction vindicated, instrumental faction shattered, cargo-cult faction *converts*) — one event, per-culture consequences, all via the cosmology axis.
 
 **Ranking — author's cut:** 1. Misattributed reactivation (the player as unwitting political author — the possession theme wearing politics). 2. Stolen-tool provenance (consequence you can hold in your hands). 3. Refugee-wave-to-pinch-camps (the director and the chain topology shaking hands). 4. Pinch-toll smuggler paths (opportunity gradients from pure economics).
+
+## Pulse — faction life runs on cycles (PROPOSED 2026-07-26)
+
+Factions (sparse islands of humanity — aesthetic.md's emptiness reconciliation) are not static dioramas triggered by the player's arrival; they run on *rhythms* whether watched or not, via TempoBuf's regional clocks (simulation.md) given a pulse rather than a flat rate: market days, patrol/caravan schedules, seasonal raids, the build-and-release arc of a border dispute. Design payoff: the same node feels different depending on *when* you arrive (market day vs. dead of night vs. the eve of a raid) — variety on revisit with no new authored content, and a stronger witnessing beat (you catch a living thing mid-breath). Musical model: "The Riddle" — a riff that builds, resolves, rebuilds. This is the temporal anti-boredom lever; see aesthetic.md.
 
 ## The No-Missions Boundary
 
