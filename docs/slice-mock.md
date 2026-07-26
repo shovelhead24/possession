@@ -2,6 +2,13 @@
 
 Design doc (2026-07-26) for the playable test of the no-missions short-term-pacing bet (pacing.md). The slice: **crash → wilderness walk → the deer → day/night → the wolves → crest the ridge → ring-curve reveal.** Its single job: *does walking this world with only survival + terrain pulling you forward feel compelling, with no missions?* If yes, the core bet is essentially won; if it lulls, we learn it here, cheap.
 
+## Findings the mock surfaced for the REAL terrain system (2026-07-26)
+
+The mock's crude terrain (fine-centre + coarse-flank strips) is a hand-rolled 2-level LOD stand-in — fixed tiers, hard seam, world-stuck. The real system needs proper camera-relative continuous LOD (clipmap or distance-quadtree, seamless transitions), per terrain.md's bake DAG + substrate resolution-pyramid and R2's curvature assumptions. Two concrete requirements the mock proved the hard way, worth carrying into the real build:
+
+- **Object & physics placement must use the same height representation the render uses at that location** (or raycast onto the actual rendered mesh). Placing on the full-res function while rendering a coarser mesh buried whole trees and let the player walk under the surface ("invisible floor"). In a real LOD system the render resolution changes continuously with distance, so this mismatch is the default state, not an edge case — snap moving things (player/car) by raycast; bias or raycast static scatter (trees) at build.
+- **LOD transitions must not crack.** Adjacent resolution levels sharing exact edge verts (as the mock's tiers now do) or skirts — otherwise gaps open at the seams.
+
 ## Scope Discipline — what we deliberately DON'T build
 
 - **No bow / no weapon (v1).** Tier 1 is prey (vision.md, moments/wolves.md — terrain saves you, not combat). A weapon tests none of the slice's questions and undercuts the helplessness. Deferred to a later hunting pass.
