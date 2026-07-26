@@ -31,3 +31,12 @@ Frustum culling: the aerial camera sees the entire terrain, so tiling had nothin
 - CDLOD vertex-morphing (not skirts) addresses the seam cracks/pops that made past chunked-LOD attempts frustrating
 
 Not yet a decision — next prototype step is a minimal tiled+CDLOD terrain (or first a ground-camera culling measurement). Clipmap kept as fallback if CDLOD morphing proves fiddly.
+
+## Ground-camera culling test (2026-07-27)
+
+Added `[G]` ground camera, tile grid 8→12. Result: **tiled ~10% faster than one-mesh at 1024 subdiv** (57 fps, 96 draw calls, 4.75M tris, ground cam), and never worse. Minor pop-in on camera-adjacent tiles observed.
+
+- **Caveat — conservative case:** 2km terrain is small enough to see whole at eye level, so ground culling was modest (~144 tiles → ~96 drawn). The ~10% is therefore a *floor*; the real game renders terrain to the horizon via LOD, sees only ~10–20% of the ring at once, so the culling win will be substantially larger. Tiling never lost.
+- **The pop-in is the expected naive-version artifact**, and exactly what the real technique fixes: CDLOD vertex-morphing for LOD-level pop, plus a small frustum cull-margin for edge pop when turning.
+
+**Direction (confirmed, not yet graduated to .decisions/main):** chunked/tiled LOD + CDLOD morphing. Draw calls proven cheap, tiling proven ≥ one-mesh and better at detail, maps onto the substrate tile pyramid, per-tile collision free. Remaining risk to retire before graduating: does CDLOD morphing actually kill the pop without being fiddly? → build a minimal tiled+CDLOD prototype next.
