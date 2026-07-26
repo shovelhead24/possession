@@ -19,7 +19,7 @@ extends Node3D
 
 const TRI_PRESETS := [128, 256, 512, 768, 1024]   # subdivisions per side
 const FOLIAGE_PRESETS := [0, 5_000, 20_000, 50_000, 100_000, 200_000]
-const TILE_GRID := 8   # tiled mode splits into TILE_GRID x TILE_GRID meshes
+const TILE_GRID := 12   # tiled mode splits into TILE_GRID x TILE_GRID meshes (finer = clearer culling)
 const TERRAIN_SIZE := 2000.0
 const DISP := 120.0    # must match the shader's disp default (heightmap -> metres)
 
@@ -28,6 +28,7 @@ var foliage_idx := 1
 var tiled := false
 var displace := true
 var overdraw := false
+var cam_ground := false   # [G] toggle: aerial orbit (sees everything) vs ground (sees a wedge)
 
 var _cam: Camera3D
 var _hud: Label
@@ -178,9 +179,19 @@ func _build_overdraw() -> void:
 func _process(delta: float) -> void:
 	_mat.set_shader_parameter("do_disp", displace)
 	_t += delta * 0.1
-	var rad := 900.0
-	_cam.position = Vector3(cos(_t) * rad, 350, sin(_t) * rad)
-	_cam.look_at(Vector3(0, 60, 0), Vector3.UP)
+	if cam_ground:
+		# stand near one edge, eye height, and slowly sweep the view across the terrain — most
+		# of the ring is behind/beside you and gets frustum-culled (the real in-game case)
+		var cx := -TERRAIN_SIZE * 0.46
+		var cz := 0.0
+		var y := _sample_height(cx, cz) + 3.0
+		_cam.position = Vector3(cx, y, cz)
+		var yaw := sin(_t * 3.0) * 1.1
+		_cam.look_at(Vector3(cx + cos(yaw) * 200.0, y + 10.0, cz + sin(yaw) * 200.0), Vector3.UP)
+	else:
+		var rad := 900.0
+		_cam.position = Vector3(cos(_t) * rad, 350, sin(_t) * rad)
+		_cam.look_at(Vector3(0, 60, 0), Vector3.UP)
 	_fps_accum += 1.0 / maxf(delta, 0.0001)
 	_fps_samples += 1
 	if _fps_samples >= 15:
@@ -192,11 +203,11 @@ func _update_hud() -> void:
 	var draw_calls := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 	var prims := int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
 	var subdiv: int = TRI_PRESETS[tri_idx]
-	_hud.text = "FPS avg: %.0f   frame: %.1f ms\ndraw calls: %d   primitives(tris): %s\n\nterrain: %d subdiv/side  |  mode: %s  |  vtx-displace: %s\nfoliage: %s   overdraw: %s\n\n[1-5] tri budget  [Q] one-mesh/tiled  [E] displace  [Up/Dn] foliage  [A] overdraw  [R] rebuild" % [
+	_hud.text = "FPS avg: %.0f   frame: %.1f ms\ndraw calls: %d   primitives(tris): %s\n\nterrain: %d subdiv/side  |  mode: %s  |  vtx-displace: %s\ncamera: %s   foliage: %s   overdraw: %s\n\nCULLING TEST: [G] toggle camera, watch draw calls + tris drop on GROUND when TILED\n[1-5] tri budget  [Q] one-mesh/tiled  [E] displace  [Up/Dn] foliage  [A] overdraw  [G] cam  [R] rebuild" % [
 		_fps_avg, 1000.0 / maxf(_fps_avg, 1.0),
 		draw_calls, _commafmt(prims),
 		subdiv, ("TILED %dx%d" % [TILE_GRID, TILE_GRID]) if tiled else "ONE MESH", "on" if displace else "off",
-		_commafmt(FOLIAGE_PRESETS[foliage_idx]), "on" if overdraw else "off"]
+		"GROUND" if cam_ground else "AERIAL", _commafmt(FOLIAGE_PRESETS[foliage_idx]), "on" if overdraw else "off"]
 
 func _commafmt(n: int) -> String:
 	var s := str(n); var out := ""; var c := 0
@@ -215,4 +226,5 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_UP: foliage_idx = mini(foliage_idx + 1, FOLIAGE_PRESETS.size() - 1); _build_foliage()
 			KEY_DOWN: foliage_idx = maxi(foliage_idx - 1, 0); _build_foliage()
 			KEY_A: overdraw = not overdraw; _build_overdraw()
+			KEY_G: cam_ground = not cam_ground
 			KEY_R: _rebuild()
