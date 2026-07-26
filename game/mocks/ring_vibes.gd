@@ -285,6 +285,8 @@ func _process(delta: float) -> void:
 	var to_sun := Vector3(sin(sun_angle), cos(sun_angle), 0)
 	_mat.set_shader_parameter("to_sun", to_sun)
 	_mat.set_shader_parameter("haze_density", haze_density)
+	_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
+	_mat.set_shader_parameter("wall_ramp", WALL_RAMP)
 	if _strip_mat:
 		_strip_mat.set_shader_parameter("to_sun", to_sun)
 		_strip_mat.set_shader_parameter("haze_density", haze_density)
@@ -489,8 +491,9 @@ func _walk_tick(delta: float) -> void:
 	var yaw: float = _look.x
 	# camera-relative in arc(=x-like)/lat(=z-like) space. yaw=0 faces +arc-ish.
 	# forward = -Z of the camera basis projected to the ground plane.
-	var d_arc := (mv.y * sin(yaw) + mv.x * cos(yaw)) * speed * delta
-	var d_lat := (mv.y * cos(yaw) - mv.x * sin(yaw)) * speed * delta
+	# camera forward (-Z) at yaw = (-sin, -cos) in (arc,lat); right (+X) = (cos, -sin)
+	var d_arc := (-mv.y * sin(yaw) + mv.x * cos(yaw)) * speed * delta
+	var d_lat := (-mv.y * cos(yaw) - mv.x * sin(yaw)) * speed * delta
 	var w: float = WIDTHS[w_idx]
 	_walk_arc += d_arc
 	_walk_lat = clampf(_walk_lat + d_lat, -w * 0.5 + 50.0, w * 0.5 - 50.0)

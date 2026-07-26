@@ -10,6 +10,8 @@ uniform vec3 to_sun = vec3(0.0, 1.0, 0.0);
 uniform float haze_density = 0.000012;
 uniform vec3 sky_color = vec3(0.45, 0.62, 0.82);
 uniform sampler2D city_tex;
+uniform float ring_width = 50000.0;
+uniform float wall_ramp = 2500.0;
 
 varying vec3 v_world_pos;
 varying vec3 v_world_normal;
@@ -35,7 +37,11 @@ void fragment() {
 	float fog = 1.0 - exp(-haze_density * dist);
 	float light_fog = 1.0 - exp(-haze_density * 0.30 * dist);
 
+	// rim wall as clean structural grey (consistent with the near strip), before haze
+	float wall_t = smoothstep(ring_width * 0.5 - wall_ramp, ring_width * 0.5, abs(v_world_pos.z));
+	lit = mix(lit, vec3(0.60, 0.62, 0.66) * (0.2 + 0.8 * diffuse), wall_t);
+
 	vec3 col = mix(lit, sky_color, fog);
-	col += city_mask * night * (1.0 - light_fog) * 1.4;  // emissive cities where it's dark
+	col += city_mask * night * (1.0 - light_fog) * 1.4 * (1.0 - wall_t);  // cities, not on walls
 	ALBEDO = col;
 }
