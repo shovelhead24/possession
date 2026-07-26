@@ -306,6 +306,8 @@ func _build_strip(arc_min: float, arc_max: float, segs: int, rows: int, w: float
 	mi.mesh = st.commit()
 	mi.material_override = _strip_mat if (_dem_w > 0 and _strip_mat) else _mat
 	add_child(mi)
+	mi.create_trimesh_collision()  # so walk/drive raycast snaps to the ACTUAL mesh, not the
+	                               # full-res function (which diverges from the coarse mesh -> under-floor)
 	return mi
 
 func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:
@@ -594,6 +596,8 @@ func _drive_tick(delta: float) -> void:
 	var pos := _car_pos(_car_arc, _car_lat)
 	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
 	var up := _ring_up(pos)
+	pos = _raycast_ground(pos, up)      # snap to the rendered mesh (no under-floor)
+	ahead = _raycast_ground(ahead, up)
 	_car.global_position = pos + up * 0.4
 	if not pos.is_equal_approx(ahead):
 		_car.look_at(ahead + up * 0.4, up)
@@ -626,9 +630,19 @@ func _walk_tick(delta: float) -> void:
 	var w: float = WIDTHS[w_idx]
 	_walk_arc += d_arc
 	_walk_lat = clampf(_walk_lat + d_lat, -w * 0.5 + 50.0, w * 0.5 - 50.0)
-	var ground := _ring_pos(_walk_arc / _radius(), _walk_lat, _terrain_h(_walk_arc, _walk_lat, w))
-	_cam.position = ground + _ring_up(ground) * EYE_HEIGHT
+	var approx := _ring_pos(_walk_arc / _radius(), _walk_lat, _terrain_h(_walk_arc, _walk_lat, w))
+	var up := _ring_up(approx)
+	var ground := _raycast_ground(approx, up)
+	_cam.position = ground + up * EYE_HEIGHT
 	_cam.rotation = Vector3(_look.y, _look.x, 0)
+
+func _raycast_ground(approx: Vector3, up: Vector3) -> Vector3:
+	# snap to the actual rendered mesh (collision) rather than the full-res function, which is
+	# finer than the mesh and would sink the player below the render ("invisible floor").
+	var ss := get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(approx + up * 400.0, approx - up * 400.0)
+	var hit := ss.intersect_ray(q)
+	return hit.position if hit else approx
 
 func _set_mode(m: Mode) -> void:
 	_mode = m
@@ -647,8 +661,9 @@ func _set_mode(m: Mode) -> void:
 			# init arc/lat from current camera (near origin worldx≈arc), then snap to curved surface
 			_walk_arc = _cam.position.x
 			_walk_lat = clampf(_cam.position.z, -w * 0.5 + 50.0, w * 0.5 - 50.0)
-			var ground := _ring_pos(_walk_arc / _radius(), _walk_lat, _terrain_h(_walk_arc, _walk_lat, w))
-			_cam.position = ground + _ring_up(ground) * EYE_HEIGHT
+			var approx := _ring_pos(_walk_arc / _radius(), _walk_lat, _terrain_h(_walk_arc, _walk_lat, w))
+			var up := _ring_up(approx)
+			_cam.position = _raycast_ground(approx, up) + up * EYE_HEIGHT
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
 	_update_hud()
 
