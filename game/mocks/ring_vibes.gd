@@ -409,8 +409,15 @@ func _tree_mesh() -> Mesh:
 				for key in by_mat:
 					var entry: Dictionary = by_mat[key]
 					entry["st"].commit(out)
-					if entry["mat"]:
-						out.surface_set_material(out.get_surface_count() - 1, entry["mat"])
+					var mat: Material = entry["mat"]
+					if mat is BaseMaterial3D:
+						# alpha-scissor so foliage cards cut cleanly (no black fringe), double-sided
+						mat = mat.duplicate()
+						mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+						mat.alpha_scissor_threshold = 0.4
+						mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+					if mat:
+						out.surface_set_material(out.get_surface_count() - 1, mat)
 				return out
 	var cone := CylinderMesh.new()
 	cone.top_radius = 0.02; cone.bottom_radius = 1.7; cone.height = 5.0
