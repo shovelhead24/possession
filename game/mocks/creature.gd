@@ -48,7 +48,10 @@ func configure(preset: String) -> void:
 			approaches = true
 			body_color = Color(0.22, 0.20, 0.19); body_len = 1.3; body_height = 0.85
 
+const SEP_RADIUS := 4.5   # creatures push apart within this (no-clip fix)
+
 func _ready() -> void:
+	add_to_group("mock_creature")
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = body_color
 	mat.roughness = 0.95
@@ -130,6 +133,18 @@ func _process(delta: float) -> void:
 		State.APPROACH:
 			_heading = atan2(to_threat.x, to_threat.z)  # toward threat
 			move = Vector3(sin(_heading), 0, cos(_heading)) * flee_speed
+
+	# separation: push apart from nearby creatures so a herd/pack spreads instead of merging
+	var sep := Vector3.ZERO
+	for other in get_tree().get_nodes_in_group("mock_creature"):
+		if other == self:
+			continue
+		var away: Vector3 = global_position - other.global_position
+		away.y = 0.0
+		var dd := away.length()
+		if dd > 0.01 and dd < SEP_RADIUS:
+			sep += away.normalized() * (SEP_RADIUS - dd)
+	move += sep * 3.0
 
 	var np := global_position + move * delta
 	np.y = height_fn.call(np.x, np.z)

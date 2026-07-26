@@ -56,6 +56,8 @@ var _mode: Mode = Mode.FLY
 const WALK_SPEED := 10.0   # reused from game/player.gd's SPEED for consistency with the real game
 const WALK_RUN_MULT := 2.0
 const EYE_HEIGHT := 1.7
+var _walk_arc := 0.0       # walk tracked in ring arc/lat like the car (fixes curve-mismatch clipping)
+var _walk_lat := 0.0
 
 # Drive mode: car lives in ring coordinates, no physics — terrain sampled analytically
 var _car: Node3D = null
@@ -73,6 +75,8 @@ var _strip_rows := STRIP_ROWS
 const CreatureScript := preload("res://mocks/creature.gd")
 var _creatures: Array = []
 var _threat_active := false
+var _trees: MultiMeshInstance3D = null
+var _forest_noise := FastNoiseLite.new()
 
 func _ready() -> void:
 	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
@@ -222,6 +226,7 @@ func _rebuild() -> void:
 	else:
 		_strip_arc = STRIP_ARC
 		_strips.append(_build_strip(STRIP_ARC, STRIP_SEGS, STRIP_ROWS, 0.0, w, r))
+	_scatter_trees()
 	_update_hud()
 
 func _build_strip(arc_ext: float, segs: int, rows: int, h_off: float, w: float, r: float) -> MeshInstance3D:
@@ -284,6 +289,8 @@ func _process(delta: float) -> void:
 		_strip_mat.set_shader_parameter("to_sun", to_sun)
 		_strip_mat.set_shader_parameter("haze_density", haze_density)
 		_strip_mat.set_shader_parameter("dem_scale", dem_scale)
+		_strip_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
+		_strip_mat.set_shader_parameter("wall_ramp", WALL_RAMP)
 	# camera-local day factor drives the sky color
 	var day: float = clampf(to_sun.y, 0.0, 1.0)
 	var sky := Color(0.45, 0.62, 0.82).lerp(Color(0.015, 0.02, 0.05), 1.0 - day)
@@ -295,6 +302,64 @@ func _process(delta: float) -> void:
 		Mode.DRIVE: _drive_tick(delta)
 		Mode.WALK: _walk_tick(delta)
 		_: _fly(delta)
+
+func _scatter_trees() -> void:
+	# conifer cones, clumped by noise into woods + clearings, placed on the curved surface.
+	# Cover to run to (the wolves moment) and the deer clearing's edge. Silhouette-first.
+	if _dem_w == 0:
+		return
+	if _trees:
+		_trees.queue_free()
+	_forest_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_forest_noise.frequency = 1.0 / 350.0
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.02
+	cone.bottom_radius = 1.7
+	cone.height = 5.0
+	var tm := StandardMaterial3D.new()
+	tm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	tm.vertex_color_use_as_albedo = true
+	cone.material = tm
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = cone
+	var xf: Array[Transform3D] = []
+	var cols: Array[Color] = []
+	var w: float = WIDTHS[w_idx]
+	var r: float = _radius()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1234
+	var arc := -700.0
+	while arc <= 700.0:
+		var lat := -w * 0.5 + 120.0
+		while lat <= w * 0.5 - 120.0:
+			var jx: float = arc + rng.randf_range(-14, 14)
+			var jz: float = lat + rng.randf_range(-14, 14)
+			var dens: float = _forest_noise.get_noise_2d(jx, jz)
+			if dens > 0.15 and rng.randf() < 0.7:
+				var h: float = _terrain_h(jx, jz, w)
+				var pos := _ring_pos(jx / r, jz, h)
+				var up := _ring_up(pos)
+				var sc: float = rng.randf_range(0.7, 1.5)
+				var basis := Basis()
+				basis.y = up
+				basis.x = up.cross(Vector3.FORWARD).normalized()
+				basis.z = basis.x.cross(up).normalized()
+				basis = basis.scaled(Vector3(sc, sc, sc))
+				xf.append(Transform3D(basis, pos))
+				var g: float = rng.randf_range(0.18, 0.30)
+				cols.append(Color(g * 0.7, g, g * 0.45))
+			lat += 28.0
+		arc += 28.0
+	mm.instance_count = xf.size()
+	for i in xf.size():
+		mm.set_instance_transform(i, xf[i])
+		mm.set_instance_color(i, cols[i])
+	_trees = MultiMeshInstance3D.new()
+	_trees.multimesh = mm
+	add_child(_trees)
+	print("ring_vibes: scattered ", xf.size(), " conifers")
 
 func _terrain_height_flat(x: float, z: float) -> float:
 	# creature-space height: walk-mode approximation treats world x/z as arc/lat directly
@@ -379,11 +444,15 @@ func _make_car() -> Node3D:
 func _car_pos(arc: float, lat: float) -> Vector3:
 	return _ring_pos(arc / _radius(), lat, _terrain_h(arc, lat, WIDTHS[w_idx]))
 
+# local up at a ring surface point = toward the cylinder axis (0, R, lat/z)
+func _ring_up(pos: Vector3) -> Vector3:
+	return (Vector3(0.0, _radius(), pos.z) - pos).normalized()
+
 func _drive_tick(delta: float) -> void:
 	var accel := 0.0
-	if Input.is_key_pressed(KEY_W): accel += 16.0
-	if Input.is_key_pressed(KEY_S): accel -= 22.0
-	_car_speed = clampf(_car_speed + accel * delta, -12.0, 45.0)
+	if Input.is_key_pressed(KEY_W): accel += 9.0
+	if Input.is_key_pressed(KEY_S): accel -= 12.0
+	_car_speed = clampf(_car_speed + accel * delta, -6.0, 22.0)  # ~80 km/h top (was 160)
 	_car_speed *= 1.0 - 0.35 * delta  # drag
 	var steer := 0.0
 	if Input.is_key_pressed(KEY_A): steer -= 1.0
@@ -393,7 +462,7 @@ func _drive_tick(delta: float) -> void:
 	_car_lat += sin(_car_heading) * _car_speed * delta
 	var pos := _car_pos(_car_arc, _car_lat)
 	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
-	var up := (Vector3(0, _radius(), 0) - pos).normalized()
+	var up := _ring_up(pos)
 	_car.global_position = pos + up * 0.4
 	if not pos.is_equal_approx(ahead):
 		_car.look_at(ahead + up * 0.4, up)
@@ -408,23 +477,25 @@ func _drive_tick(delta: float) -> void:
 
 func _walk_tick(delta: float) -> void:
 	var speed: float = WALK_SPEED * (WALK_RUN_MULT if Input.is_key_pressed(KEY_SHIFT) else 1.0)
-	var move := Vector2.ZERO
-	if Input.is_key_pressed(KEY_W): move.y -= 1.0
-	if Input.is_key_pressed(KEY_S): move.y += 1.0
-	if Input.is_key_pressed(KEY_A): move.x -= 1.0
-	if Input.is_key_pressed(KEY_D): move.x += 1.0
-	if move != Vector2.ZERO:
-		move = move.normalized()
+	var f := 0.0  # forward/back
+	var s := 0.0  # strafe
+	if Input.is_key_pressed(KEY_W): f += 1.0
+	if Input.is_key_pressed(KEY_S): f -= 1.0
+	if Input.is_key_pressed(KEY_D): s += 1.0
+	if Input.is_key_pressed(KEY_A): s -= 1.0
+	var mv := Vector2(s, f)
+	if mv != Vector2.ZERO:
+		mv = mv.normalized()
 	var yaw: float = _look.x
-	var fwd := Vector3(sin(yaw), 0, cos(yaw))
-	var right := Vector3(cos(yaw), 0, -sin(yaw))
-	var d: Vector3 = (fwd * -move.y + right * move.x) * speed * delta
+	# camera-relative in arc(=x-like)/lat(=z-like) space. yaw=0 faces +arc-ish.
+	# forward = -Z of the camera basis projected to the ground plane.
+	var d_arc := (mv.y * sin(yaw) + mv.x * cos(yaw)) * speed * delta
+	var d_lat := (mv.y * cos(yaw) - mv.x * sin(yaw)) * speed * delta
 	var w: float = WIDTHS[w_idx]
-	# naive approximation (valid at human-walking scale, negligible ring curvature over meters):
-	# world x/z map directly onto arc/lat, same functions the car and terrain mesh use.
-	var new_x: float = _cam.position.x + d.x
-	var new_z: float = clampf(_cam.position.z + d.z, -w * 0.5 + 50.0, w * 0.5 - 50.0)
-	_cam.position = Vector3(new_x, _terrain_h(new_x, new_z, w) + EYE_HEIGHT, new_z)
+	_walk_arc += d_arc
+	_walk_lat = clampf(_walk_lat + d_lat, -w * 0.5 + 50.0, w * 0.5 - 50.0)
+	var ground := _ring_pos(_walk_arc / _radius(), _walk_lat, _terrain_h(_walk_arc, _walk_lat, w))
+	_cam.position = ground + _ring_up(ground) * EYE_HEIGHT
 	_cam.rotation = Vector3(_look.y, _look.x, 0)
 
 func _set_mode(m: Mode) -> void:
@@ -441,7 +512,11 @@ func _set_mode(m: Mode) -> void:
 			_car.visible = false
 		if m == Mode.WALK:
 			var w: float = WIDTHS[w_idx]
-			_cam.position.y = _terrain_h(_cam.position.x, _cam.position.z, w) + EYE_HEIGHT
+			# init arc/lat from current camera (near origin worldx≈arc), then snap to curved surface
+			_walk_arc = _cam.position.x
+			_walk_lat = clampf(_cam.position.z, -w * 0.5 + 50.0, w * 0.5 - 50.0)
+			var ground := _ring_pos(_walk_arc / _radius(), _walk_lat, _terrain_h(_walk_arc, _walk_lat, w))
+			_cam.position = ground + _ring_up(ground) * EYE_HEIGHT
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
 	_update_hud()
 
