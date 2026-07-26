@@ -474,7 +474,10 @@ func _scatter_trees() -> void:
 			var jx: float = arc + rng.randf_range(-12, 12)
 			var jz: float = lat + rng.randf_range(-12, 12)
 			if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < 0.6:
-				var h: float = _terrain_h(jx, jz, w)
+				# sink base ~1.5m: trees are placed on the fine function but the render mesh is
+				# coarser, so bias downward — any mismatch reads as "planted", never "floating".
+				# (No per-frame raycast: trees are static, placed once. No disk bake: <1ms to compute.)
+				var h: float = _terrain_h(jx, jz, w) - 1.5
 				var pos := _ring_pos(jx / r, jz, h)
 				var up := _ring_up(pos)
 				var sc: float = base_scale * rng.randf_range(0.75, 1.4)
