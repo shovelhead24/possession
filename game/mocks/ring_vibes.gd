@@ -214,19 +214,20 @@ func _rebuild() -> void:
 	var w: float = WIDTHS[w_idx]
 	var r: float = _radius()
 
-	# Far band: the ring BEYOND the near strips (annulus), at ~terrain height — no overlap with
-	# the strips (was a sunk -80 shelf showing through as a dark z-fighting band under the terrain).
+	# Far band: the ring BEYOND the near strips (annulus). Samples the SAME terrain function, so
+	# it matches the strip exactly at the seam (no poke-through) and falls to 0 beyond the DEM
+	# (generic distant ring surface, hazed). Was a constant height that punched up through valleys.
 	var near_arc := 42_000.0
-	var band_h: float = _terrain_h(0.0, 0.0, w)
 	var seam: float = near_arc / r
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in BAND_SEGS + 1:
 		var theta: float = lerpf(seam, TAU - seam, float(i) / float(BAND_SEGS))
+		var arc: float = theta * r
 		for j in BAND_ROWS + 1:
 			var lat: float = w * (float(j) / float(BAND_ROWS) - 0.5)
 			st.set_uv(Vector2(float(i) / float(BAND_SEGS), float(j) / float(BAND_ROWS)))
-			st.add_vertex(_ring_pos(theta, lat, band_h))
+			st.add_vertex(_ring_pos(theta, lat, _terrain_h(arc, lat, w)))
 	_grid_indices(st, BAND_SEGS, BAND_ROWS)
 	st.generate_normals()
 	_band = MeshInstance3D.new()
@@ -384,18 +385,23 @@ func _rel_xform(node: Node3D, root: Node) -> Transform3D:
 	return t
 
 func _collect_tree_surfaces(node: Node, root: Node, by_mat: Dictionary) -> void:
-	# combine ALL of the tree's meshes (trunk + foliage) into per-material SurfaceTools,
-	# baking each part's transform — a whole upright tree, not a single dropped trunk.
+	# combine the tree's meshes (trunk + foliage) into per-material SurfaceTools, baking each
+	# part's transform. SKIP billboard/impostor and lower-LOD meshes — combining those baked a
+	# flat black-backed card into every tree ("black all over"). Keep LOD0 / unmarked meshes.
 	if node is MeshInstance3D and node.mesh:
-		var xf := _rel_xform(node, root)
-		for s in node.mesh.get_surface_count():
-			var mat: Material = node.mesh.surface_get_material(s)
-			var key: int = mat.get_instance_id() if mat else 0
-			if not by_mat.has(key):
-				var stx := SurfaceTool.new()
-				stx.begin(Mesh.PRIMITIVE_TRIANGLES)
-				by_mat[key] = {"st": stx, "mat": mat}
-			by_mat[key]["st"].append_from(node.mesh, s, xf)
+		var nm := node.name.to_lower()
+		var skip := "billboard" in nm or "impostor" in nm or "lod1" in nm or "lod2" in nm or "lod3" in nm
+		if not skip:
+			print("  tree mesh: ", node.name, " surfaces=", node.mesh.get_surface_count())
+			var xf := _rel_xform(node, root)
+			for s in node.mesh.get_surface_count():
+				var mat: Material = node.mesh.surface_get_material(s)
+				var key: int = mat.get_instance_id() if mat else 0
+				if not by_mat.has(key):
+					var stx := SurfaceTool.new()
+					stx.begin(Mesh.PRIMITIVE_TRIANGLES)
+					by_mat[key] = {"st": stx, "mat": mat}
+				by_mat[key]["st"].append_from(node.mesh, s, xf)
 	for child in node.get_children():
 		_collect_tree_surfaces(child, root, by_mat)
 
@@ -410,21 +416,23 @@ func _tree_mesh() -> Mesh:
 			inst.queue_free()
 			if not by_mat.is_empty():
 				var out := ArrayMesh.new()
+				var foliage_shader := load("res://mocks/ring_vibes_foliage.gdshader") as Shader
 				for key in by_mat:
 					var entry: Dictionary = by_mat[key]
 					entry["st"].commit(out)
+					var si := out.get_surface_count() - 1
 					var mat: Material = entry["mat"]
+					var tex: Texture2D = null
 					if mat is BaseMaterial3D:
-						mat = mat.duplicate()
-						# alpha-scissor cuts the foliage cards; higher threshold removes the dark
-						# fringe texels. Unshaded so double-sided leaf backfaces don't render black
-						# (Godot doesn't flip normals for backfaces — the source of the black masses).
-						mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-						mat.alpha_scissor_threshold = 0.5
-						mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-						mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-					if mat:
-						out.surface_set_material(out.get_surface_count() - 1, mat)
+						tex = (mat as BaseMaterial3D).albedo_texture
+					if tex:
+						# luminance-key the black atlas background to transparent (see foliage shader)
+						var fmat := ShaderMaterial.new()
+						fmat.shader = foliage_shader
+						fmat.set_shader_parameter("albedo_tex", tex)
+						out.surface_set_material(si, fmat)
+					elif mat:
+						out.surface_set_material(si, mat)
 				return out
 	var cone := CylinderMesh.new()
 	cone.top_radius = 0.02; cone.bottom_radius = 1.7; cone.height = 5.0
