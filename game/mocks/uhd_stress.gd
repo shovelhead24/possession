@@ -21,6 +21,7 @@ const TRI_PRESETS := [128, 256, 512, 768, 1024]   # subdivisions per side
 const FOLIAGE_PRESETS := [0, 5_000, 20_000, 50_000, 100_000, 200_000]
 const TILE_GRID := 8   # tiled mode splits into TILE_GRID x TILE_GRID meshes
 const TERRAIN_SIZE := 2000.0
+const DISP := 120.0    # must match the shader's disp default (heightmap -> metres)
 
 var tri_idx := 2
 var foliage_idx := 1
@@ -39,8 +40,11 @@ var _t := 0.0
 var _fps_accum := 0.0
 var _fps_samples := 0
 var _fps_avg := 0.0
+var _height_img: Image = null
 
 func _ready() -> void:
+	# vsync OFF so FPS shows true throughput — capped at 60 it hides how much headroom there is
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	var noise := FastNoiseLite.new()
 	noise.frequency = 0.004
 	_heightmap = NoiseTexture2D.new()
@@ -48,6 +52,7 @@ func _ready() -> void:
 	_heightmap.height = 512
 	_heightmap.noise = noise
 	await _heightmap.changed  # wait for the texture to generate
+	_height_img = _heightmap.get_image()  # CPU samples the SAME texture the GPU displaces by
 
 	_cam = Camera3D.new()
 	_cam.far = 8000.0
@@ -130,10 +135,20 @@ func _build_foliage() -> void:
 	for i in n:
 		var x := rng.randf_range(-TERRAIN_SIZE * 0.5, TERRAIN_SIZE * 0.5)
 		var z := rng.randf_range(-TERRAIN_SIZE * 0.5, TERRAIN_SIZE * 0.5)
-		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(x, 5, z)))
+		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(x, _sample_height(x, z) + 4.0, z)))
 	_foliage = MultiMeshInstance3D.new()
 	_foliage.multimesh = mm
 	add_child(_foliage)
+
+func _sample_height(x: float, z: float) -> float:
+	# same texture + same world->uv mapping the shader uses -> foliage sits ON the displaced terrain
+	if not _height_img or not displace:
+		return 0.0
+	var u := clampf(x / TERRAIN_SIZE + 0.5, 0.0, 1.0)
+	var v := clampf(z / TERRAIN_SIZE + 0.5, 0.0, 1.0)
+	var px := int(u * float(_height_img.get_width() - 1))
+	var py := int(v * float(_height_img.get_height() - 1))
+	return _height_img.get_pixel(px, py).r * DISP
 
 func _build_overdraw() -> void:
 	if _overdraw_node: _overdraw_node.queue_free()

@@ -5,13 +5,18 @@ render_mode cull_back;
 
 uniform sampler2D heightmap;
 uniform float disp = 120.0;
+uniform float terrain_size = 2000.0;
 uniform bool do_disp = true;
 
 varying float v_h;
 
 void vertex() {
+	// sample by WORLD position so tiled and one-mesh sample the same field (fair comparison,
+	// and no per-tile UV repeat). XZ is unaffected by the Y displacement below.
+	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	vec2 uv = world.xz / terrain_size + vec2(0.5);
 	if (do_disp) {
-		float h = texture(heightmap, UV).r;   // vertex texture fetch
+		float h = texture(heightmap, uv).r;   // vertex texture fetch
 		VERTEX.y += h * disp;
 		v_h = h;
 	} else {
