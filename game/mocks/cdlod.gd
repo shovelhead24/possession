@@ -73,8 +73,6 @@ func _ready() -> void:
 		mi.mesh = _grid_mesh
 		mi.material_override = mat
 		mi.visible = false
-		# generous custom AABB so nodes aren't wrongly frustum-culled (verts move in the shader)
-		mi.custom_aabb = AABB(Vector3(0, -DISP, 0), Vector3(TERRAIN_SIZE, 2 * DISP, TERRAIN_SIZE))
 		add_child(mi)
 		_pool.append(mi)
 		_mats.append(mat)
@@ -128,6 +126,10 @@ func _emit(ox: float, oz: float, size: float, level: int) -> void:
 	mat.set_shader_parameter("morph_end", band_far)
 	mat.set_shader_parameter("lod_tint", float(level) / float(MAX_LEVEL))
 	mat.set_shader_parameter("show_lod", _show_lod)
+	# AABB matching THIS node's actual world region (shader outputs world pos; instance is identity)
+	# — with a lateral margin for the coarse-morph, so frustum culling is correct, not gap-inducing.
+	mi.custom_aabb = AABB(Vector3(ox - size * 0.1, -DISP, oz - size * 0.1),
+		Vector3(size * 1.2, 2.0 * DISP, size * 1.2))
 	mi.visible = true
 	_used += 1
 
