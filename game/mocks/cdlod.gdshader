@@ -20,6 +20,7 @@ uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;   // heightmap tiling period (mountain spacing)
 uniform float disp = 300.0;
 uniform float ring_radius = 0.0;  // 0 = flat; >0 bends terrain onto the cylinder
+uniform float ring_width = 1.0e9; // terrain beyond +/- width/2 plunges out of sight behind the walls
 uniform bool curve = true;
 uniform vec2 node_origin = vec2(0.0);   // world XZ of this node's corner
 uniform float node_size = 128.0;         // world size of this node

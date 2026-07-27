@@ -19,7 +19,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
-const BUILD := 15   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 16   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -120,7 +120,8 @@ func _ready() -> void:
 	_sun.light_energy = 1.1
 	_sun.light_color = Color(1.0, 0.96, 0.88)
 	_sun.shadow_enabled = true
-	_sun.directional_shadow_max_distance = 600.0   # near CSM band — cheap, car/tree shadows only
+	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL  # single split = cheapest
+	_sun.directional_shadow_max_distance = 300.0   # car/trees are close — tiny shadow band on UHD
 	add_child(_sun)
 
 	var shader := load("res://mocks/cdlod.gdshader") as Shader
@@ -148,6 +149,9 @@ func _ready() -> void:
 		mi.mesh = _grid_mesh
 		mi.material_override = mat
 		mi.visible = false
+		# terrain RECEIVES shadows (car/trees onto ground) but must NOT cast — casting the whole
+		# double-sided LOD terrain into the shadow map every frame is what tanked FPS to ~8 on UHD.
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 		_pool.append(mi)
 		_mats.append(mat)
