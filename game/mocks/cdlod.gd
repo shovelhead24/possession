@@ -17,7 +17,9 @@ const POOL := 1200
 const RING_RADIUS := 318309.9    # 2000km circumference / TAU (the decided ring)
 const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
-const BUILD := 13   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
+const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
+const BUILD := 14   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -31,6 +33,21 @@ var _dem_cam := Vector2.ZERO
 var _dem_mpp := 23.45
 var _dem_size := Vector2.ZERO
 var _use_dem := true
+var _sat_tex: ImageTexture = null
+var _roads_tex: ImageTexture = null
+# half-res height field kept on the CPU so the car samples EXACTLY what the shader draws
+# (same data, same UV) — render-authoritative placement, no double-floor.
+var _dem_hf := PackedFloat32Array()
+var _dem_hf_w := 0
+var _dem_hf_h := 0
+# drive mode: car lives in ring (arc, lat) coords, height from the DEM, no physics
+var _car: Node3D = null
+var _drive := false
+var _car_arc := 0.0
+var _car_lat := 0.0
+var _car_heading := 0.0
+var _car_speed := 0.0
+var _sun: DirectionalLight3D = null
 var _cam: Camera3D
 var _hud: Label
 var _cam_xz := Vector2.ZERO
@@ -84,6 +101,13 @@ func _ready() -> void:
 	we.environment = env
 	add_child(we)
 
+	# sun for real-material props (the car); terrain does its own in-shader lighting
+	_sun = DirectionalLight3D.new()
+	_sun.rotation_degrees = Vector3(-52, -34, 0)
+	_sun.light_energy = 1.1
+	_sun.light_color = Color(1.0, 0.96, 0.88)
+	add_child(_sun)
+
 	var shader := load("res://mocks/cdlod.gdshader") as Shader
 	for i in POOL:
 		var mat := ShaderMaterial.new()
@@ -99,6 +123,12 @@ func _ready() -> void:
 			mat.set_shader_parameter("dem_cam", _dem_cam)
 			mat.set_shader_parameter("dem_mpp", _dem_mpp)
 			mat.set_shader_parameter("dem_size", _dem_size)
+		if _sat_tex:
+			mat.set_shader_parameter("sat_tex", _sat_tex)
+			mat.set_shader_parameter("has_sat", true)
+		if _roads_tex:
+			mat.set_shader_parameter("road_tex", _roads_tex)
+			mat.set_shader_parameter("has_roads", true)
 		var mi := MeshInstance3D.new()
 		mi.mesh = _grid_mesh
 		mi.material_override = mat
@@ -142,7 +172,22 @@ func _load_dem_texture() -> void:
 	_dem_cam = Vector2(float(cam_px[0]) * 0.5, float(cam_px[1]) * 0.5)
 	_dem_mpp = mpp * 2.0
 	_dem_size = Vector2(dw, dh)
-	print("cdlod: DEM texture %dx%d, mpp=%.1f" % [dw, dh, _dem_mpp])
+	_dem_hf = floats            # keep for CPU height queries (car)
+	_dem_hf_w = dw
+	_dem_hf_h = dh
+	# satellite + roads drape (PNG buffers, DEM-aligned; gitignored local files like the DEM)
+	if FileAccess.file_exists(DEM_SAT):
+		var simg := Image.new()
+		if simg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_SAT)) == OK:
+			simg.generate_mipmaps()
+			_sat_tex = ImageTexture.create_from_image(simg)
+	if FileAccess.file_exists(DEM_ROADS):
+		var rimg := Image.new()
+		if rimg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_ROADS)) == OK:
+			rimg.generate_mipmaps()
+			_roads_tex = ImageTexture.create_from_image(rimg)
+	print("cdlod: DEM texture %dx%d, mpp=%.1f  sat:%s roads:%s" % [dw, dh, _dem_mpp,
+		"yes" if _sat_tex else "no", "yes" if _roads_tex else "no"])
 
 func _ring_pt(arc: float, lat: float, h: float) -> Vector3:
 	# CPU mirror of the shader's flat->ring transform (for correct curved AABBs)
@@ -151,6 +196,103 @@ func _ring_pt(arc: float, lat: float, h: float) -> Vector3:
 	var theta := arc / RING_RADIUS
 	var rr := RING_RADIUS - h
 	return Vector3(rr * sin(theta), RING_RADIUS - rr * cos(theta), lat)
+
+func _terrain_h(arc: float, lat: float) -> float:
+	# CPU height from the SAME half-res field + UV the shader samples (linear, edge-clamped), so the
+	# car sits on exactly what's drawn. At the car the LOD is finest, so morph≈0 -> no double-floor.
+	if _dem_hf_w == 0:
+		return 0.0
+	var fx := clampf(_dem_cam.x + arc / _dem_mpp, 0.0, float(_dem_hf_w - 1) - 0.001)
+	var fy := clampf(_dem_cam.y - lat / _dem_mpp, 0.0, float(_dem_hf_h - 1) - 0.001)
+	var x0 := int(fx); var y0 := int(fy)
+	var tx := fx - float(x0); var ty := fy - float(y0)
+	var h00 := _dem_hf[y0 * _dem_hf_w + x0]
+	var h10 := _dem_hf[y0 * _dem_hf_w + x0 + 1]
+	var h01 := _dem_hf[(y0 + 1) * _dem_hf_w + x0]
+	var h11 := _dem_hf[(y0 + 1) * _dem_hf_w + x0 + 1]
+	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), ty)
+
+func _ring_up(pos: Vector3) -> Vector3:
+	# local up at a ring surface point = toward the cylinder axis
+	if not _curve:
+		return Vector3.UP
+	return (Vector3(0.0, RING_RADIUS, pos.z) - pos).normalized()
+
+func _make_car() -> Node3D:
+	var root := Node3D.new()
+	var body := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(2.0, 1.0, 4.2)
+	body.mesh = bm
+	var bmat := StandardMaterial3D.new()
+	bmat.albedo_color = Color(0.33, 0.36, 0.30)
+	body.material_override = bmat
+	body.position.y = 0.9
+	root.add_child(body)
+	var glass := MeshInstance3D.new()
+	var gm := BoxMesh.new()
+	gm.size = Vector3(1.7, 0.5, 1.1)
+	glass.mesh = gm
+	var gmat := StandardMaterial3D.new()
+	gmat.albedo_color = Color(0.45, 0.75, 0.80)
+	glass.material_override = gmat
+	glass.position = Vector3(0, 1.55, -0.5)
+	root.add_child(glass)
+	var wmat := StandardMaterial3D.new()
+	wmat.albedo_color = Color(0.10, 0.10, 0.10)
+	for wp in [Vector3(-1.05, 0.45, 1.4), Vector3(1.05, 0.45, 1.4), Vector3(-1.05, 0.45, -1.4), Vector3(1.05, 0.45, -1.4)]:
+		var wheel := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.height = 0.35; cm.top_radius = 0.45; cm.bottom_radius = 0.45
+		wheel.mesh = cm
+		wheel.rotation_degrees = Vector3(0, 0, 90)
+		wheel.position = wp
+		wheel.material_override = wmat
+		root.add_child(wheel)
+	add_child(root)
+	return root
+
+func _car_pos(arc: float, lat: float) -> Vector3:
+	return _ring_pt(arc, lat, _terrain_h(arc, lat))
+
+func _set_drive(on: bool) -> void:
+	_drive = on
+	if on:
+		if not _car:
+			_car = _make_car()
+		_car.visible = true
+		_car_arc = _cam.position.x
+		_car_lat = _cam.position.z
+		_car_speed = 0.0
+		_car_heading = 0.0
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		_captured = false
+		_autofly = false
+	elif _car:
+		_car.visible = false
+
+func _drive_tick(delta: float) -> void:
+	var accel := 0.0
+	if Input.is_key_pressed(KEY_W): accel += 9.0
+	if Input.is_key_pressed(KEY_S): accel -= 12.0
+	_car_speed = clampf(_car_speed + accel * delta, -6.0, 22.0)   # ~80 km/h top
+	_car_speed *= 1.0 - 0.35 * delta
+	var steer := 0.0
+	if Input.is_key_pressed(KEY_A): steer -= 1.0
+	if Input.is_key_pressed(KEY_D): steer += 1.0
+	_car_heading += steer * 1.5 * delta * clampf(abs(_car_speed) / 12.0, 0.0, 1.0) * signf(_car_speed)
+	_car_arc += cos(_car_heading) * _car_speed * delta
+	_car_lat += sin(_car_heading) * _car_speed * delta
+	var pos := _car_pos(_car_arc, _car_lat)
+	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
+	var up := _ring_up(pos)
+	_car.global_position = pos + up * 0.4
+	if not pos.is_equal_approx(ahead):
+		_car.look_at(ahead + up * 0.4, up)
+	var fwd := (ahead - pos).normalized()
+	var cam_target: Vector3 = pos + up * 4.0 - fwd * 11.0
+	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-5.0 * delta))
+	_cam.look_at(pos + up * 2.0, up)
 
 func _recompute_ranges() -> void:
 	_lod_range.clear()
@@ -256,9 +398,12 @@ func _rebuild_lod() -> void:
 
 func _process(delta: float) -> void:
 	_fps = lerpf(_fps, 1.0 / maxf(delta, 0.0001), 0.1)
-	if _autofly:
-		_cam.position += -_cam.global_basis.z * 60.0 * delta
-	_fly(delta)
+	if _drive:
+		_drive_tick(delta)
+	else:
+		if _autofly:
+			_cam.position += -_cam.global_basis.z * 60.0 * delta
+		_fly(delta)
 	_cam_xz = Vector2(_cam.position.x, _cam.position.z)
 	_rebuild_lod()
 	_update_hud()
@@ -286,9 +431,10 @@ func _update_hud() -> void:
 		_range_scale, "ON" if _curve else "off",
 		"ON" if _show_lod else "off", "ON" if _autofly else "off"]
 	_hud.text += "   [D] DEM: %s" % ("real" if (_use_dem and _dem_tex) else ("noise" if _dem_tex else "noise (no DEM)"))
+	_hud.text += "   [V] mode: %s" % ("DRIVE %d km/h (WASD)" % int(abs(_car_speed) * 3.6) if _drive else "fly")
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and not _captured:
+	if event is InputEventMouseButton and event.pressed and not _captured and not _drive:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_captured = true
 	if event is InputEventMouseMotion and _captured:
@@ -296,6 +442,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_look.y = clampf(_look.y, -1.55, 1.55)
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
 	if event is InputEventKey and event.pressed:
+		if _drive:
+			# while driving, WASD steer via polling; only V/ESC leave drive (don't toggle DEM etc.)
+			if event.keycode == KEY_V or event.keycode == KEY_ESCAPE:
+				_set_drive(false)
+			return
 		match event.keycode:
 			KEY_ESCAPE:
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -318,6 +469,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_curve = not _curve
 			KEY_D:
 				if _dem_tex: _use_dem = not _use_dem
+			KEY_V:
+				if _dem_hf_w > 0: _set_drive(not _drive)
 			KEY_COMMA:
 				_range_scale = maxf(0.25, _range_scale - 0.25); _recompute_ranges()
 			KEY_PERIOD:

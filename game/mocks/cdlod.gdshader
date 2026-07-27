@@ -11,6 +11,11 @@ uniform vec2 dem_cam = vec2(0.0);  // DEM pixel of the world origin
 uniform float dem_mpp = 47.0;      // metres per DEM texel
 uniform vec2 dem_size = vec2(1.0);
 uniform bool use_dem = false;
+uniform sampler2D sat_tex : source_color, filter_linear;  // Sentinel-2 drape, DEM-aligned
+uniform bool has_sat = false;
+uniform sampler2D road_tex : filter_linear;               // OSM roads mask
+uniform bool has_roads = false;
+uniform float sat_gain = 1.35;
 uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;   // heightmap tiling period (mountain spacing)
 uniform float disp = 300.0;
@@ -29,6 +34,7 @@ uniform float skirt = 0.15;               // skirt depth as fraction of node siz
 
 varying float v_h;
 varying vec3 v_n;
+varying vec2 v_demuv;   // DEM/sat texture coord for this vertex (for the drape)
 
 float sample_h(vec2 wxz) {
 	if (use_dem) {
@@ -48,6 +54,7 @@ void vertex() {
 	vec2 g_coarse = g - mod(g, 2.0);
 	vec2 uvm = mix(uv01, g_coarse / grid, morph);
 	wxz = node_origin + uvm * node_size;
+	v_demuv = vec2(dem_cam.x + wxz.x / dem_mpp, dem_cam.y - wxz.y / dem_mpp) / dem_size;
 	float h = sample_h(wxz);
 	// cheap gradient normal from the heightmap so terrain shape reads
 	float e = max(node_size / grid, 2.0);
@@ -76,6 +83,16 @@ void vertex() {
 void fragment() {
 	float nl = clamp(dot(normalize(v_n), normalize(vec3(0.4, 0.8, 0.3))), 0.0, 1.0);
 	vec3 base = mix(vec3(0.30, 0.40, 0.24), vec3(0.52, 0.52, 0.48), smoothstep(0.45, 0.85, v_h));
+	// real Sentinel-2 drape inside the DEM footprint; procedural green ramp beyond it
+	bool in_dem = v_demuv.x > 0.0 && v_demuv.x < 1.0 && v_demuv.y > 0.0 && v_demuv.y < 1.0;
+	if (use_dem && has_sat && in_dem) {
+		vec3 sat = texture(sat_tex, v_demuv).rgb * sat_gain;
+		base = mix(base, sat, smoothstep(0.015, 0.05, dot(sat, vec3(0.333))));  // ramp where nodata-dark
+		if (has_roads) {
+			float road = texture(road_tex, v_demuv).r;
+			base = mix(base, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
+		}
+	}
 	if (show_lod) {
 		vec3 lod_col = mix(vec3(0.1, 0.9, 0.2), vec3(0.95, 0.2, 0.1), lod_tint);
 		base = mix(base, lod_col, 0.55);
