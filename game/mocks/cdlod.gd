@@ -19,7 +19,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
-const BUILD := 20   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 21   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -61,7 +61,7 @@ var _sun: DirectionalLight3D = null
 # on the DEM (fine LOD there -> morph≈0 -> matches the drawn mesh, no need to raycast).
 # realistic fir pack with artist LODs: 3 variants, each LOD0/1/2 (geometry) + LOD3 (billboard)
 const TREE_PACK := "res://realistic_fir_trees_pack_lods_gameready/scene.gltf"
-const FOREST_HALF := 700.0
+const FOREST_HALF := 1200.0   # bigger patch so aerial views see a real expanse of wood
 const TREE_DENSITY := [0.0, 0.12, 0.3, 0.6]   # [T] cycles: none / sparse / medium / full
 const TREE_H := 9.0                           # target tree height (m)
 const TREE_LODS := 4                          # LOD0..LOD3(billboard)
@@ -82,6 +82,7 @@ var _tree_variant := PackedInt32Array()        # per-tree variant index
 # tris, nearly free) so distant forest keeps depth instead of vanishing. [G]/[B] scale all bands.
 var _tree_lod_dist := [20.0, 35.0, 55.0, 220.0]
 var _tree_lod_scale := 1.0
+var _tree_fly_mult := 14.0   # in FLY mode the billboard tier reaches ~14x further (aerial views the whole wood)
 var _tree_last_cam := Vector3(1e9, 1e9, 1e9)
 var _tree_counts := PackedInt32Array()   # visible count per LOD tier (HUD)
 var _cam: Camera3D
@@ -404,6 +405,10 @@ func _prep_material(mat: Material) -> Material:
 				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 				m.alpha_scissor_threshold = 0.5
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED
+			# billboard/impostor materials import UNSHADED (baked-in lighting) -> force lit so the
+			# far tiers take the sun and match the near geometry instead of reading flat + bright.
+			m.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+			m.roughness = 1.0
 			return m
 	return mat
 
@@ -567,6 +572,8 @@ func _update_tree_lod(force := false) -> void:
 	var d := []
 	for k in TREE_LODS:
 		var r: float = _tree_lod_dist[k] * _tree_lod_scale
+		if k == TREE_LODS - 1 and _mode == M_FLY:
+			r *= _tree_fly_mult   # keep the far wood as billboards when flying (they're ~20 tris each)
 		d.append(r * r)
 	var buckets := []
 	for v in _tree_nvar:
