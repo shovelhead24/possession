@@ -37,12 +37,20 @@ varying float v_h;
 varying vec3 v_n;
 varying vec2 v_demuv;   // DEM/sat texture coord for this vertex (for the drape)
 
+bool in_dem_bounds(vec2 uv) {
+	return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0;
+}
+
 float sample_h(vec2 wxz) {
+	// real DEM inside its footprint; procedural (tiled, recurring mountains) everywhere else, so
+	// the rest of the ring beyond the mapped patch isn't a flat plateau (the old clamp-to-edge did that).
 	if (use_dem) {
 		vec2 uv = vec2(dem_cam.x + wxz.x / dem_mpp, dem_cam.y - wxz.y / dem_mpp) / dem_size;
-		return texture(dem_tex, clamp(uv, vec2(0.001), vec2(0.999))).r;   // real DEM, metres
+		if (in_dem_bounds(uv)) {
+			return texture(dem_tex, uv).r;
+		}
 	}
-	return texture(heightmap, wxz / feature).r * disp;   // tiled procedural, mountains recur
+	return texture(heightmap, wxz / feature).r * disp;
 }
 
 void vertex() {
