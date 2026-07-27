@@ -11,6 +11,7 @@ uniform vec2 dem_cam = vec2(0.0);  // DEM pixel of the world origin
 uniform float dem_mpp = 47.0;      // metres per DEM texel
 uniform vec2 dem_size = vec2(1.0);
 uniform bool use_dem = false;
+uniform float dem_scale = 1.0;    // real-height exaggeration (DEM branch only; procedural is unaffected)
 uniform sampler2D sat_tex : source_color, filter_linear;  // Sentinel-2 drape, DEM-aligned
 uniform bool has_sat = false;
 uniform sampler2D road_tex : filter_linear;               // OSM roads mask
@@ -47,7 +48,7 @@ float sample_h(vec2 wxz) {
 	if (use_dem) {
 		vec2 uv = vec2(dem_cam.x + wxz.x / dem_mpp, dem_cam.y - wxz.y / dem_mpp) / dem_size;
 		if (in_dem_bounds(uv)) {
-			return texture(dem_tex, uv).r;
+			return texture(dem_tex, uv).r * dem_scale;
 		}
 	}
 	return texture(heightmap, wxz / feature).r * disp;
