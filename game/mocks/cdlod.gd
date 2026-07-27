@@ -7,13 +7,15 @@ extends Node3D
 #           [F] auto-fly forward (hands-free, to watch LOD update); ESC release.
 
 const GRID := 16                 # quads per node side (matches shader `grid`)
-const MAX_LEVEL := 4             # 0 = finest leaves .. MAX_LEVEL = coarsest roots
+const MAX_LEVEL := 9             # 0 = finest leaves .. MAX_LEVEL = coarsest roots
 const LEAF_SIZE := 128.0         # world size of a level-0 node
-const BASE_RANGE := 200.0        # lod_range[0]; doubles each level
-const TERRAIN_SIZE := 4096.0
-const DISP := 300.0
-const POOL := 400
-const BUILD := 11   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BASE_RANGE := 200.0        # lod_range[0]; doubles each level -> ~102km draw distance
+const TERRAIN_SIZE := 262144.0   # ~262km span (4x4 roots of 65km) — room for distant mountains
+const DISP := 800.0              # mountain height scale
+const FEATURE := 3500.0          # heightmap tiling period (mountain spacing)
+const POOL := 1200
+const RING_RADIUS := 318309.9    # 2000km circumference / TAU (the decided ring)
+const BUILD := 12   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -37,6 +39,7 @@ var _morph_lo := 0.9
 var _morph_hi := 1.0
 var _morph_horiz := true   # horizontal beat 3D — 3D was swamped by camera altitude
 var _range_scale := 1.0    # scales all LOD ranges
+var _curve := true         # [C] ring curvature on/off (compare flat vs curved)
 
 func _ready() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -51,13 +54,14 @@ func _ready() -> void:
 	_heightmap = NoiseTexture2D.new()
 	_heightmap.width = 1024
 	_heightmap.height = 1024
+	_heightmap.seamless = true   # tiles cleanly so mountains recur across the ring
 	_heightmap.noise = noise
 	await _heightmap.changed
 
 	_grid_mesh = _build_unit_grid()
 
 	_cam = Camera3D.new()
-	_cam.far = 12000.0
+	_cam.far = 400000.0   # see across the ring
 	_cam.position = Vector3(0, 260, 0)
 	add_child(_cam)
 	_cam.make_current()
@@ -80,6 +84,8 @@ func _ready() -> void:
 		mat.set_shader_parameter("terrain_size", TERRAIN_SIZE)
 		mat.set_shader_parameter("disp", DISP)
 		mat.set_shader_parameter("grid", float(GRID))
+		mat.set_shader_parameter("feature", FEATURE)
+		mat.set_shader_parameter("ring_radius", RING_RADIUS)
 		var mi := MeshInstance3D.new()
 		mi.mesh = _grid_mesh
 		mi.material_override = mat
@@ -96,6 +102,14 @@ func _ready() -> void:
 	_hud.add_theme_constant_override("outline_size", 4)
 	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	layer.add_child(_hud)
+
+func _ring_pt(arc: float, lat: float, h: float) -> Vector3:
+	# CPU mirror of the shader's flat->ring transform (for correct curved AABBs)
+	if not _curve:
+		return Vector3(arc, h, lat)
+	var theta := arc / RING_RADIUS
+	var rr := RING_RADIUS - h
+	return Vector3(rr * sin(theta), RING_RADIUS - rr * cos(theta), lat)
 
 func _recompute_ranges() -> void:
 	_lod_range.clear()
@@ -171,10 +185,13 @@ func _emit(ox: float, oz: float, size: float, level: int) -> void:
 	mat.set_shader_parameter("morph_end", lerpf(band_near, band_far, _morph_hi))
 	mat.set_shader_parameter("lod_tint", float(level) / float(MAX_LEVEL))
 	mat.set_shader_parameter("show_lod", _show_lod)
-	# AABB matching THIS node's world region, with a half-tile margin so tiles render slightly
-	# BEYOND the frustum (soft overlap) — reduces peripheral pop-in when the camera turns.
-	mi.custom_aabb = AABB(Vector3(ox - size * 0.5, -DISP, oz - size * 0.5),
-		Vector3(size * 2.0, 2.0 * DISP, size * 2.0))
+	# AABB from the node's (possibly curved) corners so frustum culling matches the shader output.
+	var aabb := AABB(_ring_pt(ox, oz, DISP), Vector3.ZERO)
+	for cx in [ox, ox + size]:
+		for cz in [oz, oz + size]:
+			aabb = aabb.expand(_ring_pt(cx, cz, DISP))
+			aabb = aabb.expand(_ring_pt(cx, cz, -DISP - size * SKIRT))
+	mi.custom_aabb = aabb.grow(size * 0.5)   # half-tile margin = soft overlap, less peripheral pop
 	mi.visible = true
 	_used += 1
 
@@ -193,6 +210,7 @@ func _rebuild_lod() -> void:
 		_mats[i].set_shader_parameter("cam_pos", cp)
 		_mats[i].set_shader_parameter("morph_horizontal", _morph_horiz)
 		_mats[i].set_shader_parameter("skirt", SKIRT)
+		_mats[i].set_shader_parameter("curve", _curve)
 
 func _process(delta: float) -> void:
 	_fps = lerpf(_fps, 1.0 / maxf(delta, 0.0001), 0.1)
@@ -220,10 +238,10 @@ func _fly(delta: float) -> void:
 func _update_hud() -> void:
 	var dc := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 	var prims := int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
-	_hud.text = "cdlod %s\nFPS: %.0f   draw calls: %d   tris: %s   nodes: %d   cam h: %.0f m\n\nMORPH:  start [ / ] = %.2f    end ; / ' = %.2f    [H] metric: %s\nRANGE:  , / . scale = %.2f   -> %s\n\n[M] LOD colour: %s   [F] auto-fly: %s   [R] reset params\nclick=capture  WASD+Space/Ctrl fly  Shift boost  ESC release" % [
+	_hud.text = "cdlod %s\nFPS: %.0f   draw calls: %d   tris: %s   nodes: %d   cam h: %.0f m\n\nMORPH:  start [ / ] = %.2f    end ; / ' = %.2f    [H] metric: %s\nRANGE:  , / . scale = %.2f   [C] curve: %s\n\n[M] LOD colour: %s   [F] auto-fly: %s   [R] reset params\nclick=capture  WASD+Space/Ctrl fly  Shift boost  ESC release" % [
 		_build_stamp, _fps, dc, str(prims), _used, _cam.position.y,
 		_morph_lo, _morph_hi, "horizontal" if _morph_horiz else "3D",
-		_range_scale, str(_lod_range),
+		_range_scale, "ON" if _curve else "off",
 		"ON" if _show_lod else "off", "ON" if _autofly else "off"]
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -253,6 +271,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_morph_hi = clampf(_morph_hi + 0.05, _morph_lo + 0.05, 1.0)
 			KEY_H:
 				_morph_horiz = not _morph_horiz
+			KEY_C:
+				_curve = not _curve
 			KEY_COMMA:
 				_range_scale = maxf(0.25, _range_scale - 0.25); _recompute_ranges()
 			KEY_PERIOD:

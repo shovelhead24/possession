@@ -5,9 +5,12 @@ render_mode cull_disabled;   // double-sided while prototyping so surface orient
 // the next-coarser grid as they approach the node's far LOD range — so when a node flips to a
 // coarser level the geometry already matches: no pop, no cracks. This is the whole point.
 
-uniform sampler2D heightmap;
+uniform sampler2D heightmap : repeat_enable;
 uniform float terrain_size = 4096.0;
+uniform float feature = 3500.0;   // heightmap tiling period (mountain spacing)
 uniform float disp = 300.0;
+uniform float ring_radius = 0.0;  // 0 = flat; >0 bends terrain onto the cylinder
+uniform bool curve = true;
 uniform vec2 node_origin = vec2(0.0);   // world XZ of this node's corner
 uniform float node_size = 128.0;         // world size of this node
 uniform float morph_start = 0.0;         // distance where morph-to-coarser begins
@@ -23,7 +26,7 @@ varying float v_h;
 varying vec3 v_n;
 
 float sample_h(vec2 wxz) {
-	return texture(heightmap, wxz / terrain_size + vec2(0.5)).r * disp;
+	return texture(heightmap, wxz / feature).r * disp;   // tiled (repeat) so mountains recur
 }
 
 void vertex() {
@@ -47,7 +50,17 @@ void vertex() {
 	v_h = h / disp;
 	// skirt verts (marked y=-1 in the unit grid) hang below the edge to hide residual cracks
 	float y = (VERTEX.y < -0.5) ? h - node_size * skirt : h;
-	VERTEX = vec3(wxz.x, y, wxz.y);   // node instance is identity — output world position
+	if (curve && ring_radius > 0.0) {
+		// bend flat (arc = wxz.x, lat = wxz.y, height = y) onto the cylinder interior
+		float theta = wxz.x / ring_radius;
+		float rr = ring_radius - y;
+		float ct = cos(theta), stt = sin(theta);
+		VERTEX = vec3(rr * stt, ring_radius - rr * ct, wxz.y);
+		// rotate the flat normal about the ring axis (Z) by theta so lighting stays correct
+		v_n = vec3(v_n.x * ct - v_n.y * stt, v_n.x * stt + v_n.y * ct, v_n.z);
+	} else {
+		VERTEX = vec3(wxz.x, y, wxz.y);   // flat: node instance is identity, output world position
+	}
 	NORMAL = v_n;
 }
 
