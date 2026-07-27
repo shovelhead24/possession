@@ -105,8 +105,10 @@ func _select(ox: float, oz: float, size: float, level: int) -> void:
 	if _used >= POOL:
 		return
 	if level > 0:
-		var center := Vector2(ox + size * 0.5, oz + size * 0.5)
-		if center.distance_to(_cam_xz) < _lod_range[level - 1]:
+		# 3D distance (includes camera altitude) — fly high and near-tiles coarsen, freeing budget
+		# to extend draw distance. Horizontal-only kept full detail directly below you at any height.
+		var center := Vector3(ox + size * 0.5, 0.0, oz + size * 0.5)
+		if _cam.position.distance_to(center) < _lod_range[level - 1]:
 			var h := size * 0.5
 			_select(ox, oz, h, level - 1)
 			_select(ox + h, oz, h, level - 1)
