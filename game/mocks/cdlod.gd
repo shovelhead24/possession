@@ -19,7 +19,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
-const BUILD := 16   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 18   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -52,6 +52,8 @@ var _sun: DirectionalLight3D = null
 # on the DEM (fine LOD there -> morph≈0 -> matches the drawn mesh, no need to raycast).
 const TREE_MODEL := "res://low_poly_red_spruce_tree_custom_textures/low_poly_red_spruce_tree_custom_textures/scene.gltf"
 const FOREST_HALF := 700.0
+const TREE_DENSITY := [0.0, 0.12, 0.3, 0.6]   # [T] cycles: none / sparse / medium / full
+var _tree_density_idx := 3
 var _trees: MultiMeshInstance3D = null
 var _forest_noise := FastNoiseLite.new()
 var _cam: Camera3D
@@ -387,6 +389,11 @@ func _scatter_trees() -> void:
 		return
 	if _trees:
 		_trees.queue_free()
+		_trees = null
+	var density: float = TREE_DENSITY[_tree_density_idx]
+	if density <= 0.0:
+		print("cdlod: trees off")
+		return
 	_forest_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	_forest_noise.frequency = 1.0 / 300.0
 	var mesh := _tree_mesh()
@@ -402,7 +409,7 @@ func _scatter_trees() -> void:
 		while lat <= FOREST_HALF:
 			var jx := arc + rng.randf_range(-12, 12)
 			var jz := lat + rng.randf_range(-12, 12)
-			if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < 0.6:
+			if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < density:
 				var ground := _car_pos(jx, jz)
 				var up := _ring_up(ground)
 				var sc: float = base_scale * rng.randf_range(0.75, 1.4)
@@ -422,8 +429,13 @@ func _scatter_trees() -> void:
 		mm.set_instance_transform(i, xf[i])
 	_trees = MultiMeshInstance3D.new()
 	_trees.multimesh = mm
+	_trees.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # discard-foliage shadow casters are brutal on UHD
 	add_child(_trees)
-	print("cdlod: scattered %d trees (%s)" % [xf.size(), "real model" if real_model else "cone"])
+	var tri_per := 0
+	for s in mesh.get_surface_count():
+		tri_per += (mesh.surface_get_arrays(s)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3
+	print("cdlod: scattered %d trees (%s), %d tris/tree, %d tris total" % [
+		xf.size(), "real model" if real_model else "cone", tri_per, tri_per * xf.size()])
 
 func _recompute_ranges() -> void:
 	_lod_range.clear()
@@ -563,6 +575,8 @@ func _update_hud() -> void:
 		"ON" if _show_lod else "off", "ON" if _autofly else "off"]
 	_hud.text += "   [D] DEM: %s" % ("real" if (_use_dem and _dem_tex) else ("noise" if _dem_tex else "noise (no DEM)"))
 	_hud.text += "   [V] mode: %s" % ("DRIVE %d km/h (WASD)" % int(abs(_car_speed) * 3.6) if _drive else "fly")
+	var tree_n := _trees.multimesh.instance_count if _trees else 0
+	_hud.text += "   [T] trees: %d (%s)" % [tree_n, ["off", "sparse", "medium", "full"][_tree_density_idx]]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and not _captured and not _drive:
@@ -602,6 +616,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				if _dem_tex: _use_dem = not _use_dem
 			KEY_V:
 				if _dem_hf_w > 0: _set_drive(not _drive)
+			KEY_T:
+				_tree_density_idx = (_tree_density_idx + 1) % TREE_DENSITY.size(); _scatter_trees()
 			KEY_COMMA:
 				_range_scale = maxf(0.25, _range_scale - 0.25); _recompute_ranges()
 			KEY_PERIOD:
