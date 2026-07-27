@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(node server.js)",
+      "Bash(curl -s -X POST http://localhost:5001/chat -H \"Content-Type: application/json\" -d \"{\\\\\"message\\\\\":\\\\\"say hi in exactly one word\\\\\",\\\\\"effort\\\\\":\\\\\"low\\\\\"}\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 10876 /F)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(Out-File *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Stop-Job *)",
+      "Bash(npx kill-port *)",
+      "Bash(node -e ' *)",
+      "Write(C:\\Games\\possession\\**)"
+    ]
+  }
+}

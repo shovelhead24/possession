@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://cfmegsevboo5e"
+
+[deps]
+
+files=["res://logs/lighting_test_2026-04-16T19-50-12.timestamp.translation", "res://logs/lighting_test_2026-04-16T19-50-12.fps.translation", "res://logs/lighting_test_2026-04-16T19-50-12.frame.translation", "res://logs/lighting_test_2026-04-16T19-50-12.cam.translation", "res://logs/lighting_test_2026-04-16T19-50-12.cam.translation", "res://logs/lighting_test_2026-04-16T19-50-12.cam.translation", "res://logs/lighting_test_2026-04-16T19-50-12.look.translation", "res://logs/lighting_test_2026-04-16T19-50-12.look.translation", "res://logs/lighting_test_2026-04-16T19-50-12.look.translation", "res://logs/lighting_test_2026-04-16T19-50-12.objects.translation", "res://logs/lighting_test_2026-04-16T19-50-12.primitives.translation", "res://logs/lighting_test_2026-04-16T19-50-12.shadow.translation", "res://logs/lighting_test_2026-04-16T19-50-12.shadow.translation", "res://logs/lighting_test_2026-04-16T19-50-12.ambient.translation", "res://logs/lighting_test_2026-04-16T19-50-12.sun.translation", "res://logs/lighting_test_2026-04-16T19-50-12.normals.translation", "res://logs/lighting_test_2026-04-16T19-50-12.stress.translation", "res://logs/lighting_test_2026-04-16T19-50-12.pass.translation"]
+
+source_file="res://logs/lighting_test_2026-04-16T19-50-12.csv"
+dest_files=["res://logs/lighting_test_2026-04-16T19-50-12.timestamp.translation", "res://logs/lighting_test_2026-04-16T19-50-12.fps.translation", "res://logs/lighting_test_2026-04-16T19-50-12.frame.translation", "res://logs/lighting_test_2026-04-16T19-50-12.cam.translation", "res://logs/lighting_test_2026-04-16T19-50-12.cam.translation", "res://logs/lighting_test_2026-04-16T19-50-12.cam.translation", "res://logs/lighting_test_2026-04-16T19-50-12.look.translation", "res://logs/lighting_test_2026-04-16T19-50-12.look.translation", "res://logs/lighting_test_2026-04-16T19-50-12.look.translation", "res://logs/lighting_test_2026-04-16T19-50-12.objects.translation", "res://logs/lighting_test_2026-04-16T19-50-12.primitives.translation", "res://logs/lighting_test_2026-04-16T19-50-12.shadow.translation", "res://logs/lighting_test_2026-04-16T19-50-12.shadow.translation", "res://logs/lighting_test_2026-04-16T19-50-12.ambient.translation", "res://logs/lighting_test_2026-04-16T19-50-12.sun.translation", "res://logs/lighting_test_2026-04-16T19-50-12.normals.translation", "res://logs/lighting_test_2026-04-16T19-50-12.stress.translation", "res://logs/lighting_test_2026-04-16T19-50-12.pass.translation"]
+
+[params]
+
+compress=true
+delimiter=0

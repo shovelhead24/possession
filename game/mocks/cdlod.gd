@@ -15,7 +15,9 @@ const DISP := 800.0              # mountain height scale
 const FEATURE := 3500.0          # heightmap tiling period (mountain spacing)
 const POOL := 1200
 const RING_RADIUS := 318309.9    # 2000km circumference / TAU (the decided ring)
-const BUILD := 12   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const DEM_R16 := "res://mocks/dem/millstreet.r16"
+const DEM_META := "res://mocks/dem/millstreet.json"
+const BUILD := 13   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -24,6 +26,11 @@ var _mats: Array[ShaderMaterial] = []
 var _used := 0
 var _lod_range: Array[float] = []
 var _heightmap: NoiseTexture2D
+var _dem_tex: ImageTexture = null
+var _dem_cam := Vector2.ZERO
+var _dem_mpp := 23.45
+var _dem_size := Vector2.ZERO
+var _use_dem := true
 var _cam: Camera3D
 var _hud: Label
 var _cam_xz := Vector2.ZERO
@@ -57,6 +64,7 @@ func _ready() -> void:
 	_heightmap.seamless = true   # tiles cleanly so mountains recur across the ring
 	_heightmap.noise = noise
 	await _heightmap.changed
+	_load_dem_texture()
 
 	_grid_mesh = _build_unit_grid()
 
@@ -86,6 +94,11 @@ func _ready() -> void:
 		mat.set_shader_parameter("grid", float(GRID))
 		mat.set_shader_parameter("feature", FEATURE)
 		mat.set_shader_parameter("ring_radius", RING_RADIUS)
+		if _dem_tex:
+			mat.set_shader_parameter("dem_tex", _dem_tex)
+			mat.set_shader_parameter("dem_cam", _dem_cam)
+			mat.set_shader_parameter("dem_mpp", _dem_mpp)
+			mat.set_shader_parameter("dem_size", _dem_size)
 		var mi := MeshInstance3D.new()
 		mi.mesh = _grid_mesh
 		mi.material_override = mat
@@ -102,6 +115,34 @@ func _ready() -> void:
 	_hud.add_theme_constant_override("outline_size", 4)
 	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	layer.add_child(_hud)
+
+func _load_dem_texture() -> void:
+	# real Millstreet DEM -> a float (RF) GPU texture the CDLOD vertex shader can sample.
+	# Half-res (every 2nd pixel) to keep the build loop quick; still ~47 m/texel.
+	if not (FileAccess.file_exists(DEM_R16) and FileAccess.file_exists(DEM_META)):
+		print("cdlod: no DEM found — using procedural noise")
+		_use_dem = false
+		return
+	var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(DEM_META))
+	var w := int(meta["w"])
+	var h := int(meta["h"])
+	var mpp := float(meta["m_per_px"])
+	var cam_px: Array = meta["camera_px"]
+	var raw := FileAccess.get_file_as_bytes(DEM_R16)   # u16 little-endian
+	var dw := w / 2
+	var dh := h / 2
+	var floats := PackedFloat32Array()
+	floats.resize(dw * dh)
+	for y in dh:
+		var sy := y * 2
+		for x in dw:
+			floats[y * dw + x] = float(raw.decode_u16((sy * w + x * 2) * 2)) / 16.0  # metres
+	var img := Image.create_from_data(dw, dh, false, Image.FORMAT_RF, floats.to_byte_array())
+	_dem_tex = ImageTexture.create_from_image(img)
+	_dem_cam = Vector2(float(cam_px[0]) * 0.5, float(cam_px[1]) * 0.5)
+	_dem_mpp = mpp * 2.0
+	_dem_size = Vector2(dw, dh)
+	print("cdlod: DEM texture %dx%d, mpp=%.1f" % [dw, dh, _dem_mpp])
 
 func _ring_pt(arc: float, lat: float, h: float) -> Vector3:
 	# CPU mirror of the shader's flat->ring transform (for correct curved AABBs)
@@ -211,6 +252,7 @@ func _rebuild_lod() -> void:
 		_mats[i].set_shader_parameter("morph_horizontal", _morph_horiz)
 		_mats[i].set_shader_parameter("skirt", SKIRT)
 		_mats[i].set_shader_parameter("curve", _curve)
+		_mats[i].set_shader_parameter("use_dem", _use_dem and _dem_tex != null)
 
 func _process(delta: float) -> void:
 	_fps = lerpf(_fps, 1.0 / maxf(delta, 0.0001), 0.1)
@@ -243,6 +285,7 @@ func _update_hud() -> void:
 		_morph_lo, _morph_hi, "horizontal" if _morph_horiz else "3D",
 		_range_scale, "ON" if _curve else "off",
 		"ON" if _show_lod else "off", "ON" if _autofly else "off"]
+	_hud.text += "   [D] DEM: %s" % ("real" if (_use_dem and _dem_tex) else ("noise" if _dem_tex else "noise (no DEM)"))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and not _captured:
@@ -273,6 +316,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_morph_horiz = not _morph_horiz
 			KEY_C:
 				_curve = not _curve
+			KEY_D:
+				if _dem_tex: _use_dem = not _use_dem
 			KEY_COMMA:
 				_range_scale = maxf(0.25, _range_scale - 0.25); _recompute_ranges()
 			KEY_PERIOD:

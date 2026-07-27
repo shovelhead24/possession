@@ -1,0 +1,17 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://uk72dpvf1miy"
+
+[deps]
+
+files=["res://logs/lighting_test_2026-04-16T17-40-05.timestamp.translation", "res://logs/lighting_test_2026-04-16T17-40-05.fps.translation", "res://logs/lighting_test_2026-04-16T17-40-05.frame.translation", "res://logs/lighting_test_2026-04-16T17-40-05.cam.translation", "res://logs/lighting_test_2026-04-16T17-40-05.cam.translation", "res://logs/lighting_test_2026-04-16T17-40-05.cam.translation", "res://logs/lighting_test_2026-04-16T17-40-05.look.translation", "res://logs/lighting_test_2026-04-16T17-40-05.look.translation", "res://logs/lighting_test_2026-04-16T17-40-05.look.translation", "res://logs/lighting_test_2026-04-16T17-40-05.objects.translation", "res://logs/lighting_test_2026-04-16T17-40-05.primitives.translation", "res://logs/lighting_test_2026-04-16T17-40-05.shadow.translation", "res://logs/lighting_test_2026-04-16T17-40-05.shadow.translation", "res://logs/lighting_test_2026-04-16T17-40-05.ambient.translation", "res://logs/lighting_test_2026-04-16T17-40-05.sun.translation", "res://logs/lighting_test_2026-04-16T17-40-05.preset.translation", "res://logs/lighting_test_2026-04-16T17-40-05.normals.translation"]
+
+source_file="res://logs/lighting_test_2026-04-16T17-40-05.csv"
+dest_files=["res://logs/lighting_test_2026-04-16T17-40-05.timestamp.translation", "res://logs/lighting_test_2026-04-16T17-40-05.fps.translation", "res://logs/lighting_test_2026-04-16T17-40-05.frame.translation", "res://logs/lighting_test_2026-04-16T17-40-05.cam.translation", "res://logs/lighting_test_2026-04-16T17-40-05.cam.translation", "res://logs/lighting_test_2026-04-16T17-40-05.cam.translation", "res://logs/lighting_test_2026-04-16T17-40-05.look.translation", "res://logs/lighting_test_2026-04-16T17-40-05.look.translation", "res://logs/lighting_test_2026-04-16T17-40-05.look.translation", "res://logs/lighting_test_2026-04-16T17-40-05.objects.translation", "res://logs/lighting_test_2026-04-16T17-40-05.primitives.translation", "res://logs/lighting_test_2026-04-16T17-40-05.shadow.translation", "res://logs/lighting_test_2026-04-16T17-40-05.shadow.translation", "res://logs/lighting_test_2026-04-16T17-40-05.ambient.translation", "res://logs/lighting_test_2026-04-16T17-40-05.sun.translation", "res://logs/lighting_test_2026-04-16T17-40-05.preset.translation", "res://logs/lighting_test_2026-04-16T17-40-05.normals.translation"]
+
+[params]
+
+compress=true
+delimiter=0

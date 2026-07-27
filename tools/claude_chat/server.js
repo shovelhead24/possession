@@ -184,7 +184,7 @@ function handleEvent(ev, send, blockTypes, setSession) {
                 case 'content_block_start':
                     blockTypes[e.index] = e.content_block.type;
                     if (e.content_block.type === 'thinking')      send({ type: 'thinking_start' });
-                    else if (e.content_block.type === 'tool_use') send({ type: 'tool_start', name: e.content_block.name, index: e.index });
+                    else if (e.content_block.type === 'tool_use') send({ type: 'tool_start', name: e.content_block.name, index: e.index, id: e.content_block.id });
                     break;
                 case 'content_block_delta':
                     if (e.delta.type === 'thinking_delta')       send({ type: 'thinking_delta', text: e.delta.thinking });
@@ -207,7 +207,7 @@ function handleEvent(ev, send, blockTypes, setSession) {
                    cache_read: ev.usage?.cache_read_input_tokens });
             break;
         case 'user': {
-            // Tool results come back as user events — scan for permission errors
+            // Tool results come back as user events
             const content = ev.message?.content || [];
             for (const block of content) {
                 if (block.type === 'tool_result') {
@@ -223,6 +223,9 @@ function handleEvent(ev, send, blockTypes, setSession) {
                         } else {
                             send({ type: 'permission_blocked', action: 'Tool', target: text.slice(0,120), pattern: '' });
                         }
+                    } else {
+                        // Tool executed — notify client so it can refresh file preview
+                        send({ type: 'tool_done', id: block.tool_use_id });
                     }
                 }
             }
@@ -232,6 +235,19 @@ function handleEvent(ev, send, blockTypes, setSession) {
             break;
     }
 }
+
+// ── File read endpoint ────────────────────────────────────────────────────────
+
+app.get('/file', (req, res) => {
+    const { path: p } = req.query;
+    if (!p) return res.status(400).json({ error: 'path required' });
+    try {
+        const content = fs.readFileSync(p, 'utf8');
+        res.json({ content });
+    } catch (e) {
+        res.status(404).json({ error: e.message });
+    }
+});
 
 const PORT = parseInt(process.env.PORT || '5001');
 app.listen(PORT, () => {

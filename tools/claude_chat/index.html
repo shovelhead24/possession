@@ -25,8 +25,13 @@ body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-seri
 .slide-panel .panel-inner{padding:10px 14px}
 
 /* ── System prompt ─────────────────────────────────────────────────────── */
+#sysPanel .panel-inner{display:flex;flex-direction:column;gap:8px}
 #sysPanel textarea{width:100%;background:#1e1e2a;color:#b0b0cc;border:1px solid #303040;border-radius:4px;padding:7px 10px;font-size:12px;font-family:inherit;resize:vertical;min-height:50px;max-height:110px}
 #sysPanel textarea:focus{outline:none;border-color:#6050b0}
+.sys-opts{display:flex;gap:16px;flex-wrap:wrap}
+.sys-opt{display:flex;align-items:center;gap:6px;font-size:11px;color:#666;cursor:pointer;user-select:none}
+.sys-opt input{accent-color:#6050b0;cursor:pointer}
+.sys-opt.active{color:#88b0d0}
 
 /* ── Sessions panel ─────────────────────────────────────────────────────── */
 #sessPanel .panel-inner{padding:0}
@@ -79,6 +84,10 @@ body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-seri
 .s-bar-track{width:72px;height:3px;background:#222;border-radius:2px;overflow:hidden}
 .s-bar-fill{height:100%;border-radius:2px;transition:width .4s}
 
+/* ── Content row (msgs + file preview) ──────────────────────────────────── */
+.content-row{flex:1;display:flex;overflow:hidden}
+.chat-col{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
 /* ── Messages ───────────────────────────────────────────────────────────── */
 .msgs{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:9px}
 .msg{max-width:90%;display:flex;flex-direction:column;gap:4px}
@@ -117,8 +126,56 @@ body{background:#13131a;color:#dddcee;font-family:'Segoe UI',system-ui,sans-seri
 .tool-body{background:#111118;padding:8px 10px;font-size:11px;color:#606880;font-family:'Cascadia Code','Consolas',monospace;white-space:pre-wrap;max-height:120px;overflow:auto;display:none;border-top:1px solid #2a2a3e}
 .tool-body.open{display:block}
 
-/* ── Permission blocked card ────────────────────────────────────────────── */
-.perm-block{background:#1a1500;border:1px solid #504010;border-radius:6px;overflow:hidden}
+/* ── Diff display ───────────────────────────────────────────────────────── */
+.diff-wrap{border:1px solid #2a3a2a;border-radius:5px;overflow:hidden;margin:2px 0;font-family:'Cascadia Code','Consolas',monospace;font-size:11.5px}
+.diff-hdr{background:#172017;padding:4px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;justify-content:space-between}
+.diff-hdr:hover{background:#1d2a1d}
+.diff-hdr-left{display:flex;align-items:center;gap:8px}
+.diff-icon{font-size:11px;color:#5a8a5a}
+.diff-path{font-size:11px;color:#80b080;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px}
+.diff-stats{font-size:10px;color:#404840;display:flex;gap:6px;flex-shrink:0}
+.diff-stat-add{color:#3a7a3a}.diff-stat-del{color:#7a3a3a}
+.diff-body{background:#0e140e;display:none;border-top:1px solid #1e2e1e;overflow-x:auto}
+.diff-body.open{display:block}
+.diff-line{display:flex;align-items:baseline;white-space:pre;line-height:1.5}
+.diff-line-num{min-width:36px;padding:0 8px;font-size:10px;text-align:right;user-select:none;flex-shrink:0}
+.diff-line-text{padding:0 10px;flex:1}
+.diff-add{background:#0d2010}
+.diff-add .diff-line-num{color:#3a6a3a;background:#0a1c0a}
+.diff-add .diff-line-text::before{content:'+';color:#4a9a4a;margin-right:4px}
+.diff-del{background:#20100d}
+.diff-del .diff-line-num{color:#6a3a3a;background:#1c0a0a}
+.diff-del .diff-line-text::before{content:'-';color:#9a4a4a;margin-right:4px}
+.diff-ctx{background:#0e140e}
+.diff-ctx .diff-line-num{color:#2a3a2a}
+.diff-ctx .diff-line-text::before{content:' ';margin-right:4px}
+.diff-line-text{color:#a0b8a0}
+.diff-add .diff-line-text{color:#88cc88}
+.diff-del .diff-line-text{color:#cc8888}
+.diff-ctx .diff-line-text{color:#606860}
+.diff-open-btn{font-size:10px;color:#3a6a3a;background:none;border:1px solid #2a4a2a;border-radius:3px;padding:2px 6px;cursor:pointer;font-family:inherit;flex-shrink:0}
+.diff-open-btn:hover{border-color:#5a9a5a;color:#70b070}
+
+/* ── File preview panel ─────────────────────────────────────────────────── */
+.file-col{width:48%;border-left:1px solid #252530;display:none;flex-direction:column;background:#0f0f17}
+.file-col.open{display:flex}
+.file-col-hdr{background:#1a1a26;border-bottom:1px solid #252530;padding:5px 10px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.file-col-path{flex:1;font-size:11px;color:#8080a8;font-family:'Cascadia Code','Consolas',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-col-close{background:none;border:none;color:#444;cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+.file-col-close:hover{color:#a04040}
+.file-col-body{flex:1;overflow:auto;padding:0}
+.file-col-lines{font-family:'Cascadia Code','Consolas',monospace;font-size:12px;line-height:1.55}
+.fc-line{display:flex;white-space:pre}
+.fc-line-num{min-width:42px;padding:0 8px;font-size:10px;color:#2a2a3a;text-align:right;background:#121218;user-select:none;flex-shrink:0;border-right:1px solid #1e1e2c}
+.fc-line-text{padding:0 10px;color:#9090b0;flex:1}
+.fc-line.hl-add{background:#0d2010}.fc-line.hl-add .fc-line-text{color:#88cc88}
+.fc-line.hl-del{background:#20100d;text-decoration:line-through;opacity:.7}
+
+/* ── Permission blocked overlay ─────────────────────────────────────────── */
+.msgs-wrap{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.perm-overlay{position:absolute;bottom:0;left:0;right:0;padding:40px 16px 14px;background:linear-gradient(transparent,#13131a 38%);display:none;z-index:10}
+.perm-overlay.active{display:block}
+.perm-block{background:#1a1500;border:1px solid #504010;border-radius:6px;overflow:hidden;box-shadow:0 4px 24px #00000080}
 .perm-block-q{padding:10px 14px 6px;font-size:12px;color:#c09040}
 .perm-block-q strong{font-family:'Cascadia Code','Consolas',monospace;font-weight:normal;color:#e0b060}
 .perm-opt{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;border-top:1px solid #2a1c00;font-size:12px;color:#a08040;user-select:none}
@@ -187,6 +244,12 @@ textarea#ti:focus{outline:none;border-color:#6050b0}
 <div class="slide-panel" id="sysPanel">
   <div class="panel-inner">
     <textarea id="sysTa" placeholder="System prompt (appended to Claude Code's default)…"></textarea>
+    <div class="sys-opts">
+      <label class="sys-opt" id="filePreviewOpt" title="Show edited file alongside chat">
+        <input type="checkbox" id="filePreviewChk" onchange="toggleFilePreview(this.checked)">
+        File preview
+      </label>
+    </div>
   </div>
 </div>
 
@@ -216,20 +279,33 @@ textarea#ti:focus{outline:none;border-color:#6050b0}
 
 <div class="status" id="status"><span style="color:#333">ready</span></div>
 
-<div class="msgs" id="msgs"></div>
-
-<div class="inp">
-  <div class="inp-top">
-    <button class="btn-clear" onclick="newChat()">New chat</button>
-    <span class="hint">Ctrl+V to paste image · Shift+Enter for newline</span>
+<div class="content-row">
+  <div class="chat-col">
+    <div class="msgs-wrap">
+      <div class="msgs" id="msgs"></div>
+      <div class="perm-overlay" id="permOverlay"></div>
+    </div>
+    <div class="inp">
+      <div class="inp-top">
+        <button class="btn-clear" onclick="newChat()">New chat</button>
+        <span class="hint">Ctrl+V to paste image · Shift+Enter for newline</span>
+      </div>
+      <div class="pending" id="pending"></div>
+      <div class="inp-row">
+        <button class="btn-att" onclick="document.getElementById('fi').click()" title="Attach image">📎</button>
+        <input type="file" id="fi" accept="image/*" multiple style="display:none" onchange="addFiles(this.files)">
+        <textarea id="ti" placeholder="Message…" rows="1"
+          onkeydown="onKey(event)" oninput="resize(this)" onpaste="onPaste(event)"></textarea>
+        <button class="btn-send" id="sendBtn" onclick="send()">Send</button>
+      </div>
+    </div>
   </div>
-  <div class="pending" id="pending"></div>
-  <div class="inp-row">
-    <button class="btn-att" onclick="document.getElementById('fi').click()" title="Attach image">📎</button>
-    <input type="file" id="fi" accept="image/*" multiple style="display:none" onchange="addFiles(this.files)">
-    <textarea id="ti" placeholder="Message…" rows="1"
-      onkeydown="onKey(event)" oninput="resize(this)" onpaste="onPaste(event)"></textarea>
-    <button class="btn-send" id="sendBtn" onclick="send()">Send</button>
+  <div class="file-col" id="fileCol">
+    <div class="file-col-hdr">
+      <span class="file-col-path" id="fileColPath">—</span>
+      <button class="file-col-close" onclick="closeFilePreview()" title="Close">×</button>
+    </div>
+    <div class="file-col-body" id="fileColBody"></div>
   </div>
 </div>
 
@@ -241,15 +317,37 @@ let pendingImgs = [];
 let streaming = false;
 let totalCost = 0;
 let lastUserMsg = '';
+let filePreviewEnabled = localStorage.getItem('filePreview') === 'true';
+
+// ── Message persistence ────────────────────────────────────────────────────
+function saveMessages() {
+    if (!sessionId) return;
+    try { localStorage.setItem('msgs_' + sessionId, document.getElementById('msgs').innerHTML); }
+    catch(_) {}
+}
+
+function restoreMessages(id) {
+    const html = id && localStorage.getItem('msgs_' + id);
+    if (!html) return false;
+    document.getElementById('msgs').innerHTML = html;
+    scrollEnd();
+    return true;
+}
 
 // ── Startup ────────────────────────────────────────────────────────────────
-if (sessionId) setSessDot(true);
+if (sessionId) { setSessDot(true); restoreMessages(sessionId); }
 renderSessions();
 loadPermissions();
 loadConfig();
 document.getElementById('ti').focus();
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer?.files) addFiles(e.dataTransfer.files); });
+
+// Apply saved file preview state
+document.getElementById('filePreviewChk').checked = filePreviewEnabled;
+if (filePreviewEnabled) {
+    document.getElementById('filePreviewOpt').classList.add('active');
+}
 
 // ── Panel toggles ──────────────────────────────────────────────────────────
 const PANELS = { sys: 'sysPanel', sess: 'sessPanel', perms: 'permsPanel' };
@@ -258,7 +356,6 @@ let activePanel = null;
 
 function togglePanel(name) {
     const opening = activePanel !== name;
-    // close all
     Object.values(PANELS).forEach(id => document.getElementById(id).classList.remove('open'));
     Object.values(BTNS).forEach(id => document.getElementById(id).classList.remove('active'));
     activePanel = null;
@@ -268,6 +365,51 @@ function togglePanel(name) {
         activePanel = name;
         if (name === 'sys') document.getElementById('sysTa').focus();
         if (name === 'perms') loadPermissions();
+    }
+}
+
+// ── File preview ───────────────────────────────────────────────────────────
+function toggleFilePreview(val) {
+    filePreviewEnabled = val;
+    localStorage.setItem('filePreview', val);
+    document.getElementById('filePreviewOpt').classList.toggle('active', val);
+    if (!val) document.getElementById('fileCol').classList.remove('open');
+}
+
+function closeFilePreview() {
+    document.getElementById('fileCol').classList.remove('open');
+}
+
+async function openFileInPreview(filePath, hlLines) {
+    if (!filePreviewEnabled) return;
+    document.getElementById('fileColPath').textContent = filePath;
+    document.getElementById('fileColBody').innerHTML = '<div style="padding:10px;font-size:11px;color:#404060">Loading…</div>';
+    document.getElementById('fileCol').classList.add('open');
+    try {
+        const r = await fetch('/file?path=' + encodeURIComponent(filePath));
+        if (!r.ok) throw new Error('not found');
+        const { content } = await r.json();
+        renderFilePreview(content, hlLines || {});
+    } catch(e) {
+        document.getElementById('fileColBody').innerHTML = `<div style="padding:10px;font-size:11px;color:#804040">${esc(e.message)}</div>`;
+    }
+}
+
+function renderFilePreview(content, hlLines) {
+    const lines = content.split('\n');
+    let html = '<div class="file-col-lines">';
+    lines.forEach((line, i) => {
+        const n = i + 1;
+        const cls = hlLines[n] === 'add' ? ' hl-add' : hlLines[n] === 'del' ? ' hl-del' : '';
+        html += `<div class="fc-line${cls}" id="fcl${n}"><span class="fc-line-num">${n}</span><span class="fc-line-text">${esc(line)}</span></div>`;
+    });
+    html += '</div>';
+    document.getElementById('fileColBody').innerHTML = html;
+    // Scroll to first highlighted line
+    const firstHl = Object.keys(hlLines)[0];
+    if (firstHl) {
+        const el = document.getElementById('fcl' + firstHl);
+        if (el) el.scrollIntoView({ block: 'center' });
     }
 }
 
@@ -313,11 +455,13 @@ function switchSession(id) {
     localStorage.setItem('claudeSessionId', id);
     setSessDot(true);
     totalCost = 0; _status = {};
-    document.getElementById('msgs').innerHTML = '';
     document.getElementById('modelTag').textContent = '—';
-    appendNotice('— session resumed —');
+    if (!restoreMessages(id)) {
+        document.getElementById('msgs').innerHTML = '';
+        appendNotice('— session resumed —');
+    }
     renderSessions();
-    togglePanel('sess'); // close panel
+    togglePanel('sess');
 }
 
 function renameSession(id, name) {
@@ -329,6 +473,7 @@ function deleteSession(e, id) {
     e.stopPropagation();
     sessions = sessions.filter(s => s.id !== id);
     saveSessions();
+    localStorage.removeItem('msgs_' + id);
     if (sessionId === id) { sessionId = null; setSessDot(false); localStorage.removeItem('claudeSessionId'); }
     renderSessions();
 }
@@ -340,6 +485,7 @@ function newChat() {
     document.getElementById('status').innerHTML = '<span style="color:#333">ready</span>';
     document.getElementById('modelTag').textContent = '—';
     setSessDot(false);
+    hidePermOverlay();
     if (activePanel === 'sess') togglePanel('sess');
 }
 
@@ -427,25 +573,38 @@ function renderPending() {
 function rmImg(id) { pendingImgs=pendingImgs.filter(i=>i.id!=id); renderPending(); }
 
 // ── Send ───────────────────────────────────────────────────────────────────
-async function send() {
+async function send(retryMsg) {
     if (streaming) return;
-    const ta = document.getElementById('ti');
-    const text = ta.value.trim();
-    if (!text && pendingImgs.length===0) return;
+    const isRetry = retryMsg !== undefined;
 
-    const imgs = [...pendingImgs];
-    pendingImgs=[]; renderPending();
-    ta.value=''; ta.style.height='auto';
+    let text, imgs;
+    if (isRetry) {
+        text = retryMsg;
+        imgs = [];
+    } else {
+        const ta = document.getElementById('ti');
+        text = ta.value.trim();
+        if (!text && pendingImgs.length===0) return;
+        imgs = [...pendingImgs];
+        pendingImgs=[]; renderPending();
+        ta.value=''; ta.style.height='auto';
+    }
+
     lastUserMsg = text;
 
-    appendUser(text, imgs);
+    if (isRetry) {
+        appendNotice('↻ retrying with permission granted…');
+    } else {
+        appendUser(text, imgs);
+    }
     const aId = 'a'+Date.now();
     appendAssistant(aId);
 
     streaming=true;
     document.getElementById('sendBtn').disabled=true;
 
-    let curThink='', curText='', toolBufs={};
+    let curThink='', curText='', toolBufs={}, toolNames={}, toolIds={}, pendingPreviews={};
+    let aborted = false;
 
     try {
         const r = await fetch('/chat', {
@@ -463,12 +622,13 @@ async function send() {
         const dec = new TextDecoder();
         let buf='';
 
-        while (true) {
+        while (!aborted) {
             const {value,done} = await reader.read();
             if (done) break;
             buf += dec.decode(value,{stream:true});
             const lines = buf.split('\n'); buf=lines.pop();
             for (const line of lines) {
+                if (aborted) break;
                 if (!line.startsWith('data: ')) continue;
                 try {
                     const ev = JSON.parse(line.slice(6));
@@ -478,17 +638,47 @@ async function send() {
                             document.getElementById('modelTag').textContent = ev.model || '—';
                             setSessDot(true);
                             addOrUpdateSession(ev.session_id, lastUserMsg);
+                            saveMessages();
                             break;
                         case 'rate_limit':     showRateLimit(ev); break;
                         case 'message_start':  setStatus({usage: ev.usage}); break;
                         case 'thinking_start': startThink(aId); break;
                         case 'thinking_delta': curThink+=ev.text; updateThink(aId,curThink); break;
-                        case 'tool_start':     startTool(aId,ev.index,ev.name); toolBufs[ev.index]=''; break;
-                        case 'tool_delta':     toolBufs[ev.index]=(toolBufs[ev.index]||'')+ev.json; updateTool(aId,ev.index,toolBufs[ev.index]); break;
+                        case 'tool_start':
+                            toolNames[ev.index] = ev.name;
+                            toolIds[ev.index] = ev.id;
+                            toolBufs[ev.index] = '';
+                            startTool(aId, ev.index, ev.name);
+                            break;
+                        case 'tool_delta':
+                            toolBufs[ev.index]=(toolBufs[ev.index]||'')+ev.json;
+                            updateTool(aId,ev.index,toolBufs[ev.index]);
+                            break;
+                        case 'tool_end': {
+                            const tname = toolNames[ev.index];
+                            if (tname === 'Edit' || tname === 'Write') {
+                                try {
+                                    const params = JSON.parse(toolBufs[ev.index] || '{}');
+                                    const wrapId = showFileDiff(aId, ev.index, tname, params);
+                                    if (wrapId && filePreviewEnabled && toolIds[ev.index]) {
+                                        pendingPreviews[toolIds[ev.index]] = wrapId;
+                                    }
+                                } catch(_) {}
+                            }
+                            break;
+                        }
+                        case 'tool_done':
+                            if (pendingPreviews[ev.id]) {
+                                openDiffInPreview(pendingPreviews[ev.id]);
+                                delete pendingPreviews[ev.id];
+                            }
+                            break;
                         case 'text_delta':     curText+=ev.text; updateText(aId,curText); break;
                         case 'usage':          setStatus({output_tokens:ev.output_tokens}); break;
                         case 'permission_blocked':
-                            showPermBlocked(aId, ev);
+                            showPermBlocked(ev, lastUserMsg);
+                            aborted = true;
+                            reader.cancel();
                             break;
                         case 'result':
                             totalCost+=ev.cost||0;
@@ -500,17 +690,19 @@ async function send() {
                         case 'done':
                             if (ev.session_id) { sessionId=ev.session_id; setSessDot(true); addOrUpdateSession(ev.session_id, lastUserMsg); }
                             finishText(aId);
+                            saveMessages();
                             break;
                     }
                 } catch(_){}
             }
         }
     } catch(e) {
-        document.getElementById(aId+'-text').innerHTML=`<div class="err-bubble">⚠ ${esc(e.message)}</div>`;
+        if (!aborted) document.getElementById(aId+'-text').innerHTML=`<div class="err-bubble">⚠ ${esc(e.message)}</div>`;
+    } finally {
+        if (aborted) finishText(aId);
+        streaming=false;
+        document.getElementById('sendBtn').disabled=false;
     }
-
-    streaming=false;
-    document.getElementById('sendBtn').disabled=false;
 }
 
 // ── DOM builders ───────────────────────────────────────────────────────────
@@ -564,48 +756,152 @@ function updateTool(id,idx,json) {
 }
 function togTool(id,idx) { const b=document.getElementById(`${id}-toolbody-${idx}`); if(b) b.classList.toggle('open'); }
 
-function showPermBlocked(id, ev) {
-    const ex = document.getElementById(id+'-extras');
-    const uid = 'pb' + Date.now();
-    const w = document.createElement('div');
-    w.id = uid;
-    w.dataset.pattern = ev.pattern || '';
-    w.innerHTML = `<div class="perm-block">
-      <div class="perm-block-q">Allow <strong>${esc(ev.pattern||ev.target)}</strong>?</div>
-      <div class="perm-opt" onclick="permAlwaysAllow('${uid}')"><span class="perm-opt-num">1</span> Yes, always allow this</div>
-      <div class="perm-opt" onclick="permAllowOnce()"><span class="perm-opt-num">2</span> Yes, allow once</div>
-      <div class="perm-opt" onclick="permFocusDeny('${uid}')"><span class="perm-opt-num">3</span> No</div>
-      <div class="perm-block-input">
-        <input id="${uid}-reason" placeholder="Tell Claude what to do instead…"
-          onkeydown="if(event.key==='Enter'){event.preventDefault();permDeny('${uid}');}">
-      </div>
-    </div>`;
-    ex.appendChild(w); scrollEnd();
+// ── Diff helpers ───────────────────────────────────────────────────────────
+function lineDiff(oldStr, newStr) {
+    const a = (oldStr||'').split('\n');
+    const b = (newStr||'').split('\n');
+    const n = a.length, m = b.length;
+    // LCS DP (works fine for short strings from Edit tool)
+    const dp = Array.from({length:n+1}, () => new Int32Array(m+1));
+    for (let i=n-1;i>=0;i--)
+        for (let j=m-1;j>=0;j--)
+            dp[i][j] = a[i]===b[j] ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j],dp[i][j+1]);
+    const ops = [];
+    let i=0,j=0;
+    while (i<n||j<m) {
+        if (i<n&&j<m&&a[i]===b[j]) { ops.push({op:'eq',text:a[i]}); i++;j++; }
+        else if (j<m&&(i>=n||dp[i][j+1]>=dp[i+1][j])) { ops.push({op:'add',text:b[j]}); j++; }
+        else { ops.push({op:'del',text:a[i]}); i++; }
+    }
+    return ops;
 }
 
-async function permAlwaysAllow(uid) {
-    const pattern = document.getElementById(uid).dataset.pattern;
+function showFileDiff(id, idx, toolName, params) {
+    const ex = document.getElementById(id+'-extras');
+    const wrapId = `${id}-diff-${idx}`;
+
+    let filePath = '';
+    let ops = [];
+    let addCount = 0, delCount = 0;
+
+    if (toolName === 'Edit') {
+        filePath = params.file_path || '';
+        ops = lineDiff(params.old_string || '', params.new_string || '');
+        addCount = ops.filter(o=>o.op==='add').length;
+        delCount = ops.filter(o=>o.op==='del').length;
+    } else if (toolName === 'Write') {
+        filePath = params.file_path || '';
+        const lines = (params.content||'').split('\n');
+        ops = lines.map(l => ({op:'add',text:l}));
+        addCount = ops.length;
+    }
+
+    if (!filePath) return null;
+
+    let lineNum = 1;
+    let linesHtml = '';
+    for (const op of ops) {
+        const cls = op.op==='add' ? 'diff-add' : op.op==='del' ? 'diff-del' : 'diff-ctx';
+        const num = op.op==='del' ? '' : lineNum++;
+        linesHtml += `<div class="diff-line ${cls}"><span class="diff-line-num">${num}</span><span class="diff-line-text">${esc(op.text)}</span></div>`;
+    }
+
+    const shortPath = filePath.replace(/\\/g,'/').split('/').slice(-2).join('/');
+    const w = document.createElement('div');
+    w.id = wrapId;
+    w.className = 'diff-wrap';
+    w.dataset.filepath = filePath;
+    w.innerHTML = `
+      <div class="diff-hdr" onclick="togDiff('${wrapId}')">
+        <div class="diff-hdr-left">
+          <span class="diff-icon">±</span>
+          <span class="diff-path" title="${esc(filePath)}">${esc(shortPath)}</span>
+        </div>
+        <div class="diff-stats">
+          <span class="diff-stat-add">+${addCount}</span>
+          <span class="diff-stat-del">-${delCount}</span>
+          ${filePreviewEnabled ? `<button class="diff-open-btn" onclick="event.stopPropagation();openDiffInPreview('${wrapId}')">open</button>` : ''}
+        </div>
+      </div>
+      <div class="diff-body open" id="${wrapId}-body">${linesHtml}</div>`;
+    ex.appendChild(w); scrollEnd();
+    return wrapId;
+}
+
+function togDiff(wrapId) {
+    const b = document.getElementById(wrapId+'-body');
+    if (b) b.classList.toggle('open');
+}
+
+function openDiffInPreview(wrapId) {
+    const w = document.getElementById(wrapId);
+    if (!w) return;
+    const filePath = w.dataset.filepath;
+    // Compute which line numbers are highlighted from the diff body
+    const hlLines = {};
+    const body = document.getElementById(wrapId+'-body');
+    if (body) {
+        let lineNum = 1;
+        for (const row of body.querySelectorAll('.diff-line')) {
+            if (row.classList.contains('diff-add')) { hlLines[lineNum] = 'add'; lineNum++; }
+            else if (row.classList.contains('diff-del')) { hlLines[lineNum] = 'del'; }
+            else { lineNum++; }
+        }
+    }
+    openFileInPreview(filePath, hlLines);
+}
+
+function showPermBlocked(ev, triggerMsg) {
+    const overlay = document.getElementById('permOverlay');
+    overlay.dataset.pattern = ev.pattern || '';
+    overlay.dataset.triggermsg = triggerMsg || '';
+    overlay.innerHTML = `<div class="perm-block">
+      <div class="perm-block-q">Allow <strong>${esc(ev.pattern||ev.target)}</strong>?</div>
+      <div class="perm-opt" onclick="permAlwaysAllow()"><span class="perm-opt-num">1</span> Yes, always allow this</div>
+      <div class="perm-opt" onclick="permAllowOnce()"><span class="perm-opt-num">2</span> Yes, allow once</div>
+      <div class="perm-opt" onclick="permFocusDeny()"><span class="perm-opt-num">3</span> No</div>
+      <div class="perm-block-input">
+        <input id="permReason" placeholder="Tell Claude what to do instead…"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();permDeny();}">
+      </div>
+    </div>`;
+    overlay.classList.add('active');
+    // Pad msgs so last message isn't hidden behind overlay
+    document.getElementById('msgs').style.paddingBottom = '160px';
+    scrollEnd();
+}
+
+function hidePermOverlay() {
+    const overlay = document.getElementById('permOverlay');
+    overlay.classList.remove('active');
+    document.getElementById('msgs').style.paddingBottom = '';
+}
+
+async function permAlwaysAllow() {
+    const overlay = document.getElementById('permOverlay');
+    const pattern = overlay.dataset.pattern;
+    const msg = overlay.dataset.triggermsg;
+    hidePermOverlay();
     if (pattern) await fetch('/permissions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ pattern }) });
-    document.getElementById('ti').value = lastUserMsg;
-    resize(document.getElementById('ti'));
-    send();
+    send(msg);
 }
 
 async function permAllowOnce() {
+    const msg = document.getElementById('permOverlay').dataset.triggermsg;
+    hidePermOverlay();
     await fetch('/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ skipPerms: true }) });
-    document.getElementById('ti').value = lastUserMsg;
-    resize(document.getElementById('ti'));
-    await send();
+    await send(msg);
     await fetch('/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ skipPerms: false }) });
 }
 
-function permFocusDeny(uid) {
-    document.getElementById(uid+'-reason').focus();
+function permFocusDeny() {
+    document.getElementById('permReason').focus();
 }
 
-function permDeny(uid) {
-    const reason = document.getElementById(uid+'-reason').value.trim();
+function permDeny() {
+    const reason = document.getElementById('permReason').value.trim();
     const msg = reason ? `Permission denied. Reason: ${reason}` : 'Permission denied.';
+    hidePermOverlay();
     document.getElementById('ti').value = msg;
     resize(document.getElementById('ti'));
     send();

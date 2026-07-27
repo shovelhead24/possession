@@ -6,6 +6,11 @@ render_mode cull_disabled;   // double-sided while prototyping so surface orient
 // coarser level the geometry already matches: no pop, no cracks. This is the whole point.
 
 uniform sampler2D heightmap : repeat_enable;
+uniform sampler2D dem_tex;         // real DEM (RF, metres); used when use_dem
+uniform vec2 dem_cam = vec2(0.0);  // DEM pixel of the world origin
+uniform float dem_mpp = 47.0;      // metres per DEM texel
+uniform vec2 dem_size = vec2(1.0);
+uniform bool use_dem = false;
 uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;   // heightmap tiling period (mountain spacing)
 uniform float disp = 300.0;
@@ -26,7 +31,11 @@ varying float v_h;
 varying vec3 v_n;
 
 float sample_h(vec2 wxz) {
-	return texture(heightmap, wxz / feature).r * disp;   // tiled (repeat) so mountains recur
+	if (use_dem) {
+		vec2 uv = vec2(dem_cam.x + wxz.x / dem_mpp, dem_cam.y - wxz.y / dem_mpp) / dem_size;
+		return texture(dem_tex, clamp(uv, vec2(0.001), vec2(0.999))).r;   // real DEM, metres
+	}
+	return texture(heightmap, wxz / feature).r * disp;   // tiled procedural, mountains recur
 }
 
 void vertex() {

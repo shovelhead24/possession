@@ -20,6 +20,10 @@ config/icon="res://icon.svg"
 window/size/viewport_width=1366
 window/size/viewport_height=768
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/cage_editor/plugin.cfg")
+
 [input]
 
 move_forward={
