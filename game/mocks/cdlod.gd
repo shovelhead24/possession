@@ -19,7 +19,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
-const BUILD := 14   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 15   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -48,6 +48,12 @@ var _car_lat := 0.0
 var _car_heading := 0.0
 var _car_speed := 0.0
 var _sun: DirectionalLight3D = null
+# trees: real low-poly spruce (gitignored, local-only), scattered near spawn, placed analytically
+# on the DEM (fine LOD there -> morph≈0 -> matches the drawn mesh, no need to raycast).
+const TREE_MODEL := "res://low_poly_red_spruce_tree_custom_textures/low_poly_red_spruce_tree_custom_textures/scene.gltf"
+const FOREST_HALF := 700.0
+var _trees: MultiMeshInstance3D = null
+var _forest_noise := FastNoiseLite.new()
 var _cam: Camera3D
 var _hud: Label
 var _cam_xz := Vector2.ZERO
@@ -97,15 +103,24 @@ func _ready() -> void:
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.6, 0.68, 0.8)
 	env.ambient_light_energy = 0.5
+	# aerial perspective: distant terrain fades to sky — the single biggest sense-of-scale cue.
+	# exponential fog, ~1/1.2e-5 ≈ 83 km extinction (matches ring_vibes' hand-tuned haze).
+	env.fog_enabled = true
+	env.fog_mode = Environment.FOG_MODE_EXPONENTIAL
+	env.fog_light_color = Color(0.62, 0.72, 0.86)
+	env.fog_density = 0.000012
+	env.fog_sky_affect = 0.0
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
 
-	# sun for real-material props (the car); terrain does its own in-shader lighting
+	# sun: lights the terrain AND the car, and casts shadows (car -> ground)
 	_sun = DirectionalLight3D.new()
 	_sun.rotation_degrees = Vector3(-52, -34, 0)
 	_sun.light_energy = 1.1
 	_sun.light_color = Color(1.0, 0.96, 0.88)
+	_sun.shadow_enabled = true
+	_sun.directional_shadow_max_distance = 600.0   # near CSM band — cheap, car/tree shadows only
 	add_child(_sun)
 
 	var shader := load("res://mocks/cdlod.gdshader") as Shader
@@ -145,6 +160,8 @@ func _ready() -> void:
 	_hud.add_theme_constant_override("outline_size", 4)
 	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	layer.add_child(_hud)
+
+	_scatter_trees()
 
 func _load_dem_texture() -> void:
 	# real Millstreet DEM -> a float (RF) GPU texture the CDLOD vertex shader can sample.
@@ -289,10 +306,120 @@ func _drive_tick(delta: float) -> void:
 	_car.global_position = pos + up * 0.4
 	if not pos.is_equal_approx(ahead):
 		_car.look_at(ahead + up * 0.4, up)
-	var fwd := (ahead - pos).normalized()
-	var cam_target: Vector3 = pos + up * 4.0 - fwd * 11.0
-	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-5.0 * delta))
+	# chase cam SEATED on the terrain 12 m behind the car (sampled in ring-space, then lifted along
+	# local-up) — so it can never sink through a slope behind the car (the real under-floor cause here).
+	var cam_ground := _car_pos(_car_arc - cos(_car_heading) * 12.0, _car_lat - sin(_car_heading) * 12.0)
+	var cam_up := _ring_up(cam_ground)
+	var cam_target: Vector3 = cam_ground + cam_up * 5.0
+	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-6.0 * delta))
 	_cam.look_at(pos + up * 2.0, up)
+
+func _rel_xform(node: Node3D, root: Node) -> Transform3D:
+	var t := Transform3D.IDENTITY
+	var n: Node = node
+	while n and n != root:
+		if n is Node3D:
+			t = (n as Node3D).transform * t
+		n = n.get_parent()
+	return t
+
+func _collect_tree_surfaces(node: Node, root: Node, by_mat: Dictionary) -> void:
+	# combine trunk + foliage per-material, baking transforms; skip billboard/impostor/low-LOD
+	# meshes (combining those baked a flat black card into every tree).
+	if node is MeshInstance3D and node.mesh:
+		var nm := node.name.to_lower()
+		var skip := "billboard" in nm or "impostor" in nm or "lod1" in nm or "lod2" in nm or "lod3" in nm
+		if not skip:
+			var xf := _rel_xform(node, root)
+			for s in node.mesh.get_surface_count():
+				var mat: Material = node.mesh.surface_get_material(s)
+				var key: int = mat.get_instance_id() if mat else 0
+				if not by_mat.has(key):
+					var stx := SurfaceTool.new()
+					stx.begin(Mesh.PRIMITIVE_TRIANGLES)
+					by_mat[key] = {"st": stx, "mat": mat}
+				by_mat[key]["st"].append_from(node.mesh, s, xf)
+	for child in node.get_children():
+		_collect_tree_surfaces(child, root, by_mat)
+
+func _tree_mesh() -> Mesh:
+	if ResourceLoader.exists(TREE_MODEL):
+		var packed := load(TREE_MODEL) as PackedScene
+		if packed:
+			var inst := packed.instantiate()
+			var by_mat := {}
+			_collect_tree_surfaces(inst, inst, by_mat)
+			inst.queue_free()
+			if not by_mat.is_empty():
+				var out := ArrayMesh.new()
+				var foliage_shader := load("res://mocks/ring_vibes_foliage.gdshader") as Shader
+				for key in by_mat:
+					var entry: Dictionary = by_mat[key]
+					entry["st"].commit(out)
+					var si := out.get_surface_count() - 1
+					var mat: Material = entry["mat"]
+					var tex: Texture2D = null
+					if mat is BaseMaterial3D:
+						tex = (mat as BaseMaterial3D).albedo_texture
+					if tex:
+						var fmat := ShaderMaterial.new()
+						fmat.shader = foliage_shader
+						fmat.set_shader_parameter("albedo_tex", tex)
+						out.surface_set_material(si, fmat)
+					elif mat:
+						out.surface_set_material(si, mat)
+				return out
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.02; cone.bottom_radius = 1.7; cone.height = 5.0
+	var tm := StandardMaterial3D.new()
+	tm.albedo_color = Color(0.16, 0.24, 0.13)
+	cone.material = tm
+	return cone
+
+func _scatter_trees() -> void:
+	# conifers clumped by noise into woods + clearings, in a patch near spawn (Millstreet). Placed
+	# analytically on the DEM+curve — trees sit in the finest-LOD region so the drawn mesh matches.
+	if _dem_hf_w == 0:
+		return
+	if _trees:
+		_trees.queue_free()
+	_forest_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_forest_noise.frequency = 1.0 / 300.0
+	var mesh := _tree_mesh()
+	var real_model := not (mesh is CylinderMesh)
+	var aabb := mesh.get_aabb()
+	var base_scale: float = (8.0 / maxf(aabb.size.y, 0.01)) if real_model else 1.0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 1234
+	var xf: Array[Transform3D] = []
+	var arc := -FOREST_HALF
+	while arc <= FOREST_HALF:
+		var lat := -FOREST_HALF
+		while lat <= FOREST_HALF:
+			var jx := arc + rng.randf_range(-12, 12)
+			var jz := lat + rng.randf_range(-12, 12)
+			if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < 0.6:
+				var ground := _car_pos(jx, jz)
+				var up := _ring_up(ground)
+				var sc: float = base_scale * rng.randf_range(0.75, 1.4)
+				var basis := Basis()
+				basis.y = up
+				basis.x = up.cross(Vector3.FORWARD).normalized()
+				basis.z = basis.x.cross(up).normalized()
+				basis = basis.rotated(up, rng.randf() * TAU).scaled(Vector3(sc, sc, sc))
+				xf.append(Transform3D(basis, ground - up * 0.3))
+			lat += 22.0
+		arc += 22.0
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = mesh
+	mm.instance_count = xf.size()
+	for i in xf.size():
+		mm.set_instance_transform(i, xf[i])
+	_trees = MultiMeshInstance3D.new()
+	_trees.multimesh = mm
+	add_child(_trees)
+	print("cdlod: scattered %d trees (%s)" % [xf.size(), "real model" if real_model else "cone"])
 
 func _recompute_ranges() -> void:
 	_lod_range.clear()

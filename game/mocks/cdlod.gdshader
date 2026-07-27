@@ -81,7 +81,6 @@ void vertex() {
 }
 
 void fragment() {
-	float nl = clamp(dot(normalize(v_n), normalize(vec3(0.4, 0.8, 0.3))), 0.0, 1.0);
 	vec3 base = mix(vec3(0.30, 0.40, 0.24), vec3(0.52, 0.52, 0.48), smoothstep(0.45, 0.85, v_h));
 	// real Sentinel-2 drape inside the DEM footprint; procedural green ramp beyond it
 	bool in_dem = v_demuv.x > 0.0 && v_demuv.x < 1.0 && v_demuv.y > 0.0 && v_demuv.y < 1.0;
@@ -97,6 +96,9 @@ void fragment() {
 		vec3 lod_col = mix(vec3(0.1, 0.9, 0.2), vec3(0.95, 0.2, 0.1), lod_tint);
 		base = mix(base, lod_col, 0.55);
 	}
-	ALBEDO = base * (0.25 + 0.75 * nl);
-	ROUGHNESS = 0.95;
+	// engine-lit now (NORMAL is written in vertex): the sun's diffuse + shadows land on the terrain,
+	// so the car casts a real shadow. No more manual nl baked into ALBEDO (that double-lit + no shadow).
+	ALBEDO = base;
+	ROUGHNESS = 1.0;
+	SPECULAR = 0.1;
 }
