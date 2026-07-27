@@ -19,7 +19,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
-const BUILD := 21   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 22   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -74,6 +74,7 @@ var _tree_meshes: Array = []                  # [variant][lod] -> Mesh
 var _tree_mm: Array = []                       # [variant][lod] -> MultiMeshInstance3D
 var _tree_nvar := 0
 var _tree_scale := 1.0                         # model->world scale to reach TREE_H
+var _foliage_shader: Shader = null             # soft wrapped-lighting shader for foliage/billboards
 var _tree_ground := PackedVector3Array()       # per-tree ground point (distance + placement)
 var _tree_basis: Array[Basis] = []             # per-tree orientation+scale (shared across its LODs)
 var _tree_variant := PackedInt32Array()        # per-tree variant index
@@ -395,20 +396,24 @@ func _rel_xform(node: Node3D, root: Node) -> Transform3D:
 	return t
 
 func _prep_material(mat: Material) -> Material:
-	# foliage/billboard surfaces need alpha; force alpha-scissor + double-sided if the import left
-	# them opaque (else leaves render as solid cards). Bark keeps its opaque material untouched.
+	# foliage/billboard surfaces -> the soft wrapped-lighting foliage shader (kills the blown-out
+	# up-facing billboard cap). Bark keeps its opaque StandardMaterial (real shape/shading).
 	if mat is BaseMaterial3D:
 		var nm := mat.resource_name.to_lower()
 		if "brunch" in nm or "branch" in nm or "billboard" in nm or "leaf" in nm or "leaves" in nm or "needle" in nm:
+			var tex: Texture2D = (mat as BaseMaterial3D).albedo_texture
+			if tex and _foliage_shader:
+				var sm := ShaderMaterial.new()
+				sm.shader = _foliage_shader
+				sm.set_shader_parameter("tex", tex)
+				return sm
+			# fallback: no texture handle -> keep StandardMaterial, force lit + alpha-scissor
 			var m := (mat as BaseMaterial3D).duplicate() as BaseMaterial3D
 			if m.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
 				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 				m.alpha_scissor_threshold = 0.5
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED
-			# billboard/impostor materials import UNSHADED (baked-in lighting) -> force lit so the
-			# far tiers take the sun and match the near geometry instead of reading flat + bright.
 			m.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-			m.roughness = 1.0
 			return m
 	return mat
 
@@ -471,6 +476,7 @@ func _load_tree_lods() -> bool:
 		return false
 	var packed := load(TREE_PACK) as PackedScene
 	if not packed: return false
+	_foliage_shader = load("res://mocks/tree_foliage.gdshader") as Shader
 	var inst := packed.instantiate()
 	var re := RegEx.new()
 	re.compile("(?i)^(.+?)_LOD(\\d)")
