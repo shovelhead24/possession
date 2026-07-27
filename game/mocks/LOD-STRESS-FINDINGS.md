@@ -40,3 +40,9 @@ Added `[G]` ground camera, tile grid 8→12. Result: **tiled ~10% faster than on
 - **The pop-in is the expected naive-version artifact**, and exactly what the real technique fixes: CDLOD vertex-morphing for LOD-level pop, plus a small frustum cull-margin for edge pop when turning.
 
 **Direction (confirmed, not yet graduated to .decisions/main):** chunked/tiled LOD + CDLOD morphing. Draw calls proven cheap, tiling proven ≥ one-mesh and better at detail, maps onto the substrate tile pyramid, per-tile collision free. Remaining risk to retire before graduating: does CDLOD morphing actually kill the pop without being fiddly? → build a minimal tiled+CDLOD prototype next.
+
+## Shadows on UHD (2026-07-27, cdlod build 15→16)
+
+Enabling directional-light shadows with the **terrain casting** dropped cdlod from ~140 fps to **~8 fps**. Directional shadows re-render caster geometry into the shadow map each frame; the full double-sided (`cull_disabled`) LOD terrain is a huge caster.
+
+**Fix (build 16):** terrain `cast_shadow = OFF` (receive-only — it only needs the car/tree shadows *on* it), `SHADOW_ORTHOGONAL` (single split), `directional_shadow_max_distance = 300`. Lesson for the real game: **big terrain never casts sun shadows on this GPU** — bake/skip terrain self-shadow; let only props (car, trees, characters) cast into a short near-camera CSM band.
