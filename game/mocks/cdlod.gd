@@ -13,7 +13,7 @@ const BASE_RANGE := 200.0        # lod_range[0]; doubles each level
 const TERRAIN_SIZE := 4096.0
 const DISP := 300.0
 const POOL := 400
-const BUILD := 8   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 9   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 
 var _grid_mesh: ArrayMesh
 var _pool: Array[MeshInstance3D] = []
@@ -131,8 +131,11 @@ func _emit(ox: float, oz: float, size: float, level: int) -> void:
 	var band_far: float = _lod_range[level]
 	mat.set_shader_parameter("node_origin", Vector2(ox, oz))
 	mat.set_shader_parameter("node_size", size)
-	mat.set_shader_parameter("morph_start", lerpf(band_near, band_far, 0.6))
-	mat.set_shader_parameter("morph_end", band_far)
+	# morph must COMPLETE before the LOD boundary, not at it — so the whole outer band of the tile
+	# is fully collapsed and matches the coarser neighbour along the entire shared edge (not just
+	# the one point exactly at the boundary line). Was 0.6->1.0 (only complete AT the line -> cracks).
+	mat.set_shader_parameter("morph_start", lerpf(band_near, band_far, 0.45))
+	mat.set_shader_parameter("morph_end", lerpf(band_near, band_far, 0.9))
 	mat.set_shader_parameter("lod_tint", float(level) / float(MAX_LEVEL))
 	mat.set_shader_parameter("show_lod", _show_lod)
 	# AABB matching THIS node's world region, with a half-tile margin so tiles render slightly
