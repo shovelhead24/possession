@@ -13,7 +13,7 @@ const BASE_RANGE := 200.0        # lod_range[0]; doubles each level
 const TERRAIN_SIZE := 4096.0
 const DISP := 300.0
 const POOL := 400
-const BUILD := 9   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 10   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 
 var _grid_mesh: ArrayMesh
 var _pool: Array[MeshInstance3D] = []
@@ -30,14 +30,18 @@ var _show_lod := false
 var _autofly := false
 var _fps := 0.0
 var _build_stamp := ""
+# live-tunable morph params (no rebuild — _emit reads these every frame)
+var _morph_lo := 0.45      # morph starts at this fraction of a tile's LOD band
+var _morph_hi := 0.9       # morph fully collapsed by this fraction
+var _morph_horiz := false  # morph distance metric: horizontal (true) vs 3D incl. cam height (false)
+var _range_scale := 1.0    # scales all LOD ranges
 
 func _ready() -> void:
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	var mt := FileAccess.get_modified_time("res://mocks/cdlod.gd")
 	_build_stamp = "build %d  (%s)" % [BUILD, Time.get_datetime_string_from_unix_time(mt).replace("T", " ")]
 	print("cdlod ", _build_stamp)
-	for l in MAX_LEVEL + 1:
-		_lod_range.append(BASE_RANGE * pow(2.0, l))
+	_recompute_ranges()
 
 	var noise := FastNoiseLite.new()
 	noise.frequency = 0.0025
@@ -91,6 +95,11 @@ func _ready() -> void:
 	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	layer.add_child(_hud)
 
+func _recompute_ranges() -> void:
+	_lod_range.clear()
+	for l in MAX_LEVEL + 1:
+		_lod_range.append(BASE_RANGE * _range_scale * pow(2.0, l))
+
 func _build_unit_grid() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -131,11 +140,8 @@ func _emit(ox: float, oz: float, size: float, level: int) -> void:
 	var band_far: float = _lod_range[level]
 	mat.set_shader_parameter("node_origin", Vector2(ox, oz))
 	mat.set_shader_parameter("node_size", size)
-	# morph must COMPLETE before the LOD boundary, not at it — so the whole outer band of the tile
-	# is fully collapsed and matches the coarser neighbour along the entire shared edge (not just
-	# the one point exactly at the boundary line). Was 0.6->1.0 (only complete AT the line -> cracks).
-	mat.set_shader_parameter("morph_start", lerpf(band_near, band_far, 0.45))
-	mat.set_shader_parameter("morph_end", lerpf(band_near, band_far, 0.9))
+	mat.set_shader_parameter("morph_start", lerpf(band_near, band_far, _morph_lo))
+	mat.set_shader_parameter("morph_end", lerpf(band_near, band_far, _morph_hi))
 	mat.set_shader_parameter("lod_tint", float(level) / float(MAX_LEVEL))
 	mat.set_shader_parameter("show_lod", _show_lod)
 	# AABB matching THIS node's world region, with a half-tile margin so tiles render slightly
@@ -158,6 +164,7 @@ func _rebuild_lod() -> void:
 	var cp := Vector3(_cam.position.x, _cam.position.y, _cam.position.z)
 	for i in _used:
 		_mats[i].set_shader_parameter("cam_pos", cp)
+		_mats[i].set_shader_parameter("morph_horizontal", _morph_horiz)
 
 func _process(delta: float) -> void:
 	_fps = lerpf(_fps, 1.0 / maxf(delta, 0.0001), 0.1)
@@ -185,9 +192,11 @@ func _fly(delta: float) -> void:
 func _update_hud() -> void:
 	var dc := int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 	var prims := int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
-	_hud.text = "cdlod %s\nFPS: %.0f   draw calls: %d   tris: %s\nnodes: %d   cam height: %.0f m\nLOD ranges: %s\n\n[M] LOD colour: %s   [F] auto-fly: %s\nclick=capture  WASD+Space/Ctrl fly  Shift boost  ESC release" % [
+	_hud.text = "cdlod %s\nFPS: %.0f   draw calls: %d   tris: %s   nodes: %d   cam h: %.0f m\n\nMORPH:  start [ / ] = %.2f    end ; / ' = %.2f    [H] metric: %s\nRANGE:  , / . scale = %.2f   -> %s\n\n[M] LOD colour: %s   [F] auto-fly: %s   [R] reset params\nclick=capture  WASD+Space/Ctrl fly  Shift boost  ESC release" % [
 		_build_stamp, _fps, dc, str(prims), _used, _cam.position.y,
-		str(_lod_range), "ON" if _show_lod else "off", "ON" if _autofly else "off"]
+		_morph_lo, _morph_hi, "horizontal" if _morph_horiz else "3D",
+		_range_scale, str(_lod_range),
+		"ON" if _show_lod else "off", "ON" if _autofly else "off"]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and not _captured:
@@ -206,3 +215,19 @@ func _unhandled_input(event: InputEvent) -> void:
 				_show_lod = not _show_lod
 			KEY_F:
 				_autofly = not _autofly
+			KEY_BRACKETLEFT:
+				_morph_lo = clampf(_morph_lo - 0.05, 0.0, _morph_hi - 0.05)
+			KEY_BRACKETRIGHT:
+				_morph_lo = clampf(_morph_lo + 0.05, 0.0, _morph_hi - 0.05)
+			KEY_SEMICOLON:
+				_morph_hi = clampf(_morph_hi - 0.05, _morph_lo + 0.05, 1.0)
+			KEY_APOSTROPHE:
+				_morph_hi = clampf(_morph_hi + 0.05, _morph_lo + 0.05, 1.0)
+			KEY_H:
+				_morph_horiz = not _morph_horiz
+			KEY_COMMA:
+				_range_scale = maxf(0.25, _range_scale - 0.25); _recompute_ranges()
+			KEY_PERIOD:
+				_range_scale = minf(4.0, _range_scale + 0.25); _recompute_ranges()
+			KEY_R:
+				_morph_lo = 0.45; _morph_hi = 0.9; _morph_horiz = false; _range_scale = 1.0; _recompute_ranges()

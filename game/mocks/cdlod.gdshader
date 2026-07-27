@@ -16,6 +16,7 @@ uniform vec3 cam_pos = vec3(0.0);
 uniform float grid = 16.0;               // quads per node side (matches GD GRID)
 uniform float lod_tint = 0.0;            // 0(fine)..1(coarse) for the LOD colour view
 uniform bool show_lod = false;
+uniform bool morph_horizontal = false;   // morph distance: horizontal vs 3D (incl. cam height)
 
 varying float v_h;
 varying vec3 v_n;
@@ -27,7 +28,7 @@ float sample_h(vec2 wxz) {
 void vertex() {
 	vec2 uv01 = vec2(VERTEX.x, VERTEX.z);          // grid vertex in [0,1]
 	vec2 wxz = node_origin + uv01 * node_size;
-	float d = distance(cam_pos, vec3(wxz.x, 0.0, wxz.y));  // 3D dist — matches altitude-aware selection
+	float d = morph_horizontal ? distance(cam_pos.xz, wxz) : distance(cam_pos, vec3(wxz.x, 0.0, wxz.y));
 	float morph = clamp((d - morph_start) / max(morph_end - morph_start, 0.001), 0.0, 1.0);
 	// morph target: snap to the coarser (every-other) grid line — collapses odd verts onto even
 	vec2 g = uv01 * grid;
