@@ -19,7 +19,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
-const BUILD := 19   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 20   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -40,9 +40,18 @@ var _roads_tex: ImageTexture = null
 var _dem_hf := PackedFloat32Array()
 var _dem_hf_w := 0
 var _dem_hf_h := 0
+# movement modes: FLY (free cam) / DRIVE (car, chase cam) / WALK (eye-height, mouse-look)
+const M_FLY := 0
+const M_DRIVE := 1
+const M_WALK := 2
+const EYE_HEIGHT := 1.7
+const WALK_SPEED := 10.0
+const WALK_RUN := 2.0
+var _mode := M_FLY
+var _walk_arc := 0.0
+var _walk_lat := 0.0
 # drive mode: car lives in ring (arc, lat) coords, height from the DEM, no physics
 var _car: Node3D = null
-var _drive := false
 var _car_arc := 0.0
 var _car_lat := 0.0
 var _car_heading := 0.0
@@ -298,21 +307,56 @@ func _make_car() -> Node3D:
 func _car_pos(arc: float, lat: float) -> Vector3:
 	return _ring_pt(arc, lat, _terrain_h(arc, lat))
 
-func _set_drive(on: bool) -> void:
-	_drive = on
-	if on:
-		if not _car:
-			_car = _make_car()
-		_car.visible = true
-		_car_arc = _cam.position.x
-		_car_lat = _cam.position.z
-		_car_speed = 0.0
-		_car_heading = 0.0
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		_captured = false
-		_autofly = false
-	elif _car:
-		_car.visible = false
+func _cycle_mode() -> void:
+	_set_mode((_mode + 1) % 3)
+
+func _set_mode(m: int) -> void:
+	_mode = m
+	if _car:
+		_car.visible = (m == M_DRIVE)
+	_autofly = false
+	match m:
+		M_DRIVE:
+			if not _car:
+				_car = _make_car()
+			_car.visible = true
+			_car_arc = _cam.position.x
+			_car_lat = _cam.position.z
+			_car_speed = 0.0
+			_car_heading = 0.0
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE   # chase cam, no mouse-look
+			_captured = false
+		M_WALK:
+			# start where the car was (or the camera if we never drove); snap to eye height
+			_walk_arc = _car_arc if _car else _cam.position.x
+			_walk_lat = _car_lat if _car else _cam.position.z
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			_captured = true
+			_cam.rotation = Vector3(_look.y, _look.x, 0)
+		_:
+			pass   # FLY: keep whatever capture state; click to (re)capture
+
+func _walk_tick(delta: float) -> void:
+	var speed := WALK_SPEED * (WALK_RUN if Input.is_key_pressed(KEY_SHIFT) else 1.0)
+	var f := 0.0
+	var s := 0.0
+	if Input.is_key_pressed(KEY_W): f += 1.0
+	if Input.is_key_pressed(KEY_S): f -= 1.0
+	if Input.is_key_pressed(KEY_D): s += 1.0
+	if Input.is_key_pressed(KEY_A): s -= 1.0
+	var mv := Vector2(s, f)
+	if mv != Vector2.ZERO:
+		mv = mv.normalized()
+	var yaw: float = _look.x
+	# camera-relative in arc(x)/lat(z): forward = -Z of cam basis projected to ground
+	var d_arc := (-mv.y * sin(yaw) + mv.x * cos(yaw)) * speed * delta
+	var d_lat := (-mv.y * cos(yaw) - mv.x * sin(yaw)) * speed * delta
+	_walk_arc += d_arc
+	_walk_lat += d_lat
+	var ground := _car_pos(_walk_arc, _walk_lat)   # ring surface at DEM height (what's drawn)
+	var up := _ring_up(ground)
+	_cam.position = ground + up * EYE_HEIGHT
+	_cam.rotation = Vector3(_look.y, _look.x, 0)
 
 func _drive_tick(delta: float) -> void:
 	var accel := 0.0
@@ -371,6 +415,27 @@ func _append_surfaces(out: ArrayMesh, src: Mesh, xf: Transform3D) -> void:
 		st.commit(out)
 		out.surface_set_material(out.get_surface_count() - 1, _prep_material(src.surface_get_material(s)))
 
+func _rebake(out: ArrayMesh, src: Mesh, xf: Transform3D) -> void:
+	# re-emit surfaces through a transform, keeping already-prepared materials
+	for s in src.get_surface_count():
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.append_from(src, s, xf)
+		st.commit(out)
+		out.surface_set_material(out.get_surface_count() - 1, src.surface_get_material(s))
+
+func _normalize_mesh(src: ArrayMesh) -> ArrayMesh:
+	# scale each LOD independently to unit height, base at y=0, centred on X/Z — so all LODs of a
+	# tree render the SAME size regardless of their intrinsic mesh scale (fixes LOD0-too-small).
+	if src == null: return null
+	var ab := src.get_aabb()
+	var s := 1.0 / maxf(ab.size.y, 0.001)
+	var pivot := Vector3(ab.position.x + ab.size.x * 0.5, ab.position.y, ab.position.z + ab.size.z * 0.5)
+	var xf := Transform3D(Basis().scaled(Vector3(s, s, s)), -pivot * s)
+	var out := ArrayMesh.new()
+	_rebake(out, src, xf)
+	return out
+
 func _walk_lod_meshes(node: Node, root: Node, re: RegEx, by_variant: Dictionary) -> void:
 	if node is MeshInstance3D and node.mesh:
 		var m := re.search(node.name)
@@ -417,13 +482,13 @@ func _load_tree_lods() -> bool:
 	for vi in _tree_nvar:
 		var lods := []
 		for l in TREE_LODS:
-			lods.append(by_variant[vnames[vi]].get(l, null))
+			var raw: ArrayMesh = by_variant[vnames[vi]].get(l, null)
+			if vi == 0 and raw:
+				var ab := raw.get_aabb()
+				print("  v0 LOD%d raw aabb = (%.2f, %.2f, %.2f)" % [l, ab.size.x, ab.size.y, ab.size.z])
+			lods.append(_normalize_mesh(raw))   # unit height, shared pivot -> no scale/pos jump on LOD switch
 		_tree_meshes.append(lods)
-	# world scale from the first available LOD's height -> TREE_H
-	var ref: Mesh = null
-	for l in TREE_LODS:
-		if _tree_meshes[0][l]: ref = _tree_meshes[0][l]; break
-	_tree_scale = TREE_H / maxf(ref.get_aabb().size.y, 0.01) if ref else 1.0
+	_tree_scale = TREE_H   # meshes normalized to unit height, so per-tree scale == world height
 	_tree_mm = []
 	for vi in _tree_nvar:
 		var mms := []
@@ -464,9 +529,9 @@ func _scatter_trees() -> void:
 		while arc <= FOREST_HALF:
 			var lat := -FOREST_HALF
 			while lat <= FOREST_HALF:
-				var jx := arc + rng.randf_range(-12, 12)
-				var jz := lat + rng.randf_range(-12, 12)
-				if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < density:
+				var jx := arc + rng.randf_range(-3.5, 3.5)
+				var jz := lat + rng.randf_range(-3.5, 3.5)
+				if _forest_noise.get_noise_2d(jx, jz) > 0.0 and rng.randf() < density:
 					var ground := _car_pos(jx, jz)
 					var up := _ring_up(ground)
 					var sc: float = _tree_scale * rng.randf_range(0.8, 1.3)
@@ -478,8 +543,8 @@ func _scatter_trees() -> void:
 					_tree_ground.append(ground - up * 0.3)
 					_tree_basis.append(basis)
 					_tree_variant.append(rng.randi() % _tree_nvar)
-				lat += 22.0
-			arc += 22.0
+				lat += 8.0
+			arc += 8.0
 	_update_tree_lod(true)
 	print("cdlod: %d trees placed (%d variants x %d LODs, distance-bucketed)" % [_tree_ground.size(), _tree_nvar, TREE_LODS])
 
@@ -628,12 +693,15 @@ func _rebuild_lod() -> void:
 
 func _process(delta: float) -> void:
 	_fps = lerpf(_fps, 1.0 / maxf(delta, 0.0001), 0.1)
-	if _drive:
-		_drive_tick(delta)
-	else:
-		if _autofly:
-			_cam.position += -_cam.global_basis.z * 60.0 * delta
-		_fly(delta)
+	match _mode:
+		M_DRIVE:
+			_drive_tick(delta)
+		M_WALK:
+			_walk_tick(delta)
+		_:
+			if _autofly:
+				_cam.position += -_cam.global_basis.z * 60.0 * delta
+			_fly(delta)
 	_cam_xz = Vector2(_cam.position.x, _cam.position.z)
 	_rebuild_lod()
 	_update_tree_lod()
@@ -662,14 +730,17 @@ func _update_hud() -> void:
 		_range_scale, "ON" if _curve else "off",
 		"ON" if _show_lod else "off", "ON" if _autofly else "off"]
 	_hud.text += "   [D] DEM: %s" % ("real" if (_use_dem and _dem_tex) else ("noise" if _dem_tex else "noise (no DEM)"))
-	_hud.text += "   [V] mode: %s" % ("DRIVE %d km/h (WASD)" % int(abs(_car_speed) * 3.6) if _drive else "fly")
+	var mode_str := "FLY"
+	if _mode == M_DRIVE: mode_str = "DRIVE %d km/h (WASD)" % int(abs(_car_speed) * 3.6)
+	elif _mode == M_WALK: mode_str = "WALK (WASD + mouse-look, Shift run)"
+	_hud.text += "   [V] mode: %s" % mode_str
 	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
 	_hud.text += "\n[T] trees: %s (%d total)   LOD0/1/2/bill = %d/%d/%d/%d   full<=%.0fm  [G]/[B] band x%.2f" % [
 		["off", "sparse", "medium", "full"][_tree_density_idx], _tree_ground.size(),
 		lc[0], lc[1], lc[2], lc[3], _tree_lod_dist[0] * _tree_lod_scale, _tree_lod_scale]
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and not _captured and not _drive:
+	if event is InputEventMouseButton and event.pressed and not _captured and _mode != M_DRIVE:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_captured = true
 	if event is InputEventMouseMotion and _captured:
@@ -677,10 +748,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		_look.y = clampf(_look.y, -1.55, 1.55)
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
 	if event is InputEventKey and event.pressed:
-		if _drive:
-			# while driving, WASD steer via polling; only V/ESC leave drive (don't toggle DEM etc.)
-			if event.keycode == KEY_V or event.keycode == KEY_ESCAPE:
-				_set_drive(false)
+		if _mode != M_FLY:
+			# drive/walk: WASD move via polling, so only mode + tree-tuning keys (not D=strafe etc.)
+			match event.keycode:
+				KEY_V: _cycle_mode()
+				KEY_ESCAPE: _set_mode(M_FLY); Input.mouse_mode = Input.MOUSE_MODE_VISIBLE; _captured = false
+				KEY_T: _tree_density_idx = (_tree_density_idx + 1) % TREE_DENSITY.size(); _scatter_trees()
+				KEY_G: _tree_lod_scale = maxf(0.25, _tree_lod_scale - 0.25); _update_tree_lod(true)
+				KEY_B: _tree_lod_scale = minf(4.0, _tree_lod_scale + 0.25); _update_tree_lod(true)
 			return
 		match event.keycode:
 			KEY_ESCAPE:
@@ -705,7 +780,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_D:
 				if _dem_tex: _use_dem = not _use_dem
 			KEY_V:
-				if _dem_hf_w > 0: _set_drive(not _drive)
+				if _dem_hf_w > 0: _cycle_mode()
 			KEY_T:
 				_tree_density_idx = (_tree_density_idx + 1) % TREE_DENSITY.size(); _scatter_trees()
 			KEY_G:
