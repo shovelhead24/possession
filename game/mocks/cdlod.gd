@@ -19,7 +19,7 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
-const BUILD := 18   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 19   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
 const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
@@ -50,12 +50,31 @@ var _car_speed := 0.0
 var _sun: DirectionalLight3D = null
 # trees: real low-poly spruce (gitignored, local-only), scattered near spawn, placed analytically
 # on the DEM (fine LOD there -> morph≈0 -> matches the drawn mesh, no need to raycast).
-const TREE_MODEL := "res://low_poly_red_spruce_tree_custom_textures/low_poly_red_spruce_tree_custom_textures/scene.gltf"
+# realistic fir pack with artist LODs: 3 variants, each LOD0/1/2 (geometry) + LOD3 (billboard)
+const TREE_PACK := "res://realistic_fir_trees_pack_lods_gameready/scene.gltf"
 const FOREST_HALF := 700.0
 const TREE_DENSITY := [0.0, 0.12, 0.3, 0.6]   # [T] cycles: none / sparse / medium / full
+const TREE_H := 9.0                           # target tree height (m)
+const TREE_LODS := 4                          # LOD0..LOD3(billboard)
 var _tree_density_idx := 3
-var _trees: MultiMeshInstance3D = null
 var _forest_noise := FastNoiseLite.new()
+# object-LOD: pick the LOD mesh per tree by distance to camera each frame; full detail only inside
+# a small (tunable) radius, then step down LOD1/LOD2/billboard, then cull. One MultiMesh per
+# (variant, LOD) so each is a single draw call.
+var _tree_meshes: Array = []                  # [variant][lod] -> Mesh
+var _tree_mm: Array = []                       # [variant][lod] -> MultiMeshInstance3D
+var _tree_nvar := 0
+var _tree_scale := 1.0                         # model->world scale to reach TREE_H
+var _tree_ground := PackedVector3Array()       # per-tree ground point (distance + placement)
+var _tree_basis: Array[Basis] = []             # per-tree orientation+scale (shared across its LODs)
+var _tree_variant := PackedInt32Array()        # per-tree variant index
+# LOD switch distances (m): LOD0 < [0], LOD1 < [1], LOD2 < [2], billboard < [3], cull beyond.
+# Full geometry only in the immediate ~20 m, then drop hard; billboard tier stretched out (it's ~2
+# tris, nearly free) so distant forest keeps depth instead of vanishing. [G]/[B] scale all bands.
+var _tree_lod_dist := [20.0, 35.0, 55.0, 220.0]
+var _tree_lod_scale := 1.0
+var _tree_last_cam := Vector3(1e9, 1e9, 1e9)
+var _tree_counts := PackedInt32Array()   # visible count per LOD tier (HUD)
 var _cam: Camera3D
 var _hud: Label
 var _cam_xz := Vector2.ZERO
@@ -167,7 +186,8 @@ func _ready() -> void:
 	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0))
 	layer.add_child(_hud)
 
-	_scatter_trees()
+	if _load_tree_lods():
+		_scatter_trees()
 
 func _load_dem_texture() -> void:
 	# real Millstreet DEM -> a float (RF) GPU texture the CDLOD vertex shader can sample.
@@ -329,113 +349,180 @@ func _rel_xform(node: Node3D, root: Node) -> Transform3D:
 		n = n.get_parent()
 	return t
 
-func _collect_tree_surfaces(node: Node, root: Node, by_mat: Dictionary) -> void:
-	# combine trunk + foliage per-material, baking transforms; skip billboard/impostor/low-LOD
-	# meshes (combining those baked a flat black card into every tree).
-	if node is MeshInstance3D and node.mesh:
-		var nm := node.name.to_lower()
-		var skip := "billboard" in nm or "impostor" in nm or "lod1" in nm or "lod2" in nm or "lod3" in nm
-		if not skip:
-			var xf := _rel_xform(node, root)
-			for s in node.mesh.get_surface_count():
-				var mat: Material = node.mesh.surface_get_material(s)
-				var key: int = mat.get_instance_id() if mat else 0
-				if not by_mat.has(key):
-					var stx := SurfaceTool.new()
-					stx.begin(Mesh.PRIMITIVE_TRIANGLES)
-					by_mat[key] = {"st": stx, "mat": mat}
-				by_mat[key]["st"].append_from(node.mesh, s, xf)
-	for child in node.get_children():
-		_collect_tree_surfaces(child, root, by_mat)
+func _prep_material(mat: Material) -> Material:
+	# foliage/billboard surfaces need alpha; force alpha-scissor + double-sided if the import left
+	# them opaque (else leaves render as solid cards). Bark keeps its opaque material untouched.
+	if mat is BaseMaterial3D:
+		var nm := mat.resource_name.to_lower()
+		if "brunch" in nm or "branch" in nm or "billboard" in nm or "leaf" in nm or "leaves" in nm or "needle" in nm:
+			var m := (mat as BaseMaterial3D).duplicate() as BaseMaterial3D
+			if m.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
+				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+				m.alpha_scissor_threshold = 0.5
+			m.cull_mode = BaseMaterial3D.CULL_DISABLED
+			return m
+	return mat
 
-func _tree_mesh() -> Mesh:
-	if ResourceLoader.exists(TREE_MODEL):
-		var packed := load(TREE_MODEL) as PackedScene
-		if packed:
-			var inst := packed.instantiate()
-			var by_mat := {}
-			_collect_tree_surfaces(inst, inst, by_mat)
-			inst.queue_free()
-			if not by_mat.is_empty():
-				var out := ArrayMesh.new()
-				var foliage_shader := load("res://mocks/ring_vibes_foliage.gdshader") as Shader
-				for key in by_mat:
-					var entry: Dictionary = by_mat[key]
-					entry["st"].commit(out)
-					var si := out.get_surface_count() - 1
-					var mat: Material = entry["mat"]
-					var tex: Texture2D = null
-					if mat is BaseMaterial3D:
-						tex = (mat as BaseMaterial3D).albedo_texture
-					if tex:
-						var fmat := ShaderMaterial.new()
-						fmat.shader = foliage_shader
-						fmat.set_shader_parameter("albedo_tex", tex)
-						out.surface_set_material(si, fmat)
-					elif mat:
-						out.surface_set_material(si, mat)
-				return out
-	var cone := CylinderMesh.new()
-	cone.top_radius = 0.02; cone.bottom_radius = 1.7; cone.height = 5.0
-	var tm := StandardMaterial3D.new()
-	tm.albedo_color = Color(0.16, 0.24, 0.13)
-	cone.material = tm
-	return cone
+func _append_surfaces(out: ArrayMesh, src: Mesh, xf: Transform3D) -> void:
+	for s in src.get_surface_count():
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.append_from(src, s, xf)
+		st.commit(out)
+		out.surface_set_material(out.get_surface_count() - 1, _prep_material(src.surface_get_material(s)))
+
+func _walk_lod_meshes(node: Node, root: Node, re: RegEx, by_variant: Dictionary) -> void:
+	if node is MeshInstance3D and node.mesh:
+		var m := re.search(node.name)
+		if m:
+			var vname := m.get_string(1)
+			var lod := int(m.get_string(2))
+			if lod < TREE_LODS:
+				if not by_variant.has(vname): by_variant[vname] = {}
+				if not by_variant[vname].has(lod): by_variant[vname][lod] = ArrayMesh.new()
+				_append_surfaces(by_variant[vname][lod], node.mesh, _rel_xform(node, root))
+	for c in node.get_children():
+		_walk_lod_meshes(c, root, re, by_variant)
+
+func _mesh_tris(m: Mesh) -> int:
+	if m == null: return 0
+	var t := 0
+	for s in m.get_surface_count():
+		var arr := m.surface_get_arrays(s)
+		var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+		t += idx.size() / 3 if idx.size() > 0 else (arr[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
+	return t
+
+func _load_tree_lods() -> bool:
+	# parse the fir pack: node names like "Christmas tree_2_LOD1_Bark_Mat_0" -> variant + LOD level.
+	# Build one combined mesh per (variant, LOD), and one MultiMeshInstance per (variant, LOD).
+	if not ResourceLoader.exists(TREE_PACK):
+		print("cdlod: tree pack not found ", TREE_PACK)
+		return false
+	var packed := load(TREE_PACK) as PackedScene
+	if not packed: return false
+	var inst := packed.instantiate()
+	var re := RegEx.new()
+	re.compile("(?i)^(.+?)_LOD(\\d)")
+	var by_variant := {}
+	_walk_lod_meshes(inst, inst, re, by_variant)
+	inst.queue_free()
+	if by_variant.is_empty():
+		print("cdlod: no LOD meshes parsed from pack")
+		return false
+	var vnames := by_variant.keys()
+	vnames.sort()
+	_tree_nvar = vnames.size()
+	_tree_meshes = []
+	for vi in _tree_nvar:
+		var lods := []
+		for l in TREE_LODS:
+			lods.append(by_variant[vnames[vi]].get(l, null))
+		_tree_meshes.append(lods)
+	# world scale from the first available LOD's height -> TREE_H
+	var ref: Mesh = null
+	for l in TREE_LODS:
+		if _tree_meshes[0][l]: ref = _tree_meshes[0][l]; break
+	_tree_scale = TREE_H / maxf(ref.get_aabb().size.y, 0.01) if ref else 1.0
+	_tree_mm = []
+	for vi in _tree_nvar:
+		var mms := []
+		for l in TREE_LODS:
+			var m: Mesh = _tree_meshes[vi][l]
+			if m == null:
+				mms.append(null); continue
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.mesh = m
+			var mmi := MultiMeshInstance3D.new()
+			mmi.multimesh = mm
+			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			add_child(mmi)
+			mms.append(mmi)
+		_tree_mm.append(mms)
+	var tris := []
+	for l in TREE_LODS:
+		tris.append(_mesh_tris(_tree_meshes[0][l]))
+	print("cdlod: tree pack — %d variants, v0 LOD tris=%s, scale=%.3f" % [_tree_nvar, str(tris), _tree_scale])
+	return true
 
 func _scatter_trees() -> void:
-	# conifers clumped by noise into woods + clearings, in a patch near spawn (Millstreet). Placed
-	# analytically on the DEM+curve — trees sit in the finest-LOD region so the drawn mesh matches.
-	if _dem_hf_w == 0:
+	# conifers clumped by noise into woods + clearings, in a patch near spawn. Placed analytically on
+	# the DEM+curve. Positions/variants computed once; LOD tier is chosen per-frame by distance.
+	if _tree_meshes.is_empty() or _dem_hf_w == 0:
 		return
-	if _trees:
-		_trees.queue_free()
-		_trees = null
+	_tree_ground = PackedVector3Array()
+	_tree_basis = []
+	_tree_variant = PackedInt32Array()
 	var density: float = TREE_DENSITY[_tree_density_idx]
-	if density <= 0.0:
-		print("cdlod: trees off")
+	if density > 0.0:
+		_forest_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+		_forest_noise.frequency = 1.0 / 300.0
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 1234
+		var arc := -FOREST_HALF
+		while arc <= FOREST_HALF:
+			var lat := -FOREST_HALF
+			while lat <= FOREST_HALF:
+				var jx := arc + rng.randf_range(-12, 12)
+				var jz := lat + rng.randf_range(-12, 12)
+				if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < density:
+					var ground := _car_pos(jx, jz)
+					var up := _ring_up(ground)
+					var sc: float = _tree_scale * rng.randf_range(0.8, 1.3)
+					var basis := Basis()
+					basis.y = up
+					basis.x = up.cross(Vector3.FORWARD).normalized()
+					basis.z = basis.x.cross(up).normalized()
+					basis = basis.rotated(up, rng.randf() * TAU).scaled(Vector3(sc, sc, sc))
+					_tree_ground.append(ground - up * 0.3)
+					_tree_basis.append(basis)
+					_tree_variant.append(rng.randi() % _tree_nvar)
+				lat += 22.0
+			arc += 22.0
+	_update_tree_lod(true)
+	print("cdlod: %d trees placed (%d variants x %d LODs, distance-bucketed)" % [_tree_ground.size(), _tree_nvar, TREE_LODS])
+
+func _fill_mm(mmi: MultiMeshInstance3D, xfs: Array) -> void:
+	if mmi == null: return
+	var mm := mmi.multimesh
+	mm.instance_count = xfs.size()
+	for i in xfs.size():
+		mm.set_instance_transform(i, xfs[i])
+
+func _update_tree_lod(force := false) -> void:
+	# pick each tree's LOD by distance to the camera, refill the per-(variant,LOD) MultiMeshes.
+	# throttled: only re-bucket when the camera has moved enough to matter.
+	if _tree_mm.is_empty():
 		return
-	_forest_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	_forest_noise.frequency = 1.0 / 300.0
-	var mesh := _tree_mesh()
-	var real_model := not (mesh is CylinderMesh)
-	var aabb := mesh.get_aabb()
-	var base_scale: float = (8.0 / maxf(aabb.size.y, 0.01)) if real_model else 1.0
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 1234
-	var xf: Array[Transform3D] = []
-	var arc := -FOREST_HALF
-	while arc <= FOREST_HALF:
-		var lat := -FOREST_HALF
-		while lat <= FOREST_HALF:
-			var jx := arc + rng.randf_range(-12, 12)
-			var jz := lat + rng.randf_range(-12, 12)
-			if _forest_noise.get_noise_2d(jx, jz) > 0.12 and rng.randf() < density:
-				var ground := _car_pos(jx, jz)
-				var up := _ring_up(ground)
-				var sc: float = base_scale * rng.randf_range(0.75, 1.4)
-				var basis := Basis()
-				basis.y = up
-				basis.x = up.cross(Vector3.FORWARD).normalized()
-				basis.z = basis.x.cross(up).normalized()
-				basis = basis.rotated(up, rng.randf() * TAU).scaled(Vector3(sc, sc, sc))
-				xf.append(Transform3D(basis, ground - up * 0.3))
-			lat += 22.0
-		arc += 22.0
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = xf.size()
-	for i in xf.size():
-		mm.set_instance_transform(i, xf[i])
-	_trees = MultiMeshInstance3D.new()
-	_trees.multimesh = mm
-	_trees.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF  # discard-foliage shadow casters are brutal on UHD
-	add_child(_trees)
-	var tri_per := 0
-	for s in mesh.get_surface_count():
-		tri_per += (mesh.surface_get_arrays(s)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3
-	print("cdlod: scattered %d trees (%s), %d tris/tree, %d tris total" % [
-		xf.size(), "real model" if real_model else "cone", tri_per, tri_per * xf.size()])
+	var cam := _cam.global_position
+	if not force and cam.distance_to(_tree_last_cam) < 3.0:
+		return
+	_tree_last_cam = cam
+	var d := []
+	for k in TREE_LODS:
+		var r: float = _tree_lod_dist[k] * _tree_lod_scale
+		d.append(r * r)
+	var buckets := []
+	for v in _tree_nvar:
+		var per := []
+		for l in TREE_LODS:
+			per.append([])
+		buckets.append(per)
+	for i in _tree_ground.size():
+		var dist2 := cam.distance_squared_to(_tree_ground[i])
+		var lod := -1
+		for k in TREE_LODS:
+			if dist2 < d[k]:
+				lod = k; break
+		if lod >= 0:
+			buckets[_tree_variant[i]][lod].append(Transform3D(_tree_basis[i], _tree_ground[i]))
+	_tree_counts = PackedInt32Array()
+	_tree_counts.resize(TREE_LODS)
+	for v in _tree_nvar:
+		for l in TREE_LODS:
+			_tree_counts[l] += buckets[v][l].size()
+			_fill_mm(_tree_mm[v][l], buckets[v][l])
 
 func _recompute_ranges() -> void:
 	_lod_range.clear()
@@ -549,6 +636,7 @@ func _process(delta: float) -> void:
 		_fly(delta)
 	_cam_xz = Vector2(_cam.position.x, _cam.position.z)
 	_rebuild_lod()
+	_update_tree_lod()
 	_update_hud()
 
 func _fly(delta: float) -> void:
@@ -575,8 +663,10 @@ func _update_hud() -> void:
 		"ON" if _show_lod else "off", "ON" if _autofly else "off"]
 	_hud.text += "   [D] DEM: %s" % ("real" if (_use_dem and _dem_tex) else ("noise" if _dem_tex else "noise (no DEM)"))
 	_hud.text += "   [V] mode: %s" % ("DRIVE %d km/h (WASD)" % int(abs(_car_speed) * 3.6) if _drive else "fly")
-	var tree_n := _trees.multimesh.instance_count if _trees else 0
-	_hud.text += "   [T] trees: %d (%s)" % [tree_n, ["off", "sparse", "medium", "full"][_tree_density_idx]]
+	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
+	_hud.text += "\n[T] trees: %s (%d total)   LOD0/1/2/bill = %d/%d/%d/%d   full<=%.0fm  [G]/[B] band x%.2f" % [
+		["off", "sparse", "medium", "full"][_tree_density_idx], _tree_ground.size(),
+		lc[0], lc[1], lc[2], lc[3], _tree_lod_dist[0] * _tree_lod_scale, _tree_lod_scale]
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and not _captured and not _drive:
@@ -618,6 +708,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				if _dem_hf_w > 0: _set_drive(not _drive)
 			KEY_T:
 				_tree_density_idx = (_tree_density_idx + 1) % TREE_DENSITY.size(); _scatter_trees()
+			KEY_G:
+				_tree_lod_scale = maxf(0.25, _tree_lod_scale - 0.25); _update_tree_lod(true)
+			KEY_B:
+				_tree_lod_scale = minf(4.0, _tree_lod_scale + 0.25); _update_tree_lod(true)
 			KEY_COMMA:
 				_range_scale = maxf(0.25, _range_scale - 0.25); _recompute_ranges()
 			KEY_PERIOD:
