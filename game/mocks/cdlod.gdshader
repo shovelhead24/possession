@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_back;
+render_mode cull_disabled;   // double-sided while prototyping so surface orientation is never the confusion
 // CDLOD terrain node. One shared unit grid ([0,1] on X/Z) is drawn per quadtree node, scaled to
 // the node's size. Vertices are displaced by a heightmap (vertex texture fetch) and MORPHED toward
 // the next-coarser grid as they approach the node's far LOD range — so when a node flips to a
