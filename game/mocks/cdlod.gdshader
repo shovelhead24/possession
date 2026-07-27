@@ -17,6 +17,7 @@ uniform float grid = 16.0;               // quads per node side (matches GD GRID
 uniform float lod_tint = 0.0;            // 0(fine)..1(coarse) for the LOD colour view
 uniform bool show_lod = false;
 uniform bool morph_horizontal = false;   // morph distance: horizontal vs 3D (incl. cam height)
+uniform float skirt = 0.15;               // skirt depth as fraction of node size (verts marked y<-0.5)
 
 varying float v_h;
 varying vec3 v_n;
@@ -44,7 +45,9 @@ void vertex() {
 	float hu = sample_h(wxz + vec2(0.0, e));
 	v_n = normalize(vec3(hl - hr, 2.0 * e, hd - hu));
 	v_h = h / disp;
-	VERTEX = vec3(wxz.x, h, wxz.y);   // node instance is identity — output world position
+	// skirt verts (marked y=-1 in the unit grid) hang below the edge to hide residual cracks
+	float y = (VERTEX.y < -0.5) ? h - node_size * skirt : h;
+	VERTEX = vec3(wxz.x, y, wxz.y);   // node instance is identity — output world position
 	NORMAL = v_n;
 }
 

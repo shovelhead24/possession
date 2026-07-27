@@ -13,7 +13,8 @@ const BASE_RANGE := 200.0        # lod_range[0]; doubles each level
 const TERRAIN_SIZE := 4096.0
 const DISP := 300.0
 const POOL := 400
-const BUILD := 10   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const BUILD := 11   # bump on each change; HUD shows this + the .gd mtime so stale runs are obvious
+const SKIRT := 0.15   # skirt depth as fraction of node size — hides the residual hairline cracks
 
 var _grid_mesh: ArrayMesh
 var _pool: Array[MeshInstance3D] = []
@@ -30,10 +31,11 @@ var _show_lod := false
 var _autofly := false
 var _fps := 0.0
 var _build_stamp := ""
-# live-tunable morph params (no rebuild — _emit reads these every frame)
-var _morph_lo := 0.45      # morph starts at this fraction of a tile's LOD band
-var _morph_hi := 0.9       # morph fully collapsed by this fraction
-var _morph_horiz := false  # morph distance metric: horizontal (true) vs 3D incl. cam height (false)
+# live-tunable morph params (no rebuild — _emit reads these every frame). Defaults = the values
+# tuned live to hairline cracks: late narrow morph (0.9->1.0) + horizontal metric.
+var _morph_lo := 0.9
+var _morph_hi := 1.0
+var _morph_horiz := true   # horizontal beat 3D — 3D was swamped by camera altitude
 var _range_scale := 1.0    # scales all LOD ranges
 
 func _ready() -> void:
@@ -101,18 +103,43 @@ func _recompute_ranges() -> void:
 		_lod_range.append(BASE_RANGE * _range_scale * pow(2.0, l))
 
 func _build_unit_grid() -> ArrayMesh:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# unit grid in [0,1] on X/Z (Y=0), plus a skirt ribbon around the perimeter whose bottom verts
+	# are marked Y=-1 — the shader drops those below the terrain to hide residual hairline cracks.
+	var verts: Array[Vector3] = []
+	var idx: Array[int] = []
 	for i in GRID + 1:
 		for j in GRID + 1:
-			st.set_uv(Vector2(float(i) / GRID, float(j) / GRID))
-			st.add_vertex(Vector3(float(i) / GRID, 0.0, float(j) / GRID))
+			verts.append(Vector3(float(i) / GRID, 0.0, float(j) / GRID))
 	for i in GRID:
 		for j in GRID:
 			var a := i * (GRID + 1) + j
 			var b := a + GRID + 1
-			st.add_index(a); st.add_index(a + 1); st.add_index(b)
-			st.add_index(a + 1); st.add_index(b + 1); st.add_index(b)
+			idx.append_array([a, a + 1, b, a + 1, b + 1, b])
+	# skirt: for each of the 4 edges, a vertical ribbon (top on the edge, bottom marked y=-1).
+	# cull_disabled, so winding doesn't matter here.
+	var edges := [
+		func(k: int) -> Vector3: return Vector3(float(k) / GRID, 0.0, 0.0),      # south
+		func(k: int) -> Vector3: return Vector3(float(k) / GRID, 0.0, 1.0),      # north
+		func(k: int) -> Vector3: return Vector3(0.0, 0.0, float(k) / GRID),      # west
+		func(k: int) -> Vector3: return Vector3(1.0, 0.0, float(k) / GRID),      # east
+	]
+	for edge in edges:
+		for k in GRID:
+			var t0: Vector3 = edge.call(k)
+			var t1: Vector3 = edge.call(k + 1)
+			var base := verts.size()
+			verts.append(t0)                                   # top 0
+			verts.append(t1)                                   # top 1
+			verts.append(Vector3(t0.x, -1.0, t0.z))            # bottom 0 (marker)
+			verts.append(Vector3(t1.x, -1.0, t1.z))            # bottom 1 (marker)
+			idx.append_array([base, base + 1, base + 2, base + 1, base + 3, base + 2])
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for v in verts:
+		st.set_uv(Vector2(v.x, v.z))
+		st.add_vertex(v)
+	for i in idx:
+		st.add_index(i)
 	return st.commit()
 
 func _select(ox: float, oz: float, size: float, level: int) -> void:
@@ -165,6 +192,7 @@ func _rebuild_lod() -> void:
 	for i in _used:
 		_mats[i].set_shader_parameter("cam_pos", cp)
 		_mats[i].set_shader_parameter("morph_horizontal", _morph_horiz)
+		_mats[i].set_shader_parameter("skirt", SKIRT)
 
 func _process(delta: float) -> void:
 	_fps = lerpf(_fps, 1.0 / maxf(delta, 0.0001), 0.1)
@@ -230,4 +258,4 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_PERIOD:
 				_range_scale = minf(4.0, _range_scale + 0.25); _recompute_ranges()
 			KEY_R:
-				_morph_lo = 0.45; _morph_hi = 0.9; _morph_horiz = false; _range_scale = 1.0; _recompute_ranges()
+				_morph_lo = 0.9; _morph_hi = 1.0; _morph_horiz = true; _range_scale = 1.0; _recompute_ranges()
