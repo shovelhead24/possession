@@ -1,102 +1,130 @@
 extends Node3D
-# Rudimentary cloud-card layer "just above our heads" (2026-07-28) -- replaces the sky-shader
-# ring-in-sky backdrop, which turned out to be effectively invisible (occluded by the real 3D
-# geometry everywhere except a seam). This is real geometry: flat quads scattered in a disc above
-# the camera, alpha-cut from a shared noise texture. [Z] cycles type, [X] toggles visibility.
+# Cloud layers for ring_vibes. REUSES the April 2026 layered-FBM work (res://cloud_layer_shader.gdshader,
+# from commit ae54493 "layered FBM plane approach (B)") rather than reinventing it -- that shader
+# already solves the hard parts: world-space FBM (so planes never show tiling), a built-in horizon
+# fade, fake normals from the density gradient (lit tops / shadowed sides), self-shadowing by
+# density, and sunset scatter. Tuning constants below are lifted from the old cloud_system.gd.
 #
-# Deliberately simple: "up" is treated as world +Y (not the ring's curved local-up) since clouds
-# only matter within a few km of the camera, where the ring's curvature is negligible -- not worth
-# the complexity for a vibes check.
+# Superseded approach (2026-07-28, same day): scattered individual cloud "patch" quads -- read as
+# obvious floating cards, not sky. Three big camera-following planes is the correct shape.
+#
+# Ring note: the planes are flat and world-axis-aligned, not bent to the ring's curvature. Over the
+# ~28km plane the ring (R=477km) drops only ~200m at the edge, and the horizon fade hides that --
+# not worth curving for a vibes check.
 
-const CLOUD_TYPES := [
-	{"name": "cirrus",   "height": 6000.0, "count": 36, "size": 1100.0, "radius": 14000.0, "coverage": 0.30, "soft": 0.45},
-	{"name": "cumulus",  "height": 2200.0, "count": 55, "size": 550.0,  "radius": 9000.0,  "coverage": 0.50, "soft": 0.30},
-	{"name": "overcast", "height": 1600.0, "count": 110, "size": 650.0, "radius": 9000.0,  "coverage": 0.78, "soft": 0.40},
+const CLOUD_ALTITUDES   := [900.0, 1800.0, 3000.0]      # cumulus, altocumulus, cirrus
+const CLOUD_TYPE_PARAMS := [                             # [noise_scale, noise_stretch_x]
+	[0.00012, 1.0],   # cumulus — large rounded puffs
+	[0.00022, 1.5],   # altocumulus — medium wave patches
+	[0.00030, 6.0],   # cirrus — elongated wispy streaks
 ]
-const REGEN_DIST := 3000.0   # regenerate the scatter once the camera drifts this far from last centre
+const WEATHER_PRESETS := {                               # per-layer [coverage, softness]
+	"clear":    {"layers": [[0.01, 0.20], [0.22, 0.28], [0.55, 0.35]], "brightness": 1.0},
+	"fresh":    {"layers": [[0.42, 0.14], [0.08, 0.24], [0.01, 0.30]], "brightness": 1.0},
+	"overcast": {"layers": [[0.80, 0.10], [0.78, 0.12], [0.62, 0.15]], "brightness": 0.5},
+}
+const WEATHER_NAMES := ["fresh", "clear", "overcast"]
+const PLANE_SIZE := 28000.0                              # 28km across; half = horizon-fade radius
+const LAYER_DIR_OFFSETS := [0.0, 35.0, -25.0]            # deg from base wind dir, per layer
+const LAYER_SPEED_MULT  := [1.0, 0.55, 0.30]
+const WIND_SPEED := 0.008
+const WIND_DIR := Vector2(1.0, 0.0)
 
-var _type_idx := 1
-var _mm_inst: MultiMeshInstance3D = null
-var _mat: ShaderMaterial = null
-var _cloud_tex: ImageTexture = null
-var _last_gen_pos := Vector3(1e18, 0.0, 0.0)
+var _layers: Array[MeshInstance3D] = []
+var _weather_idx := 0
 var _visible := true
 
 func _ready() -> void:
-	_cloud_tex = _make_cloud_tex()
-	_mat = ShaderMaterial.new()
-	_mat.shader = load("res://mocks/ring_clouds.gdshader") as Shader
-	_mat.set_shader_parameter("cloud_tex", _cloud_tex)
-	_apply_type_params()
+	_build_layers()
+	_apply_weather()
 
-func _make_cloud_tex() -> ImageTexture:
-	# FastNoiseLite.get_image() is synchronous (unlike NoiseTexture2D, which generates async) --
-	# fine here since this runs once at startup, not per-instance.
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-	noise.fractal_octaves = 4
-	noise.frequency = 0.012
-	var img := noise.get_image(256, 256)
-	return ImageTexture.create_from_image(img)
+func _build_layers() -> void:
+	var shader := load("res://cloud_layer_shader.gdshader") as Shader
+	if not shader:
+		push_error("ring_clouds: cloud_layer_shader.gdshader not found")
+		return
+	var half := PLANE_SIZE * 0.5
+	for i in 3:
+		var y: float = CLOUD_ALTITUDES[i]
+		var tp: Array = CLOUD_TYPE_PARAMS[i]
+		var verts := PackedVector3Array([
+			Vector3(-half, 0.0, -half), Vector3(half, 0.0, -half),
+			Vector3(-half, 0.0, half), Vector3(half, 0.0, half),
+		])
+		var arr := []
+		arr.resize(Mesh.ARRAY_MAX)
+		arr[Mesh.ARRAY_VERTEX] = verts
+		arr[Mesh.ARRAY_NORMAL] = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP])
+		arr[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 1, 3, 2])
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		mat.set_shader_parameter("cloud_base", y - 200.0)
+		mat.set_shader_parameter("cloud_top", y + 200.0)
+		mat.set_shader_parameter("layer_t", float(i) / 2.0)
+		mat.set_shader_parameter("plane_half_size", half)
+		mat.set_shader_parameter("noise_scale", tp[0])
+		mat.set_shader_parameter("noise_stretch", Vector2(tp[1], 1.0))
+		var angle := deg_to_rad(LAYER_DIR_OFFSETS[i])
+		var ca := cos(angle)
+		var sa := sin(angle)
+		mat.set_shader_parameter("wind_dir", Vector2(WIND_DIR.x * ca - WIND_DIR.y * sa, WIND_DIR.x * sa + WIND_DIR.y * ca))
+		mat.set_shader_parameter("wind_speed", WIND_SPEED * LAYER_SPEED_MULT[i])
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		mi.position = Vector3(0.0, y, 0.0)
+		mi.visible = _visible
+		add_child(mi)
+		_layers.append(mi)
 
-func _apply_type_params() -> void:
-	var t: Dictionary = CLOUD_TYPES[_type_idx]
-	_mat.set_shader_parameter("coverage", t["coverage"])
-	_mat.set_shader_parameter("softness", t["soft"])
-	_last_gen_pos = Vector3(1e18, 0.0, 0.0)   # force a regen with the new density/size
+func _apply_weather() -> void:
+	var wp: Dictionary = WEATHER_PRESETS[WEATHER_NAMES[_weather_idx]]
+	var layer_data: Array = wp["layers"]
+	for i in _layers.size():
+		var mat := _layers[i].material_override as ShaderMaterial
+		if not mat:
+			continue
+		mat.set_shader_parameter("coverage", layer_data[i][0])
+		mat.set_shader_parameter("softness", layer_data[i][1])
 
 func cycle_type() -> void:
-	_type_idx = (_type_idx + 1) % CLOUD_TYPES.size()
-	_apply_type_params()
+	_weather_idx = (_weather_idx + 1) % WEATHER_NAMES.size()
+	_apply_weather()
 
 func type_name() -> String:
-	return CLOUD_TYPES[_type_idx]["name"]
+	return WEATHER_NAMES[_weather_idx]
 
 func toggle_visible() -> void:
 	_visible = not _visible
-	if _mm_inst:
-		_mm_inst.visible = _visible
+	for m in _layers:
+		m.visible = _visible
 
 func is_visible_flag() -> bool:
 	return _visible
 
-func set_day(day: float) -> void:
-	if _mat:
-		_mat.set_shader_parameter("day", day)
+func set_day(day: float, to_sun := Vector3.UP) -> void:
+	# brightness follows day/night; scatter warms the clouds when the sun is near the horizon
+	var wp: Dictionary = WEATHER_PRESETS[WEATHER_NAMES[_weather_idx]]
+	var bright: float = lerpf(0.06, 1.0, day) * float(wp["brightness"])
+	var scatter: float = clampf(1.0 - abs(to_sun.y) * 3.0, 0.0, 1.0) * day
+	var sun_xz := Vector2(to_sun.x, to_sun.z)
+	if sun_xz.length() > 0.001:
+		sun_xz = sun_xz.normalized()
+	for m in _layers:
+		var mat := m.material_override as ShaderMaterial
+		if not mat:
+			continue
+		mat.set_shader_parameter("cloud_brightness", bright)
+		mat.set_shader_parameter("scatter", scatter)
+		mat.set_shader_parameter("sun_dir_xz", sun_xz)
 
 func update_around(cam_pos: Vector3) -> void:
-	if cam_pos.distance_to(_last_gen_pos) < REGEN_DIST and _mm_inst:
-		return
-	_last_gen_pos = cam_pos
-	_regen(cam_pos)
-
-func _regen(cam_pos: Vector3) -> void:
-	var t: Dictionary = CLOUD_TYPES[_type_idx]
-	if _mm_inst:
-		_mm_inst.queue_free()
-	var quad := QuadMesh.new()
-	quad.size = Vector2(t["size"], t["size"])
-	quad.material = _mat
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = quad
-	var n: int = t["count"]
-	mm.instance_count = n
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 99
-	var radius: float = t["radius"]
-	var height: float = t["height"]
-	# lie the quad flat (its face, +Z in mesh space, ends up pointing +Y/up) -- cull_disabled means
-	# which side faces the viewer (below, looking up) doesn't matter.
-	var flat := Basis(Vector3.RIGHT, Vector3.FORWARD, Vector3.UP)
-	for i in n:
-		var a := rng.randf_range(0.0, TAU)
-		var d := sqrt(rng.randf()) * radius   # sqrt so density is uniform per unit AREA, not per radius
-		var pos := cam_pos + Vector3.UP * height + Vector3(cos(a) * d, rng.randf_range(-150.0, 150.0), sin(a) * d)
-		var basis := flat.rotated(Vector3.UP, rng.randf() * TAU)
-		mm.set_instance_transform(i, Transform3D(basis, pos))
-	_mm_inst = MultiMeshInstance3D.new()
-	_mm_inst.multimesh = mm
-	_mm_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_mm_inst.visible = _visible
-	add_child(_mm_inst)
+	# planes follow the camera in XZ so they always reach the horizon in every direction; the FBM is
+	# sampled in WORLD space, so the clouds themselves stay put as you move (no sliding-with-you
+	# artifact) -- this is what the old shader's local-space _plane_offset horizon fade is built for.
+	for i in _layers.size():
+		_layers[i].position = Vector3(cam_pos.x, CLOUD_ALTITUDES[i], cam_pos.z)

@@ -584,7 +584,7 @@ func _process(delta: float) -> void:
 	var day: float = smoothstep(0.0, 0.35, local_lit)
 	_dbg_day = day
 	if _clouds:
-		_clouds.set_day(day)
+		_clouds.set_day(day, to_sun)
 		_clouds.update_around(_cam.global_position)
 	var eff_haze: float = 0.0 if _haze_off else haze_density
 	_mat.set_shader_parameter("to_sun", to_sun)
