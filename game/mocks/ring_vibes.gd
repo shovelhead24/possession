@@ -157,7 +157,12 @@ func _ready() -> void:
 	var shader := load("res://mocks/ring_vibes.gdshader") as Shader
 	_mat = ShaderMaterial.new()
 	_mat.shader = shader
-	_mat.set_shader_parameter("city_tex", _make_city_texture())
+	if _sat_tex:
+		_mat.set_shader_parameter("sat_tex", _sat_tex)
+		_mat.set_shader_parameter("has_sat", true)
+	if _roads_tex:
+		_mat.set_shader_parameter("road_tex", _roads_tex)
+		_mat.set_shader_parameter("has_roads", true)
 
 	var noise := FastNoiseLite.new()
 	noise.frequency = 0.0025
@@ -438,6 +443,11 @@ func _rebuild() -> void:
 	# backdrop, never walked to; see _far_terrain_h).
 	var near_arc: float = TERRAIN_SIZE * 0.5
 	var seam: float = near_arc / r
+	# tile the compiled patch's real satellite/roads imagery across the WHOLE band (world arc/lat
+	# divided by the patch's real-world size; the sampler's default repeat wraps it automatically) —
+	# no geographic accuracy out here, just breaking up the flat ramp with real photo texture.
+	var patch_w: float = float(_dem_w) * _dem_mpp if _dem_w > 0 else 50000.0
+	var patch_h: float = float(_dem_h) * _dem_mpp if _dem_h > 0 else 50000.0
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in BAND_SEGS + 1:
@@ -445,7 +455,7 @@ func _rebuild() -> void:
 		var arc: float = theta * r
 		for j in BAND_ROWS + 1:
 			var lat: float = w * (float(j) / float(BAND_ROWS) - 0.5)
-			st.set_uv(Vector2(float(i) / float(BAND_SEGS), float(j) / float(BAND_ROWS)))
+			st.set_uv(Vector2(arc / patch_w, -lat / patch_h))
 			st.add_vertex(_ring_pos(theta, lat, _far_terrain_h(arc, lat)))
 	_grid_indices(st, BAND_SEGS, BAND_ROWS)
 	st.generate_normals()
@@ -505,22 +515,6 @@ func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:
 			var b: int = a + rows + 1
 			st.add_index(a); st.add_index(b); st.add_index(a + 1)
 			st.add_index(a + 1); st.add_index(b); st.add_index(b + 1)
-
-func _make_city_texture() -> ImageTexture:
-	var img := Image.create_empty(2048, 64, false, Image.FORMAT_RGB8)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	for c in 70:
-		var cx := rng.randi_range(64, 2047)  # keep lon~0 (camera region) wilderness
-		var cy := rng.randi_range(8, 55)
-		var n := rng.randi_range(40, 260)
-		var spread := rng.randf_range(3.0, 14.0)
-		for p in n:
-			var px := clampi(cx + int(rng.randfn(0.0, spread)), 0, 2047)
-			var py := clampi(cy + int(rng.randfn(0.0, spread * 0.35)), 0, 63)
-			var warm := rng.randf_range(0.75, 1.0)
-			img.set_pixel(px, py, Color(warm, warm * 0.82, warm * 0.5))
-	return ImageTexture.create_from_image(img)
 
 func _process(delta: float) -> void:
 	var period: float = SUN_PERIODS[sun_speed_idx]
