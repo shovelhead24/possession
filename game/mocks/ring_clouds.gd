@@ -27,12 +27,16 @@ const LAYER_ALPHA := [0.85, 0.70, 0.60, 0.50, 0.45]      # higher layers thinner
 # which reads as flat uniform sheets. Gradient runs low->high: dense fluffy slow-churning cumulus
 # up to wispy fast-churning cirrus.
 # [warp_amount, warp_freq, warp_speed, evolve_speed, density_pow, macro_amount, macro_scale]
+# NOTE on warp_speed/evolve_speed: these MUST stay well below the layer's effective wind_speed.
+# First pass had them 4-45x HIGHER, so the shapes boiled in place far faster than they translated --
+# reading as "baked in position, fading in and out" rather than drifting. Real cloud turbulence
+# advects with the air mass and morphs slowly relative to its travel. Now ~15% / ~8% of wind speed.
 const CLOUD_SHAPE := [
-	[0.30, 0.55, 0.03, 0.004, 2.0, 0.55, 0.12],   # low cumulus — dense pinched centres, broad regions
-	[0.45, 0.65, 0.04, 0.006, 1.7, 0.45, 0.15],   # cumulus
-	[0.70, 0.80, 0.06, 0.010, 1.3, 0.35, 0.20],   # altocumulus — more shear
-	[1.00, 1.00, 0.08, 0.014, 1.0, 0.25, 0.25],   # high altocumulus — streaking
-	[1.60, 1.30, 0.11, 0.020, 0.8, 0.15, 0.30],   # cirrus — heavy warp, wispy tails, fastest churn
+	[0.30, 0.55, 0.0024, 0.0013, 2.0, 0.55, 0.12],   # low cumulus — dense pinched centres, broad regions
+	[0.45, 0.65, 0.0019, 0.0010, 1.7, 0.45, 0.15],   # cumulus
+	[0.70, 0.80, 0.0013, 0.0007, 1.3, 0.35, 0.20],   # altocumulus — more shear
+	[1.00, 1.00, 0.0010, 0.0005, 1.0, 0.25, 0.25],   # high altocumulus — streaking
+	[1.60, 1.30, 0.0007, 0.0004, 0.8, 0.15, 0.30],   # cirrus — heavy warp, wispy tails
 ]
 # Rebalanced 2026-07-28 for the 5-layer stack. The first pass just interpolated the old 3-layer
 # coverage curve out to 5 points while keeping its endpoints -- which ADDS two extra layers of
@@ -63,7 +67,7 @@ const LAT_SEGS := 4
 const FADE_START := 0.5                                  # fraction of half-arc where the horizon fade begins
 const LAYER_DIR_OFFSETS := [0.0, 20.0, 35.0, -10.0, -25.0]   # deg from base wind dir, per layer
 const LAYER_SPEED_MULT  := [1.0, 0.78, 0.55, 0.42, 0.30]
-const WIND_SPEED := 0.008
+const WIND_SPEED := 0.016   # doubled so the drift actually reads; [O] panel scales it live
 const WIND_DIR := Vector2(1.0, 0.0)
 
 var _layers: Array[MeshInstance3D] = []
@@ -80,6 +84,8 @@ var soft_mult := 1.0
 var alpha_mult := 1.0
 var warp_mult := 1.0
 var bright_mult := 1.0
+var wind_mult := 1.0     # drift speed (how fast clouds travel)
+var churn_mult := 1.0    # warp/evolve speed (how fast they morph in place)
 
 func _ready() -> void:
 	_build_layers()
@@ -172,6 +178,9 @@ func _apply_weather() -> void:
 		var base_alpha: float = wp["alpha"][i] if wp.has("alpha") else LAYER_ALPHA[i]
 		mat.set_shader_parameter("layer_alpha", clampf(base_alpha * alpha_mult, 0.0, 1.0))
 		mat.set_shader_parameter("warp_amount", CLOUD_SHAPE[i][0] * warp_mult)
+		mat.set_shader_parameter("warp_speed", CLOUD_SHAPE[i][2] * churn_mult)
+		mat.set_shader_parameter("evolve_speed", CLOUD_SHAPE[i][3] * churn_mult)
+		mat.set_shader_parameter("wind_speed", WIND_SPEED * LAYER_SPEED_MULT[i] * wind_mult)
 
 func retune() -> void:
 	# re-apply everything after a slider moves (coverage/softness/alpha/warp all live here)

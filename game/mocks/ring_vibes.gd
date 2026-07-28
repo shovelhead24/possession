@@ -303,6 +303,9 @@ func _build_tuning_panel(layer: CanvasLayer) -> void:
 	_add_slider(vb, "softness x", 0.2, 3.0, 1.0, func(v): _clouds.soft_mult = v; _clouds.retune())
 	_add_slider(vb, "warp x", 0.0, 3.0, 1.0, func(v): _clouds.warp_mult = v; _clouds.retune())
 	_add_slider(vb, "brightness x", 0.3, 2.0, 1.0, func(v): _clouds.bright_mult = v)
+	# drift vs churn: churn must stay well under drift or clouds boil in place instead of moving
+	_add_slider(vb, "wind (drift) x", 0.0, 6.0, 1.0, func(v): _clouds.wind_mult = v; _clouds.retune())
+	_add_slider(vb, "churn (morph) x", 0.0, 8.0, 1.0, func(v): _clouds.churn_mult = v; _clouds.retune())
 	var sun_title := Label.new()
 	sun_title.text = "— sun / wall shadow —"
 	vb.add_child(sun_title)
