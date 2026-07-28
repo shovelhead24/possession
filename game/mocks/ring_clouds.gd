@@ -23,18 +23,22 @@ const CLOUD_TYPE_PARAMS := [                             # [noise_scale, noise_s
 	[0.00030, 6.0],   # cirrus — elongated wispy streaks
 ]
 const LAYER_ALPHA := [0.85, 0.70, 0.60, 0.50, 0.45]      # higher layers thinner; stacked alpha compounds
+# Rebalanced 2026-07-28 for the 5-layer stack. The first pass just interpolated the old 3-layer
+# coverage curve out to 5 points while keeping its endpoints -- which ADDS two extra layers of
+# cloud, so every preset read about one step heavier than its name (clear looked like fresh, fresh
+# like overcast, overcast like heavy rain). Coverage is cut across the board to compensate; with
+# 5 stacked layers the compounded alpha does the work that high per-layer coverage used to.
 const WEATHER_PRESETS := {                               # per-layer [coverage, softness]
-	"fresh":    {"layers": [[0.42, 0.14], [0.30, 0.18], [0.08, 0.24], [0.04, 0.27], [0.01, 0.30]],
+	"clear":    {"layers": [[0.00, 0.20], [0.00, 0.22], [0.04, 0.28], [0.10, 0.32], [0.20, 0.35]],
 				 "brightness": 1.0, "self_shadow": 0.72},
-	"clear":    {"layers": [[0.01, 0.20], [0.10, 0.24], [0.22, 0.28], [0.38, 0.32], [0.55, 0.35]],
+	"fresh":    {"layers": [[0.20, 0.14], [0.13, 0.18], [0.05, 0.24], [0.02, 0.27], [0.01, 0.30]],
 				 "brightness": 1.0, "self_shadow": 0.72},
-	# overcast read far too dark: brightness 0.5 x heavy self-shadow (dense fbm -> low self_shadow)
-	# compounded into near-black. Brightness raised and self-shadow softened -- thick overcast in
-	# life is bright-but-flat, not dark.
-	"overcast": {"layers": [[0.80, 0.10], [0.80, 0.11], [0.78, 0.12], [0.70, 0.14], [0.62, 0.15]],
-				 "brightness": 0.85, "self_shadow": 0.35},
+	# overcast also read far too dark before: brightness 0.5 x heavy self-shadow (dense fbm -> low
+	# self_shadow) compounded toward black. Thick overcast in life is bright-but-flat, not dark.
+	"overcast": {"layers": [[0.55, 0.12], [0.50, 0.12], [0.44, 0.13], [0.34, 0.15], [0.24, 0.16]],
+				 "brightness": 0.95, "self_shadow": 0.28},
 }
-const WEATHER_NAMES := ["fresh", "clear", "overcast"]
+const WEATHER_NAMES := ["clear", "fresh", "overcast"]   # [Z] cycles light -> heavy
 const PLANE_SIZE := 28000.0                              # 28km across; half = horizon-fade radius
 const LAYER_DIR_OFFSETS := [0.0, 20.0, 35.0, -10.0, -25.0]   # deg from base wind dir, per layer
 const LAYER_SPEED_MULT  := [1.0, 0.78, 0.55, 0.42, 0.30]
