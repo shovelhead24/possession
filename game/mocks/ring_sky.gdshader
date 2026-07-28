@@ -41,10 +41,14 @@ void sky() {
 	vec3 horizon = mix(night_horizon, day_horizon, day);
 	vec3 col = mix(horizon, zenith, smoothstep(-0.05, 0.65, up));
 
-	// stars: hashed point sparkles on a direction-space grid; fade near the horizon, dimmed by day
-	vec3 grid = floor(dir * star_density);
-	float h = hash13(grid);
-	float star = step(0.9975, h) * hash13(grid + vec3(3.7, 1.3, 5.1));
+	// stars: hashed point sparkles on an azimuth/elevation grid (NOT floor(dir*density) -- that
+	// cartesian grid goes dead wherever two axes compress toward zero, e.g. looking straight up,
+	// which is exactly the "no stars all the way around" gap found by flying up) -- fade near the
+	// horizon, dimmed by day.
+	vec2 sph = vec2(atan(dir.x, dir.z), asin(clamp(dir.y, -1.0, 1.0))) * star_density;
+	vec2 sgrid = floor(sph);
+	float h = hash21(sgrid);
+	float star = step(0.9975, h) * hash21(sgrid + vec2(3.7, 1.3));
 	float horizon_fade = smoothstep(-0.05, 0.2, up);
 	float star_vis = mix(1.0, star_day_visibility, day);
 	col += vec3(star) * star_vis * horizon_fade;

@@ -19,6 +19,15 @@ const SUN_PERIODS := [0.0, 1140.0, 60.0, 8.0]                     # s per full d
 # plane by SUN_TILT means the ring only occults the sun where the tilted path crosses back through
 # Z=0, which happens twice per cycle (at sun_angle = pi/2 and 3pi/2), not continuously.
 const SUN_TILT := deg_to_rad(15.0)
+# single source of truth for both the sky dome (ring_sky.gdshader) and the terrain/band/wall fog-
+# fade target -- these used to be two independent hardcoded gradients (a leftover flat-background
+# color calc never updated when the real sky shader was built), so far from spawn the terrain's fog
+# faded toward a colour that didn't match what the actual sky looked like there, reading as "haze
+# only works near the start."
+const DAY_ZENITH := Color(0.20, 0.42, 0.72)
+const DAY_HORIZON := Color(0.62, 0.74, 0.86)
+const NIGHT_ZENITH := Color(0.02, 0.03, 0.06)
+const NIGHT_HORIZON := Color(0.07, 0.09, 0.15)
 const BAND_SEGS := 1024
 const BAND_ROWS := 8
 const WALL_HEIGHT := 3_000.0
@@ -555,10 +564,15 @@ func _process(delta: float) -> void:
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("to_sun", to_sun)
 		_wall_mat.set_shader_parameter("haze_density", haze_density)
-	# camera-local day factor drives the sky + fog-blend colour
-	var sky := Color(0.45, 0.62, 0.82).lerp(Color(0.015, 0.02, 0.05), 1.0 - day)
+	# camera-local day factor drives the sky + fog-blend colour -- fog fades toward the HORIZON
+	# colour (not zenith), matching what the real sky shader shows near the ground far away.
+	var sky := DAY_HORIZON.lerp(NIGHT_HORIZON, 1.0 - day)
 	_sky_mat.set_shader_parameter("to_sun", to_sun)
 	_sky_mat.set_shader_parameter("day", day)
+	_sky_mat.set_shader_parameter("day_zenith", Vector3(DAY_ZENITH.r, DAY_ZENITH.g, DAY_ZENITH.b))
+	_sky_mat.set_shader_parameter("day_horizon", Vector3(DAY_HORIZON.r, DAY_HORIZON.g, DAY_HORIZON.b))
+	_sky_mat.set_shader_parameter("night_zenith", Vector3(NIGHT_ZENITH.r, NIGHT_ZENITH.g, NIGHT_ZENITH.b))
+	_sky_mat.set_shader_parameter("night_horizon", Vector3(NIGHT_HORIZON.r, NIGHT_HORIZON.g, NIGHT_HORIZON.b))
 	_sky_mat.set_shader_parameter("ring_radius", _radius())
 	_sky_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
 	_sky_mat.set_shader_parameter("cam_world_pos", _cam.global_position)
