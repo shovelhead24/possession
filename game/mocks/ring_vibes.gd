@@ -545,11 +545,23 @@ func _process(delta: float) -> void:
 	if period > 0.0 and not sun_paused:
 		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
 	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(SUN_TILT), cos(sun_angle) * sin(SUN_TILT))
+	# day/night is only "to_sun.y" as a global scalar when the camera sits near arc=0 (spawn) --
+	# the terrain's OWN lighting (and the ring-in-sky element) correctly varies by arc position via
+	# dot(normal(theta), to_sun), which is what makes the far side of the ring show a genuinely
+	# different day/night state than where you're standing (real ringworld physics -- your night,
+	# their day). The sky background/ambient/sun-energy were still using the theta=0 special case
+	# unconditionally, so as soon as 5x fly-boost lets you actually travel far, they'd report
+	# "day here" while the visible terrain/ring correctly showed night, or vice versa -- exactly the
+	# "almost the opposite" mismatch found by flying far. Computing the camera's own current theta
+	# and evaluating the SAME formula there keeps everything consistent regardless of position.
+	var r_now := _radius()
+	var cam_theta := atan2(_cam.global_position.x, r_now - _cam.global_position.y)
+	var local_lit := clampf(-sin(cam_theta) * to_sun.x + cos(cam_theta) * to_sun.y, 0.0, 1.0)
 	# the raw cosine curve spent most of its "day half" ramping through a dim dusk-like value and
 	# only briefly touched full brightness near the very peak -- it LOOKED like night was ~50% of
 	# the cycle but day was mostly a fast dim transition, not a comparable bright half. Remapping
 	# widens the plateau: day reaches 1.0 well before the sun nears its max height, and holds there.
-	var day: float = smoothstep(0.0, 0.35, clampf(to_sun.y, 0.0, 1.0))
+	var day: float = smoothstep(0.0, 0.35, local_lit)
 	_mat.set_shader_parameter("to_sun", to_sun)
 	_mat.set_shader_parameter("haze_density", haze_density)
 	_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
