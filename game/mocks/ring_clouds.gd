@@ -23,6 +23,17 @@ const CLOUD_TYPE_PARAMS := [                             # [noise_scale, noise_s
 	[0.00030, 6.0],   # cirrus — elongated wispy streaks
 ]
 const LAYER_ALPHA := [0.85, 0.70, 0.60, 0.50, 0.45]      # higher layers thinner; stacked alpha compounds
+# Per-layer shape/animation character. Without this every layer is the same fbm sliding linearly,
+# which reads as flat uniform sheets. Gradient runs low->high: dense fluffy slow-churning cumulus
+# up to wispy fast-churning cirrus.
+# [warp_amount, warp_freq, warp_speed, evolve_speed, density_pow, macro_amount, macro_scale]
+const CLOUD_SHAPE := [
+	[0.30, 0.55, 0.03, 0.004, 2.0, 0.55, 0.12],   # low cumulus — dense pinched centres, broad regions
+	[0.45, 0.65, 0.04, 0.006, 1.7, 0.45, 0.15],   # cumulus
+	[0.70, 0.80, 0.06, 0.010, 1.3, 0.35, 0.20],   # altocumulus — more shear
+	[1.00, 1.00, 0.08, 0.014, 1.0, 0.25, 0.25],   # high altocumulus — streaking
+	[1.60, 1.30, 0.11, 0.020, 0.8, 0.15, 0.30],   # cirrus — heavy warp, wispy tails, fastest churn
+]
 # Rebalanced 2026-07-28 for the 5-layer stack. The first pass just interpolated the old 3-layer
 # coverage curve out to 5 points while keeping its endpoints -- which ADDS two extra layers of
 # cloud, so every preset read about one step heavier than its name (clear looked like fresh, fresh
@@ -82,6 +93,14 @@ func _build_layers() -> void:
 		mat.set_shader_parameter("noise_scale", tp[0])
 		mat.set_shader_parameter("noise_stretch", Vector2(tp[1], 1.0))
 		mat.set_shader_parameter("layer_alpha", LAYER_ALPHA[i])
+		var sh: Array = CLOUD_SHAPE[i]
+		mat.set_shader_parameter("warp_amount", sh[0])
+		mat.set_shader_parameter("warp_freq", sh[1])
+		mat.set_shader_parameter("warp_speed", sh[2])
+		mat.set_shader_parameter("evolve_speed", sh[3])
+		mat.set_shader_parameter("density_pow", sh[4])
+		mat.set_shader_parameter("macro_amount", sh[5])
+		mat.set_shader_parameter("macro_scale", sh[6])
 		var angle := deg_to_rad(LAYER_DIR_OFFSETS[i])
 		var ca := cos(angle)
 		var sa := sin(angle)

@@ -29,6 +29,25 @@ uniform float under_ambient  : hint_range(0.0, 1.0) = 0.55;  // sky-bounce floor
 uniform float under_transmit : hint_range(0.0, 2.0) = 0.75;  // how much sun bleeds through thin cloud
 uniform float transmit_k     : hint_range(0.5, 8.0) = 2.5;   // higher = thickness kills transmission faster
 
+// --- shape/animation variety (added 2026-07-28) ------------------------------------------------
+// Everything below defaults to a no-op, so the original cloud_system.gd look is unchanged.
+// DOMAIN WARP: Noise(x + Noise(x)) -- the single biggest win for variety. Plain fbm + linear
+// scroll reads as a flat sheet sliding past; warping the sample coordinate by a second noise gives
+// wind shear, wispy tails and curl. Because the warp field itself drifts (warp_speed) the clouds
+// CHURN and morph as they travel instead of rigidly translating.
+uniform float warp_amount : hint_range(0.0, 4.0) = 0.0;   // warp strength, in noise-space units
+uniform float warp_freq   : hint_range(0.1, 4.0) = 0.6;   // warp noise scale rel. to the main fbm
+uniform float warp_speed  : hint_range(0.0, 1.0) = 0.05;  // how fast the warp field itself evolves
+// EVOLUTION: slowly slides the noise field on a second axis so shapes are born/die in place rather
+// than being a fixed pattern conveyor-belted past the camera.
+uniform float evolve_speed : hint_range(0.0, 0.5) = 0.0;
+// SHAPE: pow() pinches low values and sharpens peaks -> dense fluffy centres, fast-fading edges.
+uniform float density_pow : hint_range(0.5, 4.0) = 1.0;
+// MACRO MODULATION: Density = N1 * N2, where a low-frequency N2 carves broad cloudy/clear regions
+// so coverage isn't uniform to the horizon (real skies have weather-scale structure).
+uniform float macro_amount : hint_range(0.0, 1.0) = 0.0;
+uniform float macro_scale  : hint_range(0.02, 1.0) = 0.15;
+
 varying vec3 world_pos;
 varying vec2 _plane_offset;
 
@@ -57,6 +76,12 @@ float fbm(vec2 p) {
 	return v;
 }
 
+// cheap 2-octave fbm for the warp/macro fields -- they only need broad shape, and this keeps the
+// added cost small (the 6-octave fbm is already called 3x per fragment for density + normals).
+float fbm2(vec2 p) {
+	return 0.65 * vnoise2(p) + 0.35 * vnoise2(p * 2.13 + vec2(4.1, 1.7));
+}
+
 void vertex() {
 	world_pos      = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	_plane_offset  = VERTEX.xz;
@@ -65,7 +90,28 @@ void vertex() {
 void fragment() {
 	// noise_stretch elongates cirrus into streaks (x=6 for top layer)
 	vec2 uv = world_pos.xz * (noise_scale * noise_stretch) + wind_dir * TIME * wind_speed;
-	float raw = fbm(uv);
+	// slow evolution: shifts the field on a second axis so shapes form and dissolve in place
+	uv += vec2(0.0, TIME * evolve_speed);
+	// domain warp: sample offset by a drifting noise field -> shear, curl and wispy tails, and the
+	// cloud churns as it drifts rather than sliding rigidly. Computed once and reused by the
+	// normal-gradient samples below (their offset is tiny, so the warp is effectively identical).
+	vec2 warp = vec2(0.0);
+	if (warp_amount > 0.001) {
+		vec2 wuv = uv * warp_freq + vec2(TIME * warp_speed, TIME * warp_speed * 0.7);
+		warp = vec2(fbm2(wuv), fbm2(wuv + vec2(5.2, 1.3))) - 0.5;
+		warp *= warp_amount;
+	}
+	float raw = fbm(uv + warp);
+	float base_raw = raw;   // pre-modulation copy: the normal gradient below must compare like-for-like
+	// macro modulation (Density = N1 * N2): broad cloudy/clear regions so coverage isn't uniform
+	if (macro_amount > 0.001) {
+		float macro = fbm2(uv * macro_scale + vec2(11.3, 7.9));
+		raw *= mix(1.0, clamp(macro * 1.8, 0.0, 1.0), macro_amount);
+	}
+	// pow() pinches lows / sharpens peaks -> dense centres with fast-fading edges
+	if (density_pow != 1.0) {
+		raw = pow(clamp(raw, 0.0, 1.0), density_pow);
+	}
 	float threshold = 1.0 - coverage;
 	float d = smoothstep(threshold - softness, threshold + softness, raw);
 	d *= mix(1.0, 0.8, layer_t);
@@ -78,10 +124,12 @@ void fragment() {
 	vec3 base_color = mix(color_bottom, color_top, layer_t + d * 0.15);
 
 	// Fake surface normal from FBM density gradient (2 extra samples)
-	// Gives each cloud puff a lit dome on top and shadowed sides
+	// Gives each cloud puff a lit dome on top and shadowed sides.
+	// NOTE: must sample the WARPED field (uv + warp), matching `raw` above -- sampling the unwarped
+	// field here would light a different shape than the one actually being drawn.
 	float e = 0.5;
-	float ndx = fbm(uv + vec2(e, 0.0)) - raw;
-	float ndz = fbm(uv + vec2(0.0, e)) - raw;
+	float ndx = fbm(uv + warp + vec2(e, 0.0)) - base_raw;
+	float ndz = fbm(uv + warp + vec2(0.0, e)) - base_raw;
 	vec3 fake_normal = normalize(vec3(-ndx * 10.0, 1.0, -ndz * 10.0));
 
 	// Sun direction with slight upward component (approximate elevation)
