@@ -542,6 +542,10 @@ func _process(delta: float) -> void:
 	var day: float = clampf(to_sun.y, 0.0, 1.0)
 	var sky := Color(0.45, 0.62, 0.82).lerp(Color(0.015, 0.02, 0.05), 1.0 - day)
 	_env.background_color = sky
+	# ambient was fixed-intensity regardless of day/night — trees/car/creatures (engine-lit) stayed
+	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
+	# Scale it down at night so everything dims together.
+	_env.ambient_light_energy = lerpf(0.05, 0.4, day)
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))

@@ -17,6 +17,9 @@ void fragment() {
 	ALBEDO = c.rgb;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
+	if (!FRONT_FACING) {
+		NORMAL = -NORMAL;   // cull_disabled cross-billboards are seen from both sides; without this
+	}                       // the backside of every other card lights as if facing away from the sun
 }
 
 void light() {
