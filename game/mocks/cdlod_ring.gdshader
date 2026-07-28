@@ -96,15 +96,6 @@ void vertex() {
 }
 
 void fragment() {
-	// hide the geometric underside (cull_disabled kept for the skirts' sake — see file note below
-	// this shader's header — but the main grid's back side should never be visible from inside the
-	// ring; discard is used instead of render_mode cull_back specifically because that mode has
-	// twice rendered "almost nothing" in this project when the winding guess was wrong (see
-	// ring_vibes.gdshader's history note) — discard is safe to flip (one character) if this guess
-	// is backwards too, since worst case shows the wrong side rather than nothing.
-	if (!FRONT_FACING) {
-		discard;
-	}
 	vec3 base = mix(vec3(0.30, 0.40, 0.24), vec3(0.52, 0.52, 0.48), smoothstep(0.45, 0.85, v_h));
 	bool in_dem = v_demuv.x > 0.0 && v_demuv.x < 1.0 && v_demuv.y > 0.0 && v_demuv.y < 1.0;
 	if (use_dem && has_sat && in_dem) {
