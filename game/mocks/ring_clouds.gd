@@ -42,8 +42,10 @@ const CLOUD_SHAPE := [
 const WEATHER_PRESETS := {                               # per-layer [coverage, softness]
 	"clear":    {"layers": [[0.00, 0.20], [0.00, 0.22], [0.04, 0.28], [0.10, 0.32], [0.20, 0.35]],
 				 "brightness": 1.0, "self_shadow": 0.72},
-	"fresh":    {"layers": [[0.20, 0.14], [0.13, 0.18], [0.05, 0.24], [0.02, 0.27], [0.01, 0.30]],
-				 "brightness": 1.0, "self_shadow": 0.72},
+	# baked 2026-07-29 from live slider tuning (was coverage x2.21, opacity x1.57, softness x0.81,
+	# brightness x1.29 on the previous values) -- user-approved "fresh" look.
+	"fresh":    {"layers": [[0.44, 0.11], [0.29, 0.15], [0.11, 0.19], [0.04, 0.22], [0.02, 0.24]],
+				 "brightness": 1.29, "self_shadow": 0.72, "alpha": [1.0, 1.0, 0.94, 0.79, 0.71]},
 	# overcast also read far too dark before: brightness 0.5 x heavy self-shadow (dense fbm -> low
 	# self_shadow) compounded toward black. Thick overcast in life is bright-but-flat, not dark.
 	# raised again after the rebalance overshot -- read "pretty but not overcast". Still bright/flat
@@ -52,7 +54,13 @@ const WEATHER_PRESETS := {                               # per-layer [coverage, 
 				 "brightness": 0.95, "self_shadow": 0.28},
 }
 const WEATHER_NAMES := ["clear", "fresh", "overcast"]   # [Z] cycles light -> heavy
-const PLANE_SIZE := 28000.0                              # 28km across; half = horizon-fade radius
+# Arc extent is what lets the deck reach the horizon: at 120km a 1000m cloud sits 0.48 deg above
+# horizontal (vs 4.1 deg at the old 14km, which is why it visibly stopped short of the horizon).
+# Only possible because the sheet now bends with the ring -- see cloud_layer_shader.gdshader.
+const PLANE_ARC := 240000.0                              # +/-120km along the arc
+const ARC_SEGS := 64                                     # subdivision so the ring bend is a curve, not a flat quad
+const LAT_SEGS := 4
+const FADE_START := 0.5                                  # fraction of half-arc where the horizon fade begins
 const LAYER_DIR_OFFSETS := [0.0, 20.0, 35.0, -10.0, -25.0]   # deg from base wind dir, per layer
 const LAYER_SPEED_MULT  := [1.0, 0.78, 0.55, 0.42, 0.30]
 const WIND_SPEED := 0.008
@@ -63,6 +71,9 @@ var _weather_idx := 0
 var _visible := true
 # live tuning multipliers, driven by the debug sliders in ring_vibes.gd. These MULTIPLY the preset
 # values rather than replacing them, so the presets stay meaningful and 1.0 == "as authored".
+var ring_radius := 0.0    # set by ring_vibes before _ready(); 0 = flat planes (old behaviour)
+var ring_width := 0.0
+var wall_top := 4000.0    # matches ring_vibes' WALL_TOP_H, for the wall-shadow test
 var cov_mult := 1.0
 var soft_mult := 1.0
 var alpha_mult := 1.0
@@ -78,27 +89,45 @@ func _build_layers() -> void:
 	if not shader:
 		push_error("ring_clouds: cloud_layer_shader.gdshader not found")
 		return
-	var half := PLANE_SIZE * 0.5
+	var half := PLANE_ARC * 0.5
+	var half_lat: float = ring_width * 0.5 if ring_width > 0.0 else 25000.0
 	for i in CLOUD_ALTITUDES.size():
 		var y: float = CLOUD_ALTITUDES[i]
 		var tp: Array = CLOUD_TYPE_PARAMS[i]
-		var verts := PackedVector3Array([
-			Vector3(-half, 0.0, -half), Vector3(half, 0.0, -half),
-			Vector3(-half, 0.0, half), Vector3(half, 0.0, half),
-		])
+		# subdivided strip: long in arc (bends with the ring), bounded in lat by the ring walls --
+		# clouds shouldn't extend past the habitat edge, and the walls occlude that view anyway.
+		var verts := PackedVector3Array()
+		var norms := PackedVector3Array()
+		var idx := PackedInt32Array()
+		for a in ARC_SEGS + 1:
+			var fx: float = lerpf(-half, half, float(a) / float(ARC_SEGS))
+			for l in LAT_SEGS + 1:
+				var fz: float = lerpf(-half_lat, half_lat, float(l) / float(LAT_SEGS))
+				verts.append(Vector3(fx, 0.0, fz))
+				norms.append(Vector3.UP)
+		for a in ARC_SEGS:
+			for l in LAT_SEGS:
+				var v0 := a * (LAT_SEGS + 1) + l
+				var v1 := v0 + LAT_SEGS + 1
+				idx.append_array([v0, v1, v0 + 1, v0 + 1, v1, v1 + 1])
 		var arr := []
 		arr.resize(Mesh.ARRAY_MAX)
 		arr[Mesh.ARRAY_VERTEX] = verts
-		arr[Mesh.ARRAY_NORMAL] = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP, Vector3.UP])
-		arr[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 1, 3, 2])
+		arr[Mesh.ARRAY_NORMAL] = norms
+		arr[Mesh.ARRAY_INDEX] = idx
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
 		var mat := ShaderMaterial.new()
 		mat.shader = shader
 		mat.set_shader_parameter("cloud_base", y - 200.0)
 		mat.set_shader_parameter("cloud_top", y + 200.0)
-		mat.set_shader_parameter("layer_t", float(i) / 2.0)
+		mat.set_shader_parameter("layer_t", float(i) / float(CLOUD_ALTITUDES.size() - 1))
 		mat.set_shader_parameter("plane_half_size", half)
+		mat.set_shader_parameter("ring_radius", ring_radius)
+		mat.set_shader_parameter("altitude", y)
+		mat.set_shader_parameter("fade_start", FADE_START)
+		mat.set_shader_parameter("ring_half_width", half_lat)
+		mat.set_shader_parameter("wall_top", wall_top)
 		mat.set_shader_parameter("noise_scale", tp[0])
 		mat.set_shader_parameter("noise_stretch", Vector2(tp[1], 1.0))
 		mat.set_shader_parameter("layer_alpha", LAYER_ALPHA[i])
@@ -120,7 +149,10 @@ func _build_layers() -> void:
 		mi.material_override = mat
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
-		mi.position = Vector3(0.0, y, 0.0)
+		# shader writes world positions directly, so the node stays at origin; a generous custom AABB
+		# stops Godot frustum-culling the sheet based on its (meaningless) local bounds.
+		mi.position = Vector3.ZERO
+		mi.custom_aabb = AABB(Vector3(-PLANE_ARC, -PLANE_ARC, -PLANE_ARC), Vector3(PLANE_ARC * 2.0, PLANE_ARC * 2.0, PLANE_ARC * 2.0))
 		mi.visible = _visible
 		add_child(mi)
 		_layers.append(mi)
@@ -135,7 +167,8 @@ func _apply_weather() -> void:
 		mat.set_shader_parameter("coverage", clampf(layer_data[i][0] * cov_mult, 0.0, 1.0))
 		mat.set_shader_parameter("softness", clampf(layer_data[i][1] * soft_mult, 0.01, 0.5))
 		mat.set_shader_parameter("self_shadow_amt", wp["self_shadow"])
-		mat.set_shader_parameter("layer_alpha", clampf(LAYER_ALPHA[i] * alpha_mult, 0.0, 1.0))
+		var base_alpha: float = wp["alpha"][i] if wp.has("alpha") else LAYER_ALPHA[i]
+		mat.set_shader_parameter("layer_alpha", clampf(base_alpha * alpha_mult, 0.0, 1.0))
 		mat.set_shader_parameter("warp_amount", CLOUD_SHAPE[i][0] * warp_mult)
 
 func retune() -> void:
@@ -174,10 +207,19 @@ func set_day(day: float, to_sun := Vector3.UP) -> void:
 		mat.set_shader_parameter("cloud_brightness", bright)
 		mat.set_shader_parameter("scatter", scatter)
 		mat.set_shader_parameter("sun_dir_xz", sun_xz)
+		mat.set_shader_parameter("sun_world", to_sun)   # true 3D direction, for the wall-shadow test
 
 func update_around(cam_pos: Vector3) -> void:
-	# planes follow the camera in XZ so they always reach the horizon in every direction; the FBM is
-	# sampled in WORLD space, so the clouds themselves stay put as you move (no sliding-with-you
-	# artifact) -- this is what the old shader's local-space _plane_offset horizon fade is built for.
+	# the sheet follows the camera in RING coords (arc, lat) -- the shader bends it onto the cylinder
+	# and samples noise in those same coords, so clouds stay put in the world as you move rather
+	# than sliding along with you.
+	if ring_radius <= 0.0:
+		for i in _layers.size():
+			_layers[i].position = Vector3(cam_pos.x, CLOUD_ALTITUDES[i], cam_pos.z)
+		return
+	var theta := atan2(cam_pos.x, ring_radius - cam_pos.y)
+	var origin := Vector2(theta * ring_radius, cam_pos.z)
 	for i in _layers.size():
-		_layers[i].position = Vector3(cam_pos.x, CLOUD_ALTITUDES[i], cam_pos.z)
+		var mat := _layers[i].material_override as ShaderMaterial
+		if mat:
+			mat.set_shader_parameter("plane_origin", origin)

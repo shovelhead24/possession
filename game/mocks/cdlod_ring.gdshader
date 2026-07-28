@@ -38,15 +38,42 @@ uniform float skirt = 0.15;
 uniform vec3 to_sun = vec3(0.0, 1.0, 0.0);
 uniform float haze_density = 0.000012;
 uniform vec3 sky_color = vec3(0.45, 0.62, 0.82);
+// Rim-wall shadow, computed analytically. The terrain is unshaded/manually lit so it can't receive
+// Godot's shadow map -- but the walls are a known simple shape (a fence at lat = +/-width/2 rising
+// to wall_top), so we can just ask "does the ray from this point toward the sun cross the wall
+// plane below the wall top?". Cheap, exact, no shadow map needed.
+uniform float wall_top = 4000.0;
+uniform float wall_shadow_soft = 220.0;   // metres of penumbra at the shadow edge
 
 varying float v_h;
 varying vec3 v_n;
 varying vec2 v_demuv;
 varying vec2 v_tile_uv;   // repeating drape UV for the beyond-DEM fallback (same imagery, tiled)
 varying vec3 v_world_pos;
+varying float v_height;   // metres above the ring floor (v_h is normalised, no good for shadowing)
 
 bool in_dem_bounds(vec2 uv) {
 	return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0;
+}
+
+// 1.0 = lit, 0.0 = fully in the wall's shadow. `lat` is the point's position across the ring width,
+// `h` its height above the floor. Marching toward the sun, the lat coordinate changes at rate
+// to_sun.z and height at rate to_sun.y; if the ray reaches the wall's lat while still below
+// wall_top, the wall blocks it.
+float wall_shadow(float lat, float h, float half_w) {
+	if (to_sun.y <= 0.001) {
+		return 1.0;   // sun at/below the local horizon -- night shading handles it
+	}
+	// which wall can shadow us: the one on the side the sun is coming from
+	float wall_lat = (to_sun.z > 0.0) ? half_w : -half_w;
+	float d_lat = wall_lat - lat;
+	if (d_lat * to_sun.z <= 0.0) {
+		return 1.0;   // ray travels away from that wall
+	}
+	float t = d_lat / to_sun.z;              // distance along the ray to the wall plane
+	float h_at_wall = h + t * to_sun.y;      // height when it gets there
+	// below the top => blocked. Soften over wall_shadow_soft metres for a penumbra.
+	return smoothstep(wall_top - wall_shadow_soft, wall_top + wall_shadow_soft, h_at_wall);
 }
 
 float sample_h(vec2 wxz) {
@@ -78,6 +105,7 @@ void vertex() {
 	float hu = sample_h(wxz + vec2(0.0, e));
 	v_n = normalize(vec3(hl - hr, 2.0 * e, hd - hu));
 	v_h = h / max(disp, 1.0);
+	v_height = h;
 	float y = (VERTEX.y < -0.5) ? h - node_size * skirt : h;
 	vec3 world;
 	if (ring_radius > 0.0) {
@@ -132,6 +160,7 @@ void fragment() {
 	// it was inverting an already-correct normal, which is what made day/night read backwards).
 	vec3 n = normalize(v_n);
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
+	diffuse *= wall_shadow(v_world_pos.z, v_height, ring_width * 0.5);   // rim wall casts onto the floor
 	vec3 lit = base * (0.22 + 0.78 * diffuse);   // floor raised again (0.06->0.16->0.22); still read too dark
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
 	float fog = 1.0 - exp(-haze_density * dist);

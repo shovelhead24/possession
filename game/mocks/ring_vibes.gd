@@ -263,6 +263,9 @@ func _ready() -> void:
 		_cam.position.y = _terrain_h(0.0, 0.0) + 40.0  # spawn just above Millstreet
 
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
+	_clouds.ring_radius = _radius()   # must be set BEFORE _ready() builds the bent sheets
+	_clouds.ring_width = WIDTHS[w_idx]
+	_clouds.wall_top = WALL_TOP_H
 	add_child(_clouds)
 	_build_tuning_panel(hud_layer)
 
@@ -510,6 +513,7 @@ func _rebuild_lod() -> void:
 		_mats[i].set_shader_parameter("cam_pos", cp)
 		_mats[i].set_shader_parameter("ring_radius", r)
 		_mats[i].set_shader_parameter("ring_width", w)
+		_mats[i].set_shader_parameter("wall_top", WALL_TOP_H)
 
 func _rebuild() -> void:
 	if _band: _band.queue_free()

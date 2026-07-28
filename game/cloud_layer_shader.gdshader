@@ -13,7 +13,8 @@ uniform float cloud_top    : hint_range(0.0, 5000.0) = 2000.0;
 uniform float layer_t      : hint_range(0.0, 1.0) = 0.5;
 uniform vec2  wind_dir     = vec2(1.0, 0.0);
 uniform float wind_speed       : hint_range(0.0, 0.05) = 0.008;
-uniform float plane_half_size  : hint_range(1000.0, 50000.0) = 14000.0;
+uniform float plane_half_size  : hint_range(1000.0, 200000.0) = 14000.0;
+uniform float fade_start       : hint_range(0.05, 0.95) = 0.45;   // where the horizon fade begins
 uniform vec2  sun_dir_xz   = vec2(0.0, -1.0);
 uniform vec3  sun_tint     : source_color = vec3(1.0, 0.6, 0.3);
 uniform float scatter      : hint_range(0.0, 1.0) = 0.0;
@@ -48,8 +49,29 @@ uniform float density_pow : hint_range(0.5, 4.0) = 1.0;
 uniform float macro_amount : hint_range(0.0, 1.0) = 0.0;
 uniform float macro_scale  : hint_range(0.02, 1.0) = 0.15;
 
+// RING BEND (added 2026-07-29). Flat cloud planes cannot reach the horizon on a ringworld: at 30km
+// the ring floor has already risen ~940m (R=477km), above the low cloud deck, and by 60km it has
+// risen 3.8km -- above every layer. So a flat sheet sinks into the terrain long before it gets low
+// enough on-screen to meet the horizon (at 14km a 1000m cloud is still 4.1 deg up, which is the
+// visible gap). Bending the sheet onto the ring cylinder -- the same transform the terrain uses --
+// lets it run to any distance at constant altitude, curving up with the land as it should.
+// ring_radius = 0 keeps the original flat behaviour for the older cloud_system.gd scenes.
+uniform float ring_radius = 0.0;
+uniform vec2  plane_origin = vec2(0.0);   // (arc, lat) of the plane centre
+uniform float altitude     = 1000.0;      // layer height above the ring floor
+// rim-wall shadow on the cloud deck -- same analytic test the terrain uses (see cdlod_ring.gdshader).
+// Cloud layers sit at 800-3200m and the walls top out at 4000m, so the walls really do fall across
+// the underside of the deck near the ring edges.
+uniform float ring_half_width = 25000.0;
+uniform float wall_top        = 4000.0;
+uniform float wall_shadow_soft = 400.0;
+// real 3D sun direction. sun3d below fakes elevation as a constant 0.4, which is fine for the
+// diffuse term it was written for but useless for a shadow test -- that needs true elevation.
+uniform vec3 sun_world = vec3(0.0, 1.0, 0.0);
+
 varying vec3 world_pos;
 varying vec2 _plane_offset;
+varying vec2 ring_uv;      // (arc, lat) -- noise must be sampled here, not world.xz, which wraps
 
 float hash2(vec2 p) {
 	p = fract(p * vec2(0.1031, 0.1030));
@@ -83,13 +105,25 @@ float fbm2(vec2 p) {
 }
 
 void vertex() {
-	world_pos      = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	_plane_offset  = VERTEX.xz;
+	_plane_offset = VERTEX.xz;
+	if (ring_radius > 0.0) {
+		// (arc, lat) are ring-surface coords; bend them onto the cylinder interior at `altitude`
+		float arc = plane_origin.x + VERTEX.x;
+		float lat = plane_origin.y + VERTEX.z;
+		ring_uv = vec2(arc, lat);
+		float theta = arc / ring_radius;
+		float rr = ring_radius - altitude;
+		world_pos = vec3(rr * sin(theta), ring_radius - rr * cos(theta), lat);
+		VERTEX = world_pos;   // identity model transform, so VERTEX is the world position
+	} else {
+		world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+		ring_uv = world_pos.xz;
+	}
 }
 
 void fragment() {
 	// noise_stretch elongates cirrus into streaks (x=6 for top layer)
-	vec2 uv = world_pos.xz * (noise_scale * noise_stretch) + wind_dir * TIME * wind_speed;
+	vec2 uv = ring_uv * (noise_scale * noise_stretch) + wind_dir * TIME * wind_speed;
 	// slow evolution: shifts the field on a second axis so shapes form and dissolve in place
 	uv += vec2(0.0, TIME * evolve_speed);
 	// domain warp: sample offset by a drifting noise field -> shear, curl and wispy tails, and the
@@ -116,9 +150,11 @@ void fragment() {
 	float d = smoothstep(threshold - softness, threshold + softness, raw);
 	d *= mix(1.0, 0.8, layer_t);
 
-	// Horizon fade: full opacity at 45% radius, gone at plane edge
-	float dist    = length(_plane_offset);
-	float horizon = 1.0 - smoothstep(plane_half_size * 0.45, plane_half_size, dist);
+	// Horizon fade. On the ring this keys off ARC distance only -- the lat extent is bounded by the
+	// habitat walls (which occlude that direction anyway), so fading it too would just cut the deck
+	// short overhead. Flat mode keeps the original radial fade.
+	float dist    = (ring_radius > 0.0) ? abs(_plane_offset.x) : length(_plane_offset);
+	float horizon = 1.0 - smoothstep(plane_half_size * fade_start, plane_half_size, dist);
 
 	// Base cloud colour
 	vec3 base_color = mix(color_bottom, color_top, layer_t + d * 0.15);
@@ -135,6 +171,18 @@ void fragment() {
 	// Sun direction with slight upward component (approximate elevation)
 	vec3 sun3d = normalize(vec3(sun_dir_xz.x, 0.4, sun_dir_xz.y));
 	float diffuse = max(0.0, dot(fake_normal, sun3d));
+	// rim-wall shadow across the deck (ring mode only): march toward the sun and see whether we
+	// cross the wall's lat while still below its top.
+	float wall_lit = 1.0;
+	if (ring_radius > 0.0 && sun_world.y > 0.001 && abs(sun_world.z) > 0.0001) {
+		float wall_lat = (sun_world.z > 0.0) ? ring_half_width : -ring_half_width;
+		float d_lat = wall_lat - ring_uv.y;
+		if (d_lat * sun_world.z > 0.0) {
+			float h_at_wall = altitude + (d_lat / sun_world.z) * sun_world.y;
+			wall_lit = smoothstep(wall_top - wall_shadow_soft, wall_top + wall_shadow_soft, h_at_wall);
+		}
+	}
+	diffuse *= wall_lit;
 
 	// Self-shadow: denser cloud interior is darker (simulates depth/thickness)
 	float self_shadow = 1.0 - raw * self_shadow_amt;
