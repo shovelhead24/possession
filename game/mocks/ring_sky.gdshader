@@ -3,6 +3,11 @@ shader_type sky;
 // stay visible even in the "day" sky by deliberate stylistic choice (ref: Halo CE-style skyboxes
 // that keep a rich starfield behind the ring regardless of local lighting) — not physically
 // accurate (real daylight scatter would wash them out), intentional per user reference.
+//
+// 2026-07-28: the ray/cylinder "ring in the sky" backdrop that used to live here was removed —
+// confirmed effectively invisible in practice (the real 3D CDLOD+band geometry occludes it
+// everywhere except a thin seam). The "sense of the far ring" job moves to a real cloud-card
+// layer (see mocks/ring_clouds.gd) instead of a stylized sky-dome hack.
 
 uniform vec3 to_sun = vec3(0.0, 1.0, 0.0);
 uniform float day : hint_range(0.0, 1.0) = 1.0;   // 0 = night, 1 = day
@@ -12,22 +17,6 @@ uniform vec3 night_zenith : source_color = vec3(0.02, 0.03, 0.06);
 uniform vec3 night_horizon : source_color = vec3(0.07, 0.09, 0.15);
 uniform float star_density = 260.0;
 uniform float star_day_visibility = 0.4;   // stars dim, not gone, during the day
-
-// rudimentary "ring in the sky" backdrop: a real ray/cylinder intersection against the ring's own
-// tube (radius ring_radius, centred on the camera's actual position) so the far side reads with
-// correct perspective/foreshortening for free, rather than a faked band. Mostly hidden behind the
-// real 3D band mesh in normal play -- this is the backdrop for wherever that mesh doesn't cover
-// (grazing angles, culling gaps, future orbital/space viewpoints).
-uniform float ring_radius = 0.0;
-uniform float ring_width = 50000.0;
-uniform vec3 cam_world_pos = vec3(0.0);
-uniform bool show_ring = true;   // [Y] debug toggle -- isolate the real 3D geometry from this backdrop
-
-float hash13(vec3 p) {
-	p = fract(p * 0.3183099 + 0.1);
-	p *= 17.0;
-	return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
-}
 
 float hash21(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -60,49 +49,6 @@ void sky() {
 	float sun_disc = smoothstep(0.99990, 0.99998, sun_dot);
 	float sun_glow = pow(max(sun_dot, 0.0), 300.0) * 0.6;
 	col += vec3(1.0, 0.95, 0.85) * (sun_disc * 3.0 + sun_glow);
-
-	// ring-in-the-sky: solve for where this ray hits the ring's base tube, X^2 + (Y-R)^2 = (R-h)^2,
-	// h = camera's height above the local floor. For a point ON the tube, X^2+(Y-R)^2 - R^2 =
-	// -2Rh+h^2 (independent of arc position -- true for any theta, not just near the camera).
-	if (show_ring && ring_radius > 0.0) {
-		float ox = cam_world_pos.x;
-		float oy = cam_world_pos.y - ring_radius;
-		float a = dir.x * dir.x + dir.y * dir.y;
-		float b = 2.0 * (ox * dir.x + oy * dir.y);
-		float c = ox * ox + oy * oy - ring_radius * ring_radius;
-		float disc = b * b - 4.0 * a * c;
-		if (a > 0.00001 && disc > 0.0) {
-			float t = (-b + sqrt(disc)) / (2.0 * a);   // camera is inside the tube -> this root is the hit
-			if (t > 0.0) {
-				float lat = cam_world_pos.z + t * dir.z;
-				float half_w = ring_width * 0.5;
-				float edge = 1.0 - smoothstep(half_w * 0.85, half_w, abs(lat));
-				if (edge > 0.0) {
-					float px = ox + t * dir.x, py = oy + t * dir.y;
-					float theta = atan(px, -py);                    // arc position (0 near you, PI far side)
-					float sun_theta = atan(-to_sun.x, to_sun.y);     // arc position most face-on to the sun
-					float lit = clamp(cos(theta - sun_theta), 0.0, 1.0);
-					// blotch size in REAL world metres (arc-length = theta*R), not a fraction of the full
-					// circle -- sizing by theta alone made blotches scale with total circumference, so a
-					// narrow view (a small slice of theta) could show only a sliver of one blotch and read
-					// as a flat, featureless strip. ~12km cells read as cloud-sized regardless of view.
-					float arc_m = theta * ring_radius;
-					vec2 cuv = vec2(arc_m, lat) / 12000.0;
-					float n = hash21(floor(cuv)) * 0.55 + hash21(floor(cuv * 2.7) + 5.0) * 0.45;
-					vec3 dark_col = vec3(0.06, 0.16, 0.10);
-					vec3 bright_col = vec3(0.88, 0.90, 0.86);
-					vec3 cloudcol = mix(dark_col, bright_col, smoothstep(0.25, 0.75, n));   // more contrast than a plain lerp
-					float glisten = smoothstep(0.82, 1.0, n) * lit * 0.2;                   // subtle, day-side only
-					// brightness-modulate the SAME pattern by lit rather than swapping to a flat dark
-					// colour -- otherwise the night side of the ring shows no cloud detail at all,
-					// just a featureless block (this was the "no clouds overhead" bug). Floor raised
-					// (0.12->0.3) -- still too dark/flat to read as cloud texture at the old floor.
-					vec3 ring_col = cloudcol * mix(0.3, 1.0, lit) + glisten;
-					col = mix(col, ring_col, edge);
-				}
-			}
-		}
-	}
 
 	COLOR = col;
 }
