@@ -120,7 +120,11 @@ void fragment() {
 		vec3 lod_col = mix(vec3(0.1, 0.9, 0.2), vec3(0.95, 0.2, 0.1), lod_tint);
 		base = mix(base, lod_col, 0.55);
 	}
-	vec3 n = -normalize(v_n);   // only back-facing (per this mesh's winding) fragments ever reach here
+	// v_n comes from the height GRADIENT (hl-hr, 2e, hd-hu), not from triangle winding, so it always
+	// points physically "up/outward" already — no FRONT_FACING flip needed (that was copy-pasted
+	// from band/wall's winding-derived generate_normals() normals, where the flip IS correct; here
+	// it was inverting an already-correct normal, which is what made day/night read backwards).
+	vec3 n = normalize(v_n);
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
 	vec3 lit = base * (0.06 + 0.94 * diffuse);
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
