@@ -94,6 +94,11 @@ const EYE_HEIGHT := 1.7
 var _walk_arc := 0.0
 var _walk_lat := 0.0
 
+# fly speed: [Shift] used to be held-for-boost; now a 3-way toggle (normal/boost/5x-boost) since
+# a 3000km ring makes even the old boost speed tedious for covering real distance.
+const FLY_SPEEDS := [60.0, 800.0, 4000.0]
+var _fly_speed_idx := 0
+
 # Drive mode: car lives in ring coordinates, no physics — terrain sampled analytically
 var _car: Node3D = null
 var _car_arc := 0.0
@@ -561,7 +566,7 @@ func _process(delta: float) -> void:
 	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
 	# Scale it down at night so everything dims together. Max raised (0.4 -> 0.65) -- daytime overall
 	# read as "way too dark".
-	_env.ambient_light_energy = lerpf(0.06, 0.65, day)
+	_env.ambient_light_energy = lerpf(0.12, 0.8, day)
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
@@ -939,7 +944,7 @@ func _set_mode(m: Mode) -> void:
 func _fly(delta: float) -> void:
 	# fly only while mouse captured; config keys only while released — no key conflicts
 	if not _captured: return
-	var speed: float = 800.0 if Input.is_key_pressed(KEY_SHIFT) else 60.0
+	var speed: float = FLY_SPEEDS[_fly_speed_idx]
 	var dir := Vector3.ZERO
 	if Input.is_key_pressed(KEY_W): dir -= _cam.global_basis.z
 	if Input.is_key_pressed(KEY_S): dir += _cam.global_basis.z
@@ -986,6 +991,10 @@ func _unhandled_input(event: InputEvent) -> void:
 				if _dem_w > 0:
 					var order := [Mode.FLY, Mode.DRIVE, Mode.WALK]
 					_set_mode(order[(order.find(_mode) + 1) % 3])
+			KEY_SHIFT:
+				if _mode == Mode.FLY:
+					_fly_speed_idx = (_fly_speed_idx + 1) % FLY_SPEEDS.size()
+					_update_hud()
 		if _captured or _mode == Mode.DRIVE: return
 		# config keys only while mouse is released
 		match event.keycode:
@@ -1003,7 +1012,8 @@ func _update_hud() -> void:
 	var rise20: float = 20_000.0 * 20_000.0 / (2.0 * r)
 	var rise50: float = 50_000.0 * 50_000.0 / (2.0 * r)
 	var band_deg: float = rad_to_deg(2.0 * atan((w * 0.5) / (2.0 * r)))
-	var mode := "FLY (WASD + Space/Ctrl, Shift boost, ESC to release, [V] cycle mode)" if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] cycle drive/walk)"
+	var fly_speed_name: String = ["normal", "boost", "5x boost"][_fly_speed_idx]
+	var mode := "FLY %s (WASD + Space/Ctrl, [Shift] cycle speed, ESC to release, [V] cycle mode)" % fly_speed_name if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] cycle drive/walk)"
 	if _mode == Mode.DRIVE:
 		mode = "DRIVE  %d km/h  (WASD steer, [V] cycle mode)" % int(abs(_car_speed) * 3.6)
 	elif _mode == Mode.WALK:

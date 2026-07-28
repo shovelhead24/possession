@@ -132,7 +132,7 @@ void fragment() {
 	// it was inverting an already-correct normal, which is what made day/night read backwards).
 	vec3 n = normalize(v_n);
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
-	vec3 lit = base * (0.16 + 0.84 * diffuse);   // floor raised (0.06->0.16); scene read "way too dark" overall
+	vec3 lit = base * (0.22 + 0.78 * diffuse);   // floor raised again (0.06->0.16->0.22); still read too dark
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
 	float fog = 1.0 - exp(-haze_density * dist);
 	ALBEDO = mix(lit, sky_color, fog);

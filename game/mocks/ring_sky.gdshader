@@ -8,8 +8,8 @@ uniform vec3 to_sun = vec3(0.0, 1.0, 0.0);
 uniform float day : hint_range(0.0, 1.0) = 1.0;   // 0 = night, 1 = day
 uniform vec3 day_zenith : source_color = vec3(0.20, 0.42, 0.72);
 uniform vec3 day_horizon : source_color = vec3(0.62, 0.74, 0.86);
-uniform vec3 night_zenith : source_color = vec3(0.008, 0.012, 0.03);
-uniform vec3 night_horizon : source_color = vec3(0.04, 0.05, 0.09);
+uniform vec3 night_zenith : source_color = vec3(0.02, 0.03, 0.06);
+uniform vec3 night_horizon : source_color = vec3(0.07, 0.09, 0.15);
 uniform float star_density = 260.0;
 uniform float star_day_visibility = 0.4;   // stars dim, not gone, during the day
 
@@ -77,15 +77,22 @@ void sky() {
 					float theta = atan(px, -py);                    // arc position (0 near you, PI far side)
 					float sun_theta = atan(-to_sun.x, to_sun.y);     // arc position most face-on to the sun
 					float lit = clamp(cos(theta - sun_theta), 0.0, 1.0);
-					// bigger, more legible blotches (was a fine salt-and-pepper grain, barely read as cloud)
-					vec2 cuv = vec2(theta * 5.0, lat / half_w * 3.0);
-					float n = hash21(floor(cuv * 3.0)) * 0.6 + hash21(floor(cuv * 8.0) + 5.0) * 0.4;
-					vec3 cloudcol = mix(vec3(0.10, 0.26, 0.16), vec3(0.72, 0.76, 0.72), n);   // terrain green / cloud white
-					float glisten = smoothstep(0.82, 1.0, n) * lit * 0.2;                     // subtle, day-side only
+					// blotch size in REAL world metres (arc-length = theta*R), not a fraction of the full
+					// circle -- sizing by theta alone made blotches scale with total circumference, so a
+					// narrow view (a small slice of theta) could show only a sliver of one blotch and read
+					// as a flat, featureless strip. ~12km cells read as cloud-sized regardless of view.
+					float arc_m = theta * ring_radius;
+					vec2 cuv = vec2(arc_m, lat) / 12000.0;
+					float n = hash21(floor(cuv)) * 0.55 + hash21(floor(cuv * 2.7) + 5.0) * 0.45;
+					vec3 dark_col = vec3(0.06, 0.16, 0.10);
+					vec3 bright_col = vec3(0.88, 0.90, 0.86);
+					vec3 cloudcol = mix(dark_col, bright_col, smoothstep(0.25, 0.75, n));   // more contrast than a plain lerp
+					float glisten = smoothstep(0.82, 1.0, n) * lit * 0.2;                   // subtle, day-side only
 					// brightness-modulate the SAME pattern by lit rather than swapping to a flat dark
 					// colour -- otherwise the night side of the ring shows no cloud detail at all,
-					// just a featureless block (this was the "no clouds overhead" bug).
-					vec3 ring_col = cloudcol * mix(0.12, 1.0, lit) + glisten;
+					// just a featureless block (this was the "no clouds overhead" bug). Floor raised
+					// (0.12->0.3) -- still too dark/flat to read as cloud texture at the old floor.
+					vec3 ring_col = cloudcol * mix(0.3, 1.0, lit) + glisten;
 					col = mix(col, ring_col, edge);
 				}
 			}

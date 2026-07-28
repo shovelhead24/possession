@@ -48,7 +48,7 @@ void fragment() {
 			albedo = mix(albedo, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
 		}
 	}
-	vec3 lit = albedo * (0.14 + 0.86 * diffuse);   // floor raised (0.04->0.14); scene read "way too dark" overall
+	vec3 lit = albedo * (0.20 + 0.80 * diffuse);   // floor raised again (0.04->0.14->0.20); still read too dark
 
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
 	float fog = 1.0 - exp(-haze_density * dist);
