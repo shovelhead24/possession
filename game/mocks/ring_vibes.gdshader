@@ -57,7 +57,7 @@ void fragment() {
 	vec3 col = mix(lit, sky_color, fog);
 	if (has_roads) {
 		float density = textureLod(road_tex, UV, 5.0).r;   // blurred road density -> "settlement" proxy
-		col += vec3(1.0, 0.75, 0.4) * density * night * (1.0 - light_fog) * 2.2;  // emissive at night
+		col += vec3(1.0, 0.75, 0.4) * density * night * (1.0 - light_fog) * 1.1;  // emissive at night
 	}
 	ALBEDO = col;
 }

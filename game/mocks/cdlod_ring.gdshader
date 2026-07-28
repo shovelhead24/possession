@@ -42,6 +42,7 @@ uniform vec3 sky_color = vec3(0.45, 0.62, 0.82);
 varying float v_h;
 varying vec3 v_n;
 varying vec2 v_demuv;
+varying vec2 v_tile_uv;   // repeating drape UV for the beyond-DEM fallback (same imagery, tiled)
 varying vec3 v_world_pos;
 
 bool in_dem_bounds(vec2 uv) {
@@ -68,6 +69,7 @@ void vertex() {
 	vec2 uvm = mix(uv01, g_coarse / grid, morph);
 	wxz = node_origin + uvm * node_size;
 	v_demuv = vec2(dem_cam.x + wxz.x / dem_mpp, dem_cam.y - wxz.y / dem_mpp) / dem_size;
+	v_tile_uv = vec2(wxz.x, -wxz.y) / (dem_mpp * dem_size);   // repeats every patch-width of arc/lat
 	float h = sample_h(wxz);
 	float e = max(node_size / grid, 2.0);
 	float hl = sample_h(wxz + vec2(-e, 0.0));
@@ -107,12 +109,16 @@ void fragment() {
 		discard;
 	}
 	vec3 base = mix(vec3(0.30, 0.40, 0.24), vec3(0.52, 0.52, 0.48), smoothstep(0.45, 0.85, v_h));
+	// inside the mapped DEM patch: accurately-placed real imagery. Beyond it (but still within the
+	// CDLOD bubble): the SAME imagery tiled, matching the far band's treatment — no more flat noise-
+	// terrain gap between the real patch and the tiled band.
 	bool in_dem = v_demuv.x > 0.0 && v_demuv.x < 1.0 && v_demuv.y > 0.0 && v_demuv.y < 1.0;
-	if (use_dem && has_sat && in_dem) {
-		vec3 sat = texture(sat_tex, v_demuv).rgb * sat_gain;
+	if (has_sat) {
+		vec2 uv = in_dem ? v_demuv : v_tile_uv;
+		vec3 sat = texture(sat_tex, uv).rgb * sat_gain;
 		base = mix(base, sat, smoothstep(0.015, 0.05, dot(sat, vec3(0.333))));
 		if (has_roads) {
-			float road = texture(road_tex, v_demuv).r;
+			float road = texture(road_tex, uv).r;
 			base = mix(base, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
 		}
 	}
