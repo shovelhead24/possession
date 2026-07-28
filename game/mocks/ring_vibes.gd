@@ -1061,6 +1061,19 @@ func _fly(delta: float) -> void:
 	if dir != Vector3.ZERO:
 		_cam.position += dir.normalized() * speed * delta
 
+func _input(event: InputEvent) -> void:
+	# ESC lives here, NOT in _unhandled_input: once a slider in the [O] panel takes focus the GUI
+	# consumes the event and _unhandled_input never fires, so ESC silently stopped releasing the
+	# mouse. _input() always fires. Also drops GUI focus so the panel stops eating keys afterwards.
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		_captured = false
+		var focused := get_viewport().gui_get_focus_owner()
+		if focused:
+			focused.release_focus()
+		_update_hud()
+		get_viewport().set_input_as_handled()
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and not _captured and not _panel_open:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -1072,10 +1085,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_cam.rotation = Vector3(_look.y, _look.x, 0)
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			_captured = false
-			_update_hud()
-			return
+			return   # handled in _input() above
 		# always-available keys
 		match event.keycode:
 			KEY_UP: haze_density *= 1.5; _update_hud()
@@ -1144,14 +1154,14 @@ func _update_hud() -> void:
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	if not _hud_full:
-		_hud.text = "[TAB] controls   [O] cloud sliders   %s" % mode
+		_hud.text = "[ESC] release mouse   [TAB] controls   [O] sliders   %s" % mode
 		return
 	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0
 	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
 	var threat := "THREAT (wolf closing)" if _threat_active else "calm (null-write holding)"
 	# grouped by system rather than one long undifferentiated key dump
 	var lines := [
-		"[TAB] hide controls    [O] cloud sliders %s" % ("(open)" if _panel_open else ""),
+		"[ESC] release mouse    [TAB] hide controls    [O] sliders %s" % ("(open)" if _panel_open else ""),
 		"mode: %s" % mode,
 		"",
 		"RING    C %.0f km   W %.1f km   R %.1f km   rise @20km %.0f m  @50km %.0f m   far-side %.2f deg (moon 0.52)" % [
