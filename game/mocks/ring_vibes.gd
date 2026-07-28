@@ -14,6 +14,11 @@ extends Node3D
 const CIRCUMFERENCES := [1_500_000.0, 2_097_152.0, 3_000_000.0]  # m (2^21 = substrate proposal)
 const WIDTHS := [10_000.0, 32_768.0, 50_000.0]                    # m (2^15 = substrate proposal)
 const SUN_PERIODS := [0.0, 1140.0, 60.0, 8.0]                     # s per full day: off, ~19min honest, fast, terminator-sweep
+# the orbit was exactly Z=0 -- exactly the ring's own cross-section plane -- so the sun always sat
+# on the same great-circle as the ring's silhouette (always "behind" it). Tilting the orbit off that
+# plane by SUN_TILT means the ring only occults the sun where the tilted path crosses back through
+# Z=0, which happens twice per cycle (at sun_angle = pi/2 and 3pi/2), not continuously.
+const SUN_TILT := deg_to_rad(15.0)
 const BAND_SEGS := 1024
 const BAND_ROWS := 8
 const WALL_HEIGHT := 3_000.0
@@ -525,13 +530,16 @@ func _process(delta: float) -> void:
 	var period: float = SUN_PERIODS[sun_speed_idx]
 	if period > 0.0 and not sun_paused:
 		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
-	var to_sun := Vector3(sin(sun_angle), cos(sun_angle), 0)
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(SUN_TILT), cos(sun_angle) * sin(SUN_TILT))
 	_mat.set_shader_parameter("to_sun", to_sun)
 	_mat.set_shader_parameter("haze_density", haze_density)
 	_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
 	_mat.set_shader_parameter("wall_ramp", WALL_RAMP)
 	if _sun:
-		_sun.rotation = Vector3(-asin(clampf(to_sun.y, -1.0, 1.0)), 0.0, 0.0)
+		# full 3D direction now that SUN_TILT gives to_sun a Z component (the old X-only rotation
+		# derived from to_sun.y alone would ignore the tilt, leaving tree/car lighting out of sync
+		# with the terrain/sky, which both use the full to_sun vector directly).
+		_sun.global_transform.basis = Basis.looking_at(-to_sun.normalized(), Vector3.UP)
 		_sun.light_energy = clampf(to_sun.y, 0.0, 1.0) * 1.1
 		_sun.light_color = Color(1.0, 0.95, 0.86)
 	if _wall_mat:
