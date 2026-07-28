@@ -38,7 +38,12 @@ const NOISE_AMP := 1_100.0
 
 var c_idx := 2   # locked 2026-07-23: widest circumference (3,000 km) — mock-tested, see TODO.md
 var w_idx := 2   # locked 2026-07-23: widest width (50 km)
-var haze_density := 0.000002      # 1/m — ~500km extinction default (Up/Dn tunes); was 125km, too thick to read the far-side ring curve in daylight
+var haze_density := 0.0000005     # 1/m — ~2000km extinction (Up/Dn tunes). Was 500km, still ~83% faded
+                                   # to flat sky-tint at the ~954km antipodal distance -- confirmed by
+                                   # the user forcing it to near-zero and seeing the real tiled terrain
+                                   # texture appear for the first time (green/orange, previously washed out).
+var _haze_off := false            # [N] disables haze entirely regardless of haze_density, for A/B testing
+var _show_sky_ring := true        # [Y] disables the stylized sky-shader ring-in-sky backdrop
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
 var sun_paused := false
@@ -573,8 +578,9 @@ func _process(delta: float) -> void:
 	# widens the plateau: day reaches 1.0 well before the sun nears its max height, and holds there.
 	var day: float = smoothstep(0.0, 0.35, local_lit)
 	_dbg_day = day
+	var eff_haze: float = 0.0 if _haze_off else haze_density
 	_mat.set_shader_parameter("to_sun", to_sun)
-	_mat.set_shader_parameter("haze_density", haze_density)
+	_mat.set_shader_parameter("haze_density", eff_haze)
 	_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
 	_mat.set_shader_parameter("wall_ramp", WALL_RAMP)
 	if _sun:
@@ -586,7 +592,7 @@ func _process(delta: float) -> void:
 		_sun.light_color = Color(1.0, 0.95, 0.86)
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("to_sun", to_sun)
-		_wall_mat.set_shader_parameter("haze_density", haze_density)
+		_wall_mat.set_shader_parameter("haze_density", eff_haze)
 	# camera-local day factor drives the sky + fog-blend colour -- fog fades toward the HORIZON
 	# colour (not zenith), matching what the real sky shader shows near the ground far away.
 	var sky := DAY_HORIZON.lerp(NIGHT_HORIZON, 1.0 - day)
@@ -599,6 +605,7 @@ func _process(delta: float) -> void:
 	_sky_mat.set_shader_parameter("ring_radius", _radius())
 	_sky_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
 	_sky_mat.set_shader_parameter("cam_world_pos", _cam.global_position)
+	_sky_mat.set_shader_parameter("show_ring", _show_sky_ring)
 	# ambient was fixed-intensity regardless of day/night — trees/car/creatures (engine-lit) stayed
 	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
 	# Scale it down at night so everything dims together. Max raised (0.4 -> 0.65) -- daytime overall
@@ -609,7 +616,7 @@ func _process(delta: float) -> void:
 		_wall_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	for i in _used:
 		_mats[i].set_shader_parameter("to_sun", to_sun)
-		_mats[i].set_shader_parameter("haze_density", haze_density)
+		_mats[i].set_shader_parameter("haze_density", eff_haze)
 		_mats[i].set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	match _mode:
 		Mode.DRIVE: _drive_tick(delta)
@@ -1020,6 +1027,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_J: _spawn_creatures("wolf", 3, 90.0)    # pack behind
 			KEY_C: _clear_creatures()
 			KEY_M: _show_lod = not _show_lod
+			KEY_N: _haze_off = not _haze_off
+			KEY_Y: _show_sky_ring = not _show_sky_ring
 			KEY_G: _tree_lod_scale = maxf(0.25, _tree_lod_scale - 0.25); _update_tree_lod(true)
 			KEY_B: _tree_lod_scale = minf(4.0, _tree_lod_scale + 0.25); _update_tree_lod(true)
 			KEY_H:
@@ -1063,8 +1072,9 @@ func _update_hud() -> void:
 	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
 	var lod_line := "LOD nodes: %d   trees: %d (LOD0/1/2/bill %d/%d/%d/%d, [G]/[B] band x%.2f)   [M] LOD colour: %s" % [
 		_used, _tree_ground.size(), lc[0], lc[1], lc[2], lc[3], _tree_lod_scale, "ON" if _show_lod else "off"]
-	var dbg_line := "DBG cam_theta=%.1fdeg sun_theta=%.1fdeg  local_lit=%.2f  day=%.2f" % [
-		_dbg_cam_theta_deg, _dbg_sun_theta_deg, _dbg_local_lit, _dbg_day]
+	var dbg_line := "DBG cam_theta=%.1fdeg sun_theta=%.1fdeg  local_lit=%.2f  day=%.2f   [N] haze: %s   [Y] sky-ring: %s" % [
+		_dbg_cam_theta_deg, _dbg_sun_theta_deg, _dbg_local_lit, _dbg_day,
+		"OFF" if _haze_off else "on", "off" if not _show_sky_ring else "ON"]
 	_hud.text = "C = %.0f km   W = %.1f km   R = %.1f km\nrise @20km = %.0f m   @50km = %.0f m   far-side band = %.2f deg (moon = 0.52)\nhaze extinction ~%.0f km   sun period = %s s\n%s\n%s\n%s\n%s\n[Up/Dn] haze  [T] sun speed  [P] pause sun  [F] flip day/night  [R] rebuild\nmode: %s" % [
 		c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg, haze_km,
 		("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])), dem_line, slice_line, lod_line, dbg_line, mode]

@@ -21,6 +21,7 @@ uniform float star_day_visibility = 0.4;   // stars dim, not gone, during the da
 uniform float ring_radius = 0.0;
 uniform float ring_width = 50000.0;
 uniform vec3 cam_world_pos = vec3(0.0);
+uniform bool show_ring = true;   // [Y] debug toggle -- isolate the real 3D geometry from this backdrop
 
 float hash13(vec3 p) {
 	p = fract(p * 0.3183099 + 0.1);
@@ -63,7 +64,7 @@ void sky() {
 	// ring-in-the-sky: solve for where this ray hits the ring's base tube, X^2 + (Y-R)^2 = (R-h)^2,
 	// h = camera's height above the local floor. For a point ON the tube, X^2+(Y-R)^2 - R^2 =
 	// -2Rh+h^2 (independent of arc position -- true for any theta, not just near the camera).
-	if (ring_radius > 0.0) {
+	if (show_ring && ring_radius > 0.0) {
 		float ox = cam_world_pos.x;
 		float oy = cam_world_pos.y - ring_radius;
 		float a = dir.x * dir.x + dir.y * dir.y;
