@@ -17,6 +17,17 @@ uniform float plane_half_size  : hint_range(1000.0, 50000.0) = 14000.0;
 uniform vec2  sun_dir_xz   = vec2(0.0, -1.0);
 uniform vec3  sun_tint     : source_color = vec3(1.0, 0.6, 0.3);
 uniform float scatter      : hint_range(0.0, 1.0) = 0.0;
+// added 2026-07-28 for ring_vibes' 5-layer stack. Defaults reproduce the original 3-layer
+// behaviour exactly, so the older cloud_system.gd usage is unaffected.
+uniform float layer_alpha    : hint_range(0.0, 1.0) = 1.0;   // per-layer transparency (stacked layers compound)
+uniform float self_shadow_amt: hint_range(0.0, 1.0) = 0.72;  // lower = flatter/less dark in thick overcast
+// Underside lighting. The top-lit diffuse model above is only right when you're ABOVE the layer;
+// from below (the normal case, standing on the ground) a real cloud base isn't lit by direct sun at
+// all -- it's lit by light TRANSMITTED through the cloud, so thin cloud glows and thick cloud goes
+// flat grey. Without this the underside just showed the unlit side and read as muddy/too dark.
+uniform float under_ambient  : hint_range(0.0, 1.0) = 0.55;  // sky-bounce floor on the cloud base
+uniform float under_transmit : hint_range(0.0, 2.0) = 0.75;  // how much sun bleeds through thin cloud
+uniform float transmit_k     : hint_range(0.5, 8.0) = 2.5;   // higher = thickness kills transmission faster
 
 varying vec3 world_pos;
 varying vec2 _plane_offset;
@@ -78,11 +89,17 @@ void fragment() {
 	float diffuse = max(0.0, dot(fake_normal, sun3d));
 
 	// Self-shadow: denser cloud interior is darker (simulates depth/thickness)
-	float self_shadow = 1.0 - raw * 0.72;
+	float self_shadow = 1.0 - raw * self_shadow_amt;
 
-	float lighting = (0.20 + diffuse * 0.80) * self_shadow;
-	// Contrast boost: push darks darker, lights lighter
-	lighting = smoothstep(0.0, 1.0, lighting);
+	// Top-lit (viewer above the layer): direct sun on the fake normal + self-shadow by thickness.
+	float lighting_top = (0.20 + diffuse * 0.80) * self_shadow;
+	lighting_top = smoothstep(0.0, 1.0, lighting_top);   // contrast: darks darker, lights lighter
+	// Under-lit (viewer below the layer -- the usual case): transmitted light, not direct sun.
+	// exp(-thickness) so thin cloud glows and dense cloud settles to a flat grey, never black.
+	float transmit = exp(-raw * transmit_k);
+	float lighting_bottom = under_ambient + transmit * under_transmit * max(0.0, sun3d.y);
+	float viewing_top = step(world_pos.y, CAMERA_POSITION_WORLD.y);   // 1 = camera above the layer
+	float lighting = mix(lighting_bottom, lighting_top, viewing_top);
 	base_color *= lighting;
 
 	// Sunset/sunrise: global warm tint on all cloud fragments + directional boost
@@ -97,5 +114,5 @@ void fragment() {
 	}
 
 	ALBEDO = base_color * cloud_brightness;
-	ALPHA  = d * horizon;
+	ALPHA  = d * horizon * layer_alpha;
 }

@@ -12,21 +12,32 @@ extends Node3D
 # ~28km plane the ring (R=477km) drops only ~200m at the edge, and the horizon fade hides that --
 # not worth curving for a vibes check.
 
-const CLOUD_ALTITUDES   := [900.0, 1800.0, 3000.0]      # cumulus, altocumulus, cirrus
+# 5 layers (was the old system's 3) -- more depth, each thinner, so the stack reads as volume
+# rather than a few flat sheets. Per-layer alpha keeps the compounded opacity in check.
+const CLOUD_ALTITUDES   := [800.0, 1300.0, 1900.0, 2500.0, 3200.0]
 const CLOUD_TYPE_PARAMS := [                             # [noise_scale, noise_stretch_x]
-	[0.00012, 1.0],   # cumulus — large rounded puffs
+	[0.00010, 1.0],   # low cumulus — largest rounded puffs
+	[0.00014, 1.2],   # cumulus
 	[0.00022, 1.5],   # altocumulus — medium wave patches
+	[0.00026, 2.5],   # high altocumulus, starting to streak
 	[0.00030, 6.0],   # cirrus — elongated wispy streaks
 ]
+const LAYER_ALPHA := [0.85, 0.70, 0.60, 0.50, 0.45]      # higher layers thinner; stacked alpha compounds
 const WEATHER_PRESETS := {                               # per-layer [coverage, softness]
-	"clear":    {"layers": [[0.01, 0.20], [0.22, 0.28], [0.55, 0.35]], "brightness": 1.0},
-	"fresh":    {"layers": [[0.42, 0.14], [0.08, 0.24], [0.01, 0.30]], "brightness": 1.0},
-	"overcast": {"layers": [[0.80, 0.10], [0.78, 0.12], [0.62, 0.15]], "brightness": 0.5},
+	"fresh":    {"layers": [[0.42, 0.14], [0.30, 0.18], [0.08, 0.24], [0.04, 0.27], [0.01, 0.30]],
+				 "brightness": 1.0, "self_shadow": 0.72},
+	"clear":    {"layers": [[0.01, 0.20], [0.10, 0.24], [0.22, 0.28], [0.38, 0.32], [0.55, 0.35]],
+				 "brightness": 1.0, "self_shadow": 0.72},
+	# overcast read far too dark: brightness 0.5 x heavy self-shadow (dense fbm -> low self_shadow)
+	# compounded into near-black. Brightness raised and self-shadow softened -- thick overcast in
+	# life is bright-but-flat, not dark.
+	"overcast": {"layers": [[0.80, 0.10], [0.80, 0.11], [0.78, 0.12], [0.70, 0.14], [0.62, 0.15]],
+				 "brightness": 0.85, "self_shadow": 0.35},
 }
 const WEATHER_NAMES := ["fresh", "clear", "overcast"]
 const PLANE_SIZE := 28000.0                              # 28km across; half = horizon-fade radius
-const LAYER_DIR_OFFSETS := [0.0, 35.0, -25.0]            # deg from base wind dir, per layer
-const LAYER_SPEED_MULT  := [1.0, 0.55, 0.30]
+const LAYER_DIR_OFFSETS := [0.0, 20.0, 35.0, -10.0, -25.0]   # deg from base wind dir, per layer
+const LAYER_SPEED_MULT  := [1.0, 0.78, 0.55, 0.42, 0.30]
 const WIND_SPEED := 0.008
 const WIND_DIR := Vector2(1.0, 0.0)
 
@@ -44,7 +55,7 @@ func _build_layers() -> void:
 		push_error("ring_clouds: cloud_layer_shader.gdshader not found")
 		return
 	var half := PLANE_SIZE * 0.5
-	for i in 3:
+	for i in CLOUD_ALTITUDES.size():
 		var y: float = CLOUD_ALTITUDES[i]
 		var tp: Array = CLOUD_TYPE_PARAMS[i]
 		var verts := PackedVector3Array([
@@ -66,6 +77,7 @@ func _build_layers() -> void:
 		mat.set_shader_parameter("plane_half_size", half)
 		mat.set_shader_parameter("noise_scale", tp[0])
 		mat.set_shader_parameter("noise_stretch", Vector2(tp[1], 1.0))
+		mat.set_shader_parameter("layer_alpha", LAYER_ALPHA[i])
 		var angle := deg_to_rad(LAYER_DIR_OFFSETS[i])
 		var ca := cos(angle)
 		var sa := sin(angle)
@@ -90,6 +102,7 @@ func _apply_weather() -> void:
 			continue
 		mat.set_shader_parameter("coverage", layer_data[i][0])
 		mat.set_shader_parameter("softness", layer_data[i][1])
+		mat.set_shader_parameter("self_shadow_amt", wp["self_shadow"])
 
 func cycle_type() -> void:
 	_weather_idx = (_weather_idx + 1) % WEATHER_NAMES.size()
@@ -109,7 +122,9 @@ func is_visible_flag() -> bool:
 func set_day(day: float, to_sun := Vector3.UP) -> void:
 	# brightness follows day/night; scatter warms the clouds when the sun is near the horizon
 	var wp: Dictionary = WEATHER_PRESETS[WEATHER_NAMES[_weather_idx]]
-	var bright: float = lerpf(0.06, 1.0, day) * float(wp["brightness"])
+	# night floor 0.4, not 0 -- lifted from the April tuning (commit 394352a, "raise night brightness
+	# floor to 0.4 for legible night clouds"). Clouds that fade to black at night just vanish.
+	var bright: float = lerpf(0.4, 1.0, day) * float(wp["brightness"])
 	var scatter: float = clampf(1.0 - abs(to_sun.y) * 3.0, 0.0, 1.0) * day
 	var sun_xz := Vector2(to_sun.x, to_sun.z)
 	if sun_xz.length() > 0.001:
