@@ -77,9 +77,6 @@ void vertex() {
 	v_n = normalize(vec3(hl - hr, 2.0 * e, hd - hu));
 	v_h = h / max(disp, 1.0);
 	float y = (VERTEX.y < -0.5) ? h - node_size * skirt : h;
-	if (abs(wxz.y) > ring_width * 0.5) {
-		y = -1.0e5;   // beyond the wall's lat position -> sink out of sight, never poke past the rim
-	}
 	vec3 world;
 	if (ring_radius > 0.0) {
 		float theta = wxz.x / ring_radius;
@@ -96,6 +93,19 @@ void vertex() {
 }
 
 void fragment() {
+	// beyond the walls' lat position -> never rendered at all (was a vertex-space sink before,
+	// which folded into a visible "wall" of geometry at the tile straddling the boundary — clean
+	// discard instead, per-fragment, no folded geometry).
+	if (abs(v_world_pos.z) > ring_width * 0.5) {
+		discard;
+	}
+	// hide the geometric underside. The first attempt at this (discard on !FRONT_FACING) had it
+	// backwards — confirmed empirically: it discarded the wanted top surface and kept the underside
+	// visible as a textured "ceiling". Flipped here: this mesh's wanted surface reports FRONT_FACING
+	// == false for this winding, so the unwanted side is FRONT_FACING == true.
+	if (FRONT_FACING) {
+		discard;
+	}
 	vec3 base = mix(vec3(0.30, 0.40, 0.24), vec3(0.52, 0.52, 0.48), smoothstep(0.45, 0.85, v_h));
 	bool in_dem = v_demuv.x > 0.0 && v_demuv.x < 1.0 && v_demuv.y > 0.0 && v_demuv.y < 1.0;
 	if (use_dem && has_sat && in_dem) {
@@ -110,8 +120,7 @@ void fragment() {
 		vec3 lod_col = mix(vec3(0.1, 0.9, 0.2), vec3(0.95, 0.2, 0.1), lod_tint);
 		base = mix(base, lod_col, 0.55);
 	}
-	vec3 n = normalize(v_n);
-	if (!FRONT_FACING) { n = -n; }
+	vec3 n = -normalize(v_n);   // only back-facing (per this mesh's winding) fragments ever reach here
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
 	vec3 lit = base * (0.06 + 0.94 * diffuse);
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
