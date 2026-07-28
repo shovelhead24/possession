@@ -280,7 +280,7 @@ func _add_slider(vb: VBoxContainer, label: String, lo: float, hi: float, val: fl
 	sl.max_value = hi
 	sl.step = 0.01
 	sl.value = val
-	sl.custom_minimum_size = Vector2(300, 0)
+	sl.custom_minimum_size = Vector2(290, 0)
 	sl.value_changed.connect(func(v: float) -> void:
 		name_lbl.text = "%s  %.2f" % [label, v]
 		setter.call(v))
@@ -289,12 +289,26 @@ func _add_slider(vb: VBoxContainer, label: String, lo: float, hi: float, val: fl
 
 func _build_tuning_panel(layer: CanvasLayer) -> void:
 	# live cloud tuning -- feel is faster to dial in by dragging than by editing constants
+	# anchored top-RIGHT and scrollable: sat on top of the HUD text at the old fixed left position,
+	# and the last two sliders fell off the bottom of the screen entirely.
 	_panel = PanelContainer.new()
-	_panel.position = Vector2(12, 300)
+	_panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_panel.anchor_left = 1.0
+	_panel.anchor_right = 1.0
+	_panel.anchor_top = 0.0
+	_panel.anchor_bottom = 1.0
+	_panel.offset_left = -350.0
+	_panel.offset_right = -12.0
+	_panel.offset_top = 12.0
+	_panel.offset_bottom = -12.0
 	_panel.visible = false
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_panel.add_child(scroll)
 	var vb := VBoxContainer.new()
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vb.add_theme_constant_override("separation", 6)
-	_panel.add_child(vb)
+	scroll.add_child(vb)
 	var title := Label.new()
 	title.text = "TUNING  ([O] close)   clouds: 1.00 = preset default"
 	vb.add_child(title)
