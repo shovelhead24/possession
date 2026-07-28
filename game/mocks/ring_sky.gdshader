@@ -13,10 +13,25 @@ uniform vec3 night_horizon : source_color = vec3(0.04, 0.05, 0.09);
 uniform float star_density = 260.0;
 uniform float star_day_visibility = 0.4;   // stars dim, not gone, during the day
 
+// rudimentary "ring in the sky" backdrop: a real ray/cylinder intersection against the ring's own
+// tube (radius ring_radius, centred on the camera's actual position) so the far side reads with
+// correct perspective/foreshortening for free, rather than a faked band. Mostly hidden behind the
+// real 3D band mesh in normal play -- this is the backdrop for wherever that mesh doesn't cover
+// (grazing angles, culling gaps, future orbital/space viewpoints).
+uniform float ring_radius = 0.0;
+uniform float ring_width = 50000.0;
+uniform vec3 cam_world_pos = vec3(0.0);
+
 float hash13(vec3 p) {
 	p = fract(p * 0.3183099 + 0.1);
 	p *= 17.0;
 	return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float hash21(vec2 p) {
+	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+	p3 += dot(p3, p3.yzx + 33.33);
+	return fract((p3.x + p3.y) * p3.z);
 }
 
 void sky() {
@@ -39,6 +54,39 @@ void sky() {
 	float sun_disc = smoothstep(0.9993, 0.9998, sun_dot);
 	float sun_glow = pow(max(sun_dot, 0.0), 300.0) * 0.6;
 	col += vec3(1.0, 0.95, 0.85) * (sun_disc * 3.0 + sun_glow);
+
+	// ring-in-the-sky: solve for where this ray hits the ring's base tube, X^2 + (Y-R)^2 = (R-h)^2,
+	// h = camera's height above the local floor. For a point ON the tube, X^2+(Y-R)^2 - R^2 =
+	// -2Rh+h^2 (independent of arc position -- true for any theta, not just near the camera).
+	if (ring_radius > 0.0) {
+		float ox = cam_world_pos.x;
+		float oy = cam_world_pos.y - ring_radius;
+		float a = dir.x * dir.x + dir.y * dir.y;
+		float b = 2.0 * (ox * dir.x + oy * dir.y);
+		float c = ox * ox + oy * oy - ring_radius * ring_radius;
+		float disc = b * b - 4.0 * a * c;
+		if (a > 0.00001 && disc > 0.0) {
+			float t = (-b + sqrt(disc)) / (2.0 * a);   // camera is inside the tube -> this root is the hit
+			if (t > 0.0) {
+				float lat = cam_world_pos.z + t * dir.z;
+				float half_w = ring_width * 0.5;
+				float edge = 1.0 - smoothstep(half_w * 0.85, half_w, abs(lat));
+				if (edge > 0.0) {
+					float px = ox + t * dir.x, py = oy + t * dir.y;
+					float theta = atan(px, -py);                    // arc position (0 near you, PI far side)
+					float sun_theta = atan(-to_sun.x, to_sun.y);     // arc position most face-on to the sun
+					float lit = clamp(cos(theta - sun_theta), 0.0, 1.0);
+					vec2 cuv = vec2(theta * 12.0, lat / half_w * 6.0);
+					float n = hash21(floor(cuv * 6.0)) * 0.6 + hash21(floor(cuv * 14.0) + 5.0) * 0.4;
+					vec3 dark = vec3(0.015, 0.02, 0.03);
+					vec3 litcol = mix(vec3(0.10, 0.26, 0.16), vec3(0.72, 0.76, 0.72), n);   // terrain green / cloud white
+					float glisten = smoothstep(0.82, 1.0, n) * lit * 0.2;                   // subtle, day-side only
+					vec3 ring_col = mix(dark, litcol + glisten, lit);
+					col = mix(col, ring_col, edge);
+				}
+			}
+		}
+	}
 
 	COLOR = col;
 }

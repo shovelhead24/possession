@@ -550,6 +550,9 @@ func _process(delta: float) -> void:
 	var sky := Color(0.45, 0.62, 0.82).lerp(Color(0.015, 0.02, 0.05), 1.0 - day)
 	_sky_mat.set_shader_parameter("to_sun", to_sun)
 	_sky_mat.set_shader_parameter("day", day)
+	_sky_mat.set_shader_parameter("ring_radius", _radius())
+	_sky_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
+	_sky_mat.set_shader_parameter("cam_world_pos", _cam.global_position)
 	# ambient was fixed-intensity regardless of day/night — trees/car/creatures (engine-lit) stayed
 	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
 	# Scale it down at night so everything dims together.
