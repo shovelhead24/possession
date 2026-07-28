@@ -49,9 +49,10 @@ void sky() {
 	float star_vis = mix(1.0, star_day_visibility, day);
 	col += vec3(star) * star_vis * horizon_fade;
 
-	// sun disc + glow, moves with to_sun
+	// sun disc + glow, moves with to_sun. Disc radius ~0.5-0.8 deg (was ~2 deg -- read as a big
+	// close blob instead of a distant point of light); glow (much wider, soft) unchanged.
 	float sun_dot = dot(dir, normalize(to_sun));
-	float sun_disc = smoothstep(0.9993, 0.9998, sun_dot);
+	float sun_disc = smoothstep(0.99990, 0.99998, sun_dot);
 	float sun_glow = pow(max(sun_dot, 0.0), 300.0) * 0.6;
 	col += vec3(1.0, 0.95, 0.85) * (sun_disc * 3.0 + sun_glow);
 
@@ -76,12 +77,15 @@ void sky() {
 					float theta = atan(px, -py);                    // arc position (0 near you, PI far side)
 					float sun_theta = atan(-to_sun.x, to_sun.y);     // arc position most face-on to the sun
 					float lit = clamp(cos(theta - sun_theta), 0.0, 1.0);
-					vec2 cuv = vec2(theta * 12.0, lat / half_w * 6.0);
-					float n = hash21(floor(cuv * 6.0)) * 0.6 + hash21(floor(cuv * 14.0) + 5.0) * 0.4;
-					vec3 dark = vec3(0.015, 0.02, 0.03);
-					vec3 litcol = mix(vec3(0.10, 0.26, 0.16), vec3(0.72, 0.76, 0.72), n);   // terrain green / cloud white
-					float glisten = smoothstep(0.82, 1.0, n) * lit * 0.2;                   // subtle, day-side only
-					vec3 ring_col = mix(dark, litcol + glisten, lit);
+					// bigger, more legible blotches (was a fine salt-and-pepper grain, barely read as cloud)
+					vec2 cuv = vec2(theta * 5.0, lat / half_w * 3.0);
+					float n = hash21(floor(cuv * 3.0)) * 0.6 + hash21(floor(cuv * 8.0) + 5.0) * 0.4;
+					vec3 cloudcol = mix(vec3(0.10, 0.26, 0.16), vec3(0.72, 0.76, 0.72), n);   // terrain green / cloud white
+					float glisten = smoothstep(0.82, 1.0, n) * lit * 0.2;                     // subtle, day-side only
+					// brightness-modulate the SAME pattern by lit rather than swapping to a flat dark
+					// colour -- otherwise the night side of the ring shows no cloud detail at all,
+					// just a featureless block (this was the "no clouds overhead" bug).
+					vec3 ring_col = cloudcol * mix(0.12, 1.0, lit) + glisten;
 					col = mix(col, ring_col, edge);
 				}
 			}

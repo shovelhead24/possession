@@ -531,6 +531,11 @@ func _process(delta: float) -> void:
 	if period > 0.0 and not sun_paused:
 		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
 	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(SUN_TILT), cos(sun_angle) * sin(SUN_TILT))
+	# the raw cosine curve spent most of its "day half" ramping through a dim dusk-like value and
+	# only briefly touched full brightness near the very peak -- it LOOKED like night was ~50% of
+	# the cycle but day was mostly a fast dim transition, not a comparable bright half. Remapping
+	# widens the plateau: day reaches 1.0 well before the sun nears its max height, and holds there.
+	var day: float = smoothstep(0.0, 0.35, clampf(to_sun.y, 0.0, 1.0))
 	_mat.set_shader_parameter("to_sun", to_sun)
 	_mat.set_shader_parameter("haze_density", haze_density)
 	_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
@@ -540,13 +545,12 @@ func _process(delta: float) -> void:
 		# derived from to_sun.y alone would ignore the tilt, leaving tree/car lighting out of sync
 		# with the terrain/sky, which both use the full to_sun vector directly).
 		_sun.global_transform.basis = Basis.looking_at(-to_sun.normalized(), Vector3.UP)
-		_sun.light_energy = clampf(to_sun.y, 0.0, 1.0) * 1.1
+		_sun.light_energy = day * 1.3
 		_sun.light_color = Color(1.0, 0.95, 0.86)
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("to_sun", to_sun)
 		_wall_mat.set_shader_parameter("haze_density", haze_density)
 	# camera-local day factor drives the sky + fog-blend colour
-	var day: float = clampf(to_sun.y, 0.0, 1.0)
 	var sky := Color(0.45, 0.62, 0.82).lerp(Color(0.015, 0.02, 0.05), 1.0 - day)
 	_sky_mat.set_shader_parameter("to_sun", to_sun)
 	_sky_mat.set_shader_parameter("day", day)
@@ -555,8 +559,9 @@ func _process(delta: float) -> void:
 	_sky_mat.set_shader_parameter("cam_world_pos", _cam.global_position)
 	# ambient was fixed-intensity regardless of day/night — trees/car/creatures (engine-lit) stayed
 	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
-	# Scale it down at night so everything dims together.
-	_env.ambient_light_energy = lerpf(0.05, 0.4, day)
+	# Scale it down at night so everything dims together. Max raised (0.4 -> 0.65) -- daytime overall
+	# read as "way too dark".
+	_env.ambient_light_energy = lerpf(0.06, 0.65, day)
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
