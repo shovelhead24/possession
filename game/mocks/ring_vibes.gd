@@ -18,7 +18,7 @@ const SUN_PERIODS := [0.0, 1140.0, 60.0, 8.0]                     # s per full d
 # on the same great-circle as the ring's silhouette (always "behind" it). Tilting the orbit off that
 # plane by SUN_TILT means the ring only occults the sun where the tilted path crosses back through
 # Z=0, which happens twice per cycle (at sun_angle = pi/2 and 3pi/2), not continuously.
-const SUN_TILT := deg_to_rad(15.0)
+var sun_tilt := deg_to_rad(15.0)   # live-tunable via the [O] panel; also sets rim-wall shadow reach
 # single source of truth for both the sky dome (ring_sky.gdshader) and the terrain/band/wall fog-
 # fade target -- these used to be two independent hardcoded gradients (a leftover flat-background
 # color calc never updated when the real sky shader was built), so far from spawn the terrain's fog
@@ -46,8 +46,9 @@ var haze_density := 0.00001       # 1/m — ~100km extinction (Up/Dn tunes). Str
 var _haze_off := false            # [N] disables haze entirely regardless of haze_density, for A/B testing
 var _hud_full := true              # [TAB] collapses the control/debug text down to one line, for clean "vibe check" screenshots
 var _clouds: Node3D = null          # [Z] cycle type, [X] toggle -- see mocks/ring_clouds.gd
-var _panel: PanelContainer = null   # [O] live cloud tuning sliders
+var _panel: PanelContainer = null   # [O] live tuning sliders
 var _panel_open := false
+var _wall_shadow_soft := 220.0      # penumbra width at the wall-shadow edge, metres
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
 var sun_paused := false
@@ -265,7 +266,7 @@ func _ready() -> void:
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
 	_clouds.ring_radius = _radius()   # must be set BEFORE _ready() builds the bent sheets
 	_clouds.ring_width = WIDTHS[w_idx]
-	_clouds.wall_top = WALL_TOP_H
+	_clouds.wall_top = wall_top_h
 	add_child(_clouds)
 	_build_tuning_panel(hud_layer)
 
@@ -295,13 +296,26 @@ func _build_tuning_panel(layer: CanvasLayer) -> void:
 	vb.add_theme_constant_override("separation", 6)
 	_panel.add_child(vb)
 	var title := Label.new()
-	title.text = "CLOUD TUNING  ([O] close)   1.00 = preset default"
+	title.text = "TUNING  ([O] close)   clouds: 1.00 = preset default"
 	vb.add_child(title)
 	_add_slider(vb, "coverage x", 0.2, 3.0, 1.0, func(v): _clouds.cov_mult = v; _clouds.retune())
 	_add_slider(vb, "opacity x", 0.2, 2.0, 1.0, func(v): _clouds.alpha_mult = v; _clouds.retune())
 	_add_slider(vb, "softness x", 0.2, 3.0, 1.0, func(v): _clouds.soft_mult = v; _clouds.retune())
 	_add_slider(vb, "warp x", 0.0, 3.0, 1.0, func(v): _clouds.warp_mult = v; _clouds.retune())
 	_add_slider(vb, "brightness x", 0.3, 2.0, 1.0, func(v): _clouds.bright_mult = v)
+	var sun_title := Label.new()
+	sun_title.text = "— sun / wall shadow —"
+	vb.add_child(sun_title)
+	# tilt drives how far the rim-wall shadow reaches inward: reach ~= wall_top * tan(tilt), so at
+	# 15 deg it's only ~1km and barely reads; push it up to see the shadow properly.
+	_add_slider(vb, "sun tilt (deg)", 0.0, 60.0, 15.0, func(v): sun_tilt = deg_to_rad(v))
+	_add_slider(vb, "wall height (m)", 500.0, 12000.0, wall_top_h, func(v):
+		wall_top_h = v
+		_build_walls()
+		if _clouds:
+			_clouds.wall_top = v
+			_clouds.retune())
+	_add_slider(vb, "shadow softness (m)", 20.0, 2000.0, _wall_shadow_soft, func(v): _wall_shadow_soft = v)
 	layer.add_child(_panel)
 
 func _radius() -> float:
@@ -513,7 +527,8 @@ func _rebuild_lod() -> void:
 		_mats[i].set_shader_parameter("cam_pos", cp)
 		_mats[i].set_shader_parameter("ring_radius", r)
 		_mats[i].set_shader_parameter("ring_width", w)
-		_mats[i].set_shader_parameter("wall_top", WALL_TOP_H)
+		_mats[i].set_shader_parameter("wall_top", wall_top_h)
+		_mats[i].set_shader_parameter("wall_shadow_soft", _wall_shadow_soft)
 
 func _rebuild() -> void:
 	if _band: _band.queue_free()
@@ -552,7 +567,7 @@ func _rebuild() -> void:
 	_update_hud()
 
 const WALL_BASE_H := -200.0   # absolute height (below lowest terrain), from ring centre — not terrain-relative
-const WALL_TOP_H := 4000.0     # absolute rim height toward the axis
+var wall_top_h := 4000.0       # rim height toward the axis; live-tunable ([O]) since it sets shadow reach
 
 func _build_walls() -> void:
 	# rim walls: continuous around the WHOLE ring (like the band), at ABSOLUTE heights from
@@ -571,7 +586,7 @@ func _build_walls() -> void:
 			st.set_uv(Vector2(float(i) / float(segs) * 40.0, 1.0))
 			st.add_vertex(_ring_pos(theta, lat, WALL_BASE_H))
 			st.set_uv(Vector2(float(i) / float(segs) * 40.0, 0.0))
-			st.add_vertex(_ring_pos(theta, lat, WALL_TOP_H))
+			st.add_vertex(_ring_pos(theta, lat, wall_top_h))
 		for i in segs:
 			var a := i * 2
 			st.add_index(a); st.add_index(a + 2); st.add_index(a + 1)
@@ -602,7 +617,7 @@ func _process(delta: float) -> void:
 	var period: float = SUN_PERIODS[sun_speed_idx]
 	if period > 0.0 and not sun_paused:
 		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
-	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(SUN_TILT), cos(sun_angle) * sin(SUN_TILT))
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
 	# day/night is only "to_sun.y" as a global scalar when the camera sits near arc=0 (spawn) --
 	# the terrain's OWN lighting (and the ring-in-sky element) correctly varies by arc position via
 	# dot(normal(theta), to_sun), which is what makes the far side of the ring show a genuinely

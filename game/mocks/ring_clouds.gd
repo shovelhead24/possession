@@ -73,7 +73,8 @@ var _visible := true
 # values rather than replacing them, so the presets stay meaningful and 1.0 == "as authored".
 var ring_radius := 0.0    # set by ring_vibes before _ready(); 0 = flat planes (old behaviour)
 var ring_width := 0.0
-var wall_top := 4000.0    # matches ring_vibes' WALL_TOP_H, for the wall-shadow test
+var wall_top := 4000.0    # matches ring_vibes' wall_top_h, for the wall-shadow test
+var wall_shadow_soft := 400.0
 var cov_mult := 1.0
 var soft_mult := 1.0
 var alpha_mult := 1.0
@@ -128,6 +129,7 @@ func _build_layers() -> void:
 		mat.set_shader_parameter("fade_start", FADE_START)
 		mat.set_shader_parameter("ring_half_width", half_lat)
 		mat.set_shader_parameter("wall_top", wall_top)
+		mat.set_shader_parameter("wall_shadow_soft", wall_shadow_soft)
 		mat.set_shader_parameter("noise_scale", tp[0])
 		mat.set_shader_parameter("noise_stretch", Vector2(tp[1], 1.0))
 		mat.set_shader_parameter("layer_alpha", LAYER_ALPHA[i])
