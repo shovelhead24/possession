@@ -46,7 +46,9 @@ const WEATHER_PRESETS := {                               # per-layer [coverage, 
 				 "brightness": 1.0, "self_shadow": 0.72},
 	# overcast also read far too dark before: brightness 0.5 x heavy self-shadow (dense fbm -> low
 	# self_shadow) compounded toward black. Thick overcast in life is bright-but-flat, not dark.
-	"overcast": {"layers": [[0.55, 0.12], [0.50, 0.12], [0.44, 0.13], [0.34, 0.15], [0.24, 0.16]],
+	# raised again after the rebalance overshot -- read "pretty but not overcast". Still bright/flat
+	# rather than storm-dark; the live sliders are the real answer for dialling this in.
+	"overcast": {"layers": [[0.74, 0.11], [0.70, 0.11], [0.62, 0.12], [0.50, 0.14], [0.38, 0.15]],
 				 "brightness": 0.95, "self_shadow": 0.28},
 }
 const WEATHER_NAMES := ["clear", "fresh", "overcast"]   # [Z] cycles light -> heavy
@@ -59,6 +61,13 @@ const WIND_DIR := Vector2(1.0, 0.0)
 var _layers: Array[MeshInstance3D] = []
 var _weather_idx := 0
 var _visible := true
+# live tuning multipliers, driven by the debug sliders in ring_vibes.gd. These MULTIPLY the preset
+# values rather than replacing them, so the presets stay meaningful and 1.0 == "as authored".
+var cov_mult := 1.0
+var soft_mult := 1.0
+var alpha_mult := 1.0
+var warp_mult := 1.0
+var bright_mult := 1.0
 
 func _ready() -> void:
 	_build_layers()
@@ -123,9 +132,15 @@ func _apply_weather() -> void:
 		var mat := _layers[i].material_override as ShaderMaterial
 		if not mat:
 			continue
-		mat.set_shader_parameter("coverage", layer_data[i][0])
-		mat.set_shader_parameter("softness", layer_data[i][1])
+		mat.set_shader_parameter("coverage", clampf(layer_data[i][0] * cov_mult, 0.0, 1.0))
+		mat.set_shader_parameter("softness", clampf(layer_data[i][1] * soft_mult, 0.01, 0.5))
 		mat.set_shader_parameter("self_shadow_amt", wp["self_shadow"])
+		mat.set_shader_parameter("layer_alpha", clampf(LAYER_ALPHA[i] * alpha_mult, 0.0, 1.0))
+		mat.set_shader_parameter("warp_amount", CLOUD_SHAPE[i][0] * warp_mult)
+
+func retune() -> void:
+	# re-apply everything after a slider moves (coverage/softness/alpha/warp all live here)
+	_apply_weather()
 
 func cycle_type() -> void:
 	_weather_idx = (_weather_idx + 1) % WEATHER_NAMES.size()
@@ -147,7 +162,7 @@ func set_day(day: float, to_sun := Vector3.UP) -> void:
 	var wp: Dictionary = WEATHER_PRESETS[WEATHER_NAMES[_weather_idx]]
 	# night floor 0.4, not 0 -- lifted from the April tuning (commit 394352a, "raise night brightness
 	# floor to 0.4 for legible night clouds"). Clouds that fade to black at night just vanish.
-	var bright: float = lerpf(0.4, 1.0, day) * float(wp["brightness"])
+	var bright: float = lerpf(0.4, 1.0, day) * float(wp["brightness"]) * bright_mult
 	var scatter: float = clampf(1.0 - abs(to_sun.y) * 3.0, 0.0, 1.0) * day
 	var sun_xz := Vector2(to_sun.x, to_sun.z)
 	if sun_xz.length() > 0.001:

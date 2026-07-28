@@ -46,6 +46,8 @@ var haze_density := 0.00001       # 1/m — ~100km extinction (Up/Dn tunes). Str
 var _haze_off := false            # [N] disables haze entirely regardless of haze_density, for A/B testing
 var _hud_full := true              # [TAB] collapses the control/debug text down to one line, for clean "vibe check" screenshots
 var _clouds: Node3D = null          # [Z] cycle type, [X] toggle -- see mocks/ring_clouds.gd
+var _panel: PanelContainer = null   # [O] live cloud tuning sliders
+var _panel_open := false
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
 var sun_paused := false
@@ -262,6 +264,42 @@ func _ready() -> void:
 
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
 	add_child(_clouds)
+	_build_tuning_panel(hud_layer)
+
+func _add_slider(vb: VBoxContainer, label: String, lo: float, hi: float, val: float, setter: Callable) -> void:
+	var row := VBoxContainer.new()
+	var name_lbl := Label.new()
+	name_lbl.text = "%s  %.2f" % [label, val]
+	row.add_child(name_lbl)
+	var sl := HSlider.new()
+	sl.min_value = lo
+	sl.max_value = hi
+	sl.step = 0.01
+	sl.value = val
+	sl.custom_minimum_size = Vector2(300, 0)
+	sl.value_changed.connect(func(v: float) -> void:
+		name_lbl.text = "%s  %.2f" % [label, v]
+		setter.call(v))
+	row.add_child(sl)
+	vb.add_child(row)
+
+func _build_tuning_panel(layer: CanvasLayer) -> void:
+	# live cloud tuning -- feel is faster to dial in by dragging than by editing constants
+	_panel = PanelContainer.new()
+	_panel.position = Vector2(12, 300)
+	_panel.visible = false
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 6)
+	_panel.add_child(vb)
+	var title := Label.new()
+	title.text = "CLOUD TUNING  ([O] close)   1.00 = preset default"
+	vb.add_child(title)
+	_add_slider(vb, "coverage x", 0.2, 3.0, 1.0, func(v): _clouds.cov_mult = v; _clouds.retune())
+	_add_slider(vb, "opacity x", 0.2, 2.0, 1.0, func(v): _clouds.alpha_mult = v; _clouds.retune())
+	_add_slider(vb, "softness x", 0.2, 3.0, 1.0, func(v): _clouds.soft_mult = v; _clouds.retune())
+	_add_slider(vb, "warp x", 0.0, 3.0, 1.0, func(v): _clouds.warp_mult = v; _clouds.retune())
+	_add_slider(vb, "brightness x", 0.3, 2.0, 1.0, func(v): _clouds.bright_mult = v)
+	layer.add_child(_panel)
 
 func _radius() -> float:
 	return CIRCUMFERENCES[c_idx] / TAU
@@ -1005,7 +1043,7 @@ func _fly(delta: float) -> void:
 		_cam.position += dir.normalized() * speed * delta
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and not _captured:
+	if event is InputEventMouseButton and event.pressed and not _captured and not _panel_open:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_captured = true
 		_update_hud()
@@ -1033,6 +1071,15 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_M: _show_lod = not _show_lod
 			KEY_N: _haze_off = not _haze_off
 			KEY_TAB: _hud_full = not _hud_full; _update_hud()
+			KEY_O:
+				# sliders need a visible cursor, so opening the panel releases mouse capture
+				_panel_open = not _panel_open
+				if _panel:
+					_panel.visible = _panel_open
+				if _panel_open:
+					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+					_captured = false
+				_update_hud()
 			KEY_Z:
 				if _clouds:
 					_clouds.cycle_type()
@@ -1077,21 +1124,41 @@ func _update_hud() -> void:
 		mode = "DRIVE  %d km/h  (WASD steer, [V] cycle mode)" % int(abs(_car_speed) * 3.6)
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
-	var dem_line := "DEM: none (noise terrain)" if _dem_w == 0 else "DEM: %s   height x%.0f ([H] cycles)" % [_dem_name, dem_scale]
-	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0
-	var threat := "THREAT (wolf closing)" if _threat_active else "calm (null-write holding)"
-	var slice_line := "[K] deer herd  [J] wolf pack  [C] clear   creatures: %d   %s" % [_creatures.size(), threat]
-	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
-	var lod_line := "LOD nodes: %d   trees: %d (LOD0/1/2/bill %d/%d/%d/%d, [G]/[B] band x%.2f)   [M] LOD colour: %s" % [
-		_used, _tree_ground.size(), lc[0], lc[1], lc[2], lc[3], _tree_lod_scale, "ON" if _show_lod else "off"]
-	var cloud_line := "[Z] clouds: %s   [X] visible: %s" % [
-		(_clouds.type_name() if _clouds else "n/a"), ("on" if (_clouds and _clouds.is_visible_flag()) else "OFF")]
-	var dbg_line := "DBG cam_theta=%.1fdeg sun_theta=%.1fdeg  local_lit=%.2f  day=%.2f   [N] haze: %s   %s" % [
-		_dbg_cam_theta_deg, _dbg_sun_theta_deg, _dbg_local_lit, _dbg_day,
-		"OFF" if _haze_off else "on", cloud_line]
 	if not _hud_full:
-		_hud.text = "[TAB] show controls   mode: %s" % mode
+		_hud.text = "[TAB] controls   [O] cloud sliders   %s" % mode
 		return
-	_hud.text = "[TAB] hide controls\nC = %.0f km   W = %.1f km   R = %.1f km\nrise @20km = %.0f m   @50km = %.0f m   far-side band = %.2f deg (moon = 0.52)\nhaze extinction ~%.0f km   sun period = %s s\n%s\n%s\n%s\n%s\n[Up/Dn] haze  [T] sun speed  [P] pause sun  [F] flip day/night  [R] rebuild\nmode: %s" % [
-		c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg, haze_km,
-		("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])), dem_line, slice_line, lod_line, dbg_line, mode]
+	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0
+	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
+	var threat := "THREAT (wolf closing)" if _threat_active else "calm (null-write holding)"
+	# grouped by system rather than one long undifferentiated key dump
+	var lines := [
+		"[TAB] hide controls    [O] cloud sliders %s" % ("(open)" if _panel_open else ""),
+		"mode: %s" % mode,
+		"",
+		"RING    C %.0f km   W %.1f km   R %.1f km   rise @20km %.0f m  @50km %.0f m   far-side %.2f deg (moon 0.52)" % [
+			c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg],
+		"        [1/2/3] circumference   [Q/W/E] width   [R] rebuild        (config keys: release mouse first)",
+		"",
+		"SKY     sun period %s s   haze ~%.0f km %s   day %.2f" % [
+			("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])),
+			haze_km, "(OFF)" if _haze_off else "", _dbg_day],
+		"        [T] sun speed   [P] pause sun   [F] flip day/night   [Up/Dn] haze   [N] haze on/off",
+		"",
+		"CLOUDS  %s   %s" % [
+			(_clouds.type_name() if _clouds else "n/a"),
+			("visible" if (_clouds and _clouds.is_visible_flag()) else "HIDDEN")],
+		"        [Z] cycle type   [X] show/hide   [O] tuning sliders",
+		"",
+		"TERRAIN %s   LOD nodes %d   trees %d (LOD0/1/2/bill %d/%d/%d/%d)" % [
+			("none (noise)" if _dem_w == 0 else "%s  height x%.0f" % [_dem_name, dem_scale]),
+			_used, _tree_ground.size(), lc[0], lc[1], lc[2], lc[3]],
+		"        [H] terrain height   [G]/[B] tree LOD band x%.2f   [M] LOD colour %s" % [
+			_tree_lod_scale, "ON" if _show_lod else "off"],
+		"",
+		"SLICE   creatures %d   %s" % [_creatures.size(), threat],
+		"        [K] deer herd   [J] wolf pack   [C] clear",
+		"",
+		"DBG     cam_theta %.1f deg   sun_theta %.1f deg   local_lit %.2f" % [
+			_dbg_cam_theta_deg, _dbg_sun_theta_deg, _dbg_local_lit],
+	]
+	_hud.text = "\n".join(lines)
