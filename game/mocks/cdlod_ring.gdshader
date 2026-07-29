@@ -18,6 +18,12 @@ uniform sampler2D sat_tex : source_color, filter_linear;
 uniform bool has_sat = false;
 uniform sampler2D road_tex : filter_linear;
 uniform bool has_roads = false;
+// Home-area detail: R/G are east/north height gradients baked at FULL DEM resolution (see
+// tools/dem/export_to_game.py), so the terrain can be shaded with relief finer than the mesh
+// actually carries. Only meaningful inside the home DEM footprint.
+uniform sampler2D detail_tex : filter_linear;
+uniform bool has_detail = false;
+uniform float normal_strength = 1.0;
 uniform float sat_gain = 1.35;
 // Secondary splice patches placed around the arc (see ring_vibes.gd PATCHES). One Texture2DArray,
 // one layer per patch, at reduced resolution -- these are travel scenery, not the play area, and
@@ -272,6 +278,14 @@ void fragment() {
 	// from band/wall's winding-derived generate_normals() normals, where the flip IS correct; here
 	// it was inverting an already-correct normal, which is what made day/night read backwards).
 	vec3 n = normalize(v_n);
+	// full-res relief inside the home DEM: perturb the (mesh-resolution) normal by the baked
+	// gradients so the starting area reads crisp even where the LOD mesh is coarse. Applied in
+	// world XZ, which is only strictly right near arc 0 -- fine, since this texture is home-only.
+	if (in_dem && has_detail && !is_water) {
+		vec4 d = texture(detail_tex, v_demuv);
+		vec3 pert = vec3((d.r - 0.5) * 2.4, 0.0, (d.g - 0.5) * 2.4) * dem_scale * normal_strength;
+		n = normalize(n + pert);
+	}
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
 	float wall_lit = wall_shadow(v_world_pos.z, v_height, ring_width * 0.5);   // rim wall onto the floor
 	diffuse *= wall_lit;

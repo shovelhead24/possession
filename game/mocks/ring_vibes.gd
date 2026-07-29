@@ -77,6 +77,10 @@ const DEM_R16 := "res://mocks/dem/millstreet.r16"
 const DEM_META := "res://mocks/dem/millstreet.json"
 const DEM_SAT := "res://mocks/dem/millstreet_sat.dat"
 const DEM_ROADS := "res://mocks/dem/millstreet_roads.dat"
+# R/G encode east/north height gradients at FULL DEM resolution, B = height/4m. Gives the home area
+# per-pixel relief shading finer than the mesh itself carries. The CDLOD rewrite dropped this and
+# the starting area lost its crispness as a result -- restored 2026-07-29.
+const DEM_DETAIL := "res://mocks/dem/millstreet_detail.dat"
 var _dem := PackedByteArray()     # full-res u16 heights, /16 = metres (far-band fallback path only)
 var _dem_w := 0
 var _dem_h := 0
@@ -89,6 +93,7 @@ var _dem_cam := Vector2i.ZERO
 var _dem_name := ""
 var _sat_tex: ImageTexture = null
 var _roads_tex: ImageTexture = null
+var _detail_tex: ImageTexture = null
 var dem_scale := 1.0  # [H] cycles 1..5 — real-height exaggeration (DEM branch only)
 
 # CDLOD terrain (see mocks/cdlod.gd for the original prototype + tuning notes)
@@ -378,6 +383,9 @@ func _ready() -> void:
 		if _roads_tex:
 			mat.set_shader_parameter("road_tex", _roads_tex)
 			mat.set_shader_parameter("has_roads", true)
+		if _detail_tex:
+			mat.set_shader_parameter("detail_tex", _detail_tex)
+			mat.set_shader_parameter("has_detail", true)
 		mat.set_shader_parameter("sea_level", SEA_LEVEL)
 		mat.set_shader_parameter("ocean_enabled", ocean_enabled)
 		if _patch_tex:
@@ -520,6 +528,11 @@ func _load_dem() -> void:
 		if rimg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_ROADS)) == OK:
 			rimg.generate_mipmaps()
 			_roads_tex = ImageTexture.create_from_image(rimg)
+	if FileAccess.file_exists(DEM_DETAIL):
+		var dimg := Image.new()
+		if dimg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_DETAIL)) == OK:
+			dimg.generate_mipmaps()
+			_detail_tex = ImageTexture.create_from_image(dimg)
 	print("ring_vibes: DEM loaded — ", _dem_name, " ", _dem_w, "x", _dem_h,
 		"  sat_tex: ", "yes" if _sat_tex else "no")
 
@@ -1613,7 +1626,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_captured = true
 		_update_hud()
 	if event is InputEventMouseMotion and _captured and _mode != Mode.DRIVE:
-		_look -= event.relative * 0.0022
+		# yaw sign is OPPOSITE to pitch here: in the ring frame yaw increases toward +lat, whereas the
+		# old world-euler had it increasing counter-clockwise, so sharing one sign inverted look-left/right
+		_look.x += event.relative.x * 0.0022
+		_look.y -= event.relative.y * 0.0022
 		_look.y = clampf(_look.y, -1.55, 1.55)
 		_apply_look()
 	if event is InputEventKey and event.pressed:
