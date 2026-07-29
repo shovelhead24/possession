@@ -59,6 +59,63 @@ Cheap consumer probes worth building before committing to the systems behind the
 Each is a small scene, not a system. If a probe fails, the machinery behind that consumer is not
 worth building at full fidelity — which is the point.
 
+## Emitter/consumer topology — PROPOSED 2026-07-29
+
+The consumer framing generalises: **every layer consumes from below and emits upward**, and the
+player-facing channels above are just the last hop. Written out, three things become precise that
+were previously fuzzy.
+
+**There are two bufs, and they never talk to each other.**
+
+- **LayerBuf** — space. Baked, L0–L7, a composable DAG. *The score.*
+- **TempoBuf** — time. Live, four nested clocks (arc → regional → encounter → micro) plus a mixing
+  rule. *The beat.* Deliberately **not** a mirrored layer stack: space composes ahead of time, time
+  cannot.
+
+`simulation.md` already names the junction you are reaching for: **the intention boundary** — "never
+buf-to-buf: an entity reads space (where is possible) + time (when is ripe) and commits. Score, beat,
+musician." So the special junction is at **R2 (intentions)**, where an entity reads both, not at the
+director. Nothing ever wires LayerBuf to TempoBuf; entities are the only bridge.
+
+**The common substrate is R0's fact tuple, not the director.** R0 already carries the Datomic note:
+*one universal fact tuple shape across every system* — terrain edits, faction events, inventory,
+knowledge — rather than bespoke per-system representations. That uniformity is what lets one generic
+"why / since when" query work everywhere, and it is the true bottom of both stacks.
+
+**The director is the opposite of a bottom layer.** R5 is *sparse and top-down*: it schedules facts
+into R0 and sets tempo, and explicitly never commands entities. Intentions are distributed and
+bottom-up; the director is a thin top-down writer. Calling it the common bottom inverts it.
+
+### The player closes a loop, and is not simply "the top"
+
+The player appears in the topology **three** times, which is why "top of both stacks" doesn't quite
+land:
+
+1. **As an emitter into R0** — actions become persistent facts, the only durable world mutations.
+2. **As an R2 entity** — "the player as just another intention-holding entity, not a special
+   customer of a content system" (`simulation.md`).
+3. **As the terminal consumer** — the seven channels above.
+
+So the architecture is not a stack with the player on top; it is a **loop that closes through the
+player**:
+
+```
+player acts ──► R0 facts ──► R1 pressures ──► R2 intentions ──► R3 actions
+   ▲                            (reads LayerBuf + TempoBuf here)        │
+   │                                                                    ▼
+   └────────── consumers (7 channels) ◄────── R4 encounters ◄───────────┘
+```
+
+**Returning draws are literally this loop closing** (`draws.md`). That is why they cannot exist early
+— the loop has not gone round yet — and why they need no separate consequence system: they are what
+the architecture does when it runs. Standing draws come from LayerBuf directly (baked, present from
+the start); returning draws come all the way round.
+
+**Audit consequence:** a quantity is worth simulating if it survives the trip to a consumer. Most
+"consequence" bugs will be a break *somewhere on this loop* — a fact that never becomes pressure,
+a pressure with no intention that reads it, an action that intersects no bubble — rather than a
+missing feature. Debug the loop, not the symptom.
+
 ## Anti-tree note
 
 Authored trees (dialogue trees, behaviour trees as content, quest graphs) are rejected on scope: the
