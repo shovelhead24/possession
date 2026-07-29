@@ -322,4 +322,44 @@ coverage 71.9%  wrote savannah_sat.dat (22 MB) + out/savannah_s2_preview.jpg
 [15/33] olympic_forest: heights ...
 location: olympic_forest (Olympic Peninsula (Hoh), WA)
 zoom 12: tiles x 631..644 y 1419..1432 -> 14x14 = 196 tiles
-  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14  row 12/14
+  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14  row 12/14  row 13/14  row 14/14
+elevation range: -68 m .. 2419 m over 3584x3584 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote olympic_forest_detail.dat (17 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (25 MB) + olympic_forest.json  m/px=25.65  camera_px=[1794, 1888]
+[15/33] olympic_forest: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_10TDT_20240830_1_L2A  cloud=0.0%  pasted 3759k px  coverage now 22.4%
+  S2B_10UDU_20250810_0_L2A  cloud=0.0%  pasted 5072k px  coverage now 52.6%
+  S2C_10TDT_20250822_0_L2A  cloud=0.0%  pasted 3568k px  coverage now 73.9%
+  S2C_10TCT_20251014_0_L2A  cloud=0.0%  pasted 1085k px  coverage now 80.4%
+  S2C_10TDT_20251014_0_L2A  cloud=0.0%  pasted 0k px  coverage now 80.4%
+  S2A_10TCT_20251013_0_L2A  cloud=0.0%  pasted 4k px  coverage now 80.4%
+  S2C_10TCT_20250127_0_L2A  cloud=0.0%  pasted 0k px  coverage now 80.4%
+  S2C_10UCU_20250822_0_L2A  cloud=0.0%  pasted 1053k px  coverage now 86.7%
+  S2C_10TCT_20260119_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10TCT_20240830_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10UCU_20240830_1_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10UDU_20230826_0_L2A  cloud=0.0%  pasted 1k px  coverage now 86.7%
+  S2B_10TCT_20251006_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2C_10UDU_20251014_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10TCT_20240830_1_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2B_10TDT_20251006_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2B_10UCU_20231007_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2B_10TDT_20231007_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2B_10UDU_20240716_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10UDU_20230607_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10TDT_20240708_0_L2A  cloud=0.0%  pasted 1k px  coverage now 86.7%
+  S2B_10TCT_20250608_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10TDT_20240830_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2B_10TDT_20250608_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2B_10UDU_20240706_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2C_10UDU_20250716_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+  S2A_10TDT_20240906_0_L2A  cloud=0.0%  pasted 0k px  coverage now 86.7%
+coverage 86.7%  wrote olympic_forest_sat.dat (25 MB) + out/olympic_forest_s2_preview.jpg
+[15/33] olympic_forest: done in 480s (elapsed 54.3 min)
+[16/33] wye_valley: heights ...
+location: wye_valley (Wye Valley, Wales/England border)
+zoom 12: tiles x 2010..2024 y 1351..1365 -> 15x15 = 225 tiles
+  row 1/15  row 2/15  row 3/15
