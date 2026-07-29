@@ -53,11 +53,17 @@ Factions (sparse islands of humanity — aesthetic.md's emptiness reconciliation
 
 NPCs may *ask* for help — honest simulation, people ask. But: no quest log entry, no reward contract, no tracking UI. The ask is an encounter (R4); caring is the player's journal pin. Factions never court the player as a content dispenser.
 
+## Settled 2026-07-29 → `.decisions/factions.md`
+
+- **Who woke the relay** — a **living instrumental faction**. Uses the cosmology axis's suspect pool as intended, gives the relay an owner you can find and argue with, and makes misattributed reactivation a pattern the world was already running before you arrived.
+- **Human survivor faction** — **yes, a distinct class**. The only people who share the player's frame of reference. Carries a recorded guard: they must not become the faction that *explains* the ring, or they dilute the alienness the aesthetic depends on and drift into default-good-guys.
+- **Chain topology** — stays **linear**; wall/sea crossings are **rare and expensive** (a raid or an exodus, never a supply line), so chain physics hold for everyday politics while the sea still matters.
+- **City-states** — **distinct classes**. THE city is a set piece authored around its death; the enclave is a living polity and the player's first self-authored goal.
+- **Player membership** — **known, never enrolled**. A consequence of `no-missions` + reputation-as-inverted-pyramid rather than a fresh call: being known as one of theirs already *is* the relationship.
+
 ## Open Questions
 
 - Faction count/scale: bounded by communication speed on the ring (rumor decay × horse range) — tuning, not planning; L5 should derive it
-- Who woke the relay — a live faction, a dead one, or neither? (Narrative decision, upstream of history-pass authoring)
-- City-states: the night-sky cities vs THE city (protagonist two's) — same faction class or distinct?
-- **Human survivor faction?** vision.md flags an open tension: scattered crew from the player's own beacon-response mission, found later, could be its own faction class distinct from native ring cultures — undecided, not adopted.
-- Player faction membership: can you *join*, or only be known? (Witnessing lean says: known, never enrolled — but tier-2 politics may want more)
-- Do factions war across the walls/sea, or is the chain strictly linear?
+- **Is the instrumental faction that woke the relay the human-survivor faction?** They are the most plausible candidates — they would know what a relay *is* — and the convergence is elegant enough to decide deliberately rather than drift into. Opened by the two 2026-07-29 decisions together.
+- Where do the survivors sit on the ring? They are the one faction whose position is *not* derivable from geography (L5 seeds polities from watersheds; a crashed crew lands where it lands), so the history pass needs an authored placement rule for them.
+- Does the survivor faction hold a cosmology at all? The axis (taboo ↔ cargo-cult ↔ instrumental) assumes a culture that grew up under the ring. People who arrived knowing what it is may need a fourth position — or may be the purest instrumentalists on it.

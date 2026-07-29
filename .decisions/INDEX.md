@@ -6,6 +6,7 @@ One line per area file — decisions are the source of truth, this is just a map
 - civilization.md — ordinary building interiors are real/continuous (window combat, fire spread); dungeons keep pocket-reality
 - coop.md — drop-in co-op possesses an existing NPC (proximity-weighted), not a new spawn
 - dialogue.md — LLM dialogue is bake-time only, zero runtime LLM
+- factions.md — living instrumental faction woke the relay; human-survivor faction exists as its own class (with an anti-"default good guys" guard); chain topology stays linear with rare/expensive sea crossings; THE city and the enclave are distinct classes; player is known, never enrolled
 - ending.md — leave-ending mechanism (proximity-easy, vignette-assembled) + presentation (fixed sequence, delayed title, black screen close)
 - engine.md — Godot-level gotchas: reload via quit(), not reload_current_scene()
 - knowledge.md — no omniscient map; the knowledge pyramid is the map, the night sky acquires it
