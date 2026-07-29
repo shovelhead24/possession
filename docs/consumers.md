@@ -116,6 +116,34 @@ the start); returning draws come all the way round.
 a pressure with no intention that reads it, an action that intersects no bubble — rather than a
 missing feature. Debug the loop, not the symptom.
 
+## Prior art — the family, and its shared failure
+
+This architecture has close relatives, and naming them is useful mainly because **they nearly all
+failed on the same axis**, which is the axis this doc exists to defend.
+
+| System | What it shares | How it failed on consumers |
+|---|---|---|
+| **STALKER — A-Life** | offline simulation of entities outside the player bubble; emitter/consumer structure | simulated a great deal the player never perceived; much of its reputation is folklore about things happening off-screen that could not be *read* |
+| **Dwarf Fortress** | fact accretion, generated history, conserved detail | legendary depth, legendary opacity — the world's richness is largely unreadable without external tooling |
+| **Kenshi** | faction simulation, no quest-givers, genuine world movement | factions really do move; players rarely perceive *why*, so it reads as arbitrary rather than causal |
+| **Radiant AI** (Oblivion/Skyrim) | needs → intentions → actions | emergent quests read as generic — the failure was a **shallow pool with shallow preconditions**, not the pool pattern itself |
+| **Crusader Kings** | pressure/intention/action on characters | succeeds *because* its consumer bandwidth is enormous (an explicit UI) — a channel this project has deliberately refused (`diegetic-tools-not-hud`) |
+
+Two conclusions, both load-bearing:
+
+1. **The consumer audit is not bookkeeping — it is the genre's characteristic failure mode.** Four
+   independent projects with more resources built simulation the player could not consume. Assuming
+   we would notice is not supported by any of them.
+2. **Crusader Kings is the instructive exception, and its solution is closed to us.** It makes deep
+   simulation legible via a dense information UI. Having ruled that out, our legibility budget must
+   be spent on the diegetic channels in the table above — rumor, traces, bodies — which are
+   *lower bandwidth and lossier by design*. That is a harder problem than CK solved, not an easier
+   one, and it should be planned for as such.
+
+Radiant AI's specific lesson transfers directly to `no-authored-graphs`: pools work, but **pool depth
+and precondition specificity are the whole game**. A pool with few fragments and vague preconditions
+produces exactly the "go to dungeon, kill thing" texture that gave emergent content a bad name.
+
 ## Anti-tree note
 
 Authored trees (dialogue trees, behaviour trees as content, quest graphs) are rejected on scope: the
