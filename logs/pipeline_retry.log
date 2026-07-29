@@ -41,4 +41,59 @@ coverage 100.0%  wrote badlands_sd_sat.dat (35 MB) + out/badlands_sd_s2_preview.
 [3/5] iceland_highland: heights ...
 location: iceland_highland (Landmannalaugar, Iceland)
 zoom 12: tiles x 1821..1840 y 1083..1102 -> 20x20 = 400 tiles
-  row 1/20  row 2/20  row 3/20  row 4/20  row 5/20  row 6/20  row 7/20  row 8/20  row 9/20  row 10/20  row 11/20  row 12/20  row 13/20  row 14/20
+  row 1/20  row 2/20  row 3/20  row 4/20  row 5/20  row 6/20  row 7/20  row 8/20  row 9/20  row 10/20  row 11/20  row 12/20  row 13/20  row 14/20  row 15/20  row 16/20  row 17/20  row 18/20  row 19/20  row 20/20
+elevation range: 8 m .. 1678 m over 5120x5120 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote iceland_highland_detail.dat (24 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (52 MB) + iceland_highland.json  m/px=16.77  camera_px=[2552, 2533]
+[3/5] iceland_highland: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2C_28VCR_20250520_0_L2A  cloud=0.0%  pasted 4392k px  coverage now 26.2%
+  S2B_27VXL_20240629_0_L2A  cloud=0.0%  pasted 201k px  coverage now 27.4%
+  S2A_27VWL_20240610_0_L2A  cloud=0.0%  pasted 65k px  coverage now 27.8%
+  S2C_27VWL_20250520_0_L2A  cloud=0.1%  pasted 4620k px  coverage now 55.3%
+  S2A_27WWM_20251111_1_L2A  cloud=0.3%  pasted 3k px  coverage now 55.3%
+  S2B_27WWM_20231029_0_L2A  cloud=0.3%  pasted 1362k px  coverage now 63.5%
+  S2B_27WXM_20250820_0_L2A  cloud=0.4%  pasted 2008k px  coverage now 75.4%
+  S2A_27WXM_20250820_1_L2A  cloud=0.4%  pasted 1283k px  coverage now 83.1%
+  S2B_27WWM_20240913_0_L2A  cloud=0.4%  pasted 0k px  coverage now 83.1%
+  S2C_27WWM_20251102_0_L2A  cloud=0.6%  pasted 0k px  coverage now 83.1%
+  S2A_27WWM_20250820_0_L2A  cloud=0.7%  pasted 2837k px  coverage now 100.0%
+coverage 100.0%  wrote iceland_highland_sat.dat (29 MB) + out/iceland_highland_s2_preview.jpg
+[3/5] iceland_highland: done in 480s (elapsed 14.5 min)
+[4/5] scablands: heights ...
+location: scablands (Channeled Scablands, WA)
+zoom 12: tiles x 696..709 y 1440..1452 -> 14x13 = 182 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: 54 m .. 1530 m over 3584x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote scablands_detail.dat (15 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (23 MB) + scablands.json  m/px=26.23  camera_px=[1756, 1619]
+[4/5] scablands: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_11TMN_20230827_0_L2A  cloud=0.0%  pasted 2324k px  coverage now 13.9%
+  S2B_11TMM_20240905_0_L2A  cloud=0.0%  pasted 7433k px  coverage now 58.2%
+  S2A_11TLN_20250530_0_L2A  cloud=0.0%  pasted 1717k px  coverage now 68.4%
+  S2A_11TMM_20231006_0_L2A  cloud=0.0%  pasted 8k px  coverage now 68.4%
+  S2A_11TMM_20240831_0_L2A  cloud=0.0%  pasted 0k px  coverage now 68.4%
+coverage 68.4%  wrote scablands_sat.dat (23 MB) + out/scablands_s2_preview.jpg
+[4/5] scablands: done in 247s (elapsed 18.7 min)
+[5/5] salar_uyuni: heights ...
+location: salar_uyuni (Salar de Uyuni, Bolivia)
+zoom 12: tiles x 1276..1285 y 2277..2286 -> 10x10 = 100 tiles
+  row 1/10  row 2/10  row 3/10  row 4/10  row 5/10  row 6/10  row 7/10  row 8/10  row 9/10  row 10/10
+elevation range: 3361 m .. 5321 m over 2560x2560 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote salar_uyuni_detail.dat (6 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (13 MB) + salar_uyuni.json  m/px=35.88  camera_px=[1242, 1315]
+[5/5] salar_uyuni: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_19KGU_20230612_0_L2A  cloud=0.0%  pasted 382k px  coverage now 2.3%
+  S2B_19KGT_20250323_0_L2A  cloud=0.0%  pasted 1026k px  coverage now 8.4%
+coverage 8.4%  wrote salar_uyuni_sat.dat (2 MB) + out/salar_uyuni_s2_preview.jpg
+[5/5] salar_uyuni: done in 127s (elapsed 20.8 min)
+
+pipeline: 5 processed, 0 skipped, 0 failed in 20.8 min

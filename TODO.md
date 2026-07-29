@@ -27,6 +27,23 @@ Cross-session scratchpad for loose ends that don't have a natural home yet — n
 - **Scatter reads L4, not noise.** `mocks/cdlod.gd` `_scatter_trees` currently places trees from `_forest_noise` — a *placeholder* for L4 `tree_density` (layerbuf-v0.md: "runtime scatters deterministically from these"). When L4 bakes, swap noise → field sample; placement machinery (grid+jitter+seed) already correct.
 - **"Fidelity" may be one axis, not two (user insight, 2026-07-27).** Data fidelity (L4 density-field resolution in the mixed-res pyramid) and render fidelity (terrain CDLOD + object LOD tiers) are separate knobs today but want unifying: *everything coarsens with distance/attention from the observer at once* — terrain mesh, object geometry, scatter density, and sim detail (R0–R5). Same family as the knowledge-pyramid / seeded-softmax realization law. Candidate unifying principle to develop; would let one fidelity driver govern all LOD in lockstep. Not yet a decision.
 
+## Ring splice-tiling: FETCH COMPLETE (2026-07-29)
+
+All 33 locations fetched at 84km with Sentinel-2 imagery (1.83 GB, gitignored). 35 patch slots
+placed around the arc (32 distinct + 3 repeats closing the loop). `--selftest` reports **35/35
+streamed OK** with biome-correct results across the board.
+
+Reproduce from scratch: `cd tools/dem && py pipeline.py` (resumable; skips what exists).
+
+- The first run lost 5 locations to a transient DNS drop near the end (`getaddrinfo failed`) —
+  re-running picked up exactly those and completed them. That is the resumability working as
+  intended, and is why it's built that way.
+- **Happy accident worth keeping or killing deliberately:** `salar_uyuni` re-bases to a 1m floor and
+  ends up 8.5% shallow water. Salar de Uyuni's flooded mirror is one of the most famous landscapes
+  on Earth, so this reads well — but it was *not* designed. It happens because the re-base uses the
+  2nd percentile (3654m) while the true min is 3562m, so the lowest ~90m of the patch lands below
+  sea level. Raise `REBASE_FLOOR` if you want it bone dry.
+
 ## Ring splice-tiling: known remaining issues (2026-07-29, overnight session)
 
 - **Patch boundaries still step.** Height re-basing killed the severe case (3.5km cliffs from real absolute elevations — altiplano vs Camargue), so remaining steps are bounded by local relief rather than continental elevation. But adjacent 84km patches are different real places and their edges don't match, so there is still a visible seam wherever one patch's edge is high and its neighbour's is low. **Fix is edge feathering** — near a boundary, sample both patches and lerp by edge proximity. Not attempted: it needs visual iteration to judge blend width, and was done unattended.
