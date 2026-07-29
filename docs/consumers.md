@@ -116,6 +116,53 @@ the start); returning draws come all the way round.
 a pressure with no intention that reads it, an action that intersects no bubble — rather than a
 missing feature. Debug the loop, not the symptom.
 
+## Inference, not transmission — PROPOSED 2026-07-29
+
+The framing that resolves the Crusader Kings problem below: **the player is not meant to receive
+intentions. The player is meant to guess at them.**
+
+Every relative in the prior-art table treats legibility as a *transmission* problem — get the
+simulation's state into the player's head, and judge success by fidelity of transfer. CK solves it
+with bandwidth (a dense UI); the others mostly fail. Under that framing our diegetic channels are a
+handicap: lossy, low-bandwidth, slow.
+
+Invert it and the same channels become correct. If the goal is for the player to **infer** intention
+from emitted signal, then loss is not degradation — it is the *material of the puzzle*. A faction
+that emits patrol cadence, market rhythm, refugee direction and rumor, and never states its aim, is
+readable the way weather or another person is readable: by pattern, over time, with error.
+
+This is simply the knowledge pyramid applied to intention. The player already never receives the
+world's state directly — they hold decaying, distorting claims with provenance. Intention is one
+more thing known that way, and `world-never-reads-knowledge` already guarantees the world will not
+help.
+
+**Design consequences:**
+- Signals must be **patterned enough to be learnable** — this is what a baked *rhythmic signature*
+  (`simulation.md`) is for. Noise cannot be inferred from; rhythm can.
+- Partial legibility is a *target*, not a tolerance. A faction whose intent is instantly obvious has
+  failed as surely as one that is unreadable.
+- The consumer probes gain a sharper success criterion: not "did the player receive the fact?" but
+  **"did the player form a belief, and was it wrong in an interesting way?"**
+
+### Unintention
+
+If intent is inferred, then **misreading is a first-class outcome, not an error case** — and it is
+free, falling straight out of lossy channels:
+
+- **False positive** — coincident signals read as a plan. Two unrelated patrols and a market
+  closure look like mobilisation. Nobody intended anything; the player acts on it anyway.
+- **Misattribution** — already ratified as a dynamic: you wake something, rumor assigns it to
+  whichever faction the tellers already fear (`factions.md`). That is an unintention the *world*
+  suffers, mirroring the ones the player suffers.
+- **Accurate read, obsolete** — the inference was right when the signal was emitted, and the
+  staleness is real (K4). The player is not wrong so much as *late*.
+
+These need no machinery. They are what inference over decaying signals produces by default; the only
+requirement is that the design **not quietly correct them** — no confirmation, no reveal, no
+retroactive "actually they were planning X." The world does not clarify itself. Unintention is the
+thematic payoff of the whole architecture: a game about possession, in which the player's most
+consequential acts are ones they did not mean.
+
 ## Prior art — the family, and its shared failure
 
 This architecture has close relatives, and naming them is useful mainly because **they nearly all
