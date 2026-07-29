@@ -30,20 +30,58 @@ say "I'm going there" before anyone explains why?*
 | **The relay, already on** | 60–75% (high) | Humming before you arrive; someone else's transmission | Sensed / rumor | Mid | Decided (`.decisions/factions.md#relay-woken-by-living-faction`) |
 | **The hub spire** | 90–100% | Visible from everywhere by construction | Visible | Always | Decided (`moments/the_return.md`) |
 | **Second crash site (survivors)** | far from start, TBD | Proposed: wreck visible/inferable; people who share your frame | Visible + rumor | Tier 2 | **Proposed 2026-07-29** — see below |
-| **The armada** | sky | Arrives; theological catastrophe per culture | Inevitability | Mid | Decided (`moments/armada.md`) |
+| **Lit lighthouses** | 18–25% | Burning along the coast at night, purpose forgotten | Visible | Any | **Proposed** — `factions.md` slate #4, fills an empty stretch |
+| **The barrens scar** | ~30% | Visibly wrong terrain; explains the world to anyone paying attention | Visible | Any | **Proposed** — `factions.md` slate #5 |
+| **The armada** | sky | Arrives; theological catastrophe per culture | Inevitability | Mid | Decided (`moments/armada.md`) — and it answers the *survivors'* relay (`.decisions/lore.md`) |
 | **Night sky as map** | all | The sky *is* the map; K1 acquisition | Visible | Always | Decided (`.decisions/knowledge.md`) |
+
+## Two kinds of draw — PROPOSED 2026-07-29
+
+Listing the inventory exposed that every decided draw is the same *kind*: an authored landmark,
+perceivable from the start, that stops pulling once reached. That is why the middle sagged. The fix
+is not more landmarks — it is a second kind:
+
+**Standing draws** — authored, visible from far away, mostly available night one. The enclave's
+lights, the spire, the ridge, the lighthouses, the barrens scar. They orient. They are the map.
+They are also *spent* on arrival, and no amount of them fixes the mid-game.
+
+**Returning draws** — emergent, produced by the dynamics catalog (`factions.md`), and they exist
+*because the player acted*. They cannot appear early because there is no history yet:
+
+- **Misattributed reactivation** — you wake something; rumor physics assign it to whichever faction
+  the tellers already fear. A region becomes newly hostile, or newly interested, *in you*. → a place
+  you now have reason to go, that did not exist before you touched anything.
+- **Stolen-tool provenance** — the binoculars you traded turn up on a raider's body two regions on.
+  → a trail with your own fingerprints on it.
+- **Refugee wave → pinch camps** — the director schedules one fact; chain topology does the rest.
+  → a new settlement where there was none, made of consequence.
+- **Pinch-toll smuggler paths** — tolls rise, caravans reroute, a path forms through worse terrain.
+  → an opportunity gradient nobody authored.
+
+The mid-game is not under-supplied with landmarks. It is the phase where **the world starts
+returning the player's own actions to them**, and those returns *are* the draws. This also answers
+the decay question below for free: standing draws are spent on arrival, returning draws are
+generated continuously by play, so the pull does not run out.
+
+**Consequence for build order:** the dynamics catalog is not flavour to add after the simulation
+works. It is the mid-game's entire pull. Rumor propagation, fact provenance, and the refugee/toll
+pressure loops are load-bearing content systems, not polish.
 
 ## Open shape questions
 
-- **Distribution.** Draws cluster at 0–8% (three) and 40%+ (three), with a gap through the sea and
-  barrens stretch (18–36%). That stretch has the alloy barrens — "the one biome that explains the
-  whole world to anyone paying attention" — which may be a draw already and simply isn't written as
-  one. Needs checking, not assuming.
-- **Timing.** Almost every decided draw is available *immediately* (visible night one) or *late*.
-  Few are earned mid-game. If the mid-game has no new draws appearing, the middle sags — the
-  no-missions design has nothing else to pull with.
-- **Decay.** Does a draw stay pulling after it is reached? The enclave lights stop being a goal once
-  you arrive; what replaces them? (Ties to the bone-thrower reading journal pins.)
+- ~~Distribution gap at 18–36%~~ — **addressed** by the proposed lighthouse chain and barrens scar
+  (`factions.md` slate). Confirms the gap was a *faction* gap, not a landmark gap: the stretch had
+  no one living in it, so it emitted nothing.
+- ~~Timing / mid-game sag~~ — **addressed** by the standing-vs-returning split above.
+- ~~Decay~~ — **addressed**: standing draws are spent on arrival by design; returning draws are
+  generated continuously by play.
+- **Do returning draws need to be legible as consequences?** If the player cannot tell that the
+  hostile region is hostile *because of something they did*, the draw still works mechanically but
+  loses its whole thematic point (the possession theme wearing politics). Rumor already carries
+  provenance — the question is whether the player ever gets close enough to the chain to read it.
+- **Can a standing draw be re-charged?** The enclave stops pulling once reached. Could a returning
+  draw re-target an old landmark (the enclave now under siege, the spire now lit)? Cheaper than new
+  geography if it works.
 
 ## Standing habit
 

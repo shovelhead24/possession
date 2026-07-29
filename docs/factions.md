@@ -49,6 +49,35 @@ Patterns the R-stack should be able to produce — each is pressures/intentions 
 
 Factions (sparse islands of humanity — aesthetic.md's emptiness reconciliation) are not static dioramas triggered by the player's arrival; they run on *rhythms* whether watched or not, via TempoBuf's regional clocks (simulation.md) given a pulse rather than a flat rate: market days, patrol/caravan schedules, seasonal raids, the build-and-release arc of a border dispute. Design payoff: the same node feels different depending on *when* you arrive (market day vs. dead of night vs. the eve of a raid) — variety on revisit with no new authored content, and a stronger witnessing beat (you catch a living thing mid-breath). Musical model: "The Riddle" — a riff that builds, resolves, rebuilds. This is the temporal anti-boredom lever; see aesthetic.md.
 
+## Faction Slate — PROPOSED 2026-07-29
+
+A first concrete chain, built from what is already decided: `geography.md`'s arc stretches supply
+position, `civilization.md`'s bands supply capability, the cosmology axis supplies difference, and
+each faction is asked the question this doc previously never asked of any of them — **what does it
+emit that a player can perceive from outside?** (See `draws.md`.) Positions and names are
+placeholders; the *shape* is what is being proposed.
+
+| # | Faction | Arc | Band | Cosmology | Wants (pressure) | Emits (draw) |
+|---|---|---|---|---|---|---|
+| 1 | Crash-region fallen | 0–3% | regressed | **taboo** | to be left alone; the forest is a wall not a border | none outward — they are where you *start*, the first people found and the most fallen |
+| 2 | THE city | 3–8% | enclave-class | instrumental | survival it does not get | its **death**, witnessed from the ridge |
+| 3 | Ford-town corridor | 10–15% | frontier | pragmatic (weak instrumental) | control of crossings; toll revenue | the truck-and-saloon belt — first real tech, first real politics |
+| 4 | Lighthouse keepers | 18–25% | frontier | **cargo-cult** | to keep the lights burning — the *why* is long lost | **lit lighthouses along the coast at night** |
+| 5 | Barrens-edge salvagers | ~30% | regressed/frontier mix | **taboo** (work the edge, never enter) | salvage without transgression | the **barrens scar** itself — visible, wrong, explains the world to anyone paying attention |
+| 6 | The enclave | 40–55% | enclave | **instrumental** | to stay the last lit thing | its **lights**, dominating a quadrant of night sky |
+| 7 | Highland holds | 60–75% | regressed pockets | **taboo** or cargo-cult (per hold) | altitude, defensibility, the ancient above them | the **relay**, humming where it should not be |
+| 8 | Survivors | far, TBD | off-band | **purest instrumental** | rescue — already requested, catastrophically | the **second crash site** |
+
+Notes on the shape:
+- **Every cosmology position is occupied more than once**, so the axis differentiates rather than
+  labels — two taboo factions (1, 5) behave differently because band and geography differ.
+- **Salvagers are edge-dwellers, not a territory.** `biomes.md` gives the barrens no agriculture and
+  no settlements — only crossings and camps at the rim. A faction whose homeland is a *border*.
+- **The lighthouse keepers are the cheapest strong idea here**: cargo-cult maintenance of
+  infrastructure whose purpose is forgotten, emitting the most legible night-time draw in the game,
+  in the arc stretch that currently has none.
+- **Gap check:** this fills 18–25% and ~30%, the two stretches `draws.md` flagged as empty.
+
 ## The No-Missions Boundary
 
 NPCs may *ask* for help — honest simulation, people ask. But: no quest log entry, no reward contract, no tracking UI. The ask is an encounter (R4); caring is the player's journal pin. Factions never court the player as a content dispenser.
