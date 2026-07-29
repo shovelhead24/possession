@@ -260,7 +260,9 @@ var _walk_lat := 0.0
 
 # fly speed: [Shift] used to be held-for-boost; now a 3-way toggle (normal/boost/5x-boost) since
 # a 3000km ring makes even the old boost speed tedious for covering real distance.
-const FLY_SPEEDS := [60.0, 800.0, 4000.0]
+# 20x boost (16000 m/s) laps the 3000km ring in ~3min, so the whole circumference is reviewable in
+# one sitting rather than 12 minutes at 5x.
+const FLY_SPEEDS := [60.0, 800.0, 4000.0, 16000.0]
 var _fly_speed_idx := 0
 
 # Drive mode: car lives in ring coordinates, no physics — terrain sampled analytically
@@ -1717,7 +1719,7 @@ func _update_hud() -> void:
 	var rise20: float = 20_000.0 * 20_000.0 / (2.0 * r)
 	var rise50: float = 50_000.0 * 50_000.0 / (2.0 * r)
 	var band_deg: float = rad_to_deg(2.0 * atan((w * 0.5) / (2.0 * r)))
-	var fly_speed_name: String = ["normal", "boost", "5x boost"][_fly_speed_idx]
+	var fly_speed_name: String = ["normal", "boost", "5x boost", "20x boost"][_fly_speed_idx]
 	var mode := "FLY %s (WASD + Space/Ctrl, [Shift] cycle speed, ESC to release, [V] cycle mode)" % fly_speed_name if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] cycle drive/walk)"
 	if _mode == Mode.DRIVE:
 		mode = "DRIVE  %d km/h  (WASD steer, [V] cycle mode)" % int(abs(_car_speed) * 3.6)

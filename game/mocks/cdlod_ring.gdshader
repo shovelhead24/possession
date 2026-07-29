@@ -283,20 +283,24 @@ void fragment() {
 	// full-res relief inside the home DEM: perturb the (mesh-resolution) normal by the baked
 	// gradients so the starting area reads crisp even where the LOD mesh is coarse. Applied in
 	// world XZ, which is only strictly right near arc 0 -- fine, since this texture is home-only.
-	if (in_dem && has_detail && !is_water) {
-		vec4 d = texture(detail_tex, v_demuv);
-		vec3 pert = vec3((d.r - 0.5) * 2.4, 0.0, (d.g - 0.5) * 2.4) * dem_scale * normal_strength;
-		n = normalize(n + pert);
-	} else if (!in_dem && hires_has_detail && !is_water && in_hires(v_ring)) {
-		// same treatment for the streamed patch, so every splice gets the home area's fine relief
-		// rather than only millstreet. Rotated by the ring bend, unlike the home branch, because
-		// this one is used arbitrarily far around the arc where world XZ != ring tangent.
-		vec4 d = texture(hires_detail_tex, rect_uv(hires_rect, v_ring));
-		vec3 pert = vec3((d.r - 0.5) * 2.4, 0.0, (d.g - 0.5) * 2.4) * dem_scale * normal_strength;
-		float th = v_ring.x / max(ring_radius, 1.0);
-		float ct = cos(th), st = sin(th);
-		pert = vec3(pert.x * ct - pert.y * st, pert.x * st + pert.y * ct, pert.z);
-		n = normalize(n + pert);
+	// Full-res relief from the baked gradient normals (home patch or streamed splice -- same asset,
+	// same treatment). The gradients are authored in FLAT ring space, so they must be rotated onto
+	// the cylinder by the same bend the vertices got; otherwise the lighting detail is skewed
+	// relative to the surface it sits on, by an angle that grows with arc distance. The home patch
+	// spans +/-42km = +/-5deg, so it needs this too -- it was previously skipped there on the
+	// grounds that arc 0 makes it identity, which is only true at the patch's exact centre.
+	if (!is_water) {
+		bool use_home = in_dem && has_detail;
+		bool use_hires = !in_dem && hires_has_detail && in_hires(v_ring);
+		if (use_home || use_hires) {
+			vec4 d = use_home ? texture(detail_tex, v_demuv)
+							  : texture(hires_detail_tex, rect_uv(hires_rect, v_ring));
+			vec3 pert = vec3((d.r - 0.5) * 2.4, 0.0, (d.g - 0.5) * 2.4) * dem_scale * normal_strength;
+			float th = v_ring.x / max(ring_radius, 1.0);
+			float ct = cos(th), st = sin(th);
+			pert = vec3(pert.x * ct - pert.y * st, pert.x * st + pert.y * ct, pert.z);
+			n = normalize(n + pert);
+		}
 	}
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
 	float wall_lit = wall_shadow(v_world_pos.z, v_height, ring_width * 0.5);   // rim wall onto the floor
