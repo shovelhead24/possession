@@ -19,6 +19,15 @@ uniform bool has_sat = false;
 uniform sampler2D road_tex : filter_linear;
 uniform bool has_roads = false;
 uniform float sat_gain = 1.35;
+// Secondary splice patches placed around the arc (see ring_vibes.gd PATCHES). One Texture2DArray,
+// one layer per patch, at reduced resolution -- these are travel scenery, not the play area, and
+// full-res copies of all of them would be a large VRAM bill for detail nobody stands next to.
+// The high-res home patch (dem_tex above) still wins wherever it covers.
+uniform sampler2DArray patch_tex;
+uniform int patch_count = 0;
+uniform vec4 patch_rect[8];   // (arc_centre, lat_centre, half_arc, half_lat) in metres
+uniform vec4 patch_tint[8];
+uniform float ring_circumference = 3000000.0;
 uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;
 uniform float disp = 300.0;
@@ -51,6 +60,7 @@ varying vec2 v_demuv;
 varying vec2 v_tile_uv;   // repeating drape UV for the beyond-DEM fallback (same imagery, tiled)
 varying vec3 v_world_pos;
 varying float v_height;   // metres above the ring floor (v_h is normalised, no good for shadowing)
+varying vec2 v_ring;      // (arc, lat) -- needed in fragment for the splice-patch lookup
 
 bool in_dem_bounds(vec2 uv) {
 	return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0;
@@ -76,13 +86,43 @@ float wall_shadow(float lat, float h, float half_w) {
 	return smoothstep(wall_top - wall_shadow_soft, wall_top + wall_shadow_soft, h_at_wall);
 }
 
+// index of the splice patch containing this ring point, or -1. Arc is compared with wraparound so
+// a patch sitting near the 0%/100% seam still matches from either side.
+int patch_at(vec2 wxz) {
+	for (int i = 0; i < 8; i++) {
+		if (i >= patch_count) { break; }   // constant bound + break: dynamic loop bounds are unreliable on GLES3
+		vec4 r = patch_rect[i];
+		float half_c = ring_circumference * 0.5;
+		float d_arc = wxz.x - r.x;
+		d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);   // wrap to [-C/2, C/2]
+		if (abs(d_arc) < r.z && abs(wxz.y - r.y) < r.w) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+vec2 patch_uv(int i, vec2 wxz) {
+	vec4 r = patch_rect[i];
+	float d_arc = wxz.x - r.x;
+	d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);
+	return vec2(d_arc / (2.0 * r.z) + 0.5, 0.5 - (wxz.y - r.y) / (2.0 * r.w));
+}
+
 float sample_h(vec2 wxz) {
+	// 1. high-res home patch wins wherever it covers
 	if (use_dem) {
 		vec2 uv = vec2(dem_cam.x + wxz.x / dem_mpp, dem_cam.y - wxz.y / dem_mpp) / dem_size;
 		if (in_dem_bounds(uv)) {
 			return texture(dem_tex, uv).r * dem_scale;
 		}
 	}
+	// 2. secondary splices placed around the arc
+	int pi = patch_at(wxz);
+	if (pi >= 0) {
+		return texture(patch_tex, vec3(patch_uv(pi, wxz), float(pi))).r * dem_scale;
+	}
+	// 3. procedural everywhere else -- most of 3000km of arc
 	return texture(heightmap, wxz / feature).r * disp;
 }
 
@@ -106,6 +146,7 @@ void vertex() {
 	v_n = normalize(vec3(hl - hr, 2.0 * e, hd - hu));
 	v_h = h / max(disp, 1.0);
 	v_height = h;
+	v_ring = wxz;
 	float y = (VERTEX.y < -0.5) ? h - node_size * skirt : h;
 	vec3 world;
 	if (ring_radius > 0.0) {
@@ -148,6 +189,19 @@ void fragment() {
 		if (has_roads) {
 			float road = texture(road_tex, uv).r;
 			base = mix(base, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
+		}
+	}
+	// splice-patch tint: stands in for a per-patch satellite drape (fetching Sentinel-2 for every
+	// patch is a separate, much heavier job). Only applied outside the home DEM, which has real
+	// imagery. Edge-feathered so patches don't end on a hard colour line against the procedural.
+	if (!in_dem) {
+		int pi = patch_at(v_ring);
+		if (pi >= 0) {
+			vec4 r = patch_rect[pi];
+			vec2 uv = patch_uv(pi, v_ring);
+			vec2 edge = min(uv, 1.0 - uv);                       // 0 at patch border, 0.5 at centre
+			float feather = smoothstep(0.0, 0.06, min(edge.x, edge.y));
+			base = mix(base, patch_tint[pi].rgb, 0.85 * feather);
 		}
 	}
 	if (show_lod) {

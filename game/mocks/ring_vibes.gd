@@ -111,6 +111,33 @@ var _dem_hf_mpp := 46.9
 var _dem_hf_cam := Vector2.ZERO
 var _show_lod := false            # [M] LOD-colour debug view
 
+# ---------------------------------------------------------------------------------------------
+# Multi-patch splice system (2026-07-29). millstreet stays the high-res HOME patch (loaded above,
+# full resolution, where you actually play). Secondary splices are placed around the arc at their
+# geography.md positions and packed into one Texture2DArray at reduced resolution -- they exist to
+# make the ring VARY as you travel, are only ever seen at distance or in passing, and 7 of them at
+# full res would be both a big VRAM bill and pointless detail. Gaps between patches fall through to
+# procedural terrain, which is unavoidable anyway: 3000km of arc, patches are 22-84km.
+# ---------------------------------------------------------------------------------------------
+const PATCH_RES := 512            # per-patch resolution in the array (was 1024-1792 at source)
+const MAX_PATCHES := 8            # must match the shader's array size
+# arc_pct follows docs/geography.md's walked-spinward layout; tint is a broad biome colour used
+# instead of a satellite drape (fetching Sentinel-2 for every patch is a separate, heavier job).
+const PATCHES := [
+	{"name": "schwarzwald", "arc_pct": 0.04, "tint": Color(0.13, 0.22, 0.14)},   # conifer night-forest
+	{"name": "wye_valley", "arc_pct": 0.12, "tint": Color(0.32, 0.40, 0.22)},    # ford-town corridor
+	{"name": "camargue", "arc_pct": 0.21, "tint": Color(0.40, 0.44, 0.36)},      # delta marsh (the sea)
+	{"name": "salar_uyuni", "arc_pct": 0.30, "tint": Color(0.78, 0.78, 0.80)},   # alloy-barrens analogue
+	{"name": "namib_dunes", "arc_pct": 0.47, "tint": Color(0.64, 0.42, 0.24)},   # desert, enclave flank
+	{"name": "dolomites", "arc_pct": 0.67, "tint": Color(0.50, 0.48, 0.46)},     # highland/wall country
+	{"name": "badlands_sd", "arc_pct": 0.95, "tint": Color(0.54, 0.44, 0.34)},   # eroded, hub-spire approach
+]
+var _patch_tex: Texture2DArray = null
+var _patch_rects := PackedVector4Array()   # (arc_centre, lat_centre, half_arc, half_lat) metres
+var _patch_tints := PackedColorArray()
+var _patch_fields: Array = []              # CPU copies, so placement matches what's drawn
+var _patch_names: Array = []
+
 enum Mode { FLY, DRIVE, WALK }
 var _mode: Mode = Mode.FLY
 const WALK_SPEED := 10.0   # reused from game/player.gd's SPEED for consistency with the real game
@@ -166,6 +193,7 @@ func _ready() -> void:
 	_noise.frequency = 1.0 / 9_000.0
 	_load_dem()
 	_build_dem_texture()
+	_load_patches()
 
 	_cam = Camera3D.new()
 	_cam.position = Vector3(0, 120, 0)
@@ -238,6 +266,12 @@ func _ready() -> void:
 		if _roads_tex:
 			mat.set_shader_parameter("road_tex", _roads_tex)
 			mat.set_shader_parameter("has_roads", true)
+		if _patch_tex:
+			mat.set_shader_parameter("patch_tex", _patch_tex)
+			mat.set_shader_parameter("patch_count", _patch_rects.size())
+			mat.set_shader_parameter("patch_rect", _patch_rects)
+			mat.set_shader_parameter("patch_tint", _patch_tints)
+			mat.set_shader_parameter("ring_circumference", CIRCUMFERENCES[c_idx])
 		var mi := MeshInstance3D.new()
 		mi.mesh = _grid_mesh
 		mi.material_override = mat
@@ -393,6 +427,83 @@ func _build_dem_texture() -> void:
 	_dem_hf_cam = Vector2(float(_dem_cam.x) * 0.5, float(_dem_cam.y) * 0.5)
 	print("ring_vibes: DEM texture %dx%d, mpp=%.1f" % [dw, dh, _dem_hf_mpp])
 
+func _here_splice() -> String:
+	# which splice the camera is currently standing in, for the HUD
+	var r := _radius()
+	var arc: float = atan2(_cam.global_position.x, r - _cam.global_position.y) * r
+	if _dem_hf_w > 0:
+		var fx := _dem_hf_cam.x + arc / _dem_hf_mpp
+		var fy := _dem_hf_cam.y - _cam.global_position.z / _dem_hf_mpp
+		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
+			return "millstreet (home, full res)"
+	var pi := _patch_at(arc, _cam.global_position.z)
+	return str(_patch_names[pi]) if pi >= 0 else "procedural (no splice)"
+
+func _load_patches() -> void:
+	# each splice is resampled to PATCH_RES^2 and stacked into one Texture2DArray; a CPU copy is
+	# kept alongside so _terrain_h returns exactly what the shader draws (render-authoritative
+	# placement -- see .decisions/terrain.md#render-authoritative-placement).
+	var imgs: Array[Image] = []
+	_patch_rects = PackedVector4Array()
+	_patch_tints = PackedColorArray()
+	_patch_fields = []
+	_patch_names = []
+	var circumference: float = CIRCUMFERENCES[c_idx]
+	for p in PATCHES:
+		if imgs.size() >= MAX_PATCHES:
+			break
+		var base: String = "res://mocks/dem/%s" % p["name"]
+		if not (FileAccess.file_exists(base + ".r16") and FileAccess.file_exists(base + ".json")):
+			continue
+		var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".json"))
+		var w := int(meta["w"])
+		var h := int(meta["h"])
+		var mpp := float(meta["m_per_px"])
+		var raw := FileAccess.get_file_as_bytes(base + ".r16")
+		var floats := PackedFloat32Array()
+		floats.resize(PATCH_RES * PATCH_RES)
+		for y in PATCH_RES:
+			var sy: int = mini(int(float(y) / float(PATCH_RES) * float(h)), h - 1)
+			for x in PATCH_RES:
+				var sx: int = mini(int(float(x) / float(PATCH_RES) * float(w)), w - 1)
+				floats[y * PATCH_RES + x] = float(raw.decode_u16((sy * w + sx) * 2)) / 16.0
+		imgs.append(Image.create_from_data(PATCH_RES, PATCH_RES, false, Image.FORMAT_RF, floats.to_byte_array()))
+		_patch_fields.append(floats)
+		_patch_names.append(p["name"])
+		_patch_rects.append(Vector4(
+			fposmod(float(p["arc_pct"]) * circumference, circumference),   # arc centre
+			0.0,                                                            # lat centre (ring midline)
+			float(w) * mpp * 0.5, float(h) * mpp * 0.5))                    # half extents
+		_patch_tints.append(p["tint"])
+	if imgs.is_empty():
+		print("ring_vibes: no secondary splice patches found (run tools/dem export for them)")
+		return
+	_patch_tex = Texture2DArray.new()
+	_patch_tex.create_from_images(imgs)
+	print("ring_vibes: %d splice patches loaded @ %d^2 -> %s" % [imgs.size(), PATCH_RES, str(_patch_names)])
+
+func _patch_at(arc: float, lat: float) -> int:
+	# CPU mirror of the shader's patch lookup. Arc is compared with wraparound so a patch near the
+	# 0%/100% seam still matches from either side.
+	var circumference: float = CIRCUMFERENCES[c_idx]
+	for i in _patch_rects.size():
+		var r := _patch_rects[i]
+		var d_arc: float = absf(wrapf(arc - r.x, -circumference * 0.5, circumference * 0.5))
+		if d_arc < r.z and absf(lat - r.y) < r.w:
+			return i
+	return -1
+
+func _patch_height(i: int, arc: float, lat: float) -> float:
+	var r := _patch_rects[i]
+	var circumference: float = CIRCUMFERENCES[c_idx]
+	var d_arc: float = wrapf(arc - r.x, -circumference * 0.5, circumference * 0.5)
+	var u: float = clampf(d_arc / (2.0 * r.z) + 0.5, 0.0, 0.999)
+	var v: float = clampf(0.5 - (lat - r.y) / (2.0 * r.w), 0.0, 0.999)
+	var field: PackedFloat32Array = _patch_fields[i]
+	var px := int(u * float(PATCH_RES))
+	var py := int(v * float(PATCH_RES))
+	return field[py * PATCH_RES + px] * dem_scale
+
 func _terrain_h(arc: float, lat: float) -> float:
 	# EXACT match to what the CDLOD shader draws (same half-res field + UV mapping) — render-
 	# authoritative placement without raycast/collision (near camera is always CDLOD's finest LOD,
@@ -408,9 +519,12 @@ func _terrain_h(arc: float, lat: float) -> float:
 			var h01 := _dem_hf[(y0 + 1) * _dem_hf_w + x0]
 			var h11 := _dem_hf[(y0 + 1) * _dem_hf_w + x0 + 1]
 			return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), ty) * dem_scale
-	# outside the DEM patch (still possibly inside the CDLOD bubble): approximate procedural match to
-	# the shader's noise-heightmap fallback. Nobody walks/drives this far from spawn in a test
-	# session, so shape-similar (not bit-exact) is an accepted prototype-grade approximation.
+	# outside the home DEM: try the secondary splice patches placed around the arc
+	var pi := _patch_at(arc, lat)
+	if pi >= 0:
+		return _patch_height(pi, arc, lat)
+	# no patch here: approximate procedural match to the shader's noise-heightmap fallback. Gaps are
+	# unavoidable -- 3000km of arc, patches are 22-84km -- so most of the ring is this.
 	return maxf(_noise.get_noise_2d(arc * 0.05, lat * 0.05), 0.0) * DISP
 
 func _dem_sample(arc: float, lat: float) -> float:
@@ -1198,6 +1312,7 @@ func _update_hud() -> void:
 		"TERRAIN %s   LOD nodes %d   trees %d (LOD0/1/2/bill %d/%d/%d/%d)" % [
 			("none (noise)" if _dem_w == 0 else "%s  height x%.0f" % [_dem_name, dem_scale]),
 			_used, _tree_ground.size(), lc[0], lc[1], lc[2], lc[3]],
+		"        splice here: %s   (%d patches placed around the arc)" % [_here_splice(), _patch_rects.size()],
 		"        [H] terrain height   [G]/[B] tree LOD band x%.2f   [M] LOD colour %s" % [
 			_tree_lod_scale, "ON" if _show_lod else "off"],
 		"",
