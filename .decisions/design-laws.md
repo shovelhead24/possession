@@ -50,6 +50,19 @@ Laws a future session could violate silently — the core reason this log exists
 **Decision:** Player knowledge (knowledge.md) is read by the bone-thrower and dialogue selection only. World simulation and realization never read it.
 **Why:** The ring doesn't know you're watching. Indifference enforced by API surface, not by discipline.
 
+### no-authored-graphs — Content is precondition-tagged pools, never authored trees or graphs
+**Date:** 2026-07-29
+**Status:** active
+**Decision:** No dialogue trees, quest graphs, or behaviour trees-as-content. Content is authored as a **pool of fragments tagged with preconditions**, selected at runtime by a seeded pick against live facts. No nodes, no edges, no traversal.
+**Why:** Hand-authoring cost scales with branch count, and this project is bounded by what one person plus AI assistance can build — a branching structure large enough to feel alive is exactly the thing the budget cannot pay for, and the failure is silent (you find out late, having built half of it). The pool pattern is already established in two places rather than being new: the dialogue bake and the ending-vignette assembly both do precisely this. Pools also degrade gracefully — an under-populated pool yields repetition, whereas an under-populated tree yields dead ends.
+**Corollary:** consequence systems inherit this. "The world returns your actions to you" (`docs/draws.md` returning draws) must be pools + preconditions + provenance, never an authored consequence graph.
+
+### consumer-audit — Every simulated quantity names a consumer, or is coarsened or cut
+**Date:** 2026-07-29
+**Status:** active
+**Decision:** Every simulated quantity must be traceable to at least one named **player consumer** (`docs/consumers.md`) — or be explicitly classified as a cheap hidden driver, coarsened until it costs nothing, or cut. The rule is not "everything must be visible"; it is "we must know which of the three each thing is."
+**Why:** The scope failure this project is most exposed to is not too few features but **simulation nobody perceives** — state computed, propagated and conserved that never reaches a player. It is invisible in playtesting by construction, so it cannot be caught by looking at the game; only an explicit audit catches it. Generalises the reasoning already used in `world-never-reads-knowledge` ("exactly two consumers") from knowledge to everything. Claimed consumers are hypotheses until a mock shows a player consuming them — same evidentiary standard the terrain work used.
+
 ### interaction-fidelity — Tiers 0-4 ratified as a constraint, not a system
 **Date:** 2026-07-19
 **Status:** active
