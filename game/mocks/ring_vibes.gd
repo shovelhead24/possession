@@ -183,10 +183,33 @@ var _tree_center := Vector2.ZERO      # (arc, lat) the current forest was scatte
 const TREE_RESCATTER := 700.0         # re-scatter once the camera has moved this far from it
 var _patch_tex: Texture2DArray = null
 var _patch_col_tex: Texture2DArray = null   # real Sentinel-2 per patch, replaces the flat tints
+
+# --- streaming high-res tier -------------------------------------------------------------------
+# The 512^2 array is 164 m/px over an 84km patch -- fine at distance, mush underfoot. So the patch
+# you are actually STANDING IN gets streamed in at HIRES_RES and takes priority. Decoding a 3584^2
+# u16 heightmap is a multi-million-iteration GDScript loop (~1s), which would hitch every time you
+# crossed a patch boundary, so it runs on a WorkerThreadPool task and the texture is created on the
+# main thread when the task reports done. Every step is guarded: any failure just leaves the array
+# tier serving that patch, which is exactly the pre-streaming behaviour.
+const HIRES_RES := 1536
+var _hires_tex: ImageTexture = null
+var _hires_col_tex: ImageTexture = null
+var _hires_idx := -1              # patch index currently resident at high res
+var _hires_pending := -1          # patch index being decoded right now
+var _hires_task := -1             # WorkerThreadPool task id, -1 = idle
+var _hires_result := {}           # filled by the worker, consumed on the main thread
+var _hires_field := PackedFloat32Array()   # CPU copy, so _terrain_h matches the streamed tier
+var _hires_res := 0
+var _jump_idx := -1               # [,] / [.] cycle through loaded splices
 var _patch_rects := PackedVector4Array()   # (arc_centre, lat_centre, half_arc, half_lat) metres
 var _patch_tints := PackedColorArray()
 var _patch_fields: Array = []              # CPU copies, so placement matches what's drawn
 var _patch_names: Array = []
+# PATCHES entries whose data hasn't been fetched are SKIPPED at load, so loaded-patch indices do
+# NOT line up with PATCHES indices. Everything downstream must go through these parallel arrays --
+# indexing PATCHES with a loaded-patch index silently reads a different location's biome/filename
+# (caught by the --selftest: it made 6 of 10 streams load the wrong file and fail).
+var _patch_meta: Array = []
 
 enum Mode { FLY, DRIVE, WALK }
 var _mode: Mode = Mode.FLY
@@ -350,6 +373,8 @@ func _ready() -> void:
 	if _dem_w > 0:
 		_cam.position.y = _terrain_h(0.0, 0.0) + 40.0  # spawn just above Millstreet
 
+	if OS.get_cmdline_user_args().has("--selftest"):
+		_run_selftest()
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
 	_clouds.ring_radius = _radius()   # must be set BEFORE _ready() builds the bent sheets
 	_clouds.ring_width = WIDTHS[w_idx]
@@ -480,6 +505,122 @@ func _build_dem_texture() -> void:
 	_dem_hf_cam = Vector2(float(_dem_cam.x) * 0.5, float(_dem_cam.y) * 0.5)
 	print("ring_vibes: DEM texture %dx%d, mpp=%.1f" % [dw, dh, _dem_hf_mpp])
 
+func _run_selftest() -> void:
+	# `--selftest` (after a -- separator) walks every loaded splice and reports whether the
+	# high-res stream landed and whether CPU height agrees with the patch data. Exists because the
+	# streaming path can't be exercised from a headless smoke test any other way -- there is no one
+	# to press [.] -- and a threaded decode silently falling back to the array tier would otherwise
+	# look identical to success in the log.
+	await get_tree().create_timer(1.0).timeout
+	print("SELFTEST: %d patches loaded" % _patch_rects.size())
+	var streamed := 0
+	for i in _patch_rects.size():
+		_jump_splice(1)
+		var waited := 0.0
+		while _hires_idx != _jump_idx and waited < 12.0:
+			await get_tree().create_timer(0.25).timeout
+			waited += 0.25
+		var r := _patch_rects[_jump_idx]
+		var hcpu := _terrain_h(r.x, r.y)
+		var ok: bool = _hires_idx == _jump_idx
+		if ok:
+			streamed += 1
+		print("SELFTEST  %-18s arc %5.1f%%  stream=%s (%.1fs)  cpu_h=%.0fm  trees=%d" % [
+			_patch_names[_jump_idx], 100.0 * r.x / CIRCUMFERENCES[c_idx],
+			"OK" if ok else "FAIL", waited, hcpu, _tree_ground.size()])
+	print("SELFTEST: %d/%d streamed OK" % [streamed, _patch_rects.size()])
+	get_tree().quit()
+
+func _jump_splice(dir: int) -> void:
+	# hop to the next/previous loaded splice along the arc. 3000km at 4000 m/s is 12 minutes of
+	# flying to see the whole ring, which makes reviewing the splices impractical without this.
+	if _patch_rects.is_empty():
+		return
+	_jump_idx = wrapi(_jump_idx + dir, 0, _patch_rects.size())
+	var r := _patch_rects[_jump_idx]
+	var rad := _radius()
+	var theta: float = r.x / rad
+	var h := _terrain_h(r.x, r.y) + 250.0
+	_cam.position = _ring_pos(theta, r.y, h)
+	# look spinward and slightly down, so you arrive facing across the patch rather than at sky
+	var fwd := _ring_pos(theta + 0.004, r.y, h - 120.0) - _cam.position
+	_look = Vector2(atan2(-fwd.x, -fwd.z), -0.18)
+	_cam.rotation = Vector3(_look.y, _look.x, 0)
+	_tree_center = Vector2(r.x, r.y)
+	_scatter_trees()
+	print("ring_vibes: jumped to %s (%.1f%% arc)" % [_patch_names[_jump_idx], 100.0 * r.x / CIRCUMFERENCES[c_idx]])
+	_update_hud()
+
+func _hires_decode(idx: int) -> void:
+	# WORKER THREAD. Only touches FileAccess + Image (both thread-safe in Godot 4); the texture is
+	# created by the main thread in _hires_poll(). Result is handed over via _hires_result.
+	var out := {"idx": idx, "ok": false}
+	var base: String = "res://mocks/dem/%s" % _patch_names[idx]   # NOT PATCHES[idx], see _patch_meta
+	if FileAccess.file_exists(base + ".r16") and FileAccess.file_exists(base + ".json"):
+		var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".json"))
+		var w := int(meta["w"])
+		var h := int(meta["h"])
+		var raw := FileAccess.get_file_as_bytes(base + ".r16")
+		if raw.size() >= w * h * 2:
+			var res: int = mini(HIRES_RES, mini(w, h))
+			var floats := PackedFloat32Array()
+			floats.resize(res * res)
+			for y in res:
+				var sy: int = mini(int(float(y) / float(res) * float(h)), h - 1)
+				var row := sy * w
+				for x in res:
+					var sx: int = mini(int(float(x) / float(res) * float(w)), w - 1)
+					floats[y * res + x] = float(raw.decode_u16((row + sx) * 2)) / 16.0
+			out["img"] = Image.create_from_data(res, res, false, Image.FORMAT_RF, floats.to_byte_array())
+			out["field"] = floats
+			out["res"] = res
+			out["ok"] = true
+			if FileAccess.file_exists(base + "_sat.dat"):
+				var ci := Image.new()
+				if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
+					ci.resize(res, res, Image.INTERPOLATE_LANCZOS)
+					ci.convert(Image.FORMAT_RGB8)
+					out["col"] = ci
+	_hires_result = out
+
+func _hires_poll() -> void:
+	# MAIN THREAD. Kick off a decode when the camera changes patch; adopt the result when ready.
+	if _hires_task >= 0:
+		if not WorkerThreadPool.is_task_completed(_hires_task):
+			return
+		WorkerThreadPool.wait_for_task_completion(_hires_task)
+		_hires_task = -1
+		var r: Dictionary = _hires_result
+		_hires_result = {}
+		if r.get("ok", false) and int(r.get("idx", -1)) == _hires_pending:
+			_hires_tex = ImageTexture.create_from_image(r["img"])
+			_hires_col_tex = ImageTexture.create_from_image(r["col"]) if r.has("col") else null
+			_hires_idx = int(r["idx"])
+			_hires_field = r["field"]
+			_hires_res = int(r["res"])
+			var rect := _patch_rects[_hires_idx]
+			for m in _mats:
+				m.set_shader_parameter("hires_tex", _hires_tex)
+				if _hires_col_tex:
+					m.set_shader_parameter("hires_col_tex", _hires_col_tex)
+				m.set_shader_parameter("hires_has_col", _hires_col_tex != null)
+				m.set_shader_parameter("hires_rect", rect)
+				m.set_shader_parameter("hires_valid", true)
+			print("ring_vibes: streamed %s @ %d^2%s" % [
+				_patch_names[_hires_idx], _hires_res, "" if _hires_col_tex else " (no imagery)"])
+		_hires_pending = -1
+		return
+	# idle: does the camera's current patch differ from what's resident?
+	if _patch_rects.is_empty():
+		return
+	var r_now := _radius()
+	var arc: float = atan2(_cam.global_position.x, r_now - _cam.global_position.y) * r_now
+	var want := _patch_at(arc, _cam.global_position.z)
+	if want < 0 or want == _hires_idx:
+		return
+	_hires_pending = want
+	_hires_task = WorkerThreadPool.add_task(_hires_decode.bind(want))
+
 func _biome_at(arc: float, lat: float) -> Dictionary:
 	# home DEM first (it wins for heights too), then splice patches, then a generic default for the
 	# procedural stretches between them.
@@ -490,7 +631,7 @@ func _biome_at(arc: float, lat: float) -> Dictionary:
 			return {"trees": HOME_TREES, "tree_hi": HOME_TREE_HI}
 	var pi := _patch_at(arc, lat)
 	if pi >= 0:
-		var p: Dictionary = PATCHES[pi]
+		var p: Dictionary = _patch_meta[pi]   # NOT PATCHES[pi] -- indices diverge, see _patch_meta
 		return {"trees": float(p.get("trees", 0.5)), "tree_hi": float(p.get("tree_hi", 800.0))}
 	return {"trees": 0.35, "tree_hi": 700.0}   # procedural filler: sparse generic woodland
 
@@ -517,6 +658,7 @@ func _load_patches() -> void:
 	_patch_tints = PackedColorArray()
 	_patch_fields = []
 	_patch_names = []
+	_patch_meta = []
 	var circumference: float = CIRCUMFERENCES[c_idx]
 	for p in PATCHES:
 		if imgs.size() >= MAX_PATCHES:
@@ -553,6 +695,7 @@ func _load_patches() -> void:
 		imgs.append(Image.create_from_data(PATCH_RES, PATCH_RES, false, Image.FORMAT_RF, floats.to_byte_array()))
 		_patch_fields.append(floats)
 		_patch_names.append(p["name"])
+		_patch_meta.append(p)
 		_patch_rects.append(Vector4(
 			fposmod(float(p["arc_pct"]) * circumference, circumference),   # arc centre
 			0.0,                                                            # lat centre (ring midline)
@@ -618,6 +761,14 @@ func _terrain_h_raw(arc: float, lat: float) -> float:
 	# outside the home DEM: try the secondary splice patches placed around the arc
 	var pi := _patch_at(arc, lat)
 	if pi >= 0:
+		# streamed high-res tier wins for the patch you're standing in, matching the shader's order
+		if pi == _hires_idx and _hires_res > 0:
+			var rr := _patch_rects[pi]
+			var circ: float = CIRCUMFERENCES[c_idx]
+			var da: float = wrapf(arc - rr.x, -circ * 0.5, circ * 0.5)
+			var hu: float = clampf(da / (2.0 * rr.z) + 0.5, 0.0, 0.999)
+			var hv: float = clampf(0.5 - (lat - rr.y) / (2.0 * rr.w), 0.0, 0.999)
+			return _hires_field[int(hv * _hires_res) * _hires_res + int(hu * _hires_res)] * dem_scale
 		return _patch_height(pi, arc, lat)
 	# no patch here: approximate procedural match to the shader's noise-heightmap fallback. Gaps are
 	# unavoidable -- 3000km of arc, patches are 22-84km -- so most of the ring is this.
@@ -911,6 +1062,7 @@ func _process(delta: float) -> void:
 		Mode.WALK: _walk_tick(delta)
 		_: _fly(delta)
 	_rebuild_lod()
+	_hires_poll()
 	# forest follows the camera around the ring, re-scattering with the local biome when you've
 	# travelled far enough that the old patch of woodland is behind you.
 	var cam_arc := cam_theta * r_now
@@ -1348,6 +1500,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_C: _clear_creatures()
 			KEY_M: _show_lod = not _show_lod
 			KEY_N: _haze_off = not _haze_off
+			KEY_COMMA: _jump_splice(-1)
+			KEY_PERIOD: _jump_splice(1)
 			KEY_TAB: _hud_full = not _hud_full; _update_hud()
 			KEY_O:
 				# sliders need a visible cursor, so opening the panel releases mouse capture
@@ -1430,7 +1584,9 @@ func _update_hud() -> void:
 		"TERRAIN %s   LOD nodes %d   trees %d (LOD0/1/2/bill %d/%d/%d/%d)" % [
 			("none (noise)" if _dem_w == 0 else "%s  height x%.0f" % [_dem_name, dem_scale]),
 			_used, _tree_ground.size(), lc[0], lc[1], lc[2], lc[3]],
-		"        splice here: %s   (%d patches placed around the arc)" % [_here_splice(), _patch_rects.size()],
+		"        splice here: %s   (%d placed)   [,] [.] jump splice   hi-res: %s" % [
+			_here_splice(), _patch_rects.size(),
+			(_patch_names[_hires_idx] if _hires_idx >= 0 else ("loading..." if _hires_pending >= 0 else "-"))],
 		"        [H] terrain height   [G]/[B] tree LOD band x%.2f   [M] LOD colour %s" % [
 			_tree_lod_scale, "ON" if _show_lod else "off"],
 		"",

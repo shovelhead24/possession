@@ -52,3 +52,9 @@ coverage 100.0%  wrote mizen_head_sat.dat (23 MB) + out/mizen_head_s2_preview.jp
 location: slea_head (Slea Head / Dingle Peninsula)
 zoom 12: tiles x 1922..1936 y 1344..1358 -> 15x15 = 225 tiles
   row 1/15  row 2/15  row 3/15  row 4/15  row 5/15  row 6/15  row 7/15  row 8/15  row 9/15  row 10/15  row 11/15  row 12/15  row 13/15  row 14/15  row 15/15
+elevation range: -100 m .. 956 m over 3840x3840 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote slea_head_detail.dat (3 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (29 MB) + slea_head.json  m/px=23.48  camera_px=[1824, 1839]
+[4/33] slea_head: sentinel-2 ...

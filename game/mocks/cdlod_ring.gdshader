@@ -29,6 +29,14 @@ uniform int patch_count = 0;
 uniform vec4 patch_rect[40];   // (arc_centre, lat_centre, half_arc, half_lat) in metres
 uniform vec4 patch_tint[40];   // fallback colour for patches whose imagery hasn't been fetched
 uniform float ring_circumference = 3000000.0;
+// Streamed high-res tier: the ONE patch the camera is currently inside, decoded on a worker thread
+// and swapped in here. 512^2 over an 84km patch is 164 m/px -- fine for scenery you fly past, mush
+// for ground you stand on. hires_valid stays false until a decode lands, so the array tier covers.
+uniform sampler2D hires_tex;
+uniform sampler2D hires_col_tex : source_color;
+uniform vec4 hires_rect = vec4(0.0);   // (arc_centre, lat_centre, half_arc, half_lat)
+uniform bool hires_valid = false;
+uniform bool hires_has_col = false;
 uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;
 uniform float disp = 300.0;
@@ -113,11 +121,21 @@ int patch_at(vec2 wxz) {
 	return -1;
 }
 
-vec2 patch_uv(int i, vec2 wxz) {
-	vec4 r = patch_rect[i];
+vec2 rect_uv(vec4 r, vec2 wxz) {
 	float d_arc = wxz.x - r.x;
 	d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);
 	return vec2(d_arc / (2.0 * r.z) + 0.5, 0.5 - (wxz.y - r.y) / (2.0 * r.w));
+}
+
+vec2 patch_uv(int i, vec2 wxz) {
+	return rect_uv(patch_rect[i], wxz);
+}
+
+// is this point inside the streamed high-res patch?
+bool in_hires(vec2 wxz) {
+	if (!hires_valid) { return false; }
+	vec2 uv = rect_uv(hires_rect, wxz);
+	return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0;
 }
 
 float sample_h_raw(vec2 wxz) {
@@ -128,7 +146,11 @@ float sample_h_raw(vec2 wxz) {
 			return texture(dem_tex, uv).r * dem_scale;
 		}
 	}
-	// 2. secondary splices placed around the arc
+	// 2. the streamed patch you're standing in (3x the array's resolution)
+	if (in_hires(wxz)) {
+		return texture(hires_tex, rect_uv(hires_rect, wxz)).r * dem_scale;
+	}
+	// 3. secondary splices placed around the arc
 	int pi = patch_at(wxz);
 	if (pi >= 0) {
 		return texture(patch_tex, vec3(patch_uv(pi, wxz), float(pi))).r * dem_scale;
@@ -211,7 +233,13 @@ void fragment() {
 	// splice-patch tint: stands in for a per-patch satellite drape (fetching Sentinel-2 for every
 	// patch is a separate, much heavier job). Only applied outside the home DEM, which has real
 	// imagery. Edge-feathered so patches don't end on a hard colour line against the procedural.
-	if (!in_dem) {
+	if (!in_dem && hires_has_col && in_hires(v_ring)) {
+		vec2 uv = rect_uv(hires_rect, v_ring);
+		vec2 edge = min(uv, 1.0 - uv);
+		float feather = smoothstep(0.0, 0.06, min(edge.x, edge.y));
+		vec3 sat = texture(hires_col_tex, uv).rgb * sat_gain;
+		base = mix(base, sat, 0.9 * feather * smoothstep(0.015, 0.05, dot(sat, vec3(0.333))));
+	} else if (!in_dem) {
 		int pi = patch_at(v_ring);
 		if (pi >= 0) {
 			vec2 uv = patch_uv(pi, v_ring);
