@@ -369,3 +369,26 @@ wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
 wrote wye_valley_detail.dat (10 MB png-in-dat)
 wrote C:\Games\possession\game\mocks\dem (29 MB) + wye_valley.json  m/px=23.69  camera_px=[2009, 1919]
 [16/33] wye_valley: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_30UVC_20260527_0_L2A  cloud=0.0%  pasted 1403k px  coverage now 8.4%
+  S2C_30UWC_20260525_0_L2A  cloud=0.0%  pasted 10665k px  coverage now 71.9%
+  S2B_30UVC_20260304_0_L2A  cloud=0.0%  pasted 3826k px  coverage now 94.7%
+  S2C_30UWB_20250712_0_L2A  cloud=0.0%  pasted 642k px  coverage now 98.6%
+  S2C_30UWC_20250619_0_L2A  cloud=0.0%  pasted 0k px  coverage now 98.6%
+  S2C_30UVB_20250712_0_L2A  cloud=0.0%  pasted 190k px  coverage now 99.7%
+  S2B_30UWC_20250405_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.7%
+  S2A_30UWC_20230613_0_L2A  cloud=0.0%  pasted 48k px  coverage now 100.0%
+  S2A_30UVC_20230603_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2C_30UVC_20250619_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2C_30UVC_20260624_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2B_30UVC_20250405_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2B_30UVC_20240729_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2A_30UVC_20250502_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2C_30UVC_20260525_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2A_30UVC_20260318_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+coverage 100.0%  wrote wye_valley_sat.dat (32 MB) + out/wye_valley_s2_preview.jpg
+[16/33] wye_valley: done in 461s (elapsed 62.0 min)
+[17/33] dordogne: heights ...
+location: dordogne (Dordogne valley, France)
+zoom 12: tiles x 2055..2067 y 1468..1481 -> 13x14 = 182 tiles
+  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14
