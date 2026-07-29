@@ -29,6 +29,7 @@ InfoOpacity/SignalAmplification were referenced by knowledge.md and the softmax-
 
 ## Open Questions
 
-- Lat vs lon arrangement: which biomes band *across* the ring (wall-shadow driven) vs. stretch *along* it (climate-band driven)? **Working finding, not decided** (terrain/splice-portfolio.md): the first five verified real-DEM splice candidates cluster into highland/pass and headland/coast, suggesting Highland and Coast/lagoon are cross-ring (lat) bands rather than long spinward stretches. Needs more candidates before promotion out of "working."
+- Lat vs lon arrangement: which biomes band *across* the ring (wall-shadow driven) vs. stretch *along* it (climate-band driven)? **Working finding, not decided** (terrain/splice-portfolio.md): the first five verified real-DEM splice candidates cluster into highland/pass and headland/coast, suggesting Highland and Coast/lagoon are cross-ring (lat) bands rather than long spinward stretches. Batch 4 (2026-07-29, 20 more candidates) is consistent — `norwegian_fjord` is another highland-meets-sea pairing — but consistency isn't confirmation and it stays "working."
+- **Conifer night-forest had no real-DEM candidate at all until 2026-07-29**, despite being one of the two biomes the first slice needs. Closed by `schwarzwald` + `olympic_forest`. Selection lesson recorded in splice-portfolio.md: check a forest candidate's p50 against the local **treeline**, not just its relief — `tatra_spruce` looked ideal by name and failed on exactly that.
 - Does the sea have weather states (the cloud system from April is sitting right there)?
 - Biome count budget for v1 — the slice needs exactly two (valley + night-forest edge).

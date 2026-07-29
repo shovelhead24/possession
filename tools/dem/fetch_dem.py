@@ -150,6 +150,203 @@ LOCATIONS = {
         markers=[(32.0809, -81.0912, "Savannah")],
         label="Savannah, GA",
     ),
+
+    # ---------------------------------------------------------------------------------------
+    # Batch 4 (2026-07-29): portfolio expansion toward tiling the ring. 36 patches of the
+    # Millstreet size (84km) circle the 3000km ring; ~10 fetchable biomes x ~3 variants avoids
+    # visible repetition. All boxes below verified via scout_batch.py -- stats in
+    # docs/terrain/splice-portfolio.md. NOTE: these boxes are scout-sized (~0.2 deg / ~22km),
+    # NOT Millstreet's 84km export box; widening them for a real ring patch needs re-verification
+    # (character can drift out of the biome at 4x the footprint).
+    # ---------------------------------------------------------------------------------------
+
+    # --- Conifer night-forest: the gap this batch was built to close. Zero candidates before
+    # now, despite being one of the two biomes the first slice needs (biomes.md).
+    "schwarzwald": dict(
+        # Black Forest around Feldberg. Verified relief 1001m, p50 961m, 0% sea -- crucially the
+        # whole box sits BELOW the ~1400m local treeline, so it is genuinely forested highland
+        # rather than bare rock. The archetypal dark-conifer landscape.
+        lat_min=47.78, lat_max=47.98, lon_min=7.85, lon_max=8.20, zoom=12,
+        camera=(47.88, 8.025),
+        markers=[(47.8736, 8.0044, "Feldberg")],
+        label="Schwarzwald / Black Forest, Germany",
+    ),
+    "olympic_forest": dict(
+        # Hoh valley, Olympic Peninsula. Verified relief 1755m, 0% sea. Temperate rainforest
+        # under big mountain relief -- wetter and more dramatic than Schwarzwald, same biome slot.
+        lat_min=47.75, lat_max=47.95, lon_min=-124.10, lon_max=-123.75, zoom=12,
+        camera=(47.85, -123.925),
+        markers=[(47.8606, -123.9348, "Hoh Rainforest")],
+        label="Olympic Peninsula (Hoh), WA",
+    ),
+
+    # --- River Valley / ford-town corridor (geography.md ~10-15% arc)
+    "wye_valley": dict(
+        # Wye at Tintern. Verified relief 252m, 8.8% water (the Wye is tidal here -- real river
+        # crossings, which is the ford-town read).
+        lat_min=51.60, lat_max=51.80, lon_min=-2.80, lon_max=-2.50, zoom=12,
+        camera=(51.70, -2.65),
+        markers=[(51.6975, -2.6772, "Tintern")],
+        label="Wye Valley, Wales/England border",
+    ),
+    "dordogne": dict(
+        # Sarlat/Dordogne. Verified relief 252m, 0% sea -- same gentleness as the Wye without the
+        # tidal water; the drier, more settled variant of the same biome.
+        lat_min=44.80, lat_max=45.00, lon_min=1.05, lon_max=1.40, zoom=12,
+        camera=(44.90, 1.225),
+        markers=[(44.8909, 1.2166, "Sarlat")],
+        label="Dordogne valley, France",
+    ),
+
+    # --- Grass steppe
+    "great_plains": dict(
+        # Nebraska Sandhills. Verified relief 147m over the box -- genuinely flat, huge sightlines
+        # (biomes.md's "where the softmax runs coldest"). Flatter read than mongolia_steppe's 326m.
+        lat_min=41.90, lat_max=42.10, lon_min=-101.65, lon_max=-101.30, zoom=12,
+        camera=(42.00, -101.475),
+        markers=[(42.00, -101.475, "Sandhills")],
+        label="Nebraska Sandhills, USA",
+    ),
+
+    # --- Delta marsh (geography.md ~18-25% arc, the sea inflow)
+    "camargue": dict(
+        # Rhone delta. Verified p99 16m, relief 15m, 63% water -- the flattest candidate in the
+        # whole portfolio bar the salar. Reed geometry is the point (routes-as-knowledge).
+        lat_min=43.40, lat_max=43.60, lon_min=4.35, lon_max=4.70, zoom=12,
+        camera=(43.50, 4.525),
+        markers=[(43.50, 4.525, "Camargue")],
+        label="Camargue / Rhone delta, France",
+    ),
+    "danube_delta": dict(
+        # Danube delta. Verified p99 28m, 58% water. Larger-channel character than the Camargue.
+        lat_min=45.05, lat_max=45.25, lon_min=29.15, lon_max=29.50, zoom=12,
+        camera=(45.15, 29.325),
+        markers=[(45.15, 29.325, "Danube Delta")],
+        label="Danube Delta, Romania",
+    ),
+
+    # --- Highland / wall-foot crags (geography.md ~60-75% arc)
+    "dolomites": dict(
+        # Tre Cime. Verified relief 1848m, max 3139m -- the most vertical candidate found.
+        # Direct grounding for the glider/hookshot playground and scree-and-snow at altitude.
+        lat_min=46.52, lat_max=46.72, lon_min=12.15, lon_max=12.50, zoom=12,
+        camera=(46.62, 12.325),
+        markers=[(46.6183, 12.3053, "Tre Cime")],
+        label="Dolomites (Tre Cime), Italy",
+    ),
+    "cairngorms": dict(
+        # Verified relief 948m -- plateau-and-corrie rather than spire; the gentler highland read.
+        lat_min=56.98, lat_max=57.18, lon_min=-3.85, lon_max=-3.50, zoom=12,
+        camera=(57.08, -3.675),
+        markers=[(57.1117, -3.6444, "Cairn Gorm")],
+        label="Cairngorms, Scotland",
+    ),
+    "tatra_spruce": dict(
+        # Scouted as a conifer candidate; RECLASSIFIED to highland on the numbers -- p50 1057m
+        # against a ~1500m treeline and a 2606m max means most of the box is above the trees.
+        # Kept as a crags candidate rather than mislabelled as forest.
+        lat_min=49.08, lat_max=49.28, lon_min=19.95, lon_max=20.30, zoom=12,
+        camera=(49.18, 20.125),
+        markers=[(49.1639, 20.1338, "Gerlachovsky")],
+        label="High Tatras, Slovakia/Poland",
+    ),
+    "norwegian_fjord": dict(
+        # Geirangerfjord. Verified relief 1604m with 5.8% water -- mountains dropping straight
+        # into deep water. The strongest "wall meets sea" candidate found (beats slea_head).
+        lat_min=62.00, lat_max=62.20, lon_min=6.95, lon_max=7.30, zoom=12,
+        camera=(62.10, 7.125),
+        markers=[(62.10, 7.0067, "Geiranger")],
+        label="Geirangerfjord, Norway",
+    ),
+
+    # --- Desert (enclave rain-shadow flank, geography.md ~40-55% arc)
+    "atacama": dict(
+        # San Pedro / Valle de la Luna. Verified relief 1797m, 0% sea -- but note the floor sits
+        # at 2335m and peaks at 4629m: this is ANDEAN ALTIPLANO desert, not low desert. Still the
+        # literal driest place on Earth (the preservation paradox), just read it as high desert.
+        lat_min=-23.00, lat_max=-22.80, lon_min=-68.35, lon_max=-68.00, zoom=12,
+        camera=(-22.90, -68.175),
+        markers=[(-22.91, -68.20, "San Pedro de Atacama")],
+        label="Atacama (San Pedro), Chile",
+    ),
+    "namib_dunes": dict(
+        # Sossusvlei. Verified relief 395m -- dune-field character, the low-desert counterpart to
+        # Atacama's altiplano.
+        lat_min=-24.85, lat_max=-24.65, lon_min=15.15, lon_max=15.50, zoom=12,
+        camera=(-24.75, 15.325),
+        markers=[(-24.7333, 15.3333, "Sossusvlei")],
+        label="Namib dunes (Sossusvlei), Namibia",
+    ),
+
+    # --- Jungle
+    "borneo_highland": dict(
+        # Kinabalu massif. Verified relief 3302m (max 4051m) -- even more vertical than the Costa
+        # Rica splice; rainforest running from 100m to alpine in one box.
+        lat_min=5.98, lat_max=6.18, lon_min=116.40, lon_max=116.75, zoom=12,
+        camera=(6.08, 116.575),
+        markers=[(6.0753, 116.5583, "Kinabalu")],
+        label="Mount Kinabalu, Borneo",
+    ),
+
+    # --- Temperate pastoral
+    "tuscany_hills": dict(
+        # Val d'Orcia. Verified relief 594m -- the cultivated/settled read, drier and more
+        # sculpted than Vermont's wooded version of the same slot.
+        lat_min=42.95, lat_max=43.15, lon_min=11.45, lon_max=11.80, zoom=12,
+        camera=(43.05, 11.625),
+        markers=[(43.05, 11.625, "Val d'Orcia")],
+        label="Val d'Orcia, Tuscany",
+    ),
+
+    # --- Lost-world pocket (geography.md ~80% arc, the containment dome / off-mainline pocket)
+    "tepui": dict(
+        # Mount Roraima -- the literal "Lost World" tepui. Verified relief 1514m; the flat-topped
+        # mesa with sheer walls is a natural real-world grounding for a sealed pocket ecology.
+        lat_min=5.04, lat_max=5.24, lon_min=-60.90, lon_max=-60.60, zoom=12,
+        camera=(5.14, -60.75),
+        markers=[(5.1431, -60.7625, "Roraima")],
+        label="Mount Roraima tepui, Venezuela",
+    ),
+
+    # --- Eroded/ancient, for the hub-spire approach (geography.md 90-100%: "the last stretch of
+    # arc is the most degraded AND the most ancient")
+    "badlands_sd": dict(
+        # Verified relief 183m -- modest height but intensely dissected; erosion character, not
+        # mountain character, which is exactly the "degraded and ancient" read.
+        lat_min=43.75, lat_max=43.95, lon_min=-102.50, lon_max=-102.20, zoom=12,
+        camera=(43.85, -102.35),
+        markers=[(43.855, -102.34, "Badlands")],
+        label="Badlands, South Dakota",
+    ),
+    "iceland_highland": dict(
+        # Landmannalaugar. Verified relief 549m -- volcanic/glacial, the least Earth-familiar of
+        # the natural candidates; rhyolite colour and no vegetation.
+        lat_min=63.88, lat_max=64.08, lon_min=-19.25, lon_max=-18.90, zoom=12,
+        camera=(63.98, -19.075),
+        markers=[(63.9836, -19.0608, "Landmannalaugar")],
+        label="Landmannalaugar, Iceland",
+    ),
+
+    # --- Alloy-barrens ANALOGUES (geography.md ~30% arc). The barrens are the one deliberately
+    # alien biome (erodibility 0) so they can't be spliced from Earth directly -- these are
+    # reference reads for the shape language, not drop-in patches.
+    "scablands": dict(
+        # Channeled Scablands / Palouse Falls. Verified relief 354m. Catastrophic-flood scour
+        # channels cut into basalt -- erosion that looks engineered, which is the barrens' read.
+        lat_min=46.56, lat_max=46.76, lon_min=-118.40, lon_max=-118.05, zoom=12,
+        camera=(46.66, -118.225),
+        markers=[(46.6639, -118.2247, "Palouse Falls")],
+        label="Channeled Scablands, WA",
+    ),
+    "salar_uyuni": dict(
+        # Verified relief 10m across the whole box -- the flattest terrain in the portfolio by an
+        # order of magnitude. Dead-flat, featureless, wrong-looking: the closest Earth gets to a
+        # builder-alloy plain.
+        lat_min=-20.25, lat_max=-20.05, lon_min=-67.60, lon_max=-67.25, zoom=12,
+        camera=(-20.15, -67.425),
+        markers=[(-20.15, -67.425, "Salar de Uyuni")],
+        label="Salar de Uyuni, Bolivia",
+    ),
 }
 DEFAULT_LOCATION = "millstreet"
 

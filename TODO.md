@@ -27,6 +27,12 @@ Cross-session scratchpad for loose ends that don't have a natural home yet — n
 - **Scatter reads L4, not noise.** `mocks/cdlod.gd` `_scatter_trees` currently places trees from `_forest_noise` — a *placeholder* for L4 `tree_density` (layerbuf-v0.md: "runtime scatters deterministically from these"). When L4 bakes, swap noise → field sample; placement machinery (grid+jitter+seed) already correct.
 - **"Fidelity" may be one axis, not two (user insight, 2026-07-27).** Data fidelity (L4 density-field resolution in the mixed-res pyramid) and render fidelity (terrain CDLOD + object LOD tiers) are separate knobs today but want unifying: *everything coarsens with distance/attention from the observer at once* — terrain mesh, object geometry, scatter density, and sim detail (R0–R5). Same family as the knowledge-pyramid / seeded-softmax realization law. Candidate unifying principle to develop; would let one fidelity driver govern all LOD in lockstep. Not yet a decision.
 
+## Splice portfolio follow-ups (updated 2026-07-29)
+
+- **Scout boxes are ~22km, ring patches need ~84km.** All 20 Batch-4 candidates were verified at scout size (~0.2°). Before any of them becomes a real ring patch it needs re-verification at Millstreet's 84km footprint — biome character can drift out of the box at 4x the area (this is exactly how `ebro_delta` and `mongolia_steppe` originally failed and had to be re-centred).
+- **Still thin after Batch 4:** Metro/city (2 candidates, and "THE city" at 3–8% arc is a *destroyed* megacity — probably authored, not spliced), Engineered infrastructure (1: guri_dam), and **open water** — all three coast candidates are headlands, none is the open sea that geography.md's 18–25% stretch needs.
+- **No multi-patch system exists yet.** `ring_vibes.gd` loads exactly one DEM (`millstreet`) and tiles its imagery for everything else. Actually placing different splices around the arc needs a patch-registry + streaming pass that hasn't been designed.
+
 ## Splice portfolio follow-ups
 
 See `docs/terrain/splice-portfolio.md` for the full verified-candidate catalog (12 locations so far: millstreet, priests_leap, mizen_head, slea_head, loop_head, monument_valley, mongolia_steppe, costa_rica_jungle, ebro_delta, vermont, cork_city, savannah). Two new biome catalog entries came out of this batch (Jungle/volcanic-highland, Temperate pastoral hills) — both un-ranked in biomes.md's "author's cut" ranking list, which is your call, not something to auto-fill.
