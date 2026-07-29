@@ -55,6 +55,48 @@ The core worry: at 2,000 × 50 km, eerie emptiness (which sparsity gives us — 
 - **Death Stranding** — walking as the camera, weather/light as emotional labor, licensed needle-drops at vista beats (our Cherry Lips / Hail Bop instinct).
 - **Halo CE** — the emptiness/awe source above; steal the liminal sacredness, diverge on wildlife per the axis rule.
 
+## Scoring — songs as theme carriers (2026-07-29)
+
+Distinct from `grammars.md`, where music is a *generative* grammar (counterpoint, syncopation,
+polyphony as simulation structure). Here music is **directorial**: a reference track fixes the felt
+shape of a sequence, and — per the user's framing — carries theme *up and down the graphs*, since
+the same intuition is producing the systems underneath.
+
+Running list, alongside the existing needle-drop instinct (`Craft Reference Siblings`, Death
+Stranding):
+
+### Opening vignettes — "Everything in Its Right Place" (Radiohead)
+
+**Shape:** benign, majestic flora and fauna as the instruments; the piece turns discordant; you end
+submerged, with the heavy drone of nature consuming you — wolves, bears.
+
+Why it fits harder than a mood match:
+
+- **The title is the setting's thesis, exactly.** `.decisions/lore.md#the-displacement` already
+  states that nothing malicious shot the ship down: it was "the ring's own indifferent defenses,
+  doing exactly what they were built to do to an unrecognized approach." Everything *is* in its
+  right place. That is the horror, and the song says it before the player learns it.
+- **Its structure is the first slice's arc.** Benign → discordant → consumed maps onto
+  crash → deer → wolves without adjustment (`moments/deer.md`, `moments/wolves.md`). The deer's
+  ratified **null write** — silence as systems *refraining* — is the calm before the turn, and the
+  wolves writing the encounter clock hard is the turn itself.
+- **Its technique is our knowledge system.** The track builds by degrading and re-processing
+  existing material rather than adding new — the vocal chopped, pitched and fed back until it is
+  unmistakably *voice* and no longer *words*. That is K2 rumor decay made audible, and it is
+  precisely the user's own aesthetic touchstone: shouting in a foreign language, where you do not
+  know what it means but you are certain it means something.
+- **Odd meter (10/4) suits a world whose day is ~23 minutes.** The ring's cycle is not a human one;
+  a rhythm that will not resolve into 4/4 is the honest signature for it.
+- **A loop that corrupts rather than resolves** matches the Pulse/"The Riddle" model already adopted
+  for faction life (`factions.md`) — build, resolve, rebuild — and the arc director's inevitabilities,
+  which arrive whether or not anything is ready.
+
+**Production caution (not a design objection):** this is a licensed needle-drop, as are the Cherry
+Lips and Hail Bop instincts. Licensing a Radiohead track for an opening is a real cost and a real
+risk of *not being available*. Treat the reference as **the specification** — odd meter, degraded
+voice-as-instrument, benign material turning submerged and consuming — so an original score can hit
+the same shape if the licence never happens. The shape is the decision; the track is the reference.
+
 ## Open Questions
 
 - Palette/era direction — the one thing still unspecified. Painterly vs. realist, colour identity, whether "The Riddle"'s 80s-optimism-with-melancholy is an *audio* reference or a *visual* one (it pushes the look somewhere specific if visual).

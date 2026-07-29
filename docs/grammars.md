@@ -106,6 +106,32 @@ work that terminates. Where they disagree is instructive and worth watching: a s
 richly and still reach no consumer (invisible depth — the genre's characteristic failure,
 `consumers.md`), or reach a consumer while braiding nothing (a set piece).
 
+### Removing an instrument, and emergent songs — PROPOSED 2026-07-29
+
+**Subtraction is agency.** If the player removes an instrument — kills a figure, burns a granary,
+takes an object out of circulation — the song continues, but with **changed character**, and may
+resolve differently. This is the cleanest form of player agency the architecture offers: it requires
+no special-casing (the ensemble simply has one fewer writer), it cannot be pre-decided, and it is
+legible in exactly the way the inference framing wants — you hear that something is missing before
+you can name it. It also inverts the usual power fantasy: the player's most reliable lever is not
+*adding* force but **taking a voice out**.
+
+**Some songs only exist at high entropy.** Not every pattern is reachable from a cold, ordered state.
+A chaotic clash of circumstances can weight the softmax toward a rhythm that combines instruments
+from *both* colliding songs — a new tune that neither faction was disposed toward, arising only
+because the region decohered first. The EDM-from-chaos case: a driving, unified rhythm emerging out
+of a mess, not despite it.
+
+Mechanically this is a **precondition on entropy**, and it needs nothing new: some song templates
+require high local temperature and the co-presence of two specific songs before they can be
+selected at all. Consequences worth noting:
+- It makes decoherence *productive* rather than merely a legibility cost — chaos is a **generator**,
+  not just noise. The hot end of the temperature dial earns its place.
+- It gives the player a reason to *cause* chaos deliberately, which is a verb the design otherwise
+  lacks — and a very on-theme one.
+- It is the strongest argument yet that the braid test matters: an emergent song that combines two
+  factions' instruments is, by construction, a braid.
+
 ## Practical mocks — PROPOSED 2026-07-29
 
 None of these need terrain, art, or the ring. They are pure systems mocks — a few entities, a few
