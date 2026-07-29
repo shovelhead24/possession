@@ -34,6 +34,40 @@ Consequence: **counterpoint is a property of the ensemble, never of an entity.**
 wants an entity to "do two things at once" is really asking for two entities, or for a richer
 resolved bias — not for a second voice.
 
+### Crossfade and decoherence — CORRECTION 2026-07-29
+
+The above describes the *endpoints* and discards the interesting part. A DJ crossfades; an improviser
+quotes another tune mid-phrase. An entity is not always cleanly on one line — and the transitional
+state is where most of the readable character lives.
+
+**Perturbation is the width of the commit.** An entity does not merely pick the argmax line; it
+strays within a space around it. Where two songs are co-located in *both* space and time with
+comparable weight, that space overlaps both — and what is emitted is a **crossfade**: a settlement
+half on market rhythm and half on mobilisation, a faction drifting between trade and raid posture
+without ever cleanly switching.
+
+**This is softmax temperature, already ratified — no new mechanism.** Temperature is the decoherence
+dial:
+- **Cold** — sharp, near-deterministic commit. One tune, clearly played. Readable, predictable.
+- **Hot** — flat distribution, high entropy. The entity strays; lines blur; the pattern *decoheres*
+  and may re-cohere into a different tune. Ambiguous, hard to read, alive.
+
+`simulation.md` already ties temperature to readability ("readable zones run cold, information-poor
+zones run hot"). Extending it to intention makes legibility, characterisation and musical ambiguity
+one dial rather than three systems.
+
+**Guard — decoherence must not become observation-collapse.** It is tempting to say the player's
+attention resolves the ambiguity. It must not: `.decisions/design-laws.md#observation-never-rerolls`
+is ratified. Decoherence is a property of the **bias distribution over time**, and it resolves
+through **events**, never through being watched. Watching means the commit is realized in detail;
+not watching means it is computed coarsely and conserved — the same outcome, which is exactly what
+`factions.md`'s battles-resolve-unwatched already asserts. "Sometimes resolving by themselves" is
+therefore correct and already law; what the player's presence changes is *fidelity*, never outcome.
+
+**What the player's intuition is actually for:** not collapsing the state, but **anticipating** it.
+Reading a hot, decohering faction and guessing which way it will re-cohere is the skill — and being
+wrong is `consumers.md`'s unintention, earned honestly.
+
 ## Grammar families
 
 Music is the richest source but not the only one. Each family is a *generator plus a fit criterion*,
@@ -71,6 +105,56 @@ asks "does this reach a player?"; the braid test asks "does this reach other sys
 work that terminates. Where they disagree is instructive and worth watching: a structure can braid
 richly and still reach no consumer (invisible depth — the genre's characteristic failure,
 `consumers.md`), or reach a consumer while braiding nothing (a set piece).
+
+## Practical mocks — PROPOSED 2026-07-29
+
+None of these need terrain, art, or the ring. They are pure systems mocks — a few entities, a few
+clocks, text or 2D output — which makes them an order of magnitude cheaper than the terrain work and
+testable in isolation. Listed with **what each decides**, because a mock that decides nothing is a
+demo.
+
+### M1 — Combinator bake-off *(most blocking)*
+Run one fixed scenario — an entity under three competing clock modifiers — through each candidate
+combinator (clamped product, sum-then-clamp, max, softmin) and plot the resolved bias over time.
+**Decides:** TempoBuf's one frozen interface, currently `simulation.md`'s oldest open thread and
+— per the polyphony finding above — the counterpoint engine. Precedent for settling it by
+measurement rather than argument: the LOD stress test overturned a reasoned recommendation
+(`mocks/LOD-STRESS-FINDINGS.md`).
+**Watch for:** combinators that look fine on one modifier and collapse to a single dominant writer
+on three. That failure is invisible until you test the many-writer case.
+
+### M2 — Crossfade / decoherence visualiser
+Two or three songs co-located in space and time; a handful of entities carrying superposed bias;
+a temperature slider. Plot each entity's distribution and its committed line.
+**Decides:** whether temperature actually produces *readable crossfade* rather than mush — i.e.
+whether the hot end of the dial is expressive or just noise. Also whether a decohered entity
+re-coheres into something legible or wanders.
+**Watch for:** the possibility that there is no useful middle — that entities are either boringly
+sharp or uselessly random, with nothing in between. That would be a real finding.
+
+### M3 — Blind readability probe *(highest stakes)*
+Emit **only** diegetic signal — patrol counts, market open/closed, refugee direction, a rumor line
+or two — as plain text, with no UI, no labels, no internal state shown. A human reads a few cycles
+and predicts what the faction does next. Score the predictions.
+**Decides:** whether **inference-not-transmission** works at all (`consumers.md`). This is the
+assumption the entire mid-game rests on, and the one the prior-art table says four comparable
+projects got wrong.
+**Success criterion is deliberately not accuracy:** it is *"did the reader form a confident belief,
+and was it wrong in an interesting way?"* A probe where predictions are always right has failed as
+badly as one where they are random.
+
+### M4 — Doomed-city tempo lever
+One settlement, a scheduled collapse fact, three or four coupled pressures, and two or three player
+levers. Play it repeatedly; measure the spread in time-to-collapse.
+**Decides:** whether **fixed in outcome, negotiable in tempo** (`simulation.md`) is actually
+playable, and — the harder half — whether the levers are *findable* from emitted signal without
+being told. Both directions must work: prolonging and hastening.
+**Watch for:** levers that move the number but that no player would ever locate. That is agency in
+the simulation and not in the player's hands, which is the failure `consumers.md` exists to catch.
+
+**Suggested order:** M1 (unblocks the interface everything else uses) → M3 (highest stakes; kill or
+confirm the core bet early) → M2 → M4. M3 could arguably go first — it is the one that could
+invalidate the framing, and it needs almost nothing built.
 
 ## Open questions
 
