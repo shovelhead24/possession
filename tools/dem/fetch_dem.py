@@ -360,6 +360,24 @@ ZOOM = LOCATIONS[DEFAULT_LOCATION]["zoom"]
 MARKERS = LOCATIONS[DEFAULT_LOCATION]["markers"]
 LOCATION_NAME = DEFAULT_LOCATION
 
+# Uniform ring-patch sizing. The authored bboxes vary (millstreet is 84km, the Batch-4 scout boxes
+# are ~22km); tiling the ring needs one consistent footprint. Set this and every set_location()
+# re-centres the bbox to a square N km across -- including calls made inside fetch_s2.py /
+# export_to_game.py, so the whole pipeline stays consistent without threading a parameter through.
+# None = use the authored bbox verbatim (original scouting behaviour).
+PATCH_SIZE_KM = None
+
+
+def _expand_bbox(size_km):
+    """Re-centre the active bbox to a square `size_km` across, about its current centre."""
+    global LAT_MIN, LAT_MAX, LON_MIN, LON_MAX
+    clat = (LAT_MIN + LAT_MAX) / 2.0
+    clon = (LON_MIN + LON_MAX) / 2.0
+    dlat = (size_km * 1000.0) / 111_320.0
+    dlon = (size_km * 1000.0) / (111_320.0 * max(math.cos(math.radians(clat)), 1e-6))
+    LAT_MIN, LAT_MAX = clat - dlat / 2.0, clat + dlat / 2.0
+    LON_MIN, LON_MAX = clon - dlon / 2.0, clon + dlon / 2.0
+
 
 def set_location(name):
     global LAT_MIN, LAT_MAX, LON_MIN, LON_MAX, ZOOM, MARKERS, LOCATION_NAME
@@ -369,6 +387,8 @@ def set_location(name):
     ZOOM = loc["zoom"]
     MARKERS = loc["markers"]
     LOCATION_NAME = name
+    if PATCH_SIZE_KM:
+        _expand_bbox(PATCH_SIZE_KM)
 
 
 def tile_xy(lat, lon, z):

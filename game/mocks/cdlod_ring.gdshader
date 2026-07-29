@@ -23,10 +23,11 @@ uniform float sat_gain = 1.35;
 // one layer per patch, at reduced resolution -- these are travel scenery, not the play area, and
 // full-res copies of all of them would be a large VRAM bill for detail nobody stands next to.
 // The high-res home patch (dem_tex above) still wins wherever it covers.
-uniform sampler2DArray patch_tex;
+uniform sampler2DArray patch_tex;                          // heights (RF)
+uniform sampler2DArray patch_col_tex : source_color;       // Sentinel-2 imagery per patch
 uniform int patch_count = 0;
-uniform vec4 patch_rect[8];   // (arc_centre, lat_centre, half_arc, half_lat) in metres
-uniform vec4 patch_tint[8];
+uniform vec4 patch_rect[40];   // (arc_centre, lat_centre, half_arc, half_lat) in metres
+uniform vec4 patch_tint[40];   // fallback colour for patches whose imagery hasn't been fetched
 uniform float ring_circumference = 3000000.0;
 uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;
@@ -53,6 +54,15 @@ uniform vec3 sky_color = vec3(0.45, 0.62, 0.82);
 // plane below the wall top?". Cheap, exact, no shadow map needed.
 uniform float wall_top = 4000.0;
 uniform float wall_shadow_soft = 220.0;   // metres of penumbra at the shadow edge
+// Ocean. Implemented by CLAMPING terrain to sea level rather than drawing a separate water plane:
+// no second mesh, no z-fighting against the seabed, and the clamp makes the surface exactly flat
+// with flat normals for free (the gradient samples clamp too). Terrarium already floors its data
+// at 0m, so a hair above zero catches real coastline. Depth for colouring comes from the
+// UNCLAMPED height, carried through as v_depth.
+uniform bool ocean_enabled = true;
+uniform float sea_level = 0.5;
+uniform vec3 shallow_col : source_color = vec3(0.18, 0.42, 0.45);
+uniform vec3 deep_col : source_color = vec3(0.04, 0.10, 0.20);
 
 varying float v_h;
 varying vec3 v_n;
@@ -61,6 +71,7 @@ varying vec2 v_tile_uv;   // repeating drape UV for the beyond-DEM fallback (sam
 varying vec3 v_world_pos;
 varying float v_height;   // metres above the ring floor (v_h is normalised, no good for shadowing)
 varying vec2 v_ring;      // (arc, lat) -- needed in fragment for the splice-patch lookup
+varying float v_depth;    // metres below sea level (>0 = underwater); from the UNCLAMPED height
 
 bool in_dem_bounds(vec2 uv) {
 	return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0;
@@ -89,7 +100,7 @@ float wall_shadow(float lat, float h, float half_w) {
 // index of the splice patch containing this ring point, or -1. Arc is compared with wraparound so
 // a patch sitting near the 0%/100% seam still matches from either side.
 int patch_at(vec2 wxz) {
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 40; i++) {
 		if (i >= patch_count) { break; }   // constant bound + break: dynamic loop bounds are unreliable on GLES3
 		vec4 r = patch_rect[i];
 		float half_c = ring_circumference * 0.5;
@@ -109,7 +120,7 @@ vec2 patch_uv(int i, vec2 wxz) {
 	return vec2(d_arc / (2.0 * r.z) + 0.5, 0.5 - (wxz.y - r.y) / (2.0 * r.w));
 }
 
-float sample_h(vec2 wxz) {
+float sample_h_raw(vec2 wxz) {
 	// 1. high-res home patch wins wherever it covers
 	if (use_dem) {
 		vec2 uv = vec2(dem_cam.x + wxz.x / dem_mpp, dem_cam.y - wxz.y / dem_mpp) / dem_size;
@@ -124,6 +135,11 @@ float sample_h(vec2 wxz) {
 	}
 	// 3. procedural everywhere else -- most of 3000km of arc
 	return texture(heightmap, wxz / feature).r * disp;
+}
+
+float sample_h(vec2 wxz) {
+	float h = sample_h_raw(wxz);
+	return (ocean_enabled && h < sea_level) ? sea_level : h;
 }
 
 void vertex() {
@@ -147,6 +163,7 @@ void vertex() {
 	v_h = h / max(disp, 1.0);
 	v_height = h;
 	v_ring = wxz;
+	v_depth = sea_level - sample_h_raw(wxz);
 	float y = (VERTEX.y < -0.5) ? h - node_size * skirt : h;
 	vec3 world;
 	if (ring_radius > 0.0) {
@@ -197,12 +214,21 @@ void fragment() {
 	if (!in_dem) {
 		int pi = patch_at(v_ring);
 		if (pi >= 0) {
-			vec4 r = patch_rect[pi];
 			vec2 uv = patch_uv(pi, v_ring);
 			vec2 edge = min(uv, 1.0 - uv);                       // 0 at patch border, 0.5 at centre
 			float feather = smoothstep(0.0, 0.06, min(edge.x, edge.y));
-			base = mix(base, patch_tint[pi].rgb, 0.85 * feather);
+			vec3 sat = texture(patch_col_tex, vec3(uv, float(pi))).rgb * sat_gain;
+			// fall back to the flat tint where the mosaic is nodata-dark (partial S2 coverage)
+			vec3 pc = mix(patch_tint[pi].rgb, sat, smoothstep(0.015, 0.05, dot(sat, vec3(0.333))));
+			base = mix(base, pc, 0.9 * feather);
 		}
+	}
+	// ocean: colour by depth over the (already flattened) surface. Shoreline is feathered over the
+	// first couple of metres so coasts don't end on a hard line.
+	bool is_water = ocean_enabled && v_depth > 0.0;
+	if (is_water) {
+		vec3 water = mix(shallow_col, deep_col, clamp(v_depth / 60.0, 0.0, 1.0));
+		base = mix(base, water, smoothstep(0.0, 2.0, v_depth));
 	}
 	if (show_lod) {
 		vec3 lod_col = mix(vec3(0.1, 0.9, 0.2), vec3(0.95, 0.2, 0.1), lod_tint);
@@ -214,8 +240,16 @@ void fragment() {
 	// it was inverting an already-correct normal, which is what made day/night read backwards).
 	vec3 n = normalize(v_n);
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
-	diffuse *= wall_shadow(v_world_pos.z, v_height, ring_width * 0.5);   // rim wall casts onto the floor
+	float wall_lit = wall_shadow(v_world_pos.z, v_height, ring_width * 0.5);   // rim wall onto the floor
+	diffuse *= wall_lit;
 	vec3 lit = base * (0.22 + 0.78 * diffuse);   // floor raised again (0.06->0.16->0.22); still read too dark
+	// water sheen: a tight sun glint off the flat surface. Without it the ocean reads as flat blue
+	// paint -- the specular is most of what says "liquid" at this distance.
+	if (is_water) {
+		vec3 V = normalize(CAMERA_POSITION_WORLD - v_world_pos);
+		vec3 H = normalize(normalize(to_sun) + V);
+		lit += vec3(1.0, 0.97, 0.90) * pow(max(dot(n, H), 0.0), 90.0) * 0.9 * wall_lit;
+	}
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
 	float fog = 1.0 - exp(-haze_density * dist);
 	ALBEDO = mix(lit, sky_color, fog);

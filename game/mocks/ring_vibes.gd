@@ -119,20 +119,33 @@ var _show_lod := false            # [M] LOD-colour debug view
 # full res would be both a big VRAM bill and pointless detail. Gaps between patches fall through to
 # procedural terrain, which is unavoidable anyway: 3000km of arc, patches are 22-84km.
 # ---------------------------------------------------------------------------------------------
-const PATCH_RES := 512            # per-patch resolution in the array (was 1024-1792 at source)
-const MAX_PATCHES := 8            # must match the shader's array size
+# Progressive reduction: source patches are 3584^2 heights + 4096^2 imagery (~54MB each on disk).
+# Tiling the whole ring at that resolution is ~2GB and pointless -- you only ever stand in one
+# patch. So the array tier is downsampled hard; the home patch keeps its full-res path.
+# 36 patches x 512^2: heights 37MB (RF) + colour 28MB (RGB8). Comfortable on shared-memory UHD.
+const PATCH_RES := 512            # height resolution in the array  (84km / 512 = 164 m/px)
+const PATCH_COL_RES := 512        # colour resolution in the array
+const MAX_PATCHES := 40           # ring needs 36 at 84km; headroom for overlap/repeats
 # arc_pct follows docs/geography.md's walked-spinward layout; tint is a broad biome colour used
 # instead of a satellite drape (fetching Sentinel-2 for every patch is a separate, heavier job).
+# `trees` is density 0-1 and `tree_hi` the altitude ceiling in metres (a crude treeline). Both are
+# biome facts, not decoration: nothing grows on a salt flat, the Dolomites are bare above ~2000m,
+# and the whole reason tatra_spruce got reclassified during scouting was a treeline check.
 const PATCHES := [
-	{"name": "schwarzwald", "arc_pct": 0.04, "tint": Color(0.13, 0.22, 0.14)},   # conifer night-forest
-	{"name": "wye_valley", "arc_pct": 0.12, "tint": Color(0.32, 0.40, 0.22)},    # ford-town corridor
-	{"name": "camargue", "arc_pct": 0.21, "tint": Color(0.40, 0.44, 0.36)},      # delta marsh (the sea)
-	{"name": "salar_uyuni", "arc_pct": 0.30, "tint": Color(0.78, 0.78, 0.80)},   # alloy-barrens analogue
-	{"name": "namib_dunes", "arc_pct": 0.47, "tint": Color(0.64, 0.42, 0.24)},   # desert, enclave flank
-	{"name": "dolomites", "arc_pct": 0.67, "tint": Color(0.50, 0.48, 0.46)},     # highland/wall country
-	{"name": "badlands_sd", "arc_pct": 0.95, "tint": Color(0.54, 0.44, 0.34)},   # eroded, hub-spire approach
+	{"name": "schwarzwald", "arc_pct": 0.04, "tint": Color(0.13, 0.22, 0.14), "trees": 1.0, "tree_hi": 1400.0},
+	{"name": "wye_valley", "arc_pct": 0.12, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0},
+	{"name": "camargue", "arc_pct": 0.21, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0},
+	{"name": "salar_uyuni", "arc_pct": 0.30, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0},
+	{"name": "namib_dunes", "arc_pct": 0.47, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0},
+	{"name": "dolomites", "arc_pct": 0.67, "tint": Color(0.50, 0.48, 0.46), "trees": 0.7, "tree_hi": 2000.0},
+	{"name": "badlands_sd", "arc_pct": 0.95, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0},
 ]
+const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
+const HOME_TREE_HI := 600.0
+var _tree_center := Vector2.ZERO      # (arc, lat) the current forest was scattered around
+const TREE_RESCATTER := 700.0         # re-scatter once the camera has moved this far from it
 var _patch_tex: Texture2DArray = null
+var _patch_col_tex: Texture2DArray = null   # real Sentinel-2 per patch, replaces the flat tints
 var _patch_rects := PackedVector4Array()   # (arc_centre, lat_centre, half_arc, half_lat) metres
 var _patch_tints := PackedColorArray()
 var _patch_fields: Array = []              # CPU copies, so placement matches what's drawn
@@ -266,8 +279,11 @@ func _ready() -> void:
 		if _roads_tex:
 			mat.set_shader_parameter("road_tex", _roads_tex)
 			mat.set_shader_parameter("has_roads", true)
+		mat.set_shader_parameter("sea_level", SEA_LEVEL)
+		mat.set_shader_parameter("ocean_enabled", ocean_enabled)
 		if _patch_tex:
 			mat.set_shader_parameter("patch_tex", _patch_tex)
+			mat.set_shader_parameter("patch_col_tex", _patch_col_tex)
 			mat.set_shader_parameter("patch_count", _patch_rects.size())
 			mat.set_shader_parameter("patch_rect", _patch_rects)
 			mat.set_shader_parameter("patch_tint", _patch_tints)
@@ -427,6 +443,20 @@ func _build_dem_texture() -> void:
 	_dem_hf_cam = Vector2(float(_dem_cam.x) * 0.5, float(_dem_cam.y) * 0.5)
 	print("ring_vibes: DEM texture %dx%d, mpp=%.1f" % [dw, dh, _dem_hf_mpp])
 
+func _biome_at(arc: float, lat: float) -> Dictionary:
+	# home DEM first (it wins for heights too), then splice patches, then a generic default for the
+	# procedural stretches between them.
+	if _dem_hf_w > 0:
+		var fx := _dem_hf_cam.x + arc / _dem_hf_mpp
+		var fy := _dem_hf_cam.y - lat / _dem_hf_mpp
+		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
+			return {"trees": HOME_TREES, "tree_hi": HOME_TREE_HI}
+	var pi := _patch_at(arc, lat)
+	if pi >= 0:
+		var p: Dictionary = PATCHES[pi]
+		return {"trees": float(p.get("trees", 0.5)), "tree_hi": float(p.get("tree_hi", 800.0))}
+	return {"trees": 0.35, "tree_hi": 700.0}   # procedural filler: sparse generic woodland
+
 func _here_splice() -> String:
 	# which splice the camera is currently standing in, for the HUD
 	var r := _radius()
@@ -444,6 +474,8 @@ func _load_patches() -> void:
 	# kept alongside so _terrain_h returns exactly what the shader draws (render-authoritative
 	# placement -- see .decisions/terrain.md#render-authoritative-placement).
 	var imgs: Array[Image] = []
+	var cols: Array[Image] = []
+	var any_col := false
 	_patch_rects = PackedVector4Array()
 	_patch_tints = PackedColorArray()
 	_patch_fields = []
@@ -455,6 +487,20 @@ func _load_patches() -> void:
 		var base: String = "res://mocks/dem/%s" % p["name"]
 		if not (FileAccess.file_exists(base + ".r16") and FileAccess.file_exists(base + ".json")):
 			continue
+		# real imagery if the pipeline has fetched it; a flat tint plate stands in until then, so a
+		# half-finished fetch still renders (the array needs every layer present and same-size).
+		var cimg: Image = null
+		if FileAccess.file_exists(base + "_sat.dat"):
+			var ci := Image.new()
+			if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
+				ci.resize(PATCH_COL_RES, PATCH_COL_RES, Image.INTERPOLATE_LANCZOS)
+				ci.convert(Image.FORMAT_RGB8)
+				cimg = ci
+				any_col = true
+		if cimg == null:
+			cimg = Image.create(PATCH_COL_RES, PATCH_COL_RES, false, Image.FORMAT_RGB8)
+			cimg.fill(p["tint"])
+		cols.append(cimg)
 		var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".json"))
 		var w := int(meta["w"])
 		var h := int(meta["h"])
@@ -480,7 +526,11 @@ func _load_patches() -> void:
 		return
 	_patch_tex = Texture2DArray.new()
 	_patch_tex.create_from_images(imgs)
-	print("ring_vibes: %d splice patches loaded @ %d^2 -> %s" % [imgs.size(), PATCH_RES, str(_patch_names)])
+	_patch_col_tex = Texture2DArray.new()
+	_patch_col_tex.create_from_images(cols)
+	print("ring_vibes: %d splice patches @ %d^2 heights%s -> %s" % [
+		imgs.size(), PATCH_RES, (" + %d^2 imagery" % PATCH_COL_RES) if any_col else " (tints only, no sat yet)",
+		str(_patch_names)])
 
 func _patch_at(arc: float, lat: float) -> int:
 	# CPU mirror of the shader's patch lookup. Arc is compared with wraparound so a patch near the
@@ -504,7 +554,16 @@ func _patch_height(i: int, arc: float, lat: float) -> float:
 	var py := int(v * float(PATCH_RES))
 	return field[py * PATCH_RES + px] * dem_scale
 
+const SEA_LEVEL := 0.5      # must match cdlod_ring.gdshader's sea_level uniform
+var ocean_enabled := true
+
 func _terrain_h(arc: float, lat: float) -> float:
+	# clamp to sea level exactly as the shader does, so you stand ON the water surface rather than
+	# on the seabed under it (render-authoritative placement).
+	var h := _terrain_h_raw(arc, lat)
+	return SEA_LEVEL if (ocean_enabled and h < SEA_LEVEL) else h
+
+func _terrain_h_raw(arc: float, lat: float) -> float:
 	# EXACT match to what the CDLOD shader draws (same half-res field + UV mapping) — render-
 	# authoritative placement without raycast/collision (near camera is always CDLOD's finest LOD,
 	# so this analytic value already equals the drawn vertex height there).
@@ -815,6 +874,12 @@ func _process(delta: float) -> void:
 		Mode.WALK: _walk_tick(delta)
 		_: _fly(delta)
 	_rebuild_lod()
+	# forest follows the camera around the ring, re-scattering with the local biome when you've
+	# travelled far enough that the old patch of woodland is behind you.
+	var cam_arc := cam_theta * r_now
+	if Vector2(cam_arc, _cam.global_position.z).distance_to(_tree_center) > TREE_RESCATTER:
+		_tree_center = Vector2(cam_arc, _cam.global_position.z)
+		_scatter_trees()
 	_update_tree_lod()
 	_update_hud()
 
@@ -950,6 +1015,15 @@ func _scatter_trees() -> void:
 	_tree_ground = PackedVector3Array()
 	_tree_basis = []
 	_tree_variant = PackedInt32Array()
+	# scatter around wherever the camera IS, not around spawn -- on a 3000km ring the forest has to
+	# travel with you. Density and treeline come from the local biome, so the salt flat and the
+	# dunes are genuinely bare rather than sprouting Irish conifers.
+	var biome := _biome_at(_tree_center.x, _tree_center.y)
+	var density: float = biome["trees"] * TREE_DENSITY
+	var tree_hi: float = biome["tree_hi"]
+	if density <= 0.0:
+		_update_tree_lod(true)
+		return
 	_forest_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
 	_forest_noise.frequency = 1.0 / 300.0
 	var rng := RandomNumberGenerator.new()
@@ -958,20 +1032,27 @@ func _scatter_trees() -> void:
 	while arc <= FOREST_HALF:
 		var lat := -FOREST_HALF
 		while lat <= FOREST_HALF:
-			var jx := arc + rng.randf_range(-3.5, 3.5)
-			var jz := lat + rng.randf_range(-3.5, 3.5)
-			if _forest_noise.get_noise_2d(jx, jz) > 0.0 and rng.randf() < TREE_DENSITY:
-				var ground := _surface_pos(jx, jz)
-				var up := _ring_up(ground)
-				var sc: float = _tree_scale * rng.randf_range(0.8, 1.3)
-				var basis := Basis()
-				basis.y = up
-				basis.x = up.cross(Vector3.FORWARD).normalized()
-				basis.z = basis.x.cross(up).normalized()
-				basis = basis.rotated(up, rng.randf() * TAU).scaled(Vector3(sc, sc, sc))
-				_tree_ground.append(ground - up * 0.3)
-				_tree_basis.append(basis)
-				_tree_variant.append(rng.randi() % _tree_nvar)
+			var jx := _tree_center.x + arc + rng.randf_range(-3.5, 3.5)
+			var jz := _tree_center.y + lat + rng.randf_range(-3.5, 3.5)
+			if _forest_noise.get_noise_2d(jx, jz) > 0.0 and rng.randf() < density:
+				var gh := _terrain_h(jx, jz)
+				# no trees in the water or above the local treeline; fade out near the ceiling
+				# rather than cutting a hard line across the slope.
+				var ok := gh > SEA_LEVEL + 1.0 and gh < tree_hi
+				if ok and gh > tree_hi - 150.0:
+					ok = rng.randf() < (tree_hi - gh) / 150.0
+				if ok:
+					var ground := _surface_pos(jx, jz)
+					var up := _ring_up(ground)
+					var sc: float = _tree_scale * rng.randf_range(0.8, 1.3)
+					var basis := Basis()
+					basis.y = up
+					basis.x = up.cross(Vector3.FORWARD).normalized()
+					basis.z = basis.x.cross(up).normalized()
+					basis = basis.rotated(up, rng.randf() * TAU).scaled(Vector3(sc, sc, sc))
+					_tree_ground.append(ground - up * 0.3)
+					_tree_basis.append(basis)
+					_tree_variant.append(rng.randi() % _tree_nvar)
 			lat += 8.0
 		arc += 8.0
 	_update_tree_lod(true)
