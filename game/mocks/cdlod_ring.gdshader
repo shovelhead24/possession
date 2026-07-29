@@ -47,6 +47,8 @@ uniform sampler2D hires_col_tex : source_color;
 uniform vec4 hires_rect = vec4(0.0);   // (arc_centre, lat_centre, half_arc, half_lat)
 uniform bool hires_valid = false;
 uniform bool hires_has_col = false;
+uniform sampler2D hires_detail_tex : filter_linear;   // gradient normals for the streamed patch
+uniform bool hires_has_detail = false;
 uniform float hires_offset = 0.0;   // same re-basing as patch_offset, for the streamed patch
 uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;
@@ -284,6 +286,16 @@ void fragment() {
 	if (in_dem && has_detail && !is_water) {
 		vec4 d = texture(detail_tex, v_demuv);
 		vec3 pert = vec3((d.r - 0.5) * 2.4, 0.0, (d.g - 0.5) * 2.4) * dem_scale * normal_strength;
+		n = normalize(n + pert);
+	} else if (!in_dem && hires_has_detail && !is_water && in_hires(v_ring)) {
+		// same treatment for the streamed patch, so every splice gets the home area's fine relief
+		// rather than only millstreet. Rotated by the ring bend, unlike the home branch, because
+		// this one is used arbitrarily far around the arc where world XZ != ring tangent.
+		vec4 d = texture(hires_detail_tex, rect_uv(hires_rect, v_ring));
+		vec3 pert = vec3((d.r - 0.5) * 2.4, 0.0, (d.g - 0.5) * 2.4) * dem_scale * normal_strength;
+		float th = v_ring.x / max(ring_radius, 1.0);
+		float ct = cos(th), st = sin(th);
+		pert = vec3(pert.x * ct - pert.y * st, pert.x * st + pert.y * ct, pert.z);
 		n = normalize(n + pert);
 	}
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);

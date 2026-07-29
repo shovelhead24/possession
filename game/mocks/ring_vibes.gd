@@ -211,9 +211,15 @@ var _patch_col_tex: Texture2DArray = null   # real Sentinel-2 per patch, replace
 # crossed a patch boundary, so it runs on a WorkerThreadPool task and the texture is created on the
 # main thread when the task reports done. Every step is guarded: any failure just leaves the array
 # tier serving that patch, which is exactly the pre-streaming behaviour.
-const HIRES_RES := 1536
+const HIRES_RES := 1536       # streamed height resolution
+# Colour/detail stream at higher res than heights -- they are pure texture lookups, so resolution is
+# cheap there, whereas heights cost a GDScript decode loop per texel. 2048^2 RGB is ~12.6MB each;
+# with the height field that is ~35MB resident for the active patch, comfortable on shared-memory UHD.
+# (The home patch still uses its native 4096^2 imagery, so it remains slightly ahead.)
+const HIRES_TEX_RES := 2048
 var _hires_tex: ImageTexture = null
 var _hires_col_tex: ImageTexture = null
+var _hires_detail_tex: ImageTexture = null
 var _hires_idx := -1              # patch index currently resident at high res
 var _hires_pending := -1          # patch index being decoded right now
 var _hires_task := -1             # WorkerThreadPool task id, -1 = idle
@@ -653,9 +659,18 @@ func _hires_decode(idx: int) -> void:
 			if FileAccess.file_exists(base + "_sat.dat"):
 				var ci := Image.new()
 				if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
-					ci.resize(res, res, Image.INTERPOLATE_LANCZOS)
+					ci.resize(HIRES_TEX_RES, HIRES_TEX_RES, Image.INTERPOLATE_LANCZOS)
 					ci.convert(Image.FORMAT_RGB8)
 					out["col"] = ci
+			# full-res gradient normals, same asset the home patch uses. These were generated for
+			# every patch all along (export_to_game.py always writes them) and simply never loaded,
+			# which is why only the starting area had fine relief.
+			if FileAccess.file_exists(base + "_detail.dat"):
+				var di := Image.new()
+				if di.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_detail.dat")) == OK:
+					di.resize(HIRES_TEX_RES, HIRES_TEX_RES, Image.INTERPOLATE_LANCZOS)
+					di.convert(Image.FORMAT_RGB8)
+					out["detail"] = di
 	_hires_result = out
 
 func _hires_poll() -> void:
@@ -670,6 +685,7 @@ func _hires_poll() -> void:
 		if r.get("ok", false) and int(r.get("idx", -1)) == _hires_pending:
 			_hires_tex = ImageTexture.create_from_image(r["img"])
 			_hires_col_tex = ImageTexture.create_from_image(r["col"]) if r.has("col") else null
+			_hires_detail_tex = ImageTexture.create_from_image(r["detail"]) if r.has("detail") else null
 			_hires_idx = int(r["idx"])
 			_hires_field = r["field"]
 			_hires_res = int(r["res"])
@@ -679,6 +695,9 @@ func _hires_poll() -> void:
 				if _hires_col_tex:
 					m.set_shader_parameter("hires_col_tex", _hires_col_tex)
 				m.set_shader_parameter("hires_has_col", _hires_col_tex != null)
+				if _hires_detail_tex:
+					m.set_shader_parameter("hires_detail_tex", _hires_detail_tex)
+				m.set_shader_parameter("hires_has_detail", _hires_detail_tex != null)
 				m.set_shader_parameter("hires_rect", rect)
 				m.set_shader_parameter("hires_offset", _patch_offset[_hires_idx])
 				m.set_shader_parameter("hires_valid", true)
