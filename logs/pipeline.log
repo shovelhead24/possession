@@ -269,3 +269,25 @@ coverage 100.0%  wrote cork_city_sat.dat (31 MB) + out/cork_city_s2_preview.jpg
 location: guri_dam (Guri Dam / Embalse de Guri, Venezuela)
 zoom 12: tiles x 1326..1334 y 1954..1963 -> 9x10 = 90 tiles
   row 1/10  row 2/10  row 3/10  row 4/10  row 5/10  row 6/10  row 7/10  row 8/10  row 9/10  row 10/10
+elevation range: -99 m .. 2010 m over 2304x2560 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote guri_dam_detail.dat (6 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (11 MB) + guri_dam.json  m/px=37.86  camera_px=[1243, 1212]
+[12/33] guri_dam: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_20NNP_20250110_0_L2A  cloud=1.6%  pasted 6759k px  coverage now 40.3%
+  S2B_20NNP_20241126_0_L2A  cloud=1.9%  pasted 0k px  coverage now 40.3%
+  S2B_20NMP_20260321_0_L2A  cloud=2.0%  pasted 8790k px  coverage now 92.7%
+  S2B_20PMQ_20241126_0_L2A  cloud=2.3%  pasted 835k px  coverage now 97.7%
+  S2B_20NNP_20251029_1_L2A  cloud=2.5%  pasted 3k px  coverage now 97.7%
+  S2B_20PNQ_20231119_0_L2A  cloud=2.9%  pasted 92k px  coverage now 98.2%
+  S2B_20PNQ_20251029_1_L2A  cloud=3.1%  pasted 10k px  coverage now 98.3%
+  S2C_20PNQ_20250904_0_L2A  cloud=3.3%  pasted 8k px  coverage now 98.3%
+  S2A_20PNQ_20240922_0_L2A  cloud=3.8%  pasted 278k px  coverage now 100.0%
+coverage 100.0%  wrote guri_dam_sat.dat (29 MB) + out/guri_dam_s2_preview.jpg
+[12/33] guri_dam: done in 111s (elapsed 42.4 min)
+[13/33] savannah: heights ...
+location: savannah (Savannah, GA)
+zoom 12: tiles x 1120..1130 y 1657..1667 -> 11x11 = 121 tiles
+  row 1/11  row 2/11  row 3/11  row 4/11  row 5/11  row 6/11  row 7/11  row 8/11  row 9/11  row 10/11

@@ -181,6 +181,15 @@ const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
 const HOME_TREE_HI := 600.0
 var _tree_center := Vector2.ZERO      # (arc, lat) the current forest was scattered around
 const TREE_RESCATTER := 700.0         # re-scatter once the camera has moved this far from it
+# A scatter walks a 90,000-position grid with per-candidate terrain lookups (~100ms). At 5x fly
+# boost you cross TREE_RESCATTER every 0.17s, which would mean ~6 full scatters per SECOND and a
+# dead framerate. So: a hard cooldown, and no re-scatter at all while travelling fast -- at boost
+# speed the forest is billboards streaming past and nobody is inspecting where the trees are.
+const TREE_RESCATTER_CD := 2.0        # seconds; floor on how often a scatter can run
+const TREE_RESCATTER_MAX_SPEED := 120.0   # m/s above which scattering is skipped entirely
+var _tree_cd := 0.0
+var _cam_prev_pos := Vector3.ZERO
+var _cam_speed := 0.0
 var _patch_tex: Texture2DArray = null
 var _patch_col_tex: Texture2DArray = null   # real Sentinel-2 per patch, replaces the flat tints
 
@@ -1064,11 +1073,17 @@ func _process(delta: float) -> void:
 	_rebuild_lod()
 	_hires_poll()
 	# forest follows the camera around the ring, re-scattering with the local biome when you've
-	# travelled far enough that the old patch of woodland is behind you.
+	# travelled far enough that the old patch of woodland is behind you -- throttled hard, see
+	# TREE_RESCATTER_CD.
+	_cam_speed = _cam.global_position.distance_to(_cam_prev_pos) / maxf(delta, 0.0001)
+	_cam_prev_pos = _cam.global_position
+	_tree_cd = maxf(_tree_cd - delta, 0.0)
 	var cam_arc := cam_theta * r_now
-	if Vector2(cam_arc, _cam.global_position.z).distance_to(_tree_center) > TREE_RESCATTER:
+	if (_tree_cd <= 0.0 and _cam_speed < TREE_RESCATTER_MAX_SPEED
+			and Vector2(cam_arc, _cam.global_position.z).distance_to(_tree_center) > TREE_RESCATTER):
 		_tree_center = Vector2(cam_arc, _cam.global_position.z)
 		_scatter_trees()
+		_tree_cd = TREE_RESCATTER_CD
 	_update_tree_lod()
 	_update_hud()
 
