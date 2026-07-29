@@ -603,10 +603,10 @@ func _jump_splice(dir: int) -> void:
 	var theta: float = r.x / rad
 	var h := _terrain_h(r.x, r.y) + 250.0
 	_cam.position = _ring_pos(theta, r.y, h)
-	# look spinward and slightly down, so you arrive facing across the patch rather than at sky
-	var fwd := _ring_pos(theta + 0.004, r.y, h - 120.0) - _cam.position
-	_look = Vector2(atan2(-fwd.x, -fwd.z), -0.18)
-	_cam.rotation = Vector3(_look.y, _look.x, 0)
+	# yaw 0 is spinward in the local ring frame, so arriving level and slightly nose-down is just
+	# (0, -0.18) -- no need to derive a world-space forward vector any more.
+	_look = Vector2(0.0, -0.18)
+	_apply_look()
 	_tree_center = Vector2(r.x, r.y)
 	_scatter_trees()
 	print("ring_vibes: jumped to %s (%.1f%% arc)" % [_patch_names[_jump_idx], 100.0 * r.x / CIRCUMFERENCES[c_idx]])
@@ -1474,6 +1474,21 @@ func _car_pos(arc: float, lat: float) -> Vector3:
 	return _surface_pos(arc, lat)
 
 # local up at a ring surface point = toward the cylinder axis (0, R, lat/z)
+func _apply_look() -> void:
+	# Orient the camera in the LOCAL ring frame rather than world space. `_cam.rotation = (pitch,
+	# yaw, 0)` is a world-space Euler, which only reads correctly near arc 0 where local up happens
+	# to be world +Y. Local up on a ring points at the axis, so it swings a full 360 deg around the
+	# circumference -- at 25% of arc it is 90 deg from spawn's, which is why jumping splices left the
+	# ground sideways and then upside down.
+	#   _look.x = yaw, 0 = spinward (along the arc), positive turns toward +lat
+	#   _look.y = pitch, positive is up
+	var up := _ring_up(_cam.global_position)
+	var lat_dir := Vector3(0.0, 0.0, 1.0)          # cylinder axis: always perpendicular to up
+	var spin := up.cross(lat_dir).normalized()      # spinward tangent
+	var flat := (spin * cos(_look.x) + lat_dir * sin(_look.x)).normalized()
+	var fwd := (flat * cos(_look.y) + up * sin(_look.y)).normalized()
+	_cam.global_transform.basis = Basis.looking_at(fwd, up)
+
 func _ring_up(pos: Vector3) -> Vector3:
 	return (Vector3(0.0, _radius(), pos.z) - pos).normalized()
 
@@ -1519,16 +1534,18 @@ func _walk_tick(delta: float) -> void:
 	if mv != Vector2.ZERO:
 		mv = mv.normalized()
 	var yaw: float = _look.x
-	# camera-relative in arc(=x-like)/lat(=z-like) space. yaw=0 faces +arc-ish.
-	var d_arc := (-mv.y * sin(yaw) + mv.x * cos(yaw)) * speed * delta
-	var d_lat := (-mv.y * cos(yaw) - mv.x * sin(yaw)) * speed * delta
+	# camera-relative in ring (arc, lat) space, matching _apply_look's frame: yaw 0 faces SPINWARD,
+	# so forward = (cos yaw, sin yaw) and strafe-right = (-sin yaw, cos yaw). Was derived against the
+	# old world-space euler where yaw 0 faced -Z, which no longer holds anywhere but arc 0.
+	var d_arc := (mv.y * cos(yaw) - mv.x * sin(yaw)) * speed * delta
+	var d_lat := (mv.y * sin(yaw) + mv.x * cos(yaw)) * speed * delta
 	var w: float = WIDTHS[w_idx]
 	_walk_arc += d_arc
 	_walk_lat = clampf(_walk_lat + d_lat, -w * 0.5 + 50.0, w * 0.5 - 50.0)
 	var ground := _car_pos(_walk_arc, _walk_lat)   # exact analytic surface point — no raycast needed
 	var up := _ring_up(ground)
 	_cam.position = ground + up * EYE_HEIGHT
-	_cam.rotation = Vector3(_look.y, _look.x, 0)
+	_apply_look()
 
 func _set_mode(m: Mode) -> void:
 	_mode = m
@@ -1537,6 +1554,12 @@ func _set_mode(m: Mode) -> void:
 			_car = _make_car()
 		_car.visible = true
 		_car_speed = 0.0
+		# place the car where the CAMERA is (in ring coords) -- it kept its previous arc/lat before,
+		# so entering drive after jumping a splice snapped the car back to the last place you drove
+		var rd := _radius()
+		_car_arc = atan2(_cam.position.x, rd - _cam.position.y) * rd
+		_car_lat = clampf(_cam.position.z, -WIDTHS[w_idx] * 0.5 + 50.0, WIDTHS[w_idx] * 0.5 - 50.0)
+		_car_heading = 0.0
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		_captured = false
 	else:
@@ -1544,12 +1567,15 @@ func _set_mode(m: Mode) -> void:
 			_car.visible = false
 		if m == Mode.WALK:
 			var w: float = WIDTHS[w_idx]
-			_walk_arc = _cam.position.x
+			# derive arc from the ring angle, NOT world x -- those only coincide near arc 0, so
+			# entering walk mode anywhere else used to teleport you back toward spawn
+			var rr := _radius()
+			_walk_arc = atan2(_cam.position.x, rr - _cam.position.y) * rr
 			_walk_lat = clampf(_cam.position.z, -w * 0.5 + 50.0, w * 0.5 - 50.0)
 			var ground := _car_pos(_walk_arc, _walk_lat)
 			var up := _ring_up(ground)
 			_cam.position = ground + up * EYE_HEIGHT
-		_cam.rotation = Vector3(_look.y, _look.x, 0)
+		_apply_look()
 	_update_hud()
 
 func _fly(delta: float) -> void:
@@ -1561,8 +1587,10 @@ func _fly(delta: float) -> void:
 	if Input.is_key_pressed(KEY_S): dir += _cam.global_basis.z
 	if Input.is_key_pressed(KEY_A): dir -= _cam.global_basis.x
 	if Input.is_key_pressed(KEY_D): dir += _cam.global_basis.x
-	if Input.is_key_pressed(KEY_SPACE): dir += Vector3.UP
-	if Input.is_key_pressed(KEY_CTRL): dir -= Vector3.UP
+	# vertical follows LOCAL up, or "ascend" drifts sideways once you are round the ring
+	var local_up := _ring_up(_cam.global_position)
+	if Input.is_key_pressed(KEY_SPACE): dir += local_up
+	if Input.is_key_pressed(KEY_CTRL): dir -= local_up
 	if dir != Vector3.ZERO:
 		_cam.position += dir.normalized() * speed * delta
 
@@ -1587,7 +1615,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and _captured and _mode != Mode.DRIVE:
 		_look -= event.relative * 0.0022
 		_look.y = clampf(_look.y, -1.55, 1.55)
-		_cam.rotation = Vector3(_look.y, _look.x, 0)
+		_apply_look()
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_ESCAPE:
 			return   # handled in _input() above
