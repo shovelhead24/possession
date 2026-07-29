@@ -73,6 +73,15 @@ const WIND_DIR := Vector2(1.0, 0.0)
 var _layers: Array[MeshInstance3D] = []
 var _weather_idx := 0
 var _visible := true
+# Smooth biome-driven weather. Presets used to be a manual [Z] cycle only, so a desert patch had
+# the same sky as a delta. ring_vibes now calls transition_to() as the camera crosses biomes, and
+# the blend is eased over WEATHER_BLEND seconds -- snapping the whole sky on a patch boundary would
+# read as a glitch, not weather.
+const WEATHER_BLEND := 25.0
+var _wx_from := ""
+var _wx_to := ""
+var _wx_t := 1.0
+var auto_weather := true          # [Z] switches to manual and stops biome overrides
 # live tuning multipliers, driven by the debug sliders in ring_vibes.gd. These MULTIPLY the preset
 # values rather than replacing them, so the presets stay meaningful and 1.0 == "as authored".
 var ring_radius := 0.0    # set by ring_vibes before _ready(); 0 = flat planes (old behaviour)
@@ -187,11 +196,55 @@ func retune() -> void:
 	_apply_weather()
 
 func cycle_type() -> void:
+	# manual override: stop biome-driven weather so the chosen preset sticks
+	auto_weather = false
 	_weather_idx = (_weather_idx + 1) % WEATHER_NAMES.size()
+	_wx_t = 1.0
+	_wx_from = ""
 	_apply_weather()
 
+func transition_to(name: String) -> void:
+	if not auto_weather or not WEATHER_PRESETS.has(name):
+		return
+	var current: String = _wx_to if _wx_to != "" else str(WEATHER_NAMES[_weather_idx])
+	if name == current and _wx_t >= 1.0:
+		return
+	# blend from wherever we currently ARE, so a mid-transition change doesn't jump back
+	_wx_from = current if _wx_t >= 1.0 else _blend_name()
+	_wx_to = name
+	_wx_t = 0.0
+
+func _blend_name() -> String:
+	# mid-blend snapshot identity; the numbers are interpolated in _process, this is just for HUD
+	return _wx_from if _wx_t < 0.5 else _wx_to
+
+func _process(delta: float) -> void:
+	if _wx_t >= 1.0 or _wx_from == "" or _wx_to == "":
+		return
+	_wx_t = minf(_wx_t + delta / WEATHER_BLEND, 1.0)
+	var t: float = _wx_t * _wx_t * (3.0 - 2.0 * _wx_t)   # smoothstep ease
+	var a: Dictionary = WEATHER_PRESETS[_wx_from]
+	var b: Dictionary = WEATHER_PRESETS[_wx_to]
+	for i in _layers.size():
+		var mat := _layers[i].material_override as ShaderMaterial
+		if not mat:
+			continue
+		var la: Array = a["layers"][i]
+		var lb: Array = b["layers"][i]
+		mat.set_shader_parameter("coverage", clampf(lerpf(la[0], lb[0], t) * cov_mult, 0.0, 1.0))
+		mat.set_shader_parameter("softness", clampf(lerpf(la[1], lb[1], t) * soft_mult, 0.01, 0.5))
+		mat.set_shader_parameter("self_shadow_amt", lerpf(a["self_shadow"], b["self_shadow"], t))
+		var aa: float = a["alpha"][i] if a.has("alpha") else LAYER_ALPHA[i]
+		var ab: float = b["alpha"][i] if b.has("alpha") else LAYER_ALPHA[i]
+		mat.set_shader_parameter("layer_alpha", clampf(lerpf(aa, ab, t) * alpha_mult, 0.0, 1.0))
+	if _wx_t >= 1.0:
+		_weather_idx = WEATHER_NAMES.find(_wx_to)
+		_wx_from = ""
+
 func type_name() -> String:
-	return WEATHER_NAMES[_weather_idx]
+	if _wx_t < 1.0 and _wx_from != "":
+		return "%s->%s %d%%" % [_wx_from, _wx_to, int(_wx_t * 100.0)]
+	return str(WEATHER_NAMES[_weather_idx]) + ("" if auto_weather else " (manual)")
 
 func toggle_visible() -> void:
 	_visible = not _visible
@@ -203,10 +256,15 @@ func is_visible_flag() -> bool:
 
 func set_day(day: float, to_sun := Vector3.UP) -> void:
 	# brightness follows day/night; scatter warms the clouds when the sun is near the horizon
-	var wp: Dictionary = WEATHER_PRESETS[WEATHER_NAMES[_weather_idx]]
+	# blended across a weather transition, or it snaps on the frame the preset index flips
+	var wb: float = float(WEATHER_PRESETS[WEATHER_NAMES[_weather_idx]]["brightness"])
+	if _wx_t < 1.0 and _wx_from != "" and _wx_to != "":
+		var t: float = _wx_t * _wx_t * (3.0 - 2.0 * _wx_t)
+		wb = lerpf(float(WEATHER_PRESETS[_wx_from]["brightness"]),
+				   float(WEATHER_PRESETS[_wx_to]["brightness"]), t)
 	# night floor 0.4, not 0 -- lifted from the April tuning (commit 394352a, "raise night brightness
 	# floor to 0.4 for legible night clouds"). Clouds that fade to black at night just vanish.
-	var bright: float = lerpf(0.4, 1.0, day) * float(wp["brightness"]) * bright_mult
+	var bright: float = lerpf(0.4, 1.0, day) * wb * bright_mult
 	var scatter: float = clampf(1.0 - abs(to_sun.y) * 3.0, 0.0, 1.0) * day
 	var sun_xz := Vector2(to_sun.x, to_sun.z)
 	if sun_xz.length() > 0.001:

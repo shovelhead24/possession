@@ -140,42 +140,42 @@ const MAX_PATCHES := 40           # ring needs 36 at 84km; headroom for overlap/
 # Entries whose data hasn't been fetched yet are skipped at load, so this list is safe to keep
 # complete while tools/dem/pipeline.py is still running.
 const PATCHES := [
-	{"name": "schwarzwald", "arc_pct": 0.028, "tint": Color(0.13, 0.22, 0.14), "trees": 1.0, "tree_hi": 1400.0},
-	{"name": "cork_city", "arc_pct": 0.056, "tint": Color(0.34, 0.38, 0.30), "trees": 0.3, "tree_hi": 200.0},
-	{"name": "savannah", "arc_pct": 0.084, "tint": Color(0.30, 0.38, 0.26), "trees": 0.3, "tree_hi": 120.0},
-	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0},
-	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.36, 0.40, 0.24), "trees": 0.5, "tree_hi": 400.0},
-	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.26, 0.36, 0.20), "trees": 0.6, "tree_hi": 900.0},
-	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0},
-	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0},
-	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.36, 0.42, 0.32), "trees": 0.1, "tree_hi": 40.0},
-	{"name": "ebro_delta", "arc_pct": 0.280, "tint": Color(0.42, 0.44, 0.34), "trees": 0.1, "tree_hi": 60.0},
-	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0},
-	{"name": "scablands", "arc_pct": 0.336, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0},
-	{"name": "loop_head", "arc_pct": 0.364, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 250.0},
-	{"name": "monument_valley", "arc_pct": 0.392, "tint": Color(0.62, 0.38, 0.24), "trees": 0.0, "tree_hi": 0.0},
-	{"name": "atacama", "arc_pct": 0.420, "tint": Color(0.58, 0.44, 0.32), "trees": 0.0, "tree_hi": 0.0},
-	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0},
-	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.26, 0.34, 0.24), "trees": 0.4, "tree_hi": 500.0},
-	{"name": "great_plains", "arc_pct": 0.504, "tint": Color(0.48, 0.46, 0.28), "trees": 0.05, "tree_hi": 1500.0},
-	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.46, 0.44, 0.28), "trees": 0.05, "tree_hi": 1900.0},
-	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0},
-	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0},
-	{"name": "priests_leap", "arc_pct": 0.616, "tint": Color(0.28, 0.34, 0.26), "trees": 0.5, "tree_hi": 450.0},
-	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.34, 0.34, 0.26), "trees": 0.5, "tree_hi": 700.0},
-	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.50, 0.48, 0.46), "trees": 0.7, "tree_hi": 2000.0},
-	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.40, 0.42, 0.38), "trees": 0.7, "tree_hi": 1500.0},
-	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0},
-	{"name": "olympic_forest", "arc_pct": 0.756, "tint": Color(0.14, 0.24, 0.16), "trees": 1.0, "tree_hi": 1200.0},
-	{"name": "borneo_highland", "arc_pct": 0.784, "tint": Color(0.16, 0.28, 0.16), "trees": 1.0, "tree_hi": 2500.0},
-	{"name": "costa_rica_jungle", "arc_pct": 0.812, "tint": Color(0.16, 0.30, 0.18), "trees": 1.0, "tree_hi": 2000.0},
-	{"name": "tepui", "arc_pct": 0.840, "tint": Color(0.24, 0.32, 0.24), "trees": 0.5, "tree_hi": 1500.0},
-	{"name": "iceland_highland", "arc_pct": 0.868, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0},
-	{"name": "badlands_sd", "arc_pct": 0.896, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0},
+	{"name": "schwarzwald", "arc_pct": 0.028, "tint": Color(0.13, 0.22, 0.14), "trees": 1.0, "tree_hi": 1400.0, "weather": "fresh"},
+	{"name": "cork_city", "arc_pct": 0.056, "tint": Color(0.34, 0.38, 0.30), "trees": 0.3, "tree_hi": 200.0, "weather": "fresh"},
+	{"name": "savannah", "arc_pct": 0.084, "tint": Color(0.30, 0.38, 0.26), "trees": 0.3, "tree_hi": 120.0, "weather": "fresh"},
+	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0, "weather": "overcast"},
+	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.36, 0.40, 0.24), "trees": 0.5, "tree_hi": 400.0, "weather": "fresh"},
+	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.26, 0.36, 0.20), "trees": 0.6, "tree_hi": 900.0, "weather": "fresh"},
+	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "overcast"},
+	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh"},
+	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.36, 0.42, 0.32), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast"},
+	{"name": "ebro_delta", "arc_pct": 0.280, "tint": Color(0.42, 0.44, 0.34), "trees": 0.1, "tree_hi": 60.0, "weather": "fresh"},
+	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
+	{"name": "scablands", "arc_pct": 0.336, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
+	{"name": "loop_head", "arc_pct": 0.364, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 250.0, "weather": "overcast"},
+	{"name": "monument_valley", "arc_pct": 0.392, "tint": Color(0.62, 0.38, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
+	{"name": "atacama", "arc_pct": 0.420, "tint": Color(0.58, 0.44, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
+	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
+	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.26, 0.34, 0.24), "trees": 0.4, "tree_hi": 500.0, "weather": "overcast"},
+	{"name": "great_plains", "arc_pct": 0.504, "tint": Color(0.48, 0.46, 0.28), "trees": 0.05, "tree_hi": 1500.0, "weather": "clear"},
+	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.46, 0.44, 0.28), "trees": 0.05, "tree_hi": 1900.0, "weather": "clear"},
+	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh"},
+	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "overcast"},
+	{"name": "priests_leap", "arc_pct": 0.616, "tint": Color(0.28, 0.34, 0.26), "trees": 0.5, "tree_hi": 450.0, "weather": "overcast"},
+	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.34, 0.34, 0.26), "trees": 0.5, "tree_hi": 700.0, "weather": "overcast"},
+	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.50, 0.48, 0.46), "trees": 0.7, "tree_hi": 2000.0, "weather": "fresh"},
+	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.40, 0.42, 0.38), "trees": 0.7, "tree_hi": 1500.0, "weather": "fresh"},
+	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0, "weather": "overcast"},
+	{"name": "olympic_forest", "arc_pct": 0.756, "tint": Color(0.14, 0.24, 0.16), "trees": 1.0, "tree_hi": 1200.0, "weather": "overcast"},
+	{"name": "borneo_highland", "arc_pct": 0.784, "tint": Color(0.16, 0.28, 0.16), "trees": 1.0, "tree_hi": 2500.0, "weather": "overcast"},
+	{"name": "costa_rica_jungle", "arc_pct": 0.812, "tint": Color(0.16, 0.30, 0.18), "trees": 1.0, "tree_hi": 2000.0, "weather": "overcast"},
+	{"name": "tepui", "arc_pct": 0.840, "tint": Color(0.24, 0.32, 0.24), "trees": 0.5, "tree_hi": 1500.0, "weather": "overcast"},
+	{"name": "iceland_highland", "arc_pct": 0.868, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "overcast"},
+	{"name": "badlands_sd", "arc_pct": 0.896, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "clear"},
 	# closing the loop back toward 0% -- repeats, so the hub-spire approach isn't a procedural gap
-	{"name": "scablands", "arc_pct": 0.924, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0},
-	{"name": "iceland_highland", "arc_pct": 0.952, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0},
-	{"name": "badlands_sd", "arc_pct": 0.980, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0},
+	{"name": "scablands", "arc_pct": 0.924, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
+	{"name": "iceland_highland", "arc_pct": 0.952, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "overcast"},
+	{"name": "badlands_sd", "arc_pct": 0.980, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "clear"},
 ]
 const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
 const HOME_TREE_HI := 600.0
@@ -637,12 +637,13 @@ func _biome_at(arc: float, lat: float) -> Dictionary:
 		var fx := _dem_hf_cam.x + arc / _dem_hf_mpp
 		var fy := _dem_hf_cam.y - lat / _dem_hf_mpp
 		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
-			return {"trees": HOME_TREES, "tree_hi": HOME_TREE_HI}
+			return {"trees": HOME_TREES, "tree_hi": HOME_TREE_HI, "weather": "fresh"}
 	var pi := _patch_at(arc, lat)
 	if pi >= 0:
 		var p: Dictionary = _patch_meta[pi]   # NOT PATCHES[pi] -- indices diverge, see _patch_meta
-		return {"trees": float(p.get("trees", 0.5)), "tree_hi": float(p.get("tree_hi", 800.0))}
-	return {"trees": 0.35, "tree_hi": 700.0}   # procedural filler: sparse generic woodland
+		return {"trees": float(p.get("trees", 0.5)), "tree_hi": float(p.get("tree_hi", 800.0)),
+				"weather": str(p.get("weather", "fresh"))}
+	return {"trees": 0.35, "tree_hi": 700.0, "weather": "fresh"}   # procedural filler
 
 func _here_splice() -> String:
 	# which splice the camera is currently standing in, for the HUD
@@ -1030,6 +1031,10 @@ func _process(delta: float) -> void:
 	if _clouds:
 		_clouds.set_day(day, to_sun)
 		_clouds.update_around(_cam.global_position)
+		# weather follows the biome you're over, eased in (see ring_clouds.WEATHER_BLEND) -- checked
+		# on the same cheap cadence as the forest, not every frame
+		if _tree_cd <= 0.0:
+			_clouds.transition_to(_biome_at(cam_theta * r_now, _cam.global_position.z)["weather"])
 	var eff_haze: float = 0.0 if _haze_off else haze_density
 	_mat.set_shader_parameter("to_sun", to_sun)
 	_mat.set_shader_parameter("haze_density", eff_haze)

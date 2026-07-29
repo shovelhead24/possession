@@ -290,4 +290,36 @@ coverage 100.0%  wrote guri_dam_sat.dat (29 MB) + out/guri_dam_s2_preview.jpg
 [13/33] savannah: heights ...
 location: savannah (Savannah, GA)
 zoom 12: tiles x 1120..1130 y 1657..1667 -> 11x11 = 121 tiles
-  row 1/11  row 2/11  row 3/11  row 4/11  row 5/11  row 6/11  row 7/11  row 8/11  row 9/11  row 10/11
+  row 1/11  row 2/11  row 3/11  row 4/11  row 5/11  row 6/11  row 7/11  row 8/11  row 9/11  row 10/11  row 11/11
+elevation range: -100 m .. 565 m over 2816x2816 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote savannah_detail.dat (4 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (15 MB) + savannah.json  m/px=32.38  camera_px=[1372, 1349]
+[13/33] savannah: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2C_17SMR_20250301_1_L2A  cloud=0.0%  pasted 16k px  coverage now 0.1%
+  S2B_17SMS_20251221_1_L2A  cloud=0.0%  pasted 1k px  coverage now 0.1%
+  S2B_17SMR_20241216_0_L2A  cloud=0.0%  pasted 11k px  coverage now 0.2%
+  S2B_17SMS_20250204_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.2%
+  S2C_17SMS_20250301_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.2%
+  S2A_17SMR_20240922_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.2%
+  S2B_17SMR_20241116_0_L2A  cloud=0.0%  pasted 13k px  coverage now 0.3%
+  S2B_17SMS_20231003_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.3%
+  S2C_17SMR_20251017_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.3%
+  S2B_17SMR_20240917_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.3%
+  S2B_17SMS_20241024_0_L2A  cloud=0.0%  pasted 153k px  coverage now 1.2%
+  S2B_17SMR_20231003_0_L2A  cloud=0.0%  pasted 3k px  coverage now 1.2%
+  S2A_17SMR_20241012_0_L2A  cloud=0.0%  pasted 1k px  coverage now 1.2%
+  S2B_17SMR_20251231_0_L2A  cloud=0.0%  pasted 0k px  coverage now 1.2%
+  S2A_17SMR_20230918_0_L2A  cloud=0.0%  pasted 0k px  coverage now 1.2%
+  S2B_17SMR_20251221_1_L2A  cloud=0.0%  pasted 0k px  coverage now 1.2%
+  S2A_17SMR_20241019_0_L2A  cloud=0.0%  pasted 11859k px  coverage now 71.9%
+  S2B_17SMR_20241017_0_L2A  cloud=0.0%  pasted 0k px  coverage now 71.9%
+coverage 71.9%  wrote savannah_sat.dat (22 MB) + out/savannah_s2_preview.jpg
+[13/33] savannah: done in 235s (elapsed 46.3 min)
+[14/33] schwarzwald: already complete, skipping
+[15/33] olympic_forest: heights ...
+location: olympic_forest (Olympic Peninsula (Hoh), WA)
+zoom 12: tiles x 631..644 y 1419..1432 -> 14x14 = 196 tiles
+  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14  row 12/14
