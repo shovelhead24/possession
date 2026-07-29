@@ -391,4 +391,694 @@ coverage 100.0%  wrote wye_valley_sat.dat (32 MB) + out/wye_valley_s2_preview.jp
 [17/33] dordogne: heights ...
 location: dordogne (Dordogne valley, France)
 zoom 12: tiles x 2055..2067 y 1468..1481 -> 13x14 = 182 tiles
-  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14
+  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14  row 12/14  row 13/14  row 14/14
+elevation range: 28 m .. 591 m over 3328x3584 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote dordogne_detail.dat (11 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (23 MB) + dordogne.json  m/px=27.07  camera_px=[1776, 1802]
+[17/33] dordogne: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_31TCK_20250810_0_L2A  cloud=0.0%  pasted 1904k px  coverage now 11.3%
+  S2C_31TCL_20260409_1_L2A  cloud=0.0%  pasted 1413k px  coverage now 19.8%
+  S2B_31TCK_20231010_0_L2A  cloud=0.0%  pasted 7k px  coverage now 19.8%
+  S2B_30TYQ_20241031_0_L2A  cloud=0.0%  pasted 10k px  coverage now 19.9%
+  S2B_31TCK_20251228_0_L2A  cloud=0.0%  pasted 0k px  coverage now 19.9%
+  S2B_31TCK_20250711_0_L2A  cloud=0.0%  pasted 0k px  coverage now 19.9%
+  S2B_31TCL_20241031_1_L2A  cloud=0.0%  pasted 0k px  coverage now 19.9%
+  S2B_31TCK_20240805_0_L2A  cloud=0.0%  pasted 0k px  coverage now 19.9%
+  S2B_31TCL_20260226_0_L2A  cloud=0.0%  pasted 479k px  coverage now 22.7%
+  S2B_31TCK_20230920_0_L2A  cloud=0.0%  pasted 0k px  coverage now 22.7%
+  S2A_31TCK_20240810_0_L2A  cloud=0.0%  pasted 29k px  coverage now 22.9%
+  S2B_31TDL_20231007_0_L2A  cloud=0.0%  pasted 153k px  coverage now 23.8%
+  S2A_31TCK_20230624_1_L2A  cloud=0.0%  pasted 36k px  coverage now 24.1%
+  S2A_31TCK_20230624_0_L2A  cloud=0.0%  pasted 10840k px  coverage now 88.7%
+  S2A_31TCL_20230905_0_L2A  cloud=0.0%  pasted 0k px  coverage now 88.7%
+  S2B_31TCL_20250817_0_L2A  cloud=0.0%  pasted 1901k px  coverage now 100.0%
+coverage 100.0%  wrote dordogne_sat.dat (33 MB) + out/dordogne_s2_preview.jpg
+[17/33] dordogne: done in 482s (elapsed 70.0 min)
+[18/33] great_plains: heights ...
+location: great_plains (Nebraska Sandhills, USA)
+zoom 12: tiles x 887..899 y 1514..1526 -> 13x13 = 169 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: 911 m .. 1287 m over 3328x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote great_plains_detail.dat (12 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (22 MB) + great_plains.json  m/px=28.40  camera_px=[1648, 1665]
+[18/33] great_plains: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_13TGG_20231007_0_L2A  cloud=0.0%  pasted 12316k px  coverage now 73.4%
+  S2B_14TLM_20230821_0_L2A  cloud=0.0%  pasted 3551k px  coverage now 94.6%
+  S2B_14TLM_20231007_0_L2A  cloud=0.0%  pasted 908k px  coverage now 100.0%
+coverage 100.0%  wrote great_plains_sat.dat (31 MB) + out/great_plains_s2_preview.jpg
+[18/33] great_plains: done in 203s (elapsed 73.4 min)
+[19/33] camargue: heights ...
+location: camargue (Camargue / Rhone delta, France)
+zoom 12: tiles x 2093..2105 y 1491..1503 -> 13x13 = 169 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: -15 m .. 461 m over 3328x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote camargue_detail.dat (3 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (22 MB) + camargue.json  m/px=27.72  camera_px=[1660, 1603]
+[19/33] camargue: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_31TEH_20251010_1_L2A  cloud=0.0%  pasted 202k px  coverage now 1.2%
+  S2A_31TEH_20230807_1_L2A  cloud=0.0%  pasted 981k px  coverage now 7.1%
+  S2A_31TEJ_20230807_0_L2A  cloud=0.0%  pasted 63k px  coverage now 7.4%
+  S2A_31TFJ_20230807_0_L2A  cloud=0.0%  pasted 430k px  coverage now 10.0%
+  S2A_31TEH_20240516_0_L2A  cloud=0.0%  pasted 11k px  coverage now 10.1%
+  S2B_31TEH_20230524_0_L2A  cloud=0.0%  pasted 461k px  coverage now 12.8%
+  S2A_31TEH_20230906_1_L2A  cloud=0.0%  pasted 13k px  coverage now 12.9%
+  S2A_31TFH_20230906_1_L2A  cloud=0.0%  pasted 2852k px  coverage now 29.9%
+  S2A_31TEH_20250811_1_L2A  cloud=0.0%  pasted 15k px  coverage now 30.0%
+coverage 30.0%  wrote camargue_sat.dat (4 MB) + out/camargue_s2_preview.jpg
+[19/33] camargue: done in 231s (elapsed 77.3 min)
+[20/33] danube_delta: heights ...
+location: danube_delta (Danube Delta, Romania)
+zoom 12: tiles x 2375..2387 y 1464..1477 -> 13x14 = 182 tiles
+  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14  row 12/14  row 13/14  row 14/14
+elevation range: -7 m .. 229 m over 3328x3584 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote danube_delta_detail.dat (3 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (23 MB) + danube_delta.json  m/px=26.95  camera_px=[1703, 1796]
+[20/33] danube_delta: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_35TPL_20250811_1_L2A  cloud=0.0%  pasted 94k px  coverage now 0.6%
+  S2A_35TQK_20250619_0_L2A  cloud=0.0%  pasted 873k px  coverage now 5.8%
+  S2B_35TQK_20240816_0_L2A  cloud=0.0%  pasted 92k px  coverage now 6.3%
+  S2C_35TQL_20260605_0_L2A  cloud=0.0%  pasted 852k px  coverage now 11.4%
+  S2C_35TQK_20250617_0_L2A  cloud=0.0%  pasted 0k px  coverage now 11.4%
+  S2A_35TQK_20250828_0_L2A  cloud=0.0%  pasted 0k px  coverage now 11.4%
+  S2C_35TQK_20250428_0_L2A  cloud=0.0%  pasted 71k px  coverage now 11.8%
+  S2B_35TPL_20230828_0_L2A  cloud=0.0%  pasted 12k px  coverage now 11.9%
+  S2C_35TQK_20260622_0_L2A  cloud=0.0%  pasted 0k px  coverage now 11.9%
+  S2B_35TQK_20250625_0_L2A  cloud=0.0%  pasted 951k px  coverage now 17.6%
+  S2A_35TPL_20240708_0_L2A  cloud=0.0%  pasted 13k px  coverage now 17.7%
+  S2B_35TPL_20240921_0_L2A  cloud=0.0%  pasted 18k px  coverage now 17.8%
+coverage 17.8%  wrote danube_delta_sat.dat (4 MB) + out/danube_delta_s2_preview.jpg
+[20/33] danube_delta: done in 344s (elapsed 83.0 min)
+[21/33] dolomites: heights ...
+location: dolomites (Dolomites (Tre Cime), Italy)
+zoom 12: tiles x 2181..2194 y 1440..1453 -> 14x14 = 196 tiles
+  row 1/14  row 2/14  row 3/14  row 4/14  row 5/14  row 6/14  row 7/14  row 8/14  row 9/14  row 10/14  row 11/14  row 12/14  row 13/14  row 14/14
+elevation range: 210 m .. 3892 m over 3584x3584 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote dolomites_detail.dat (17 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (25 MB) + dolomites.json  m/px=26.25  camera_px=[1851, 1788]
+[21/33] dolomites: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_32TQS_20241111_0_L2A  cloud=0.0%  pasted 5k px  coverage now 0.0%
+  S2A_32TQS_20241116_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.0%
+  S2C_32TQT_20250919_0_L2A  cloud=0.0%  pasted 4385k px  coverage now 26.2%
+  S2C_33TUN_20250919_0_L2A  cloud=0.0%  pasted 11k px  coverage now 26.2%
+  S2A_33TUM_20231007_0_L2A  cloud=0.0%  pasted 2527k px  coverage now 41.3%
+  S2A_33TUN_20230910_1_L2A  cloud=0.0%  pasted 0k px  coverage now 41.3%
+  S2A_32TQS_20230907_0_L2A  cloud=0.0%  pasted 197k px  coverage now 42.5%
+  S2C_33TUM_20250919_0_L2A  cloud=0.0%  pasted 2907k px  coverage now 59.8%
+  S2C_32TQS_20250919_0_L2A  cloud=0.0%  pasted 6699k px  coverage now 99.8%
+  S2A_32TQS_20231007_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_32TQS_20230625_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_32TQS_20260522_1_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_32TQT_20231219_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_32TQT_20241116_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_32TQS_20260502_1_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_32TQS_20250918_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_33TUM_20231219_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2B_32TQS_20241115_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.8%
+  S2A_32TQS_20231219_0_L2A  cloud=0.0%  pasted 19k px  coverage now 99.9%
+  S2A_32TQT_20230907_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.9%
+  S2B_32TQS_20250609_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.9%
+  S2B_32TQT_20260502_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.9%
+  S2B_32TQS_20240130_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.9%
+  S2B_32TQS_20260425_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.9%
+  S2A_32TQS_20230910_1_L2A  cloud=0.0%  pasted 18k px  coverage now 100.0%
+  S2C_33TUM_20260328_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+coverage 100.0%  wrote dolomites_sat.dat (36 MB) + out/dolomites_s2_preview.jpg
+[21/33] dolomites: done in 391s (elapsed 89.5 min)
+[22/33] cairngorms: heights ...
+location: cairngorms (Cairngorms, Scotland)
+zoom 12: tiles x 1998..2014 y 1245..1261 -> 17x17 = 289 tiles
+  row 1/17  row 2/17  row 3/17  row 4/17  row 5/17  row 6/17  row 7/17  row 8/17  row 9/17  row 10/17  row 11/17  row 12/17  row 13/17  row 14/17  row 15/17  row 16/17  row 17/17
+elevation range: 7 m .. 1306 m over 4352x4352 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote cairngorms_detail.dat (13 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (37 MB) + cairngorms.json  m/px=20.77  camera_px=[2095, 2093]
+[22/33] cairngorms: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_30VWJ_20260429_0_L2A  cloud=0.0%  pasted 159k px  coverage now 1.0%
+  S2C_30VVJ_20250712_0_L2A  cloud=0.0%  pasted 509k px  coverage now 4.0%
+  S2B_30VVH_20260429_0_L2A  cloud=0.0%  pasted 2768k px  coverage now 20.5%
+  S2C_30VVJ_20251010_0_L2A  cloud=0.0%  pasted 0k px  coverage now 20.5%
+  S2A_30VVH_20230530_0_L2A  cloud=0.0%  pasted 0k px  coverage now 20.5%
+  S2A_30VWJ_20230616_0_L2A  cloud=0.0%  pasted 0k px  coverage now 20.5%
+  S2B_30VVJ_20251015_0_L2A  cloud=0.0%  pasted 0k px  coverage now 20.5%
+  S2A_30VWH_20230904_0_L2A  cloud=0.0%  pasted 14k px  coverage now 20.6%
+  S2B_30VVJ_20250408_0_L2A  cloud=0.0%  pasted 0k px  coverage now 20.6%
+  S2C_30VVH_20250516_0_L2A  cloud=0.0%  pasted 102k px  coverage now 21.2%
+  S2A_30VVJ_20260430_1_L2A  cloud=0.0%  pasted 0k px  coverage now 21.2%
+  S2A_30VVJ_20260430_0_L2A  cloud=0.0%  pasted 0k px  coverage now 21.2%
+  S2A_30VVJ_20260430_2_L2A  cloud=0.0%  pasted 0k px  coverage now 21.2%
+  S2C_30VVJ_20250403_0_L2A  cloud=0.0%  pasted 0k px  coverage now 21.2%
+  S2C_30VVJ_20250516_0_L2A  cloud=0.0%  pasted 13206k px  coverage now 99.9%
+  S2C_30VVH_20260424_0_L2A  cloud=0.0%  pasted 0k px  coverage now 99.9%
+  S2B_30VVH_20250408_0_L2A  cloud=0.1%  pasted 0k px  coverage now 99.9%
+  S2A_30VVH_20260430_1_L2A  cloud=0.1%  pasted 0k px  coverage now 99.9%
+  S2A_30VVH_20260430_0_L2A  cloud=0.1%  pasted 0k px  coverage now 99.9%
+  S2A_30VVJ_20251015_1_L2A  cloud=0.1%  pasted 0k px  coverage now 99.9%
+  S2A_30VVH_20250408_1_L2A  cloud=0.1%  pasted 0k px  coverage now 99.9%
+coverage 99.9%  wrote cairngorms_sat.dat (32 MB) + out/cairngorms_s2_preview.jpg
+[22/33] cairngorms: done in 439s (elapsed 96.8 min)
+[23/33] tatra_spruce: heights ...
+location: tatra_spruce (High Tatras, Slovakia/Poland)
+zoom 12: tiles x 2270..2283 y 1396..1410 -> 14x15 = 210 tiles
+  row 1/15  row 2/15  row 3/15  row 4/15  row 5/15  row 6/15  row 7/15  row 8/15  row 9/15  row 10/15  row 11/15  row 12/15  row 13/15  row 14/15  row 15/15
+elevation range: 275 m .. 2606 m over 3584x3840 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote tatra_spruce_detail.dat (14 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (27 MB) + tatra_spruce.json  m/px=24.98  camera_px=[1786, 1927]
+[23/33] tatra_spruce: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_34UDA_20260625_1_L2A  cloud=0.0%  pasted 13k px  coverage now 0.1%
+  S2B_34UDV_20260625_0_L2A  cloud=0.0%  pasted 845k px  coverage now 5.1%
+  S2A_34UDA_20250813_0_L2A  cloud=0.0%  pasted 2k px  coverage now 5.1%
+  S2C_34UDV_20250702_0_L2A  cloud=0.0%  pasted 14916k px  coverage now 94.0%
+  S2A_34UCA_20260314_1_L2A  cloud=0.0%  pasted 2k px  coverage now 94.1%
+  S2B_34UDV_20251107_0_L2A  cloud=0.0%  pasted 0k px  coverage now 94.1%
+  S2A_34UDV_20250813_0_L2A  cloud=0.0%  pasted 0k px  coverage now 94.1%
+  S2A_34UCV_20250813_0_L2A  cloud=0.0%  pasted 996k px  coverage now 100.0%
+coverage 100.0%  wrote tatra_spruce_sat.dat (32 MB) + out/tatra_spruce_s2_preview.jpg
+[23/33] tatra_spruce: done in 284s (elapsed 101.6 min)
+[24/33] norwegian_fjord: heights ...
+location: norwegian_fjord (Geirangerfjord, Norway)
+zoom 12: tiles x 2119..2138 y 1130..1149 -> 20x20 = 400 tiles
+  row 1/20  row 2/20  row 3/20  row 4/20  row 5/20  row 6/20  row 7/20  row 8/20  row 9/20  row 10/20  row 11/20  row 12/20  row 13/20  row 14/20  row 15/20  row 16/20  row 17/20  row 18/20  row 19/20  row 20/20
+elevation range: -6 m .. 2073 m over 5120x5120 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote norwegian_fjord_detail.dat (25 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (52 MB) + norwegian_fjord.json  m/px=17.88  camera_px=[2577, 2584]
+[24/33] norwegian_fjord: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2C_32VLQ_20250927_0_L2A  cloud=0.0%  pasted 3354k px  coverage now 20.0%
+  S2C_32VLQ_20250712_0_L2A  cloud=0.0%  pasted 32k px  coverage now 20.2%
+  S2B_32VLQ_20240503_0_L2A  cloud=0.0%  pasted 14k px  coverage now 20.3%
+  S2B_32VMQ_20240901_0_L2A  cloud=0.0%  pasted 1219k px  coverage now 27.5%
+  S2B_32VLQ_20230409_0_L2A  cloud=0.0%  pasted 0k px  coverage now 27.5%
+  S2A_32VLQ_20260430_1_L2A  cloud=0.0%  pasted 1k px  coverage now 27.6%
+  S2B_32VMP_20240901_0_L2A  cloud=0.0%  pasted 3018k px  coverage now 45.5%
+  S2A_32VMQ_20240306_0_L2A  cloud=0.1%  pasted 2100k px  coverage now 58.1%
+  S2B_32VMQ_20240504_0_L2A  cloud=0.1%  pasted 0k px  coverage now 58.1%
+  S2A_32VMQ_20230421_0_L2A  cloud=0.1%  pasted 0k px  coverage now 58.1%
+  S2B_32VLP_20240901_0_L2A  cloud=0.1%  pasted 0k px  coverage now 58.1%
+  S2A_32VLQ_20230421_0_L2A  cloud=0.2%  pasted 851k px  coverage now 63.1%
+  S2A_32VMP_20240522_0_L2A  cloud=0.2%  pasted 1761k px  coverage now 73.6%
+  S2C_32VLP_20250713_0_L2A  cloud=0.2%  pasted 0k px  coverage now 73.6%
+  S2A_32VMQ_20240522_0_L2A  cloud=0.3%  pasted 0k px  coverage now 73.6%
+  S2C_32VMP_20250825_0_L2A  cloud=0.3%  pasted 0k px  coverage now 73.6%
+  S2A_32VMP_20240919_0_L2A  cloud=0.3%  pasted 0k px  coverage now 73.6%
+  S2A_32VMP_20230604_0_L2A  cloud=0.3%  pasted 0k px  coverage now 73.6%
+  S2B_32VMP_20250519_0_L2A  cloud=0.4%  pasted 0k px  coverage now 73.6%
+  S2C_32VLP_20250927_0_L2A  cloud=0.4%  pasted 3542k px  coverage now 94.8%
+  S2B_32VLP_20250515_0_L2A  cloud=0.5%  pasted 583k px  coverage now 98.2%
+  S2A_32VLP_20230610_0_L2A  cloud=0.5%  pasted 4k px  coverage now 98.3%
+  S2A_32VLP_20250519_1_L2A  cloud=0.5%  pasted 0k px  coverage now 98.3%
+coverage 98.3%  wrote norwegian_fjord_sat.dat (29 MB) + out/norwegian_fjord_s2_preview.jpg
+[24/33] norwegian_fjord: done in 695s (elapsed 113.1 min)
+[25/33] atacama: heights ...
+location: atacama (Atacama (San Pedro), Chile)
+zoom 12: tiles x 1267..1276 y 2311..2320 -> 10x10 = 100 tiles
+  row 1/10  row 2/10  row 3/10  row 4/10  row 5/10  row 6/10  row 7/10  row 8/10  row 9/10  row 10/10
+elevation range: 2236 m .. 5972 m over 2560x2560 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote atacama_detail.dat (6 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (13 MB) + atacama.json  m/px=35.21  camera_px=[1361, 1223]
+[25/33] atacama: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_19KFR_20250701_0_L2A  cloud=0.0%  pasted 1208k px  coverage now 7.2%
+  S2B_19KFQ_20250201_0_L2A  cloud=0.0%  pasted 4156k px  coverage now 32.0%
+  S2B_19KER_20250711_0_L2A  cloud=0.0%  pasted 2600k px  coverage now 47.5%
+coverage 47.5%  wrote atacama_sat.dat (14 MB) + out/atacama_s2_preview.jpg
+[25/33] atacama: done in 223s (elapsed 116.8 min)
+[26/33] namib_dunes: heights ...
+location: namib_dunes (Namib dunes (Sossusvlei), Namibia)
+zoom 12: tiles x 2217..2227 y 2334..2343 -> 11x10 = 110 tiles
+  row 1/10  row 2/10  row 3/10  row 4/10  row 5/10  row 6/10  row 7/10  row 8/10  row 9/10  row 10/10
+elevation range: -69 m .. 1680 m over 2816x2560 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote namib_dunes_detail.dat (11 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (14 MB) + namib_dunes.json  m/px=34.71  camera_px=[1373, 1226]
+[26/33] namib_dunes: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_33KWP_20240403_0_L2A  cloud=0.0%  pasted 2556k px  coverage now 15.2%
+  S2B_33JWN_20240515_0_L2A  cloud=0.0%  pasted 8990k px  coverage now 68.8%
+  S2B_33JWN_20250719_0_L2A  cloud=0.0%  pasted 110k px  coverage now 69.5%
+  S2B_33JWN_20251209_0_L2A  cloud=0.0%  pasted 3301k px  coverage now 89.2%
+coverage 89.2%  wrote namib_dunes_sat.dat (22 MB) + out/namib_dunes_s2_preview.jpg
+[26/33] namib_dunes: done in 236s (elapsed 120.8 min)
+[27/33] borneo_highland: heights ...
+location: borneo_highland (Mount Kinabalu, Borneo)
+zoom 12: tiles x 3370..3378 y 1974..1983 -> 9x10 = 90 tiles
+  row 1/10  row 2/10  row 3/10  row 4/10  row 5/10  row 6/10  row 7/10  row 8/10  row 9/10  row 10/10
+elevation range: -89 m .. 4051 m over 2304x2560 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote borneo_highland_detail.dat (9 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (11 MB) + borneo_highland.json  m/px=38.00  camera_px=[1117, 1201]
+[27/33] borneo_highland: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_50NMN_20251102_0_L2A  cloud=1.3%  pasted 4741k px  coverage now 28.3%
+  S2B_50NMN_20250628_0_L2A  cloud=2.6%  pasted 1k px  coverage now 28.3%
+  S2C_50NMM_20250723_0_L2A  cloud=5.1%  pasted 12032k px  coverage now 100.0%
+  S2B_50NMM_20230808_0_L2A  cloud=10.4%  pasted 1k px  coverage now 100.0%
+coverage 100.0%  wrote borneo_highland_sat.dat (30 MB) + out/borneo_highland_s2_preview.jpg
+[27/33] borneo_highland: done in 141s (elapsed 123.1 min)
+[28/33] tuscany_hills: heights ...
+location: tuscany_hills (Val d'Orcia, Tuscany)
+zoom 12: tiles x 2174..2186 y 1498..1510 -> 13x13 = 169 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: -3 m .. 1718 m over 3328x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote tuscany_hills_detail.dat (10 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (22 MB) + tuscany_hills.json  m/px=27.93  camera_px=[1604, 1611]
+[28/33] tuscany_hills: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_32TQN_20250809_0_L2A  cloud=0.0%  pasted 9302k px  coverage now 55.4%
+  S2B_32TPN_20260608_0_L2A  cloud=0.0%  pasted 45k px  coverage now 55.7%
+  S2A_32TPP_20230910_1_L2A  cloud=0.0%  pasted 1910k px  coverage now 67.1%
+  S2A_32TQP_20230910_1_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQN_20230910_1_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQP_20240214_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQP_20230823_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TPN_20260625_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TPN_20250603_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQN_20251008_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQN_20260409_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQN_20250305_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TPN_20260409_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQN_20240214_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQP_20251008_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TPN_20240414_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQN_20230717_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQP_20231002_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TPN_20250305_1_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2C_32TQN_20251105_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TPN_20230823_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQN_20241230_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TPN_20230910_1_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQP_20250812_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQN_20230823_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQN_20240711_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2B_32TQN_20231002_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TPN_20250809_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2C_32TQN_20260404_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+  S2A_32TQN_20241031_0_L2A skipped: CURL error: Could not resolve host: sentinel-cogs.s3.us-west-2.amazonaws.com
+coverage 67.1%  wrote tuscany_hills_sat.dat (24 MB) + out/tuscany_hills_s2_preview.jpg
+[28/33] tuscany_hills: done in 15120s (elapsed 375.1 min)
+[29/33] tepui: heights ...
+location: tepui (Mount Roraima tepui, Venezuela)
+zoom 12: tiles x 1352..1361 y 1985..1993 -> 10x9 = 90 tiles
+[29/33] tepui: FAILED
+Traceback (most recent call last):
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1319, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              encode_chunked=req.has_header('Transfer-encoding'))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1338, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1384, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1333, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1093, in _send_output
+    self.send(msg)
+    ~~~~~~~~~^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1037, in send
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1472, in connect
+    super().connect()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1003, in connect
+    self.sock = self._create_connection(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        (self.host,self.port), self.timeout, self.source_address)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 840, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Games\possession\tools\dem\pipeline.py", line 63, in run
+    fd.main()
+    ~~~~~~~^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 424, in main
+    mosaic.paste(fetch(ZOOM, tx, ty, cache), ((tx - x0) * 256, (ty - y0) * 256))
+                 ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 404, in fetch
+    urllib.request.urlretrieve(URL.format(z=z, x=x, y=y), path)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 214, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+                            ~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 489, in open
+    response = self._open(req, data)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 506, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1367, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        context=self._context)
+                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1322, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+
+[30/33] badlands_sd: heights ...
+location: badlands_sd (Badlands, South Dakota)
+zoom 12: tiles x 877..889 y 1485..1497 -> 13x13 = 169 tiles
+[30/33] badlands_sd: FAILED
+Traceback (most recent call last):
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1319, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              encode_chunked=req.has_header('Transfer-encoding'))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1338, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1384, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1333, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1093, in _send_output
+    self.send(msg)
+    ~~~~~~~~~^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1037, in send
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1472, in connect
+    super().connect()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1003, in connect
+    self.sock = self._create_connection(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        (self.host,self.port), self.timeout, self.source_address)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 840, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Games\possession\tools\dem\pipeline.py", line 63, in run
+    fd.main()
+    ~~~~~~~^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 424, in main
+    mosaic.paste(fetch(ZOOM, tx, ty, cache), ((tx - x0) * 256, (ty - y0) * 256))
+                 ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 404, in fetch
+    urllib.request.urlretrieve(URL.format(z=z, x=x, y=y), path)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 214, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+                            ~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 489, in open
+    response = self._open(req, data)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 506, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1367, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        context=self._context)
+                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1322, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+
+[31/33] iceland_highland: heights ...
+location: iceland_highland (Landmannalaugar, Iceland)
+zoom 12: tiles x 1821..1840 y 1083..1102 -> 20x20 = 400 tiles
+[31/33] iceland_highland: FAILED
+Traceback (most recent call last):
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1319, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              encode_chunked=req.has_header('Transfer-encoding'))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1338, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1384, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1333, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1093, in _send_output
+    self.send(msg)
+    ~~~~~~~~~^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1037, in send
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1472, in connect
+    super().connect()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1003, in connect
+    self.sock = self._create_connection(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        (self.host,self.port), self.timeout, self.source_address)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 840, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Games\possession\tools\dem\pipeline.py", line 63, in run
+    fd.main()
+    ~~~~~~~^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 424, in main
+    mosaic.paste(fetch(ZOOM, tx, ty, cache), ((tx - x0) * 256, (ty - y0) * 256))
+                 ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 404, in fetch
+    urllib.request.urlretrieve(URL.format(z=z, x=x, y=y), path)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 214, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+                            ~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 489, in open
+    response = self._open(req, data)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 506, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1367, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        context=self._context)
+                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1322, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+
+[32/33] scablands: heights ...
+location: scablands (Channeled Scablands, WA)
+zoom 12: tiles x 696..709 y 1440..1452 -> 14x13 = 182 tiles
+[32/33] scablands: FAILED
+Traceback (most recent call last):
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1319, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              encode_chunked=req.has_header('Transfer-encoding'))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1338, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1384, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1333, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1093, in _send_output
+    self.send(msg)
+    ~~~~~~~~~^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1037, in send
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1472, in connect
+    super().connect()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1003, in connect
+    self.sock = self._create_connection(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        (self.host,self.port), self.timeout, self.source_address)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 840, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Games\possession\tools\dem\pipeline.py", line 63, in run
+    fd.main()
+    ~~~~~~~^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 424, in main
+    mosaic.paste(fetch(ZOOM, tx, ty, cache), ((tx - x0) * 256, (ty - y0) * 256))
+                 ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 404, in fetch
+    urllib.request.urlretrieve(URL.format(z=z, x=x, y=y), path)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 214, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+                            ~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 489, in open
+    response = self._open(req, data)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 506, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1367, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        context=self._context)
+                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1322, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+
+[33/33] salar_uyuni: heights ...
+location: salar_uyuni (Salar de Uyuni, Bolivia)
+zoom 12: tiles x 1276..1285 y 2277..2286 -> 10x10 = 100 tiles
+[33/33] salar_uyuni: FAILED
+Traceback (most recent call last):
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1319, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              encode_chunked=req.has_header('Transfer-encoding'))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1338, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1384, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1333, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1093, in _send_output
+    self.send(msg)
+    ~~~~~~~~~^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1037, in send
+    self.connect()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1472, in connect
+    super().connect()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\http\client.py", line 1003, in connect
+    self.sock = self._create_connection(
+                ~~~~~~~~~~~~~~~~~~~~~~~^
+        (self.host,self.port), self.timeout, self.source_address)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 840, in create_connection
+    for res in getaddrinfo(host, port, 0, SOCK_STREAM):
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\socket.py", line 977, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+socket.gaierror: [Errno 11001] getaddrinfo failed
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Games\possession\tools\dem\pipeline.py", line 63, in run
+    fd.main()
+    ~~~~~~~^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 424, in main
+    mosaic.paste(fetch(ZOOM, tx, ty, cache), ((tx - x0) * 256, (ty - y0) * 256))
+                 ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Games\possession\tools\dem\fetch_dem.py", line 404, in fetch
+    urllib.request.urlretrieve(URL.format(z=z, x=x, y=y), path)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 214, in urlretrieve
+    with contextlib.closing(urlopen(url, data)) as fp:
+                            ~~~~~~~^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 189, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 489, in open
+    response = self._open(req, data)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 506, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+                              '_open', req)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 466, in _call_chain
+    result = func(*args)
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1367, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        context=self._context)
+                        ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bran the builder\AppData\Local\Programs\Python\Python313\Lib\urllib\request.py", line 1322, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 11001] getaddrinfo failed>
+
+
+pipeline: 26 processed, 2 skipped, 5 failed in 375.1 min
+failed: tepui badlands_sd iceland_highland scablands salar_uyuni
+re-run the same command to retry just those (completed ones are skipped)

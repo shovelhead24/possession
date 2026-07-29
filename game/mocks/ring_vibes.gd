@@ -561,10 +561,11 @@ func _run_selftest() -> void:
 					wet += 1
 				n += 1
 		var bio := _biome_at(r.x, r.y)
-		print("SELFTEST  %-18s arc %5.1f%%  stream=%s (%.1fs)  h %.0f..%.0fm  sea %4.1f%%  trees=%-6d wx=%s" % [
+		print("SELFTEST  %-18s arc %5.1f%%  stream=%s (%.1fs)  h %.0f..%.0fm  sea %4.1f%%  trees=%-6d dens=%.2f hi=%.0f  wx=%s" % [
 			_patch_names[_jump_idx], 100.0 * r.x / CIRCUMFERENCES[c_idx],
 			"OK" if ok else "FAIL", waited, hmin, hmax,
-			100.0 * float(wet) / float(n), _tree_ground.size(), bio["weather"]])
+			100.0 * float(wet) / float(n), _tree_ground.size(),
+			bio["trees"], bio["tree_hi"], bio["weather"]])
 	print("SELFTEST: %d/%d streamed OK" % [streamed, _patch_rects.size()])
 	get_tree().quit()
 

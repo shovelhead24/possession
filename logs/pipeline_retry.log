@@ -1,0 +1,44 @@
+pipeline: 5 locations @ 84km, satellite ON, force=False
+[1/5] tepui: heights ...
+location: tepui (Mount Roraima tepui, Venezuela)
+zoom 12: tiles x 1352..1361 y 1985..1993 -> 10x9 = 90 tiles
+  row 1/9  row 2/9  row 3/9  row 4/9  row 5/9  row 6/9  row 7/9  row 8/9  row 9/9
+elevation range: 468 m .. 2766 m over 2560x2304 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote tepui_detail.dat (8 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (11 MB) + tepui.json  m/px=38.06  camera_px=[1228, 1136]
+[1/5] tepui: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_20NPL_20231129_0_L2A  cloud=0.0%  pasted 431k px  coverage now 2.6%
+  S2A_20NQL_20241128_0_L2A  cloud=1.7%  pasted 8001k px  coverage now 50.3%
+  S2C_20NQL_20250921_0_L2A  cloud=2.0%  pasted 6299k px  coverage now 87.8%
+  S2A_20NQM_20230915_0_L2A  cloud=2.6%  pasted 1350k px  coverage now 95.9%
+  S2B_20NQL_20231129_0_L2A  cloud=2.7%  pasted 0k px  coverage now 95.9%
+  S2B_20NQL_20230910_0_L2A  cloud=4.2%  pasted 0k px  coverage now 95.9%
+  S2A_20NQM_20230902_1_L2A  cloud=4.6%  pasted 604k px  coverage now 99.5%
+  S2A_20NQM_20241019_0_L2A  cloud=7.3%  pasted 0k px  coverage now 99.5%
+coverage 99.5%  wrote tepui_sat.dat (29 MB) + out/tepui_s2_preview.jpg
+[1/5] tepui: done in 190s (elapsed 3.2 min)
+[2/5] badlands_sd: heights ...
+location: badlands_sd (Badlands, South Dakota)
+zoom 12: tiles x 877..889 y 1485..1497 -> 13x13 = 169 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: 650 m .. 1022 m over 3328x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote badlands_sd_detail.dat (13 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (22 MB) + badlands_sd.json  m/px=27.56  camera_px=[1660, 1729]
+[2/5] badlands_sd: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_13TGK_20240929_0_L2A  cloud=0.0%  pasted 1528k px  coverage now 9.1%
+  S2B_13TGJ_20241014_0_L2A  cloud=0.0%  pasted 9713k px  coverage now 67.0%
+  S2A_13TFK_20240624_0_L2A  cloud=0.0%  pasted 439k px  coverage now 69.6%
+  S2B_13TFJ_20230831_0_L2A  cloud=0.0%  pasted 5095k px  coverage now 100.0%
+  S2B_13TGJ_20231229_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+coverage 100.0%  wrote badlands_sd_sat.dat (35 MB) + out/badlands_sd_s2_preview.jpg
+[2/5] badlands_sd: done in 203s (elapsed 6.5 min)
+[3/5] iceland_highland: heights ...
+location: iceland_highland (Landmannalaugar, Iceland)
+zoom 12: tiles x 1821..1840 y 1083..1102 -> 20x20 = 400 tiles
+  row 1/20  row 2/20  row 3/20  row 4/20  row 5/20  row 6/20  row 7/20  row 8/20  row 9/20  row 10/20  row 11/20  row 12/20  row 13/20  row 14/20
