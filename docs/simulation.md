@@ -31,9 +31,27 @@ Clock hierarchy: **arc clock** (global, counts in day/night *cycles*) → **regi
 
 The governing law transfers unchanged and is what keeps this honest: `operators.md`'s syncopation contract is *"perturbs inputs to later bake layers; never scripts outcomes."* A temporal syncopation therefore perturbs **clock rates and phases**, never schedules events. Interleaving, phase offset and syncopation are prepared; what actually happens is still emitted live by entities reading both bufs. Score prepared, performance live.
 
-**How far this can go — the line.** "Time is a prepared song" is admissible in exactly this form. What is **not** admissible is baking the *intention schedule* — deciding in advance that a faction will do X at time T. That would break three ratified things at once: intentions are distributed and bottom-up while the director stays sparse and top-down; inevitabilities are scheduled as *defaults with interceptable preconditions*, so a baked schedule kills the hail mary that honest causality exists to permit; and a world whose behaviour is pre-decided is a script wearing simulation's clothes — the no-missions sin through the pacing door.
+### Pre-biased, not pre-decided — the operative distinction (2026-07-29)
 
-**What may be baked about intention** (and this gets the interweaving without the cost): a faction's **repertoire** — the set of intentions it is capable of, with preconditions — and its **rhythmic signature** — how it emits when acting (market-day shape, patrol cadence, the tempo of a build-and-release border dispute). That is `factions.md`'s "Identity Baked, Behavior Live" extended to include a *temporal* identity, not just a spatial and historical one. Baked instrument and repertoire; live performance.
+Intention **is** baked — as *bias*, never as outcome. The distinction carries the whole design:
+
+- **Pre-decided** — faction does X at time T. Fixes the outcome, so preconditions become decoration and interception becomes impossible. This is what breaks the architecture: it contradicts bottom-up intentions against a sparse top-down director, kills the hail mary that interceptable defaults exist to permit, and makes the world a script wearing simulation's clothes (the no-missions sin through the pacing door).
+- **Pre-biased** — faction is *disposed toward* X, and more so at certain phases. Shapes the distribution; leaves the outcome live, precondition-gated, and interceptable.
+
+Pre-biasing needs **no new mechanism** — it is the machinery already ratified, pointed at intention instead of placement:
+
+| | Realization (existing) | Intention (this) |
+|---|---|---|
+| Baked input | LayerBuf fields score candidate sites | faction repertoire + time-varying weights over it |
+| Selection | seeded softmax, `hash(world_seed, entity_id, fact_version, time_bucket)` | same |
+| Sharpness | temperature = readability | temperature = how *legible* this faction's disposition is |
+| Guarantee | observation never rerolls | same |
+
+So a faction's baked identity carries a **time-varying prior over its repertoire** — a seasonal raid disposition that rises and falls, a trade posture that peaks on market cycles. Temporal syncopations perturb those priors (phase-shifting one region's raiding against its neighbour's harvest). The entity still reads space and time at the intention boundary, still checks preconditions, still commits live.
+
+**That is literally a prepared song:** the score says what is *likely* at each bar; the performance is still played. And it strengthens the inference framing (`consumers.md`) rather than competing with it — a bias is a **pattern**, and patterns are what a player can learn. Pre-decided outcomes would be unlearnable in principle (nothing to generalise from until it happens); pre-biased dispositions are exactly what "reading" a faction means. Softmax temperature becomes a per-faction legibility dial: cold factions are predictable and readable, hot ones erratic and opaque.
+
+**What is baked, in full:** identity and history (L5), repertoire (which intentions are available, with preconditions), a **time-varying prior** over that repertoire, and a **rhythmic signature** — how the faction emits when acting (market-day shape, patrol cadence, the tempo of a build-and-release border dispute). `factions.md`'s "Identity Baked, Behavior Live" extended with a *temporal* identity. Baked instrument, repertoire and inclination; live performance.
 
 **Intensity, never valence:** events and tempo signals carry no "good/bad for player" labels as control inputs — valence is contextual in a composed world, flattens co-op asymmetry, and a fairness-optimizing director makes the world secretly caring (the missions sin via the pacing door). The conductor budgets *intensity* — a scalar from player-side observables, post hoc. It avoids monotony; it never helps. Relief arrives as tilted opportunity gradients, never outcomes. Valence labels live in telemetry only.
 

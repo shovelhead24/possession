@@ -138,7 +138,10 @@ help.
 
 **Design consequences:**
 - Signals must be **patterned enough to be learnable** — this is what a baked *rhythmic signature*
-  (`simulation.md`) is for. Noise cannot be inferred from; rhythm can.
+  and a baked *time-varying disposition* (`simulation.md`, pre-biased-not-pre-decided) are for.
+  Noise cannot be inferred from; rhythm can. Note this is why **pre-biased** is the load-bearing
+  form: a bias is a pattern and therefore learnable, whereas a pre-decided outcome offers nothing
+  to generalise from until it fires. Inference needs the world to have *inclinations*, not scripts.
 - Partial legibility is a *target*, not a tolerance. A faction whose intent is instantly obvious has
   failed as surely as one that is unreadable.
 - The consumer probes gain a sharper success criterion: not "did the player receive the fact?" but
