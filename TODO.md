@@ -38,14 +38,19 @@ Reproduce from scratch: `cd tools/dem && py pipeline.py` (resumable; skips what 
 - The first run lost 5 locations to a transient DNS drop near the end (`getaddrinfo failed`) —
   re-running picked up exactly those and completed them. That is the resumability working as
   intended, and is why it's built that way.
-- **Happy accident worth keeping or killing deliberately:** `salar_uyuni` re-bases to a 1m floor and
-  ends up 8.5% shallow water. Salar de Uyuni's flooded mirror is one of the most famous landscapes
-  on Earth, so this reads well — but it was *not* designed. It happens because the re-base uses the
-  2nd percentile (3654m) while the true min is 3562m, so the lowest ~90m of the patch lands below
-  sea level. Raise `REBASE_FLOOR` if you want it bone dry.
+- **Re-basing is now OFF** (`REBASE_PATCHES = false`, 2026-07-29 user call: "lock them to their real
+  heights"). Patches render at true elevation; the ~3.5 km boundary cliffs are back and expected.
+  The code is kept as a fallback if edge feathering alone isn't enough.
+- **u16 height ceiling fixed.** Heights were stored in 1/16 m units, ceiling 4095.9 m — so 17.4% of
+  `atacama` and 1.2% of `salar_uyuni` were pinned flat at exactly that, a fake plateau over a sixth
+  of the Atacama patch. Only visible once re-basing was turned off. Scale is now 1/4 m (ceiling
+  16,383 m) and written into each patch's JSON as `h_scale`, with readers falling back to 16 for
+  older files. Recovered terrain is real: atacama now reaches 5822 m, salar_uyuni 4791 m (the
+  volcanoes ringing the salt flat). Re-export is heights-only and fast (~10 min, tiles cached).
 
 ## Ring splice-tiling: known remaining issues (2026-07-29, overnight session)
 
+- **Patches OVERLAP, and the lower-indexed one wins the overlap zone.** Patches average 91.3 km wide (range 84–97.7, varying because tile counts round up and m/px changes with latitude) but are spaced 84 km — so neighbours overlap ~7 km. `patch_at()` returns the first match by index, so throughout that overlap band the earlier-listed patch is drawn. Concretely: `salar_uyuni` (floor 3653 m) reports 8.3% "sea" because its outer samples land inside `ebro_delta`'s rect (sea level) and resolve there. This is the boundary-cliff issue in its sharpest form and is *expected* until edge work happens.
 - **Patch boundaries still step.** Height re-basing killed the severe case (3.5km cliffs from real absolute elevations — altiplano vs Camargue), so remaining steps are bounded by local relief rather than continental elevation. But adjacent 84km patches are different real places and their edges don't match, so there is still a visible seam wherever one patch's edge is high and its neighbour's is low. **Fix is edge feathering** — near a boundary, sample both patches and lerp by edge proximity. Not attempted: it needs visual iteration to judge blend width, and was done unattended.
 - **`ebro_delta` and `savannah` are serving wrong-character terrain** after the 84km widening (see splice-portfolio.md). Needs re-centring, which is a scouting decision.
 - **Trees only re-scatter below 120 m/s.** Deliberate (see the perf note in ring_vibes.gd) but it means at fly-boost the forest you see is the one scattered where you last slowed down, not the local biome's. Fine for travel, wrong if you stop somewhere new at speed — it corrects after 2s once you slow.
