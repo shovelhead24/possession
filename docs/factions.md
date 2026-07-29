@@ -64,6 +64,6 @@ NPCs may *ask* for help — honest simulation, people ask. But: no quest log ent
 ## Open Questions
 
 - Faction count/scale: bounded by communication speed on the ring (rumor decay × horse range) — tuning, not planning; L5 should derive it
-- **Is the instrumental faction that woke the relay the human-survivor faction?** They are the most plausible candidates — they would know what a relay *is* — and the convergence is elegant enough to decide deliberately rather than drift into. Opened by the two 2026-07-29 decisions together.
+- ~~Is the instrumental faction that woke the relay the human-survivor faction?~~ **RESOLVED 2026-07-29 → `.decisions/lore.md#two-signals-armada-answers-survivors`: yes.** Two distinct transmissions — a pre-game beacon (sender still open) drew the response mission; the survivors woke the relay afterwards to call for rescue. The armada is answering *them*, which makes them the origin of the catastrophe rather than allies, and is what actually enforces their anti-"default good guys" guard.
 - Where do the survivors sit on the ring? They are the one faction whose position is *not* derivable from geography (L5 seeds polities from watersheds; a crashed crew lands where it lands), so the history pass needs an authored placement rule for them.
 - Does the survivor faction hold a cosmology at all? The axis (taboo ↔ cargo-cult ↔ instrumental) assumes a culture that grew up under the ring. People who arrived knowing what it is may need a fourth position — or may be the purest instrumentalists on it.
