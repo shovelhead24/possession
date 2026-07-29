@@ -1,8 +1,15 @@
 # World / Ring Scale
 
+### ring-circumference-3000km — Ring circumference set at 3,000 km
+**Date:** 2026-07-28
+**Status:** active
+**Decision:** Circumference 3,000 km (radius ~477.5 km), width unchanged at 50 km. Supersedes the 2,000 km desk decision.
+**Why:** The 2,000 km figure was set 2026-07-18 *before* the issue-#9 vibe-check mock existed — and building that mock was precisely the mechanism for correcting it. In hands-on sessions the 3,000 km config (the top of the original 1,500/2,000/3,000 candidate band) consistently read better, and the user confirmed it directly: "when we did the vibes mock 3000 felt better." Scale class is unchanged, so every reason behind the 2,000 km entry still holds — the sky stays geometrically honest (far side ~0.6° overhead rather than ~0.9°, still moon-scale), free interior flight still can't catch the world lying, and the transport ladder survives comfortably (~3.5 days nonstop walk instead of ~2.3).
+**Consequence flagged:** `docs/` largely still says 2,000 km in prose. Not mass-edited — the number appears in reasoning passages where a blind find/replace would break the argument. Treat this entry as the source of truth and fix prose opportunistically. `ring_vibes.gd` has been on 3,000 km (`c_idx = 2`) since 2026-07-23, so the mock and the docs were silently disagreeing for five days.
+
 ### ring-circumference-2000km — Ring circumference set at 2,000 km
 **Date:** 2026-07-18
-**Status:** active
+**Status:** SUPERSEDED 2026-07-28 by ring-circumference-3000km
 **Decision:** Circumference 2,000 km (radius ~318 km). Width still open — widened candidates (10–50 km) now in play, see brief. Pending vibe-check via skybox mock demos at 1,500 / 2,000 / 3,000 km configs (issue #9) — the number may tune within that band, but the *scale class* (small honest ring, not 20,000 km megastructure) is decided.
 **Why:** At this radius everything the sky moments promise is geometrically honest — far side ~0.9° overhead (about two moons, wider if the ring widens), terrain 50 km ahead visibly risen ~4 km — and direct interior flight (potential spaceflight options) stays consistent, since an oversized-far-side cheat cannot survive a player approaching it. Walking 360° is still ~2.3 days nonstop (a month of real sessions), so the transport ladder survives. The 20,000 km version required stylizing both signature sky moments and banned free spaceflight forever.
 

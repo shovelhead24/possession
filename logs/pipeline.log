@@ -58,3 +58,214 @@ wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
 wrote slea_head_detail.dat (3 MB png-in-dat)
 wrote C:\Games\possession\game\mocks\dem (29 MB) + slea_head.json  m/px=23.48  camera_px=[1824, 1839]
 [4/33] slea_head: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_29ULT_20250410_0_L2A  cloud=0.0%  pasted 1457k px  coverage now 8.7%
+  S2A_29ULT_20250407_2_L2A  cloud=0.0%  pasted 5k px  coverage now 8.7%
+  S2C_29ULT_20260420_0_L2A  cloud=0.0%  pasted 0k px  coverage now 8.7%
+  S2B_28UGC_20250410_0_L2A  cloud=0.0%  pasted 245k px  coverage now 10.2%
+  S2C_28UGC_20260420_0_L2A  cloud=0.0%  pasted 13k px  coverage now 10.3%
+  S2A_29ULU_20230602_0_L2A  cloud=0.0%  pasted 2573k px  coverage now 25.6%
+  S2B_29ULT_20230604_0_L2A  cloud=0.0%  pasted 928k px  coverage now 31.1%
+  S2B_28UGC_20230531_0_L2A  cloud=0.0%  pasted 40k px  coverage now 31.4%
+  S2B_29ULT_20230531_0_L2A  cloud=0.0%  pasted 2k px  coverage now 31.4%
+  S2A_28UGD_20230602_0_L2A  cloud=0.0%  pasted 487k px  coverage now 34.3%
+  S2A_29ULT_20250411_0_L2A  cloud=0.0%  pasted 102k px  coverage now 34.9%
+  S2B_28UGC_20250407_0_L2A  cloud=0.0%  pasted 0k px  coverage now 34.9%
+  S2B_29ULT_20260429_0_L2A  cloud=0.0%  pasted 0k px  coverage now 34.9%
+  S2A_29ULT_20230530_0_L2A  cloud=0.0%  pasted 0k px  coverage now 34.9%
+  S2B_29UMU_20250407_0_L2A  cloud=0.0%  pasted 1941k px  coverage now 46.5%
+  S2A_28UGC_20230605_0_L2A  cloud=0.0%  pasted 5k px  coverage now 46.5%
+  S2B_28UGC_20240919_0_L2A  cloud=0.0%  pasted 3886k px  coverage now 69.7%
+  S2A_29ULT_20250517_1_L2A  cloud=0.0%  pasted 0k px  coverage now 69.7%
+  S2A_29ULT_20260429_1_L2A  cloud=0.0%  pasted 517k px  coverage now 72.8%
+coverage 72.8%  wrote slea_head_sat.dat (14 MB) + out/slea_head_s2_preview.jpg
+[4/33] slea_head: done in 293s (elapsed 13.5 min)
+[5/33] loop_head: heights ...
+location: loop_head (Loop Head)
+zoom 12: tiles x 1928..1942 y 1335..1349 -> 15x15 = 225 tiles
+  row 1/15  row 2/15  row 3/15  row 4/15  row 5/15  row 6/15  row 7/15  row 8/15  row 9/15  row 10/15  row 11/15  row 12/15  row 13/15  row 14/15  row 15/15
+elevation range: -100 m .. 941 m over 3840x3840 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote loop_head_detail.dat (3 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (29 MB) + loop_head.json  m/px=23.23  camera_px=[1809, 1939]
+[5/33] loop_head: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_29UMU_20250517_2_L2A  cloud=0.0%  pasted 21k px  coverage now 0.1%
+  S2A_29UMU_20240510_0_L2A  cloud=0.0%  pasted 1k px  coverage now 0.1%
+  S2A_29UMU_20250407_1_L2A  cloud=0.0%  pasted 0k px  coverage now 0.1%
+  S2A_29UMU_20250815_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.1%
+  S2B_29UMU_20240505_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.1%
+  S2C_29UMU_20250515_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.1%
+  S2C_29UMU_20250505_0_L2A  cloud=0.0%  pasted 0k px  coverage now 0.1%
+  S2A_29ULU_20230602_0_L2A  cloud=0.0%  pasted 2732k px  coverage now 16.4%
+  S2B_29ULT_20230604_0_L2A  cloud=0.0%  pasted 1k px  coverage now 16.4%
+  S2A_29UMU_20240220_0_L2A  cloud=0.0%  pasted 0k px  coverage now 16.4%
+  S2A_28UGD_20230602_0_L2A  cloud=0.0%  pasted 205k px  coverage now 17.6%
+  S2B_29UMU_20230531_0_L2A  cloud=0.0%  pasted 0k px  coverage now 17.6%
+  S2A_29ULT_20250411_0_L2A  cloud=0.0%  pasted 6k px  coverage now 17.7%
+  S2A_29ULT_20230530_0_L2A  cloud=0.0%  pasted 0k px  coverage now 17.7%
+  S2B_29UMU_20250407_0_L2A  cloud=0.0%  pasted 12429k px  coverage now 91.8%
+  S2C_29UMU_20260527_0_L2A  cloud=0.0%  pasted 0k px  coverage now 91.8%
+  S2B_29UMU_20260306_0_L2A  cloud=0.0%  pasted 0k px  coverage now 91.8%
+  S2A_29ULT_20260429_1_L2A  cloud=0.0%  pasted 75k px  coverage now 92.2%
+coverage 92.2%  wrote loop_head_sat.dat (21 MB) + out/loop_head_s2_preview.jpg
+[5/33] loop_head: done in 184s (elapsed 16.6 min)
+[6/33] monument_valley: heights ...
+location: monument_valley (Monument Valley, UT/AZ)
+zoom 12: tiles x 789..800 y 1588..1599 -> 12x12 = 144 tiles
+  row 1/12  row 2/12  row 3/12  row 4/12  row 5/12  row 6/12  row 7/12  row 8/12  row 9/12  row 10/12  row 11/12  row 12/12
+elevation range: 1113 m .. 2493 m over 3072x3072 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote monument_valley_detail.dat (10 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (18 MB) + monument_valley.json  m/px=30.52  camera_px=[1621, 1612]
+[6/33] monument_valley: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_12SWF_20230805_0_L2A  cloud=0.0%  pasted 2209k px  coverage now 13.2%
+  S2B_12SXG_20231006_0_L2A  cloud=0.0%  pasted 2526k px  coverage now 28.2%
+  S2A_12SXG_20241005_0_L2A  cloud=0.0%  pasted 0k px  coverage now 28.2%
+  S2B_12SXF_20231016_0_L2A  cloud=0.0%  pasted 1993k px  coverage now 40.1%
+  S2B_12SWF_20240705_0_L2A  cloud=0.0%  pasted 0k px  coverage now 40.1%
+  S2A_12SWF_20240925_0_L2A  cloud=0.0%  pasted 4661k px  coverage now 67.9%
+coverage 67.9%  wrote monument_valley_sat.dat (23 MB) + out/monument_valley_s2_preview.jpg
+[6/33] monument_valley: done in 220s (elapsed 20.3 min)
+[7/33] mongolia_steppe: heights ...
+location: mongolia_steppe (Mongolian steppe (central, east of Khangai))
+zoom 12: tiles x 3253..3266 y 1434..1446 -> 14x13 = 182 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: 1171 m .. 1891 m over 3584x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote mongolia_steppe_detail.dat (10 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (23 MB) + mongolia_steppe.json  m/px=26.06  camera_px=[1723, 1707]
+[7/33] mongolia_steppe: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2A_48TWT_20240910_0_L2A  cloud=0.0%  pasted 4445k px  coverage now 26.5%
+  S2A_48TWT_20231026_0_L2A  cloud=0.0%  pasted 0k px  coverage now 26.5%
+  S2B_48TWS_20251112_0_L2A  cloud=0.0%  pasted 0k px  coverage now 26.5%
+  S2B_48TWT_20240826_0_L2A  cloud=0.0%  pasted 0k px  coverage now 26.5%
+  S2A_48TWT_20241010_0_L2A  cloud=0.0%  pasted 0k px  coverage now 26.5%
+  S2B_48TXS_20250903_0_L2A  cloud=0.0%  pasted 4590k px  coverage now 53.9%
+  S2B_48TXT_20240826_0_L2A  cloud=0.0%  pasted 5187k px  coverage now 84.8%
+  S2A_48TWS_20231026_0_L2A  cloud=0.0%  pasted 1689k px  coverage now 94.8%
+  S2B_48TWS_20250903_0_L2A  cloud=0.0%  pasted 17k px  coverage now 94.9%
+  S2C_48TWT_20251005_0_L2A  cloud=0.0%  pasted 11k px  coverage now 95.0%
+  S2B_48TWT_20231001_0_L2A  cloud=0.0%  pasted 0k px  coverage now 95.0%
+  S2B_48TWT_20231011_0_L2A  cloud=0.0%  pasted 0k px  coverage now 95.0%
+  S2B_48TWT_20251010_0_L2A  cloud=0.0%  pasted 0k px  coverage now 95.0%
+  S2C_48TWT_20250816_0_L2A  cloud=0.0%  pasted 5k px  coverage now 95.0%
+  S2A_48TWT_20241119_0_L2A  cloud=0.0%  pasted 0k px  coverage now 95.0%
+  S2B_48TWT_20240905_0_L2A  cloud=0.0%  pasted 25k px  coverage now 95.2%
+coverage 95.2%  wrote mongolia_steppe_sat.dat (28 MB) + out/mongolia_steppe_s2_preview.jpg
+[7/33] mongolia_steppe: done in 270s (elapsed 24.8 min)
+[8/33] costa_rica_jungle: heights ...
+location: costa_rica_jungle (Costa Rica (Arenal), mountainous rainforest)
+zoom 12: tiles x 1079..1088 y 1924..1932 -> 10x9 = 90 tiles
+  row 1/9  row 2/9  row 3/9  row 4/9  row 5/9  row 6/9  row 7/9  row 8/9  row 9/9
+elevation range: -89 m .. 2316 m over 2560x2304 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote costa_rica_jungle_detail.dat (8 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (11 MB) + costa_rica_jungle.json  m/px=37.58  camera_px=[1211, 1135]
+[8/33] costa_rica_jungle: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_16PFS_20240207_0_L2A  cloud=0.5%  pasted 1150k px  coverage now 6.9%
+  S2A_16PGS_20240330_0_L2A  cloud=3.4%  pasted 11407k px  coverage now 74.9%
+coverage 74.9%  wrote costa_rica_jungle_sat.dat (25 MB) + out/costa_rica_jungle_s2_preview.jpg
+[8/33] costa_rica_jungle: done in 157s (elapsed 27.4 min)
+[9/33] ebro_delta: heights ...
+location: ebro_delta (Ebro Delta, Spain)
+zoom 12: tiles x 2051..2062 y 1534..1546 -> 12x13 = 156 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: -8 m .. 1419 m over 3072x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote ebro_delta_detail.dat (4 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (20 MB) + ebro_delta.json  m/px=28.98  camera_px=[1489, 1647]
+[9/33] ebro_delta: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2C_30TYK_20250312_0_L2A  cloud=0.0%  pasted 287k px  coverage now 1.7%
+  S2B_30TYK_20240312_0_L2A  cloud=0.0%  pasted 0k px  coverage now 1.7%
+  S2A_30TYK_20250423_0_L2A  cloud=0.0%  pasted 55k px  coverage now 2.0%
+  S2B_30TYK_20250506_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.0%
+  S2B_30TYK_20240411_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.0%
+  S2B_30TYK_20230726_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.0%
+  S2A_30TYK_20260617_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.0%
+  S2C_30TYK_20260317_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.0%
+  S2B_30TYK_20250903_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.0%
+  S2C_30TYK_20260516_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.0%
+  S2A_30TYK_20240416_0_L2A  cloud=0.0%  pasted 19k px  coverage now 2.2%
+  S2B_30TYK_20250814_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.2%
+  S2B_30TYK_20240819_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.2%
+  S2A_30TYK_20240913_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.2%
+  S2B_30TYK_20250516_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.2%
+  S2A_30TYK_20250811_0_L2A  cloud=0.0%  pasted 0k px  coverage now 2.2%
+  S2A_31TCE_20250423_0_L2A  cloud=0.0%  pasted 3674k px  coverage now 24.1%
+  S2B_30TYK_20231203_0_L2A  cloud=0.0%  pasted 0k px  coverage now 24.1%
+  S2C_30TYK_20250401_0_L2A  cloud=0.0%  pasted 0k px  coverage now 24.1%
+  S2B_30TYK_20260521_0_L2A  cloud=0.0%  pasted 0k px  coverage now 24.1%
+  S2B_31TBE_20250814_0_L2A  cloud=0.0%  pasted 243k px  coverage now 25.5%
+  S2B_31TCE_20231226_0_L2A  cloud=0.0%  pasted 624k px  coverage now 29.2%
+  S2B_31TBE_20250516_0_L2A  cloud=0.0%  pasted 7k px  coverage now 29.3%
+  S2B_31TCE_20260404_0_L2A  cloud=0.0%  pasted 3k px  coverage now 29.3%
+  S2B_30TYK_20240112_0_L2A  cloud=0.0%  pasted 0k px  coverage now 29.3%
+  S2A_30TYK_20250503_0_L2A  cloud=0.0%  pasted 0k px  coverage now 29.3%
+  S2C_31TBE_20260317_0_L2A  cloud=0.0%  pasted 22k px  coverage now 29.4%
+  S2B_30TYK_20231223_0_L2A  cloud=0.0%  pasted 0k px  coverage now 29.4%
+coverage 29.4%  wrote ebro_delta_sat.dat (5 MB) + out/ebro_delta_s2_preview.jpg
+[9/33] ebro_delta: done in 279s (elapsed 32.0 min)
+[10/33] vermont: heights ...
+location: vermont (Vermont (Stowe/Mad River Valley))
+zoom 12: tiles x 1214..1226 y 1475..1487 -> 13x13 = 169 tiles
+  row 1/13  row 2/13  row 3/13  row 4/13  row 5/13  row 6/13  row 7/13  row 8/13  row 9/13  row 10/13  row 11/13  row 12/13  row 13/13
+elevation range: 0 m .. 32767 m over 3328x3328 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote vermont_detail.dat (13 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (22 MB) + vermont.json  m/px=27.27  camera_px=[1604, 1772]
+[10/33] vermont: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_18TYQ_20250916_0_L2A  cloud=0.0%  pasted 2462k px  coverage now 14.7%
+  S2B_18TYQ_20241018_0_L2A  cloud=0.0%  pasted 367k px  coverage now 16.9%
+  S2B_18TYQ_20260603_0_L2A  cloud=0.0%  pasted 110k px  coverage now 17.5%
+  S2B_18TXQ_20260603_0_L2A  cloud=0.0%  pasted 11767k px  coverage now 87.7%
+  S2B_18TYP_20241018_0_L2A  cloud=0.0%  pasted 304k px  coverage now 89.5%
+  S2B_18TXP_20231004_0_L2A  cloud=0.0%  pasted 698k px  coverage now 93.6%
+  S2B_18TXQ_20250916_0_L2A  cloud=0.0%  pasted 0k px  coverage now 93.6%
+  S2B_18TYQ_20241018_1_L2A  cloud=0.0%  pasted 1064k px  coverage now 100.0%
+  S2A_18TYQ_20250314_0_L2A  cloud=0.0%  pasted 1k px  coverage now 100.0%
+  S2B_18TXP_20241018_1_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2C_18TYQ_20251011_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2B_18TXP_20241018_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2A_18TYQ_20241115_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2B_18TYQ_20230410_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2A_18TXP_20250821_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2A_18TYQ_20240206_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2A_18TYQ_20230922_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+  S2A_18TYQ_20240916_0_L2A  cloud=0.0%  pasted 0k px  coverage now 100.0%
+coverage 100.0%  wrote vermont_sat.dat (30 MB) + out/vermont_s2_preview.jpg
+[10/33] vermont: done in 354s (elapsed 37.9 min)
+[11/33] cork_city: heights ...
+location: cork_city (Cork City, Ireland)
+zoom 12: tiles x 1944..1958 y 1347..1361 -> 15x15 = 225 tiles
+  row 1/15  row 2/15  row 3/15  row 4/15  row 5/15  row 6/15  row 7/15  row 8/15  row 9/15  row 10/15  row 11/15  row 12/15  row 13/15  row 14/15  row 15/15
+elevation range: -96 m .. 1012 m over 3840x3840 px
+preview: hillshade (numpy)
+wrote C:\Games\possession\tools\dem\out\heightmap_16bit.png and preview.png
+wrote cork_city_detail.dat (7 MB png-in-dat)
+wrote C:\Games\possession\game\mocks\dem (29 MB) + cork_city.json  m/px=23.58  camera_px=[1937, 2008]
+[11/33] cork_city: sentinel-2 ...
+30 candidate scenes (sorted by cloud cover)
+  S2B_29UNT_20250407_0_L2A  cloud=0.0%  pasted 4981k px  coverage now 29.7%
+  S2B_29UNU_20250517_0_L2A  cloud=0.0%  pasted 0k px  coverage now 29.7%
+  S2C_29UNU_20250409_0_L2A  cloud=0.0%  pasted 150k px  coverage now 30.6%
+  S2B_29UMU_20250407_0_L2A  cloud=0.0%  pasted 20k px  coverage now 30.7%
+  S2A_29UNT_20230530_0_L2A  cloud=0.0%  pasted 10456k px  coverage now 93.0%
+  S2A_29UMT_20260429_1_L2A  cloud=0.0%  pasted 1166k px  coverage now 100.0%
+coverage 100.0%  wrote cork_city_sat.dat (31 MB) + out/cork_city_s2_preview.jpg
+[11/33] cork_city: done in 158s (elapsed 40.6 min)
+[12/33] guri_dam: heights ...
+location: guri_dam (Guri Dam / Embalse de Guri, Venezuela)
+zoom 12: tiles x 1326..1334 y 1954..1963 -> 9x10 = 90 tiles
+  row 1/10  row 2/10  row 3/10  row 4/10  row 5/10  row 6/10  row 7/10  row 8/10  row 9/10  row 10/10
