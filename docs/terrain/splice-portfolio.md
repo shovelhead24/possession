@@ -79,6 +79,21 @@ All boxes below verified live via the new `tools/dem/scout_batch.py` (batch scou
 3. **The alloy barrens have Earth analogues after all** — not to splice, but to steal shape language from. The salar's 10 m relief over 22 km is the "wrong flatness" the barrens want; the scablands' scour channels are erosion that reads as engineering.
 4. **Two "biome affinity" clusters from the Batch-1 finding hold up.** Highland and Coast/lagoon keep recurring together (`norwegian_fjord`, `slea_head`) — consistent with the working hypothesis in `biomes.md`'s Open Questions that both are *cross-ring (lat) bands* rather than long spinward stretches. Still not promoted to decided.
 
+### CONFIRMED 2026-07-29: widening to 84 km drifts some patches out of character
+
+The Batch-4 caveat ("character can drift out of the biome at 4× the footprint") is no longer hypothetical — re-fetching at the uniform 84 km ring-patch size and re-measuring in-engine shows it happening:
+
+| Patch | Scouted @ ~22 km | Measured @ 84 km | Verdict |
+|---|---|---|---|
+| `ebro_delta` | p99 **37 m**, flat delta plain | **1..1209 m** | Box has re-acquired the Els Ports foothills — *exactly* the failure the 2026-07-23 re-centring fixed. |
+| `savannah` | p99 **21 m**, confirmed flat | **1..406 m** | Picks up inland relief; no longer the flat coastal-grid read. |
+| `slea_head` | 69% sea | 69.3% sea | Unchanged — coastal headlands survive widening well. |
+| `mongolia_steppe` | 1302–1749 m | 1178–1795 m | Essentially unchanged; open steppe is uniform at both scales. |
+
+**Rule this establishes:** small, tightly-framed features (delta plains, city footprints, single valleys) do **not** survive a 4× widening — the surrounding region reasserts itself. Broad, uniform landscapes (steppe, open coast, dune fields) do. Any patch whose value comes from being *flat* or *small* needs its centre re-chosen at the target footprint, not just re-fetched at it.
+
+Affected patches currently in the ring: `ebro_delta` and `savannah` are serving terrain that no longer matches their catalogued character. Not corrected yet — the fix is re-centring, which is a scouting decision.
+
 ### Coverage after Batch 4
 
 | Biome | Candidates |

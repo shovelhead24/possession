@@ -362,4 +362,4 @@ coverage 86.7%  wrote olympic_forest_sat.dat (25 MB) + out/olympic_forest_s2_pre
 [16/33] wye_valley: heights ...
 location: wye_valley (Wye Valley, Wales/England border)
 zoom 12: tiles x 2010..2024 y 1351..1365 -> 15x15 = 225 tiles
-  row 1/15  row 2/15  row 3/15
+  row 1/15  row 2/15  row 3/15  row 4/15

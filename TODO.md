@@ -29,7 +29,7 @@ Cross-session scratchpad for loose ends that don't have a natural home yet — n
 
 ## Splice portfolio follow-ups (updated 2026-07-29)
 
-- **Scout boxes are ~22km, ring patches need ~84km.** All 20 Batch-4 candidates were verified at scout size (~0.2°). Before any of them becomes a real ring patch it needs re-verification at Millstreet's 84km footprint — biome character can drift out of the box at 4x the area (this is exactly how `ebro_delta` and `mongolia_steppe` originally failed and had to be re-centred).
+- **CONFIRMED: widening to 84km drifted two patches out of character.** `ebro_delta` (scouted p99 37m flat delta) now measures 1..1209m — it has re-acquired the Els Ports foothills, the exact failure the 2026-07-23 re-centring fixed. `savannah` (scouted p99 21m) now 1..406m. Both are live in the ring serving terrain that doesn't match their catalogued biome. **Fix is re-centring at the 84km footprint, which is a scouting decision, not a re-fetch.** Rule: patches whose value is being *flat* or *small* don't survive widening; broad uniform landscapes (steppe, open coast, dunes) do. See splice-portfolio.md.
 - **Still thin after Batch 4:** Metro/city (2 candidates, and "THE city" at 3–8% arc is a *destroyed* megacity — probably authored, not spliced), Engineered infrastructure (1: guri_dam), and **open water** — all three coast candidates are headlands, none is the open sea that geography.md's 18–25% stretch needs.
 - **No multi-patch system exists yet.** `ring_vibes.gd` loads exactly one DEM (`millstreet`) and tiles its imagery for everything else. Actually placing different splices around the arc needs a patch-registry + streaming pass that hasn't been designed.
 

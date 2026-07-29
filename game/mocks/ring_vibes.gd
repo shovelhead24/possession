@@ -534,9 +534,28 @@ func _run_selftest() -> void:
 		var ok: bool = _hires_idx == _jump_idx
 		if ok:
 			streamed += 1
-		print("SELFTEST  %-18s arc %5.1f%%  stream=%s (%.1fs)  cpu_h=%.0fm  trees=%d" % [
+		# sample a grid across the patch: sea fraction validates the ocean clamp against real data
+		# (a coastal splice reporting 0% would mean the clamp never fires), and min/max height
+		# catches a patch that decoded as flat or garbage.
+		var wet := 0
+		var n := 0
+		var hmin := 1e9
+		var hmax := -1e9
+		for gy in 24:
+			for gx in 24:
+				var sa: float = r.x + (float(gx) / 23.0 - 0.5) * 2.0 * r.z * 0.98
+				var sl: float = r.y + (float(gy) / 23.0 - 0.5) * 2.0 * r.w * 0.98
+				var hh := _terrain_h(sa, sl)
+				hmin = minf(hmin, hh)
+				hmax = maxf(hmax, hh)
+				if hh <= SEA_LEVEL:
+					wet += 1
+				n += 1
+		var bio := _biome_at(r.x, r.y)
+		print("SELFTEST  %-18s arc %5.1f%%  stream=%s (%.1fs)  h %.0f..%.0fm  sea %4.1f%%  trees=%-6d wx=%s" % [
 			_patch_names[_jump_idx], 100.0 * r.x / CIRCUMFERENCES[c_idx],
-			"OK" if ok else "FAIL", waited, hcpu, _tree_ground.size()])
+			"OK" if ok else "FAIL", waited, hmin, hmax,
+			100.0 * float(wet) / float(n), _tree_ground.size(), bio["weather"]])
 	print("SELFTEST: %d/%d streamed OK" % [streamed, _patch_rects.size()])
 	get_tree().quit()
 
