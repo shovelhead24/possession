@@ -23,6 +23,15 @@ uniform bool has_roads = false;
 uniform float sat_gain = 1.35;
 uniform float ring_width = 50000.0;
 uniform float wall_ramp = 2500.0;
+// Splice patches, same set the near terrain uses. Without these the band tiled ONE location's
+// imagery around ~2870km of the 3000km ring, so the far side read as a single repeated valley
+// regardless of how many unique splices were placed. UV carries ring (arc, lat) in metres.
+uniform sampler2DArray patch_col_tex : source_color;
+uniform int patch_count = 0;
+uniform vec4 patch_rect[40];
+uniform vec4 patch_tint[40];
+uniform float ring_circumference = 3000000.0;
+uniform vec2 home_patch_size = vec2(84000.0);   // millstreet footprint, for the tiled fallback
 
 varying vec3 v_world_pos;
 varying vec3 v_world_normal;
@@ -40,11 +49,30 @@ void fragment() {
 	float night = smoothstep(0.06, -0.06, nl);
 
 	vec3 albedo = vec3(0.30, 0.38, 0.24);   // vague grassland fallback (no DEM loaded)
-	if (has_sat) {
-		vec3 sat = texture(sat_tex, UV).rgb * sat_gain;
+	// 1. real splice imagery wherever a patch covers this point (UV = ring arc/lat in metres)
+	int pi = -1;
+	vec2 puv = vec2(0.0);
+	for (int i = 0; i < 40; i++) {
+		if (i >= patch_count) { break; }
+		vec4 r = patch_rect[i];
+		float d_arc = UV.x - r.x;
+		d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);
+		if (abs(d_arc) < r.z && abs(UV.y - r.y) < r.w) {
+			pi = i;
+			puv = vec2(d_arc / (2.0 * r.z) + 0.5, 0.5 - (UV.y - r.y) / (2.0 * r.w));
+			break;
+		}
+	}
+	if (pi >= 0) {
+		vec3 sat = texture(patch_col_tex, vec3(puv, float(pi))).rgb * sat_gain;
+		albedo = mix(patch_tint[pi].rgb, sat, smoothstep(0.015, 0.05, dot(sat, vec3(0.333))));
+	} else if (has_sat) {
+		// 2. no patch here: tile the home imagery, as before
+		vec2 tuv = vec2(UV.x / home_patch_size.x, -UV.y / home_patch_size.y);
+		vec3 sat = texture(sat_tex, tuv).rgb * sat_gain;
 		albedo = mix(albedo, sat, smoothstep(0.015, 0.05, dot(sat, vec3(0.333))));  // ramp where nodata-dark
 		if (has_roads) {
-			float road = texture(road_tex, UV).r;
+			float road = texture(road_tex, tuv).r;
 			albedo = mix(albedo, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
 		}
 	}
@@ -56,7 +84,9 @@ void fragment() {
 
 	vec3 col = mix(lit, sky_color, fog);
 	if (has_roads) {
-		float density = textureLod(road_tex, UV, 5.0).r;   // blurred road density -> "settlement" proxy
+		// UV is metres now, so the road lookup has to re-derive its own tiling like the drape above
+		vec2 tuv = vec2(UV.x / home_patch_size.x, -UV.y / home_patch_size.y);
+		float density = textureLod(road_tex, tuv, 5.0).r;   // blurred road density -> "settlement" proxy
 		col += vec3(1.0, 0.75, 0.4) * density * night * (1.0 - light_fog) * 1.1;  // emissive at night
 	}
 	ALBEDO = col;

@@ -28,8 +28,10 @@ const DAY_ZENITH := Color(0.20, 0.42, 0.72)
 const DAY_HORIZON := Color(0.62, 0.74, 0.86)
 const NIGHT_ZENITH := Color(0.02, 0.03, 0.06)
 const NIGHT_HORIZON := Color(0.07, 0.09, 0.15)
-const BAND_SEGS := 1024
-const BAND_ROWS := 8
+# 1024 segs over 3000km was 2.9km per segment -- too coarse to resolve an 84km splice into anything
+# but a smear (~29 segments per patch). 3000 gives 1km segments, ~84 per patch.
+const BAND_SEGS := 3000
+const BAND_ROWS := 16
 const WALL_HEIGHT := 3_000.0
 const WALL_RAMP := 2_500.0        # lat meters over which wall rises
 const RIDGE_ARC := 50_000.0       # far-band decorative ridge (never walked to — see _far_terrain_h)
@@ -330,6 +332,17 @@ func _ready() -> void:
 	if _roads_tex:
 		_mat.set_shader_parameter("road_tex", _roads_tex)
 		_mat.set_shader_parameter("has_roads", true)
+	# the far band uses the SAME splice patches as the near terrain -- see the note in
+	# ring_vibes.gdshader; without this it tiled one location around ~2870km of the ring
+	if _patch_col_tex:
+		_mat.set_shader_parameter("patch_col_tex", _patch_col_tex)
+		_mat.set_shader_parameter("patch_count", _patch_rects.size())
+		_mat.set_shader_parameter("patch_rect", _patch_rects)
+		_mat.set_shader_parameter("patch_tint", _patch_tints)
+		_mat.set_shader_parameter("ring_circumference", CIRCUMFERENCES[c_idx])
+	if _dem_w > 0:
+		_mat.set_shader_parameter("home_patch_size",
+			Vector2(float(_dem_w) * _dem_mpp, float(_dem_h) * _dem_mpp))
 
 	var noise := FastNoiseLite.new()
 	noise.frequency = 0.0025
@@ -864,9 +877,13 @@ func _dem_sample(arc: float, lat: float) -> float:
 	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), ty)
 
 func _far_terrain_h(arc: float, lat: float) -> float:
-	# decorative height for the far band ONLY (everything beyond the CDLOD bubble, all the way
-	# around to the antipodal point) — never walked to, so this is purely a "does the ring silhouette
-	# look right from a distance" formula, unrelated to _terrain_h's exactness requirement.
+	# Height for the far band (everything beyond the CDLOD bubble, round to the antipodal point).
+	# Consults the SAME splice patches the near terrain uses — without this the band baked
+	# millstreet-or-noise for ~2870km of the 3000km ring, so the far side showed one repeated valley
+	# no matter how many unique splices were placed.
+	var pi := _patch_at(arc, lat)
+	if pi >= 0:
+		return _patch_height(pi, arc, lat)
 	if _dem_w > 0:
 		var dh: float = _dem_sample(arc, lat)
 		if dh >= 0.0:
@@ -995,6 +1012,9 @@ func _rebuild() -> void:
 	# tile the compiled patch's real satellite/roads imagery across the WHOLE band (world arc/lat
 	# divided by the patch's real-world size; the sampler's default repeat wraps it automatically) —
 	# no geographic accuracy out here, just breaking up the flat ramp with real photo texture.
+	# UV now carries RING COORDS (arc, lat) in metres rather than a normalised tile coordinate, so
+	# the band shader can do the same splice-patch lookup the near terrain does. The tiled-millstreet
+	# fallback derives its own tiling from these inside the shader.
 	var patch_w: float = float(_dem_w) * _dem_mpp if _dem_w > 0 else 50000.0
 	var patch_h: float = float(_dem_h) * _dem_mpp if _dem_h > 0 else 50000.0
 	var st := SurfaceTool.new()
@@ -1004,7 +1024,7 @@ func _rebuild() -> void:
 		var arc: float = theta * r
 		for j in BAND_ROWS + 1:
 			var lat: float = w * (float(j) / float(BAND_ROWS) - 0.5)
-			st.set_uv(Vector2(arc / patch_w, -lat / patch_h))
+			st.set_uv(Vector2(arc, lat))
 			st.add_vertex(_ring_pos(theta, lat, _far_terrain_h(arc, lat)))
 	_grid_indices(st, BAND_SEGS, BAND_ROWS)
 	st.generate_normals()
