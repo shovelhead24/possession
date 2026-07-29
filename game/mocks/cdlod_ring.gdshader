@@ -28,6 +28,10 @@ uniform sampler2DArray patch_col_tex : source_color;       // Sentinel-2 imagery
 uniform int patch_count = 0;
 uniform vec4 patch_rect[40];   // (arc_centre, lat_centre, half_arc, half_lat) in metres
 uniform vec4 patch_tint[40];   // fallback colour for patches whose imagery hasn't been fetched
+// Height re-basing, metres. Splices are real places at real elevations (altiplano 3562m, Camargue
+// 1m), so butting them edge-to-edge produced 3.5km cliffs at patch boundaries. Patches well above
+// sea level are shifted down to a common low floor; coastal patches get 0 so coastlines survive.
+uniform float patch_offset[40];
 uniform float ring_circumference = 3000000.0;
 // Streamed high-res tier: the ONE patch the camera is currently inside, decoded on a worker thread
 // and swapped in here. 512^2 over an 84km patch is 164 m/px -- fine for scenery you fly past, mush
@@ -37,6 +41,7 @@ uniform sampler2D hires_col_tex : source_color;
 uniform vec4 hires_rect = vec4(0.0);   // (arc_centre, lat_centre, half_arc, half_lat)
 uniform bool hires_valid = false;
 uniform bool hires_has_col = false;
+uniform float hires_offset = 0.0;   // same re-basing as patch_offset, for the streamed patch
 uniform float terrain_size = 4096.0;
 uniform float feature = 3500.0;
 uniform float disp = 300.0;
@@ -148,12 +153,12 @@ float sample_h_raw(vec2 wxz) {
 	}
 	// 2. the streamed patch you're standing in (3x the array's resolution)
 	if (in_hires(wxz)) {
-		return texture(hires_tex, rect_uv(hires_rect, wxz)).r * dem_scale;
+		return (texture(hires_tex, rect_uv(hires_rect, wxz)).r + hires_offset) * dem_scale;
 	}
 	// 3. secondary splices placed around the arc
 	int pi = patch_at(wxz);
 	if (pi >= 0) {
-		return texture(patch_tex, vec3(patch_uv(pi, wxz), float(pi))).r * dem_scale;
+		return (texture(patch_tex, vec3(patch_uv(pi, wxz), float(pi))).r + patch_offset[pi]) * dem_scale;
 	}
 	// 3. procedural everywhere else -- most of 3000km of arc
 	return texture(heightmap, wxz / feature).r * disp;

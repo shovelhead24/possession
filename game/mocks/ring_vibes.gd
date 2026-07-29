@@ -219,6 +219,14 @@ var _patch_names: Array = []
 # indexing PATCHES with a loaded-patch index silently reads a different location's biome/filename
 # (caught by the --selftest: it made 6 of 10 streams load the wrong file and fail).
 var _patch_meta: Array = []
+# Per-patch height re-basing. Splices are real places with real absolute elevations -- the Bolivian
+# altiplano sits at 3562m, the Camargue at 1m -- so butting them edge-to-edge on the ring produced
+# 3.5km cliffs at every boundary. Each patch whose floor is well above sea level is shifted down so
+# its floor sits just above water, preserving internal relief. Genuinely coastal patches (floor
+# already near zero) are left alone, or re-basing would destroy their coastlines.
+var _patch_offset := PackedFloat32Array()
+const REBASE_ABOVE := 100.0   # only re-base patches whose floor exceeds this
+const REBASE_FLOOR := 20.0    # where a re-based floor lands (above SEA_LEVEL, so salt flats stay dry)
 
 enum Mode { FLY, DRIVE, WALK }
 var _mode: Mode = Mode.FLY
@@ -356,6 +364,7 @@ func _ready() -> void:
 			mat.set_shader_parameter("patch_count", _patch_rects.size())
 			mat.set_shader_parameter("patch_rect", _patch_rects)
 			mat.set_shader_parameter("patch_tint", _patch_tints)
+			mat.set_shader_parameter("patch_offset", _patch_offset)
 			mat.set_shader_parameter("ring_circumference", CIRCUMFERENCES[c_idx])
 		var mi := MeshInstance3D.new()
 		mi.mesh = _grid_mesh
@@ -633,6 +642,7 @@ func _hires_poll() -> void:
 					m.set_shader_parameter("hires_col_tex", _hires_col_tex)
 				m.set_shader_parameter("hires_has_col", _hires_col_tex != null)
 				m.set_shader_parameter("hires_rect", rect)
+				m.set_shader_parameter("hires_offset", _patch_offset[_hires_idx])
 				m.set_shader_parameter("hires_valid", true)
 			print("ring_vibes: streamed %s @ %d^2%s" % [
 				_patch_names[_hires_idx], _hires_res, "" if _hires_col_tex else " (no imagery)"])
@@ -676,6 +686,21 @@ func _here_splice() -> String:
 	var pi := _patch_at(arc, _cam.global_position.z)
 	return str(_patch_names[pi]) if pi >= 0 else "procedural (no splice)"
 
+func _patch_floor(field: PackedFloat32Array) -> float:
+	# 2nd percentile of a subsample, NOT the minimum -- Terrarium mosaics carry single-pixel decode
+	# artifacts (the known Savannah/Guri glitch class), and one bogus low pixel would drag a whole
+	# patch's re-basing with it. Subsampled because sorting 262k floats in GDScript is not free.
+	var s := PackedFloat32Array()
+	var stride: int = maxi(1, field.size() / 4096)
+	var i := 0
+	while i < field.size():
+		s.append(field[i])
+		i += stride
+	if s.is_empty():
+		return 0.0
+	s.sort()
+	return s[int(float(s.size()) * 0.02)]
+
 func _load_patches() -> void:
 	# each splice is resampled to PATCH_RES^2 and stacked into one Texture2DArray; a CPU copy is
 	# kept alongside so _terrain_h returns exactly what the shader draws (render-authoritative
@@ -688,6 +713,7 @@ func _load_patches() -> void:
 	_patch_fields = []
 	_patch_names = []
 	_patch_meta = []
+	_patch_offset = PackedFloat32Array()
 	var circumference: float = CIRCUMFERENCES[c_idx]
 	for p in PATCHES:
 		if imgs.size() >= MAX_PATCHES:
@@ -725,6 +751,8 @@ func _load_patches() -> void:
 		_patch_fields.append(floats)
 		_patch_names.append(p["name"])
 		_patch_meta.append(p)
+		var floor_h := _patch_floor(floats)
+		_patch_offset.append(REBASE_FLOOR - floor_h if floor_h > REBASE_ABOVE else 0.0)
 		_patch_rects.append(Vector4(
 			fposmod(float(p["arc_pct"]) * circumference, circumference),   # arc centre
 			0.0,                                                            # lat centre (ring midline)
@@ -761,7 +789,7 @@ func _patch_height(i: int, arc: float, lat: float) -> float:
 	var field: PackedFloat32Array = _patch_fields[i]
 	var px := int(u * float(PATCH_RES))
 	var py := int(v * float(PATCH_RES))
-	return field[py * PATCH_RES + px] * dem_scale
+	return (field[py * PATCH_RES + px] + _patch_offset[i]) * dem_scale
 
 const SEA_LEVEL := 0.5      # must match cdlod_ring.gdshader's sea_level uniform
 var ocean_enabled := true
@@ -797,7 +825,8 @@ func _terrain_h_raw(arc: float, lat: float) -> float:
 			var da: float = wrapf(arc - rr.x, -circ * 0.5, circ * 0.5)
 			var hu: float = clampf(da / (2.0 * rr.z) + 0.5, 0.0, 0.999)
 			var hv: float = clampf(0.5 - (lat - rr.y) / (2.0 * rr.w), 0.0, 0.999)
-			return _hires_field[int(hv * _hires_res) * _hires_res + int(hu * _hires_res)] * dem_scale
+			return (_hires_field[int(hv * _hires_res) * _hires_res + int(hu * _hires_res)]
+					+ _patch_offset[pi]) * dem_scale
 		return _patch_height(pi, arc, lat)
 	# no patch here: approximate procedural match to the shader's noise-heightmap fallback. Gaps are
 	# unavoidable -- 3000km of arc, patches are 22-84km -- so most of the ring is this.
