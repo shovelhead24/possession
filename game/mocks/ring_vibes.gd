@@ -79,6 +79,10 @@ var _dem := PackedByteArray()     # full-res u16 heights, /16 = metres (far-band
 var _dem_w := 0
 var _dem_h := 0
 var _dem_mpp := 23.45
+# heights are u16 in units of 1/h_scale metres; read from each patch's JSON. Defaults to the old 16
+# for files exported before the scale changed to 4 (16 clipped anything above 4095.9m -- 17% of the
+# Atacama patch came out as a flat fake plateau).
+var _dem_hscale := 16.0
 var _dem_cam := Vector2i.ZERO
 var _dem_name := ""
 var _sat_tex: ImageTexture = null
@@ -219,11 +223,16 @@ var _patch_names: Array = []
 # indexing PATCHES with a loaded-patch index silently reads a different location's biome/filename
 # (caught by the --selftest: it made 6 of 10 streams load the wrong file and fail).
 var _patch_meta: Array = []
-# Per-patch height re-basing. Splices are real places with real absolute elevations -- the Bolivian
-# altiplano sits at 3562m, the Camargue at 1m -- so butting them edge-to-edge on the ring produced
-# 3.5km cliffs at every boundary. Each patch whose floor is well above sea level is shifted down so
-# its floor sits just above water, preserving internal relief. Genuinely coastal patches (floor
-# already near zero) are left alone, or re-basing would destroy their coastlines.
+# Per-patch height re-basing -- OFF by design (2026-07-29, user call: "lock them to their real
+# heights"). Splices are real places with real absolute elevations: the Bolivian altiplano floors at
+# 3562m, the Camargue at 1m. With re-basing off, each patch renders at its TRUE elevation, which is
+# the honest data and the right base to judge edge work against.
+#
+# The cost is real and expected: butting real elevations edge-to-edge produces ~3.5km cliffs at
+# patch boundaries (salar_uyuni vs scablands) and ~1.2km elsewhere. Re-basing shifted every
+# high-floored patch down to a common low floor to hide that. Kept, not deleted, because it is the
+# fallback if edge feathering turns out not to be enough on its own.
+const REBASE_PATCHES := false
 var _patch_offset := PackedFloat32Array()
 const REBASE_ABOVE := 100.0   # only re-base patches whose floor exceeds this
 const REBASE_FLOOR := 20.0    # where a re-based floor lands (above SEA_LEVEL, so salt flats stay dry)
@@ -486,6 +495,7 @@ func _load_dem() -> void:
 	_dem_h = int(meta["h"])
 	_dem_mpp = float(meta["m_per_px"])
 	_dem_cam = Vector2i(int(meta["camera_px"][0]), int(meta["camera_px"][1]))
+	_dem_hscale = float(meta.get("h_scale", 16.0))
 	_dem_name = str(meta["name"])
 	if FileAccess.file_exists(DEM_SAT):
 		var simg := Image.new()
@@ -513,7 +523,7 @@ func _build_dem_texture() -> void:
 	for y in dh:
 		var sy := y * 2
 		for x in dw:
-			floats[y * dw + x] = float(_dem.decode_u16((sy * _dem_w + x * 2) * 2)) / 16.0
+			floats[y * dw + x] = float(_dem.decode_u16((sy * _dem_w + x * 2) * 2)) / _dem_hscale
 	var img := Image.create_from_data(dw, dh, false, Image.FORMAT_RF, floats.to_byte_array())
 	_dem_tex = ImageTexture.create_from_image(img)
 	_dem_hf = floats
@@ -598,6 +608,7 @@ func _hires_decode(idx: int) -> void:
 		var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".json"))
 		var w := int(meta["w"])
 		var h := int(meta["h"])
+		var hs := float(meta.get("h_scale", 16.0))
 		var raw := FileAccess.get_file_as_bytes(base + ".r16")
 		if raw.size() >= w * h * 2:
 			var res: int = mini(HIRES_RES, mini(w, h))
@@ -608,7 +619,7 @@ func _hires_decode(idx: int) -> void:
 				var row := sy * w
 				for x in res:
 					var sx: int = mini(int(float(x) / float(res) * float(w)), w - 1)
-					floats[y * res + x] = float(raw.decode_u16((row + sx) * 2)) / 16.0
+					floats[y * res + x] = float(raw.decode_u16((row + sx) * 2)) / hs
 			out["img"] = Image.create_from_data(res, res, false, Image.FORMAT_RF, floats.to_byte_array())
 			out["field"] = floats
 			out["res"] = res
@@ -740,6 +751,7 @@ func _load_patches() -> void:
 		var w := int(meta["w"])
 		var h := int(meta["h"])
 		var mpp := float(meta["m_per_px"])
+		var hs := float(meta.get("h_scale", 16.0))
 		var raw := FileAccess.get_file_as_bytes(base + ".r16")
 		var floats := PackedFloat32Array()
 		floats.resize(PATCH_RES * PATCH_RES)
@@ -747,13 +759,16 @@ func _load_patches() -> void:
 			var sy: int = mini(int(float(y) / float(PATCH_RES) * float(h)), h - 1)
 			for x in PATCH_RES:
 				var sx: int = mini(int(float(x) / float(PATCH_RES) * float(w)), w - 1)
-				floats[y * PATCH_RES + x] = float(raw.decode_u16((sy * w + sx) * 2)) / 16.0
+				floats[y * PATCH_RES + x] = float(raw.decode_u16((sy * w + sx) * 2)) / hs
 		imgs.append(Image.create_from_data(PATCH_RES, PATCH_RES, false, Image.FORMAT_RF, floats.to_byte_array()))
 		_patch_fields.append(floats)
 		_patch_names.append(p["name"])
 		_patch_meta.append(p)
-		var floor_h := _patch_floor(floats)
-		_patch_offset.append(REBASE_FLOOR - floor_h if floor_h > REBASE_ABOVE else 0.0)
+		if REBASE_PATCHES:
+			var floor_h := _patch_floor(floats)
+			_patch_offset.append(REBASE_FLOOR - floor_h if floor_h > REBASE_ABOVE else 0.0)
+		else:
+			_patch_offset.append(0.0)   # real absolute elevation
 		_patch_rects.append(Vector4(
 			fposmod(float(p["arc_pct"]) * circumference, circumference),   # arc centre
 			0.0,                                                            # lat centre (ring midline)
@@ -842,10 +857,10 @@ func _dem_sample(arc: float, lat: float) -> float:
 		return -1.0
 	var x0 := int(fx); var y0 := int(fy)
 	var tx: float = fx - float(x0); var ty: float = fy - float(y0)
-	var h00 := float(_dem.decode_u16((y0 * _dem_w + x0) * 2)) / 16.0
-	var h10 := float(_dem.decode_u16((y0 * _dem_w + x0 + 1) * 2)) / 16.0
-	var h01 := float(_dem.decode_u16(((y0 + 1) * _dem_w + x0) * 2)) / 16.0
-	var h11 := float(_dem.decode_u16(((y0 + 1) * _dem_w + x0 + 1) * 2)) / 16.0
+	var h00 := float(_dem.decode_u16((y0 * _dem_w + x0) * 2)) / _dem_hscale
+	var h10 := float(_dem.decode_u16((y0 * _dem_w + x0 + 1) * 2)) / _dem_hscale
+	var h01 := float(_dem.decode_u16(((y0 + 1) * _dem_w + x0) * 2)) / _dem_hscale
+	var h11 := float(_dem.decode_u16(((y0 + 1) * _dem_w + x0 + 1) * 2)) / _dem_hscale
 	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), ty)
 
 func _far_terrain_h(arc: float, lat: float) -> float:

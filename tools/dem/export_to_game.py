@@ -47,7 +47,7 @@ def main(name):
     # Detail texture: R/G = normal perturbation (east/north gradients), B = height/4m.
     # Saved as PNG bytes in a .dat so Godot's importer ignores it; loaded manually at runtime.
     import numpy as np
-    arr = np.frombuffer(raw, dtype="<u2").reshape(h, w).astype(np.float64) / 16.0
+    arr = np.frombuffer(raw, dtype="<u2").reshape(h, w).astype(np.float64) / fd.H_SCALE
     gpx = np.gradient(arr, axis=1) / m_per_px   # east+
     gpy = np.gradient(arr, axis=0) / m_per_px   # south+
     s = 1.2  # slope normalization (~50 deg full-scale)
@@ -61,7 +61,10 @@ def main(name):
     with open(os.path.join(DEST, f"{name}_detail.dat"), "wb") as f:
         f.write(buf.getvalue())
     print("wrote %s_detail.dat (%d MB png-in-dat)" % (name, len(buf.getvalue()) // 1_000_000))
+    # h_scale makes the file self-describing: heights are u16 in units of 1/h_scale metres.
+    # Readers must honour it -- it changed from 16 to 4 to stop clipping high terrain.
     meta = {"w": w, "h": h, "m_per_px": round(m_per_px, 3), "camera_px": cam_px,
+            "h_scale": fd.H_SCALE,
             "name": "%s (Terrarium z%d)" % (loc["label"], fd.ZOOM)}
     with open(os.path.join(DEST, f"{name}.json"), "w") as f:
         json.dump(meta, f, indent=1)

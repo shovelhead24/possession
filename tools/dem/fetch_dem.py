@@ -17,6 +17,15 @@ from PIL import Image, ImageDraw
 URL = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"
 OUT = os.path.join(os.path.dirname(__file__), "out")
 
+# Heights are stored as u16 in units of 1/H_SCALE metres, so the ceiling is 65535/H_SCALE.
+# Was 16 (ceiling 4095.9m) -- which silently CLIPPED high terrain: 17.4% of the Atacama patch and
+# 1.2% of Salar de Uyuni came out as a flat fake plateau at exactly 4095.9m, because the Andean
+# altiplano genuinely exceeds that. 4 gives a 16383m ceiling (clears Everest) at 0.25m precision,
+# which is far finer than needed at 20-40 m/px horizontal.
+# Written into each patch's JSON as "h_scale" so readers are self-describing; readers fall back to
+# 16 for any file exported before this change.
+H_SCALE = 4
+
 # Splice candidates: bbox (padded to a single-viewpoint patch), zoom, marker
 # pins for the preview image, and the camera anchor export_to_game.py spawns
 # above. Add new candidates here as they're scouted/verified.
@@ -438,7 +447,7 @@ def main():
             if e < -100:  # terrarium sea junk clamp
                 e = 0.0
             lo, hi = min(lo, e), max(hi, e)
-            dst[px, py] = int(max(e, 0.0) * 16)  # 1/16 m units in 16-bit range
+            dst[px, py] = int(max(e, 0.0) * H_SCALE)
     print(f"elevation range: {lo:.0f} m .. {hi:.0f} m over {w}x{h} px")
 
     heights.point(lambda v: v).convert("I;16").save(os.path.join(OUT, "heightmap_16bit.png"))
