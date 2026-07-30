@@ -41,12 +41,56 @@ remember, and is worth studying for exactly that.)
 - **Each run surfaces more subtle systems**, each conferring a diminishing edge alone — the depth is
   in *combining* them, not in any single unlock.
 
-### The first ending is already the replay incentive
+### The ending reflects; it does not report
 
-No New Game+ prompt is needed. `ending.md` assembles the ending from R0 persistent facts plus the
-player's knowledge pyramid, sampled at the moment of ringing. **A fast run assembles a thin ending** —
-not broken, just sparse. The game tells you what you did not see, in your own ending, in its own
-voice. That is diegetic, costs nothing, and is far better than a menu offering "harder mode".
+**Corrected 2026-07-30.** An earlier draft proposed that a thin ending should tell the player what
+they missed, as the replay hook. That is wrong: **the ending is a place to reflect on the run you
+had, not to enumerate the runs you didn't.** `ending.md` assembles vignettes from actual R0 facts
+and the player's own knowledge pyramid — pointing at absences turns that into a completion checklist
+and makes the ending about content rather than about the player.
+
+A fast run should still produce a *sparse* ending — fewer facts, fewer vignettes, honestly. But
+sparse-because-that-is-what-happened is different from a list of doors you did not open. The ending
+stays a mirror.
+
+**So the replay incentive is not the ending.** It may not need to be anything: if the first run is
+genuinely good and unexpectedly short, that is its own pull. Teasing or incentivising is available
+if needed, but should be considered a failure mode to fall back on, not the plan.
+
+### Escalation is LOCAL, and writes into the grids
+
+Not a global difficulty dial. **The regions you got through are the ones that get harder** — the
+cross-run model raises pressure *locally*, in the same spatial fields everything else already reads.
+
+Why this is the right shape:
+- **It is the syncopation law again** (`operators.md`: "perturbs *inputs* to later bake layers;
+  never scripts outcomes"). Khaibit writes syncopations. Cross-run learning therefore cannot script
+  anything — it can only weight what was already possible, which is exactly the guarantee needed to
+  keep interception and honest causality intact. *(Third distinct design question this law has
+  settled; it is earning its place.)*
+- **It does not break the region's interaction with everything else.** A pressured region still
+  trades, still raids, still sits in the chain — it is simply running hotter. Nothing is walled off.
+- **Second-order consequences are the payoff, not a side effect.** Raise pressure in one link of the
+  chain and it propagates: refugees, tolls, reroutes, a neighbour emboldened. The most interesting
+  difficulty is the difficulty you did not directly cause.
+- **It is diegetically legible.** That valley is harder *because of what happened there*, which the
+  player was present for. Compare a global multiplier, which is unreadable and unearned.
+
+### Weaknesses are earned, never the default verb
+
+Tribes carry exploitable biases — a cosmology that can be leaned on, a grievance that can be
+inflamed, a dependency that can be cut. These remain usable even at high local pressure, so a
+skilled reader is never locked out.
+
+**But they must not be the obvious first interaction, nor the only one.** Constraints:
+- A tribe's exploitable bias is **earned knowledge** — inferred from watching (see the inference
+  framing in `consumers.md`), not offered on approach. It is a deep read, not a menu option.
+- **Shallow interactions must exist and must work.** Trade, pass through, ignore. A player who never
+  reads deeply still has a game.
+- Consistent with the earlier note that later systems confer a **diminishing edge individually** —
+  the depth is in combining several reads, so no single discovered weakness becomes the answer to a
+  tribe. Otherwise every playthrough collapses into speedrunning known exploits, and the surface
+  layer is wasted content.
 
 ## The collision — read before adopting
 
