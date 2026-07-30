@@ -3,10 +3,19 @@
 Curated vocabulary of what a settlement can *do* — the outcomes a player predicts, and the things
 that later return to them as consequence. Started 2026-07-30.
 
-**Method: trust the sparse meat-space model.** These are not invented game verbs. They are what
-small, isolated, subsistence communities under scarcity actually do — because that is the target,
-and the real thing is both richer and cheaper than anything designed from scratch. Where a real
-behaviour exists, use it.
+**Method (two of them, and they got conflated once — worth keeping separate):**
+
+1. **Trust the sparse meat-space model** — i.e. *the human brain in the room*, sparse weights,
+   runs on meat, and **the target platform**, since the game is played by one and not by an
+   analysis. Where the designer's gut and a systematic argument disagree about whether something
+   *reads*, the gut wins by default: it is the instrument the product is aimed at. Corroborated
+   immediately in practice — M3 run 2's fatal defect (every routine had a unique phrasing, making
+   it a lookup table) was caught by playing it for ten minutes and not by any amount of designing
+   it. See `mocks/M3-READABILITY-FINDINGS.md`.
+2. **Prefer real behaviour to invented verbs.** The list below is what small, isolated, subsistence
+   communities under scarcity actually do. The real thing is richer *and* cheaper than anything
+   designed from scratch, and it comes pre-loaded with second-order consequences we would otherwise
+   have to invent. (This is a good method; it is simply not what "sparse meat-space model" meant.)
 
 **Scale assumption:** settlements of tens to a few hundred people, days apart, on a chain
 (`factions.md`). At that scale *demography is structural* — one death is a political event, and a

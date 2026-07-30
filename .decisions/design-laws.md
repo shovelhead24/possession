@@ -57,6 +57,13 @@ Laws a future session could violate silently — the core reason this log exists
 **Why:** Hand-authoring cost scales with branch count, and this project is bounded by what one person plus AI assistance can build — a branching structure large enough to feel alive is exactly the thing the budget cannot pay for, and the failure is silent (you find out late, having built half of it). The pool pattern is already established in two places rather than being new: the dialogue bake and the ending-vignette assembly both do precisely this. Pools also degrade gracefully — an under-populated pool yields repetition, whereas an under-populated tree yields dead ends.
 **Corollary:** consequence systems inherit this. "The world returns your actions to you" (`docs/draws.md` returning draws) must be pools + preconditions + provenance, never an authored consequence graph.
 
+### meat-model-arbitrates — When the gut and the analysis disagree about whether something reads, the gut wins
+**Date:** 2026-07-30
+**Status:** active
+**Decision:** The designer's own perception — "the sparse meat-space model", the human brain in the room — is the arbiter of whether anything *reads*. Where it disagrees with a systematic argument, it wins by default, and the correct response is to fix the analysis rather than argue with the perception. Systematic reasoning proposes; playing it decides.
+**Why:** The target platform is a human brain. An argument that something is legible is a hypothesis *about* that brain, and the brain is available to test against directly — so deferring to the argument over the instrument is simply using worse evidence. Demonstrated the day it was written: M3 run 2's fatal defect (every routine phrasing was unique, making a supposed inference puzzle into a lookup table) survived being designed twice specifically to avoid it, and was caught in ten minutes of play. Related to `consumer-audit`, which already holds that claimed consumers are hypotheses until a mock shows a player consuming them; this is the sharper form — the designer *is* an available player, and their reaction is data, not opinion.
+**Practical form:** build the cheap probe, play it, believe the result. Prefer "that felt like a lookup table" over any amount of reasoning about why it should not have.
+
 ### consumer-audit — Every simulated quantity names a consumer, or is coarsened or cut
 **Date:** 2026-07-29
 **Status:** active
