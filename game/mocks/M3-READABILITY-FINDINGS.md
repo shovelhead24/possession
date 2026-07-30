@@ -58,6 +58,45 @@ inside what the player could see.
   variance or their signals are decoration.** A world where everyone mostly does one thing needs no
   inference layer at all.
 
+## Run 2 result (2026-07-30) — POSITIVE, with three real defects
+
+| Metric | Run 1 | Run 2 |
+|---|---|---|
+| Scored accuracy | 42% | **84%** |
+| Base-rate baseline | 57% | 69% |
+| **Margin over the bar** | **−15** | **+15** |
+
+**Inference-not-transmission is supported.** A reader who has watched a place for a dozen cycles can
+predict it from modulated routine alone, beating the base rate substantially. The core bet of the
+mid-game (`docs/consumers.md`) survives its first honest test. Note this only became true once
+legibility was *designed* — run 1's ambiguous flavour text was genuinely unreadable — which
+sharpens the earlier finding rather than replacing it.
+
+Player report: *"more readable, but the answers clustered around the same two outcomes and clustered
+together to the point I could guess based on the last answer. Some indicators seemed more relevant
+than others — markets running out meant feast no matter what, herds coming in to graze meant fortify
+no matter what."*
+
+Three defects, all mine:
+
+1. **The modulation table is a lookup, not a signal.** Nearly every (routine, intent) pair got a
+   *unique* string, so "the market sold out before midday" appears only for feast — a perfect tell.
+   Only one phrasing was shared across intents. The intended ambiguity was never actually built.
+   **Fix:** each modulation must be consistent with 2–3 intents. No line may resolve an outcome
+   alone; convergence must be required.
+2. **Outcome distribution is badly skewed (69% base rate).** At temp 0.55 the disposition's max
+   almost always wins, and `caravan` holds the top weight on four of eight phases. `feast` and
+   `callup` barely occur. **Fix:** balance so all five outcomes have comparable frequency, which
+   also drops the base-rate bar to something meaningful.
+3. **Autocorrelation is still the cheapest strategy.** Adjacent phases have similar weights, so the
+   last answer predicts the next one. This was run 1's finding too and I only half-fixed it.
+   **Fix:** make adjacent phases *contrast* deliberately — the phase pattern should alternate rather
+   than plateau.
+
+Note defect 1 is the interesting one: it is the same mistake as the "tells", surviving a redesign
+that was specifically meant to remove it. Uniqueness of phrasing *is* a tell, whatever the phrasing
+describes. Ambiguity has to be built explicitly; it does not arise from indirection.
+
 ## Run 2 design
 
 Fixes targeted at the defects above:
