@@ -91,10 +91,15 @@ var _log_lines: Array[String] = []
 var _out: RichTextLabel
 var _entry: LineEdit
 var _rng := RandomNumberGenerator.new()
+var _transcript: FileAccess = null
+const TRANSCRIPT := "user://chain_transcript.txt"
 
 
 func _ready() -> void:
 	_rng.randomize()
+	_transcript = FileAccess.open(TRANSCRIPT, FileAccess.WRITE)
+	if _transcript:
+		_transcript.store_line("#RUN %s" % Time.get_datetime_string_from_system())
 	_load_khaibit()
 	for p in PLACES:
 		_st[p] = {
@@ -169,6 +174,7 @@ func _tick() -> void:
 	# every settlement commits and acts. Nothing waits for the player; witnessing is passive.
 	_cycle += 1
 	var events: Array[String] = []
+	_log_state("tick")
 	for p in PLACES:
 		var act := _commit(p, _cycle)
 		var s: Dictionary = _st[p]
@@ -347,6 +353,10 @@ func _ending() -> void:
 		_say("You understood %d of the three well enough to have used them." % known_n)
 	_save_khaibit()
 	_say("\n[i]Khaibit remembers. Run it again.[/i]")
+	_log_state("end")
+	if _transcript:
+		_transcript.close()
+		_transcript = null
 	_entry.editable = false
 
 
@@ -377,6 +387,40 @@ func _save_khaibit() -> void:
 func _say(s: String) -> void:
 	_out.append_text(s + "\n")
 	_out.scroll_to_line(_out.get_line_count() - 1)
+	# Mirror to stdout AND to a transcript file. Run 1 of this mock produced NO record at all --
+	# _say only wrote to the label -- so a played session left nothing to analyse but the Khaibit
+	# save. For a probe whose whole purpose is evidence, that is the probe failing, not the player.
+	var plain := s
+	for tag in ["[b]", "[/b]", "[i]", "[/i]", "[/color]"]:
+		plain = plain.replace(tag, "")
+	while plain.find("[color=") != -1:
+		var a := plain.find("[color=")
+		var b := plain.find("]", a)
+		if b == -1:
+			break
+		plain = plain.substr(0, a) + plain.substr(b + 1)
+	print(plain)
+	if _transcript:
+		_transcript.store_line(plain)
+		_transcript.flush()
+
+func _log_state(tag: String) -> void:
+	# structured per-cycle dump: the qualitative transcript says what it FELT like, this says what
+	# actually happened underneath, so the two can be compared afterwards.
+	if not _transcript:
+		return
+	var row := {"cycle": _cycle, "tag": tag, "here": _here, "places": {}}
+	for p in PLACES:
+		row["places"][p] = {
+			"pressure": snappedf(float(_st[p]["pressure"]), 0.01),
+			"cattle": int(_st[p]["cattle"]),
+			"last": _st[p]["last"],
+			"grievance": _st[p]["grievance"],
+			"activity": int(_activity[p]),
+			"known": bool(_known[p]),
+		}
+	_transcript.store_line("#STATE " + JSON.stringify(row))
+	_transcript.flush()
 
 func _build_ui() -> void:
 	var layer := CanvasLayer.new()
