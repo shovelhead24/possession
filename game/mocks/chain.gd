@@ -97,10 +97,17 @@ const TRANSCRIPT := "user://chain_transcript.txt"
 
 func _ready() -> void:
 	_rng.randomize()
-	_transcript = FileAccess.open(TRANSCRIPT, FileAccess.WRITE)
+	# append, never truncate -- runs must be comparable, since Khaibit only shows up across them
+	_transcript = FileAccess.open(TRANSCRIPT, FileAccess.READ_WRITE)
+	if _transcript == null:
+		_transcript = FileAccess.open(TRANSCRIPT, FileAccess.WRITE)
+	else:
+		_transcript.seek_end()
 	if _transcript:
-		_transcript.store_line("#RUN %s" % Time.get_datetime_string_from_system())
+		_transcript.store_line("\n#RUN %s" % Time.get_datetime_string_from_system())
 	_load_khaibit()
+	if _transcript:
+		_transcript.store_line("#KHAIBIT-IN " + JSON.stringify(_khaibit))
 	for p in PLACES:
 		_st[p] = {
 			"pressure": 0.15 + float(_khaibit.get(p, 0.0)),   # <- Khaibit: hotter where you worked
@@ -380,6 +387,8 @@ func _save_khaibit() -> void:
 	var f := FileAccess.open(SAVE, FileAccess.WRITE)
 	f.store_string(JSON.stringify(out))
 	f.close()
+	if _transcript:
+		_transcript.store_line("#KHAIBIT-OUT " + JSON.stringify(out))
 
 
 # --- ui --------------------------------------------------------------------------------------
