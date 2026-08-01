@@ -50,6 +50,9 @@ var _hud_full := true              # [TAB] collapses the control/debug text down
 var _clouds: Node3D = null          # [Z] cycle type, [X] toggle -- see mocks/ring_clouds.gd
 var _panel: PanelContainer = null   # [O] live tuning sliders
 var _panel_open := false
+var _warp: PanelContainer = null    # [G] warp menu -- jump straight to a named splice
+var _warp_open := false
+var _warp_list: VBoxContainer = null
 var _wall_shadow_soft := 220.0      # penumbra width at the wall-shadow edge, metres
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
@@ -435,6 +438,9 @@ func _ready() -> void:
 	_hud.add_theme_constant_override("outline_size", 4)
 	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	hud_layer.add_child(_hud)
+	# built here, not with the tuning panel below: _rebuild() populates it, so the container
+	# has to exist before _rebuild() runs or the menu comes up empty.
+	_build_warp_panel(hud_layer)
 
 	if _load_tree_lods():
 		pass  # _scatter_trees() runs inside _rebuild() below
@@ -467,6 +473,73 @@ func _add_slider(vb: VBoxContainer, label: String, lo: float, hi: float, val: fl
 		setter.call(v))
 	row.add_child(sl)
 	vb.add_child(row)
+
+func _build_warp_panel(layer: CanvasLayer) -> void:
+	# One button per loaded splice, in arc order, with its arc % and biome. Built AFTER the patches
+	# load so it lists what is actually on disk, not what PATCHES hopes for -- the same index
+	# divergence that made _patch_meta necessary would otherwise send you to the wrong place.
+	_warp = PanelContainer.new()
+	_warp.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_warp.offset_left = 12.0
+	_warp.offset_right = 372.0
+	_warp.offset_top = 12.0
+	_warp.offset_bottom = 700.0
+	_warp.visible = false
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_warp.add_child(scroll)
+	var vb := VBoxContainer.new()
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vb.add_theme_constant_override("separation", 2)
+	scroll.add_child(vb)
+	_warp_list = vb
+	var title := Label.new()
+	title.text = "WARP  ([G] close)"
+	vb.add_child(title)
+	layer.add_child(_warp)
+
+func _populate_warp_panel() -> void:
+	if _warp_list == null:
+		return
+	for c in _warp_list.get_children():
+		if c is Button:
+			c.queue_free()
+	var home := Button.new()
+	home.text = "· home — %s" % DEM_R16.get_file().get_basename()
+	home.pressed.connect(func(): _warp_to(-1))
+	_warp_list.add_child(home)
+	var circ: float = CIRCUMFERENCES[c_idx]
+	var order := range(_patch_rects.size())
+	order.sort_custom(func(a, b): return _patch_rects[a].x < _patch_rects[b].x)
+	for i in order:
+		var r: Vector4 = _patch_rects[i]
+		var m: Dictionary = _patch_meta[i]
+		var b := Button.new()
+		b.text = "%5.1f%%  %s%s" % [100.0 * r.x / circ, _patch_names[i],
+			"   [trees %.0f%%]" % (100.0 * float(m.get("trees", 0.0)))]
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.pressed.connect(func(): _warp_to(i))
+		_warp_list.add_child(b)
+
+func _warp_to(idx: int) -> void:
+	var rad := _radius()
+	var arc := 0.0
+	var lat := 0.0
+	var label := "home"
+	if idx >= 0 and idx < _patch_rects.size():
+		var r: Vector4 = _patch_rects[idx]
+		arc = r.x
+		lat = r.y
+		label = str(_patch_names[idx])
+		_jump_idx = idx
+	_cam.position = _ring_pos(arc / rad, lat, _terrain_h(arc, lat) + 250.0)
+	_look = Vector2(0.0, -0.18)
+	_apply_look()
+	_tree_center = Vector2(arc, lat)
+	_scatter_trees()
+	_refill_buildings(true)
+	print("ring_vibes: warped to %s (%.1f%% arc)" % [label, 100.0 * arc / CIRCUMFERENCES[c_idx]])
+	_update_hud()
 
 func _build_tuning_panel(layer: CanvasLayer) -> void:
 	# live cloud tuning -- feel is faster to dial in by dragging than by editing constants
@@ -643,6 +716,7 @@ func _jump_splice(dir: int) -> void:
 	_apply_look()
 	_tree_center = Vector2(r.x, r.y)
 	_scatter_trees()
+	_refill_buildings(true)
 	print("ring_vibes: jumped to %s (%.1f%% arc)" % [_patch_names[_jump_idx], 100.0 * r.x / CIRCUMFERENCES[c_idx]])
 	_update_hud()
 
@@ -1088,6 +1162,7 @@ func _rebuild() -> void:
 	_build_walls()
 	_scatter_trees()
 	_load_buildings()
+	_populate_warp_panel()
 	_update_hud()
 
 const WALL_BASE_H := -200.0   # absolute height (below lowest terrain), from ring centre — not terrain-relative
@@ -1916,6 +1991,16 @@ func _unhandled_input(event: InputEvent) -> void:
 					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 					_captured = false
 				_update_hud()
+			KEY_G:
+				# warp menu. [,] and [.] cycle, but 35 splices is too many to hunt through one
+				# at a time when you want a named one.
+				_warp_open = not _warp_open
+				if _warp:
+					_warp.visible = _warp_open
+				if _warp_open:
+					Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+					_captured = false
+				_update_hud()
 			KEY_Z:
 				if _clouds:
 					_clouds.cycle_type()
@@ -1948,6 +2033,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_E: w_idx = 2; _rebuild()
 
 func _update_hud() -> void:
+	if _hud == null:
+		return   # input can arrive mid-startup, before the label exists
 	var c: float = CIRCUMFERENCES[c_idx]
 	var w: float = WIDTHS[w_idx]
 	var r: float = _radius()
@@ -1961,14 +2048,15 @@ func _update_hud() -> void:
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	if not _hud_full:
-		_hud.text = "[ESC] release mouse   [TAB] controls   [O] sliders   %s" % mode
+		_hud.text = "[ESC] release mouse   [TAB] controls   [O] sliders   [G] warp   %s" % mode
 		return
 	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0
 	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
 	var threat := "THREAT (wolf closing)" if _threat_active else "calm (null-write holding)"
 	# grouped by system rather than one long undifferentiated key dump
 	var lines := [
-		"[ESC] release mouse    [TAB] hide controls    [O] sliders %s" % ("(open)" if _panel_open else ""),
+		"[ESC] release mouse    [TAB] hide controls    [O] sliders %s    [G] warp menu %s" % [
+			("(open)" if _panel_open else ""), ("(open)" if _warp_open else "")],
 		"mode: %s" % mode,
 		"",
 		"RING    C %.0f km   W %.1f km   R %.1f km   rise @20km %.0f m  @50km %.0f m   far-side %.2f deg (moon 0.52)" % [
