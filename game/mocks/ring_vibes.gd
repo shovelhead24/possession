@@ -1524,6 +1524,17 @@ func _fill_mm(mmi: MultiMeshInstance3D, xfs: Array) -> void:
 # instead, so the offset is applied here per patch rather than baked into the file.
 # ---------------------------------------------------------------------------
 
+func _plinth(st: SurfaceTool, quad: Callable, e: float) -> void:
+	# An undercroft dropping a full building-height below the floor. Buildings are placed on the
+	# HIGHEST corner of their footprint so nothing is buried; that leaves the downhill side in the
+	# air, and this fills it. Which is also what hillside buildings actually do -- cut into the
+	# slope at the back, stand on stone or stilts at the front. Invisible on flat ground.
+	var base := Color(0.34, 0.31, 0.28)
+	quad.call(Vector3(-e, -1.0, e), Vector3(e, -1.0, e), Vector3(e, 0.02, e), Vector3(-e, 0.02, e), base)
+	quad.call(Vector3(e, -1.0, -e), Vector3(-e, -1.0, -e), Vector3(-e, 0.02, -e), Vector3(e, 0.02, -e), base)
+	quad.call(Vector3(e, -1.0, e), Vector3(e, -1.0, -e), Vector3(e, 0.02, -e), Vector3(e, 0.02, e), base)
+	quad.call(Vector3(-e, -1.0, -e), Vector3(-e, -1.0, e), Vector3(-e, 0.02, e), Vector3(-e, 0.02, -e), base)
+
 func _house_mesh() -> ArrayMesh:
 	# Unit house: footprint 1x1 in x/z, total height 1, walls to 0.72, gable ridge along z.
 	# Instance transforms scale it to real width/depth/height, so one mesh covers every building.
@@ -1557,6 +1568,7 @@ func _house_mesh() -> ArrayMesh:
 	# gable ends
 	tri.call(Vector3(-0.5, wt, 0.5), Vector3(0.5, wt, 0.5), Vector3(0.0, 1.0, 0.5), wall)
 	tri.call(Vector3(0.5, wt, -0.5), Vector3(-0.5, wt, -0.5), Vector3(0.0, 1.0, -0.5), wall)
+	_plinth(st, quad, 0.5)
 	st.generate_normals()
 	return st.commit()
 
@@ -1597,6 +1609,7 @@ func _joglo_mesh() -> ArrayMesh:
 	tri.call(Vector3(mid, midy, -mid), Vector3(-mid, midy, -mid), apex, roof)
 	tri.call(Vector3(mid, midy, mid), Vector3(mid, midy, -mid), apex, roof)
 	tri.call(Vector3(-mid, midy, -mid), Vector3(-mid, midy, mid), apex, roof)
+	_plinth(st, quad, 0.42)
 	st.generate_normals()
 	return st.commit()
 
@@ -1722,7 +1735,19 @@ func _refill_buildings(force := false) -> void:
 		var d_arc: float = absf(wrapf(_bldg[i] - here.x, -circ * 0.5, circ * 0.5))
 		if d_arc < BLDG_RADIUS and absf(_bldg[i + 1] - here.y) < BLDG_RADIUS:
 			if _terrain_h(_bldg[i], _bldg[i + 1]) > SEA_LEVEL + 0.5:
-				var ground := _surface_pos(_bldg[i], _bldg[i + 1])
+				# A level box on a slope buries its uphill half if you place it by its centre: a 12m
+				# footprint on a 20-degree slope spans 4m of rise. Sample the four corners and sit on
+				# the highest, so nothing is ever underground; the plinth covers the downhill gap.
+				var hw: float = _bldg[i + 2] * 0.5
+				var hd: float = _bldg[i + 3] * 0.5
+				var yc := cos(_bldg[i + 4])
+				var ys := sin(_bldg[i + 4])
+				var top := -1e20
+				for sx in [-1.0, 1.0]:
+					for sz in [-1.0, 1.0]:
+						top = maxf(top, _terrain_h(_bldg[i] + sx * hw * yc - sz * hd * ys,
+							_bldg[i + 1] + sx * hw * ys + sz * hd * yc))
+				var ground := _ring_pos(_bldg[i] / _radius(), _bldg[i + 1], top)
 				var up := _ring_up(ground)
 				var ax := up.cross(Vector3.FORWARD).normalized()
 				if ax.length_squared() < 0.25:
@@ -1737,7 +1762,7 @@ func _refill_buildings(force := false) -> void:
 				var si: int = _bldg_style[i / 6] if (i / 6) < _bldg_style.size() else 0
 				xfs[si].append(Transform3D(
 					Basis(rx * _bldg[i + 2], up * _bldg[i + 5], rz * _bldg[i + 3]),
-					ground - up * 0.4))
+					ground))
 				rng.seed = i
 				var t := rng.randf_range(0.82, 1.12)
 				cols[si].append(Color(t, t * rng.randf_range(0.97, 1.02), t * rng.randf_range(0.94, 1.0)))
