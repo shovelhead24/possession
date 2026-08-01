@@ -45,6 +45,12 @@ var haze_density := 0.00001       # 1/m — ~100km extinction (Up/Dn tunes). Str
                                    # haze should only read as atmosphere within the immediate pre-horizon
                                    # playspace (the near DEM/CDLOD area); the sense of the far ring is a
                                    # cloud layer's job (see mocks/ring_clouds.gd), not haze stretched thin.
+# ATMOSPHERE EXIT. Climb out and the daylight sky effects have to go, or space reads as "very high
+# up on a blue day" instead of space. Drives haze, sky tint, star visibility and ambient fill off
+# one altitude factor. No shader change needed -- the sky already takes its colours as uniforms.
+const SPACE_LO := 14_000.0        # m above the ring surface where thinning starts
+const SPACE_HI := 48_000.0        # m by which it reads as vacuum
+var _space := 0.0                 # 0 = in atmosphere, 1 = space
 var _haze_off := false            # [N] disables haze entirely regardless of haze_density, for A/B testing
 var _hud_full := true              # [TAB] collapses the control/debug text down to one line, for clean "vibe check" screenshots
 var _clouds: Node3D = null          # [Z] cycle type, [X] toggle -- see mocks/ring_clouds.gd
@@ -96,6 +102,19 @@ var _dem_cam := Vector2i.ZERO
 var _dem_name := ""
 var _sat_tex: ImageTexture = null
 var _roads_tex: ImageTexture = null
+# CPU copy of the road mask, so the scatter can read it. The shader has had this texture all
+# along, but nothing on the CPU could tell a road from a field, which is why conifers grew down
+# the middle of the N72. Kept as raw bytes at ROAD_RES rather than an Image: the scatter takes
+# five samples per candidate over ~90k candidates, and get_pixel() at that rate is not viable.
+const ROAD_RES := 2048
+# Thresholds are calibrated to the DOWNSAMPLED mask, not the 8192^2 one the shader reads. Roads are
+# 1-3px lines up there, so resizing to 2048 spreads each one into a low, soft ridge -- measured max
+# over the spawn area is 0.306, which is why a 0.35 cut-off matched nothing at all. The upside is
+# that the blur is itself a proximity field, so a second set of offset probes is unnecessary:
+# high = carriageway, low-but-present = the verge beside it.
+const ROAD_ON := 0.14             # at/above this, it is road surface: nothing grows
+const ROAD_NEAR := 0.03           # above this but below ROAD_ON: roadside, plant a hedge
+var _road_mask := PackedByteArray()
 var _detail_tex: ImageTexture = null
 var dem_scale := 1.0  # [H] cycles 1..5 — real-height exaggeration (DEM branch only)
 
@@ -635,6 +654,11 @@ func _load_dem() -> void:
 	if FileAccess.file_exists(DEM_ROADS):
 		var rimg := Image.new()
 		if rimg.load_png_from_buffer(FileAccess.get_file_as_bytes(DEM_ROADS)) == OK:
+			var cpu := Image.new()
+			cpu.copy_from(rimg)
+			cpu.resize(ROAD_RES, ROAD_RES, Image.INTERPOLATE_LANCZOS)
+			cpu.convert(Image.FORMAT_L8)
+			_road_mask = cpu.get_data()
 			rimg.generate_mipmaps()
 			_roads_tex = ImageTexture.create_from_image(rimg)
 	if FileAccess.file_exists(DEM_DETAIL):
@@ -1324,7 +1348,10 @@ func _process(delta: float) -> void:
 		# on the same cheap cadence as the forest, not every frame
 		if _tree_cd <= 0.0:
 			_clouds.transition_to(_biome_at(cam_theta * r_now, _cam.global_position.z)["weather"])
-	var eff_haze: float = 0.0 if _haze_off else haze_density
+	# altitude above the ring surface, toward the axis
+	var cam_alt: float = r_now - Vector2(_cam.position.x, r_now - _cam.position.y).length()
+	_space = smoothstep(SPACE_LO, SPACE_HI, cam_alt)
+	var eff_haze: float = (0.0 if _haze_off else haze_density) * (1.0 - _space)
 	_mat.set_shader_parameter("to_sun", to_sun)
 	_mat.set_shader_parameter("haze_density", eff_haze)
 	_mat.set_shader_parameter("ring_width", WIDTHS[w_idx])
@@ -1342,12 +1369,22 @@ func _process(delta: float) -> void:
 	# camera-local day factor drives the sky + fog-blend colour -- fog fades toward the HORIZON
 	# colour (not zenith), matching what the real sky shader shows near the ground far away.
 	var sky := DAY_HORIZON.lerp(NIGHT_HORIZON, 1.0 - day)
+	# in vacuum there is no scattering, so no blue and no skylight -- just the sun and the stars
+	var vac := Color(0.006, 0.008, 0.014)
+	var dz := DAY_ZENITH.lerp(vac, _space)
+	var dh := DAY_HORIZON.lerp(vac, _space)
+	var nz := NIGHT_ZENITH.lerp(vac, _space)
+	var nh := NIGHT_HORIZON.lerp(vac, _space)
+	sky = sky.lerp(vac, _space)
+	_sky_mat.set_shader_parameter("star_day_visibility", lerpf(0.4, 1.0, _space))
+	if _env:
+		_env.ambient_light_energy = lerpf(0.4, 0.04, _space)
 	_sky_mat.set_shader_parameter("to_sun", to_sun)
 	_sky_mat.set_shader_parameter("day", day)
-	_sky_mat.set_shader_parameter("day_zenith", Vector3(DAY_ZENITH.r, DAY_ZENITH.g, DAY_ZENITH.b))
-	_sky_mat.set_shader_parameter("day_horizon", Vector3(DAY_HORIZON.r, DAY_HORIZON.g, DAY_HORIZON.b))
-	_sky_mat.set_shader_parameter("night_zenith", Vector3(NIGHT_ZENITH.r, NIGHT_ZENITH.g, NIGHT_ZENITH.b))
-	_sky_mat.set_shader_parameter("night_horizon", Vector3(NIGHT_HORIZON.r, NIGHT_HORIZON.g, NIGHT_HORIZON.b))
+	_sky_mat.set_shader_parameter("day_zenith", Vector3(dz.r, dz.g, dz.b))
+	_sky_mat.set_shader_parameter("day_horizon", Vector3(dh.r, dh.g, dh.b))
+	_sky_mat.set_shader_parameter("night_zenith", Vector3(nz.r, nz.g, nz.b))
+	_sky_mat.set_shader_parameter("night_horizon", Vector3(nh.r, nh.g, nh.b))
 	# ambient was fixed-intensity regardless of day/night — trees/car/creatures (engine-lit) stayed
 	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
 	# Scale it down at night so everything dims together. Max raised (0.4 -> 0.65) -- daytime overall
@@ -1517,6 +1554,21 @@ func _load_tree_lods() -> bool:
 	print("ring_vibes: tree pack — %d variants x %d LODs loaded" % [_tree_nvar, TREE_LODS])
 	return true
 
+func _road_at(arc: float, lat: float) -> float:
+	# Same mapping the shader uses for road_tex: normalised over the home DEM extent, since that is
+	# the bbox fetch_osm_roads.py rasterised into. Returns 0 outside the home patch -- the other 34
+	# splices have no road data yet (deferred: Overpass rate limits).
+	if _road_mask.is_empty() or _dem_hf_w == 0:
+		return 0.0
+	var u := (_dem_hf_cam.x + arc / _dem_hf_mpp) / float(_dem_hf_w)
+	var v := (_dem_hf_cam.y - lat / _dem_hf_mpp) / float(_dem_hf_h)
+	if u < 0.0 or u >= 1.0 or v < 0.0 or v >= 1.0:
+		return 0.0
+	var idx := int(v * float(ROAD_RES)) * ROAD_RES + int(u * float(ROAD_RES))
+	if idx < 0 or idx >= _road_mask.size():
+		return 0.0
+	return float(_road_mask[idx]) / 255.0
+
 func _scatter_trees() -> void:
 	# conifers clumped by noise into woods + clearings, in a patch near spawn. Placed analytically
 	# on the DEM+curve (no raycast — see file header). Positions/variants baked once; LOD tier
@@ -1549,13 +1601,25 @@ func _scatter_trees() -> void:
 	_forest_noise.frequency = 1.0 / 300.0
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1234
+	var n_road := 0
+	var n_hedge := 0
 	var arc := -FOREST_HALF
 	while arc <= FOREST_HALF:
 		var lat := -FOREST_HALF
 		while lat <= FOREST_HALF:
 			var jx := _tree_center.x + arc + rng.randf_range(-3.5, 3.5)
 			var jz := _tree_center.y + lat + rng.randf_range(-3.5, 3.5)
-			if _forest_noise.get_noise_2d(jx, jz) > 0.0 and rng.randf() < density:
+			# Nothing grows on the carriageway. The road mask has been in the shader since the
+			# drape went in, but the scatter could not read it, so conifers grew down the middle
+			# of every road in the starting area.
+			var rv := _road_at(jx, jz)
+			var on_road := rv >= ROAD_ON
+			var side := (not on_road) and rv >= ROAD_NEAR
+			# ...and roads are LINED. A hedgerow ignores the forest mask entirely: it is there
+			# because the road is there, which is exactly how field boundaries work.
+			if on_road:
+				n_road += 1
+			elif side or (_forest_noise.get_noise_2d(jx, jz) > 0.0 and rng.randf() < density):
 				var gh := _terrain_h(jx, jz)
 				# no trees in the water or above the local treeline; fade out near the ceiling
 				# rather than cutting a hard line across the slope.
@@ -1565,7 +1629,10 @@ func _scatter_trees() -> void:
 				if ok:
 					var ground := _surface_pos(jx, jz)
 					var up := _ring_up(ground)
-					var sc: float = _tree_scale * tmul * rng.randf_range(0.8, 1.3)
+					# hedge height, not tree height, with the occasional standard left to grow out of it
+					var sc: float = _tree_scale * tmul * (
+						(rng.randf_range(0.9, 1.4) if rng.randf() < 0.08 else rng.randf_range(0.22, 0.40))
+						if side else rng.randf_range(0.8, 1.3))
 					var basis := Basis()
 					basis.y = up
 					basis.x = up.cross(Vector3.FORWARD).normalized()
@@ -1574,10 +1641,13 @@ func _scatter_trees() -> void:
 					_tree_ground.append(ground - up * 0.3)
 					_tree_basis.append(basis)
 					_tree_variant.append(rng.randi() % _tree_nvar)
+					if side:
+						n_hedge += 1
 			lat += 8.0
 		arc += 8.0
 	_update_tree_lod(true)
-	print("ring_vibes: %d trees placed (%d variants x %d LODs, distance-bucketed)" % [_tree_ground.size(), _tree_nvar, TREE_LODS])
+	print("ring_vibes: %d trees placed (%d variants x %d LODs) — %d hedgerow, %d rejected on road (mask %d KB)"
+		% [_tree_ground.size(), _tree_nvar, TREE_LODS, n_hedge, n_road, _road_mask.size() / 1024])
 
 func _fill_mm(mmi: MultiMeshInstance3D, xfs: Array) -> void:
 	if mmi == null: return
@@ -2214,9 +2284,10 @@ func _update_hud() -> void:
 			c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg],
 		"        [1/2/3] circumference   [Q/W/E] width   [R] rebuild        (config keys: release mouse first)",
 		"",
-		"SKY     sun period %s s   haze ~%.0f km %s   day %.2f" % [
+		"SKY     sun period %s s   haze ~%.0f km %s   day %.2f   atmos %s" % [
 			("off" if SUN_PERIODS[sun_speed_idx] == 0.0 else str(SUN_PERIODS[sun_speed_idx])),
-			haze_km, "(OFF)" if _haze_off else "", _dbg_day],
+			haze_km, "(OFF)" if _haze_off else "", _dbg_day,
+			("VACUUM" if _space > 0.98 else ("%.0f%% thinned" % (_space * 100.0)) if _space > 0.01 else "sea level")],
 		"        [T] sun speed   [P] pause sun   [F] flip day/night   [Up/Dn] haze   [N] haze on/off",
 		"",
 		"CLOUDS  %s   %s" % [

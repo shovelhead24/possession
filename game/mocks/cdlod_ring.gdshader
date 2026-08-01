@@ -252,7 +252,13 @@ void fragment() {
 		base = mix(base, sat, smoothstep(0.015, 0.05, dot(sat, vec3(0.333))));
 		if (has_roads) {
 			float road = texture(road_tex, uv).r;
-			base = mix(base, vec3(0.27, 0.27, 0.285), smoothstep(0.2, 0.75, road));
+			// VERGE first, then carriageway over it. The rasterised mask antialiases at its edges,
+			// so the 0.03-0.25 band is already a strip a few metres wide either side of the road --
+			// a free ditch/verge with no extra data. Darker and greener than the field it cuts
+			// through, which is what an Irish roadside ditch actually looks like from a car.
+			float verge = smoothstep(0.03, 0.22, road) * (1.0 - smoothstep(0.25, 0.55, road));
+			base = mix(base, base * vec3(0.62, 0.78, 0.55), verge * 0.8);
+			base = mix(base, vec3(0.27, 0.27, 0.285), smoothstep(0.35, 0.8, road));
 		}
 	}
 	// splice-patch tint: stands in for a per-patch satellite drape (fetching Sentinel-2 for every

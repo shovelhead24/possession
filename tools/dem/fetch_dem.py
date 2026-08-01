@@ -30,6 +30,45 @@ H_SCALE = 4
 # pins for the preview image, and the camera anchor export_to_game.py spawns
 # above. Add new candidates here as they're scouted/verified.
 LOCATIONS = {
+    # --- coastal batch. The ring came out ~95% land because every box was centred on a landform;
+    # these are centred on WATER with the coast running through them, so the patch is genuinely
+    # half sea. Deliberately varied: karst islands, arctic cliffs, a mountain coast, two oceans
+    # meeting, and a tropical archipelago.
+    "halong_bay": dict(
+        # limestone towers standing in the sea -- nothing else in the portfolio looks like this
+        lat_min=20.500, lat_max=21.260, lon_min=106.900, lon_max=107.660, zoom=12,
+        camera=(20.9101, 107.1839),
+        markers=[(20.9101, 107.1839, "Ha Long"), (20.7500, 107.2500, "Cat Ba")],
+        label="Ha Long Bay (karst islands, Vietnam)",
+    ),
+    "lofoten": dict(
+        # arctic sea cliffs dropping straight into open ocean, white beaches between
+        lat_min=67.870, lat_max=68.630, lon_min=12.700, lon_max=14.760, zoom=12,
+        camera=(68.2200, 13.7300),
+        markers=[(68.2200, 13.7300, "Vestvagoy"), (67.9800, 13.0000, "Moskenes")],
+        label="Lofoten (arctic sea cliffs, Norway)",
+    ),
+    "big_sur": dict(
+        # mountains falling into the Pacific; ~1000m of relief within 3km of the water
+        lat_min=35.860, lat_max=36.620, lon_min=-121.900, lon_max=-121.160, zoom=12,
+        camera=(36.2400, -121.7800),
+        markers=[(36.2704, -121.8081, "Bixby"), (36.0200, -121.5600, "Big Sur")],
+        label="Big Sur (mountain coast, California)",
+    ),
+    "cape_peninsula": dict(
+        # Table Mountain and a peninsula with open ocean on both sides
+        lat_min=-34.740, lat_max=-33.980, lon_min=18.070, lon_max=18.980, zoom=12,
+        camera=(-34.1500, 18.4200),
+        markers=[(-33.9575, 18.4041, "Table Mtn"), (-34.3568, 18.4740, "Cape Point")],
+        label="Cape Peninsula (two oceans, South Africa)",
+    ),
+    "palawan": dict(
+        # tropical archipelago: shallow reef, scattered islands, very little continuous land
+        lat_min=11.020, lat_max=11.780, lon_min=119.010, lon_max=119.790, zoom=12,
+        camera=(11.2000, 119.4000),
+        markers=[(11.1949, 119.4103, "El Nido"), (11.5000, 119.3000, "Bacuit")],
+        label="Palawan (tropical archipelago, Philippines)",
+    ),
     "java_majapahit": dict(
         # East Java, the Majapahit heartland. Chosen so the patch contains the actual empire:
         # Trowulan (the 14th-c capital, still a living town on top of its own ruins), Mount
