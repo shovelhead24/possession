@@ -196,6 +196,9 @@ const PATCHES := [
 ]
 const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
 const HOME_TREE_HI := 600.0
+var _lod_center_arc := 0.0        # arc the CDLOD bubble is centred on, snapped to a root
+var _band_cd := 0.0
+const BAND_REBUILD_MAX_SPEED := 3000.0   # m/s above which the band rebuild waits
 var _tree_center := Vector2.ZERO      # (arc, lat) the current forest was scattered around
 # Real-OSM buildings (tools/dem/fetch_osm_buildings.py). Position is real; footprint and roof are
 # stand-ins, exactly as the road drape is real geometry with invented surfacing.
@@ -1128,9 +1131,13 @@ func _rebuild_lod() -> void:
 	var root_size: float = LEAF_SIZE * pow(2.0, MAX_LEVEL)
 	var roots := int(ceil(TERRAIN_SIZE / root_size))
 	var half := roots * root_size * 0.5
+	# The bubble follows the camera. It used to be nailed to world origin, which meant the fine
+	# terrain was a fixed 262km box around spawn and 32 of the 35 splices were never drawn at
+	# anything better than band resolution -- the real reason buildings sank away from home.
 	for gx in roots:
 		for gz in roots:
-			_select_lod(gx * root_size - half, gz * root_size - half, root_size, MAX_LEVEL)
+			_select_lod(_lod_center_arc + gx * root_size - half, gz * root_size - half,
+				root_size, MAX_LEVEL)
 	for i in range(_used, _pool.size()):
 		_pool[i].visible = false
 	var cp := Vector3(_cam.position.x, _cam.position.y, _cam.position.z)
@@ -1144,27 +1151,44 @@ func _rebuild_lod() -> void:
 		_mats[i].set_shader_parameter("wall_shadow_soft", _wall_shadow_soft)
 
 func _rebuild() -> void:
-	if _band: _band.queue_free()
+	_lod_center_arc = _snap_lod_center()
+	_build_band(_lod_center_arc)
+	_build_walls()
+	_scatter_trees()
+	_load_buildings()
+	_populate_warp_panel()
+	_update_hud()
+
+func _snap_lod_center() -> float:
+	# Snapped to a whole root so the LOD grid does not swim under the camera as you move; the band
+	# only needs rebuilding when this value actually changes, i.e. every root_size of travel.
+	if _cam == null:
+		return 0.0
+	var r := _radius()
+	var root_size: float = LEAF_SIZE * pow(2.0, MAX_LEVEL)
+	var cam_arc: float = atan2(_cam.position.x, r - _cam.position.y) * r
+	return floor(cam_arc / root_size) * root_size
+
+func _build_band(center_arc: float) -> void:
+	# Far band: the ring BEYOND the CDLOD bubble. It reads the same splice patches the near terrain
+	# does (see _far_terrain_h) but at BAND_SEGS resolution -- ~1km along the arc and ~3km across
+	# the width -- so it is a backdrop, not a surface to stand on. Anything placed from _terrain_h
+	# (which resolves 190m or better) sits on relief the band simply does not have, which is why
+	# buildings buried themselves in valleys everywhere except inside the bubble.
+	#
+	# The hole in this band is where the CDLOD terrain goes, so it has to follow the camera too.
+	var t0 := Time.get_ticks_msec()
+	if _band:
+		_band.queue_free()
+		_band = null
 	var w: float = WIDTHS[w_idx]
 	var r: float = _radius()
-
-	# Far band: the ring BEYOND the CDLOD bubble. Samples the decorative fallback (matches exactly
-	# at the seam only in the trivial sense that both are "outside the DEM" — this is a coarse
-	# backdrop, never walked to; see _far_terrain_h).
-	var near_arc: float = TERRAIN_SIZE * 0.5
-	var seam: float = near_arc / r
-	# tile the compiled patch's real satellite/roads imagery across the WHOLE band (world arc/lat
-	# divided by the patch's real-world size; the sampler's default repeat wraps it automatically) —
-	# no geographic accuracy out here, just breaking up the flat ramp with real photo texture.
-	# UV now carries RING COORDS (arc, lat) in metres rather than a normalised tile coordinate, so
-	# the band shader can do the same splice-patch lookup the near terrain does. The tiled-millstreet
-	# fallback derives its own tiling from these inside the shader.
-	var patch_w: float = float(_dem_w) * _dem_mpp if _dem_w > 0 else 50000.0
-	var patch_h: float = float(_dem_h) * _dem_mpp if _dem_h > 0 else 50000.0
+	var seam: float = (TERRAIN_SIZE * 0.5) / r
+	var c_theta: float = center_arc / r
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for i in BAND_SEGS + 1:
-		var theta: float = lerpf(seam, TAU - seam, float(i) / float(BAND_SEGS))
+		var theta: float = c_theta + lerpf(seam, TAU - seam, float(i) / float(BAND_SEGS))
 		var arc: float = theta * r
 		for j in BAND_ROWS + 1:
 			var lat: float = w * (float(j) / float(BAND_ROWS) - 0.5)
@@ -1177,12 +1201,8 @@ func _rebuild() -> void:
 	_band.material_override = _mat
 	_band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_band)
-
-	_build_walls()
-	_scatter_trees()
-	_load_buildings()
-	_populate_warp_panel()
-	_update_hud()
+	print("ring_vibes: far band rebuilt around arc %.0f km (%d ms)"
+		% [center_arc / 1000.0, Time.get_ticks_msec() - t0])
 
 const WALL_BASE_H := -200.0   # absolute height (below lowest terrain), from ring centre — not terrain-relative
 var wall_top_h := 4000.0       # rim height toward the axis; live-tunable ([O]) since it sets shadow reach
@@ -1321,6 +1341,18 @@ func _process(delta: float) -> void:
 		_tree_cd = TREE_RESCATTER_CD
 	_update_tree_lod()
 	_refill_buildings()
+	# the band carries a hole where the CDLOD bubble sits, so it has to be rebuilt whenever the
+	# bubble moves to a new root. ~51k vertices of _far_terrain_h, so only on an actual change.
+	# ...but it costs ~430ms, and a root is only 65km, which at 20x fly speed is under a second.
+	# Same treatment as the tree re-scatter: defer while travelling fast and catch up on slowing
+	# down. The band is a backdrop; you cannot judge it at 80 km/s anyway.
+	_band_cd = maxf(_band_cd - delta, 0.0)
+	var want := _snap_lod_center()
+	if (not is_equal_approx(want, _lod_center_arc)
+		and _band_cd <= 0.0 and _cam_speed < BAND_REBUILD_MAX_SPEED):
+		_lod_center_arc = want
+		_build_band(want)
+		_band_cd = 1.5
 	_update_hud()
 
 # ---------------------------------------------------------------------------
