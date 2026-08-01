@@ -199,12 +199,13 @@ const HOME_TREE_HI := 600.0
 var _tree_center := Vector2.ZERO      # (arc, lat) the current forest was scattered around
 # Real-OSM buildings (tools/dem/fetch_osm_buildings.py). Position is real; footprint and roof are
 # stand-ins, exactly as the road drape is real geometry with invented surfacing.
-const BLDG_RADIUS := 3000.0        # instance houses within this of the camera, metres
+const BLDG_RADIUS := 8000.0        # instance houses within this of the camera, metres
 const BLDG_RESCATTER := 500.0      # camera travel before the visible set is rebuilt
-const BLDG_MAX := 8000             # hard instance cap
+const BLDG_MAX := 14000            # hard instance cap
 var _bldg := PackedFloat32Array()  # world arc, lat, w, d, yaw, height -- 6 floats per building
 var _bldg_mmi: Array = []           # one MultiMeshInstance3D per building style
 var _bldg_style := PackedByteArray()  # style index per building
+var _bldg_focus := {}               # patch name -> world (arc, lat) of its densest cluster
 var _bldg_center := Vector2(1e12, 1e12)
 var _bldg_shown := 0
 const TREE_RESCATTER := 700.0         # re-scatter once the camera has moved this far from it
@@ -531,6 +532,11 @@ func _warp_to(idx: int) -> void:
 		arc = r.x
 		lat = r.y
 		label = str(_patch_names[idx])
+		if _bldg_focus.has(label):
+			var f: Vector2 = _bldg_focus[label]
+			arc = f.x
+			lat = clampf(f.y, -WIDTHS[w_idx] * 0.45, WIDTHS[w_idx] * 0.45)
+			label += " (settlement)"
 		_jump_idx = idx
 	_cam.position = _ring_pos(arc / rad, lat, _terrain_h(arc, lat) + 250.0)
 	_look = Vector2(0.0, -0.18)
@@ -1613,15 +1619,47 @@ func _load_bldg_file(name: String, arc_off: float, lat_off: float, style: int) -
 			% [name, (b.size() - 8) / 24, n])
 		n = (b.size() - 8) / 24
 	var circ: float = CIRCUMFERENCES[c_idx]
+	# Patches are 84-97km across but the ring is only 50km wide, so a patch overhangs the rim by a
+	# long way in latitude. Buildings out there would sit past the wall on nothing. Filter them, and
+	# build the density histogram from the survivors -- otherwise the "densest cluster" a warp aims
+	# at can be a town that is not on the ring at all, which is exactly what Java's was.
+	var lat_lim: float = WIDTHS[w_idx] * 0.47
+	var cell := {}
+	var best_key := 0
+	var best_n := 0
+	var kept := 0
 	for i in n:
 		var o := 8 + i * 24
-		_bldg.append(fposmod(b.decode_float(o) + arc_off, circ))
-		_bldg.append(b.decode_float(o + 4) + lat_off)
+		var lt := b.decode_float(o + 4) + lat_off
+		if absf(lt) > lat_lim:
+			continue
+		var ar := b.decode_float(o) + arc_off
+		_bldg.append(fposmod(ar, circ))
+		_bldg.append(lt)
 		_bldg.append(b.decode_float(o + 8))
 		_bldg.append(b.decode_float(o + 12))
 		_bldg.append(b.decode_float(o + 16))
 		_bldg.append(b.decode_float(o + 20))
 		_bldg_style.append(style)
+		kept += 1
+		# densest 4km cell, so a warp lands in the settlement rather than the middle of the bbox
+		var cx := int(floor(ar / 4000.0))
+		var cy := int(floor(lt / 4000.0))
+		# +50000 bias: lat cells go negative, and cx*100000 + cy is ambiguous without it
+		var key := cx * 100000 + (cy + 50000)
+		var v: int = int(cell.get(key, 0)) + 1
+		cell[key] = v
+		if v > best_n:
+			best_n = v
+			best_key = key
+	if best_n > 0:
+		var bx: int = int(floor(float(best_key) / 100000.0))
+		var by: int = best_key - bx * 100000 - 50000
+		_bldg_focus[name] = Vector2((float(bx) + 0.5) * 4000.0, (float(by) + 0.5) * 4000.0)
+	if kept < n:
+		print("ring_vibes: %s — %d of %d buildings kept (%d fell outside the %0.0fkm ring width)"
+			% [name, kept, n, n - kept, WIDTHS[w_idx] / 1000.0])
+	return kept
 	return n
 
 func _load_buildings() -> void:
@@ -1694,13 +1732,17 @@ func _refill_buildings(force := false) -> void:
 		if shown >= BLDG_MAX:
 			break
 		i += 6
+	var dbg := PackedStringArray()
 	for s in _bldg_mmi.size():
 		var mm: MultiMesh = _bldg_mmi[s].multimesh
+		dbg.append("style%d=%d" % [s, xfs[s].size()])
 		mm.instance_count = xfs[s].size()
 		for k in xfs[s].size():
 			mm.set_instance_transform(k, xfs[s][k])
 			mm.set_instance_color(k, cols[s][k])
 	_bldg_shown = shown
+	if force:
+		print("ring_vibes: buildings in range at arc %.0f lat %.0f -> %s" % [here.x, here.y, ", ".join(dbg)])
 
 func _update_tree_lod(force := false) -> void:
 	if _tree_mm.is_empty():
