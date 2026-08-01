@@ -39,6 +39,13 @@ const BIAS := {
 	"Slievan": {"key": "kin",   "desc": "Slievan counts kin above cattle. It will pay a fine it cannot afford to get a hostage back."},
 }
 
+# People, so the prose has somebody in it. A flat pool, not characters -- they carry no state.
+const NAMES := {
+	"Ardvane": ["Ferran", "the Boru woman", "old Mael", "the ferryman"],
+	"Corrin":  ["Sgian", "the reeve", "Nass of the upper house", "a woman with a broken hand"],
+	"Slievan": ["Tolm", "Bride Cathan", "the boatwright", "a boy minding nets"],
+}
+
 const ACTIONS := ["lift", "reprisal", "fine", "refuse", "market", "herds_down", "feast", "moot"]
 const ACTION_TEXT := {
 	"lift": "lifted cattle from", "reprisal": "rode in reprisal against",
@@ -125,6 +132,20 @@ func _ready() -> void:
 		_say("[i]Something remembers the last time. Some places will be less patient.[/i]\n")
 	_say("Commands: [b]watch[/b]  [b]go <place>[/b]  [b]ask[/b]  [b]warn <place>[/b]  [b]incite[/b]  [b]gift[/b]  [b]wait[/b]  [b]think[/b]  [b]leave[/b]\n")
 	_arrive()
+	if "--autoplay" in OS.get_cmdline_user_args():
+		_autoplay()
+
+func _autoplay() -> void:
+	# Drives a whole run with random verbs so content changes can be smoke-tested without a human
+	# at the keyboard. It is NOT a substitute for playing -- it proves the paths execute and lets
+	# the prose be read in bulk. Whether any of it reads is still the meat model's call.
+	var verbs := ["watch", "watch", "ask", "ask", "wait", "think", "gift", "incite",
+		"go Ardvane", "go Corrin", "go Slievan", "warn Corrin", "warn Slievan"]
+	while _cycle < RUN_CYCLES and _entry.editable:
+		_do(verbs[_rng.randi() % verbs.size()])
+	if _entry.editable:
+		_do("leave")
+	get_tree().quit()
 
 
 # --- simulation ----------------------------------------------------------------------------------
@@ -181,7 +202,13 @@ func _tick() -> void:
 	# every settlement commits and acts. Nothing waits for the player; witnessing is passive.
 	_cycle += 1
 	var events: Array[String] = []
+	var news: Array[String] = []
 	_log_state("tick")
+	# snapshot, so threshold CROSSINGS can be reported. Run 2 lost 80% of Corrin's herd and never
+	# said so once -- the state was simulated to the head and never reached a player. consumer-audit.
+	var before := {}
+	for p in PLACES:
+		before[p] = {"cattle": int(_st[p]["cattle"]), "pressure": float(_st[p]["pressure"])}
 	for p in PLACES:
 		var act := _commit(p, _cycle)
 		var s: Dictionary = _st[p]
@@ -189,24 +216,36 @@ func _tick() -> void:
 		var tgt := _target(p)
 		match act:
 			"lift":
-				var n: int = 4 + _rng.randi() % 6
-				_st[tgt]["cattle"] = int(_st[tgt]["cattle"]) - n
-				s["cattle"] = int(s["cattle"]) + n
-				_st[tgt]["grievance"][p] = minf(float(_st[tgt]["grievance"][p]) + 0.45, 1.0)
-				_st[tgt]["pressure"] = minf(float(_st[tgt]["pressure"]) + 0.15, 1.0)
-				events.append("%s lifted cattle from %s" % [p, tgt])
+				# you can only take what is there. Unclamped this drove Corrin to -54 head, and nobody
+				# could tell, because the number was never shown to anyone.
+				var n: int = mini(4 + _rng.randi() % 6, int(_st[tgt]["cattle"]))
+				if n <= 0:
+					s["pressure"] = minf(float(s["pressure"]) + 0.1, 1.0)
+					events.append("%s rode on %s and found the pens already bare" % [p, tgt])
+				else:
+					_st[tgt]["cattle"] = int(_st[tgt]["cattle"]) - n
+					s["cattle"] = int(s["cattle"]) + n
+					_st[tgt]["grievance"][p] = minf(float(_st[tgt]["grievance"][p]) + 0.45, 1.0)
+					_st[tgt]["pressure"] = minf(float(_st[tgt]["pressure"]) + 0.15, 1.0)
+					events.append("%s lifted %d head from %s" % [p, n, tgt])
 			"reprisal":
-				var n2: int = 3 + _rng.randi() % 5
+				var n2: int = mini(3 + _rng.randi() % 5, int(_st[tgt]["cattle"]))
 				_st[tgt]["cattle"] = int(_st[tgt]["cattle"]) - n2
 				s["grievance"][tgt] = maxf(float(s["grievance"][tgt]) - 0.35, 0.0)
 				_st[tgt]["pressure"] = minf(float(_st[tgt]["pressure"]) + 0.2, 1.0)
-				events.append("%s rode in reprisal against %s" % [p, tgt])
+				if n2 <= 0:
+					events.append("%s rode against %s. There was nothing left to take" % [p, tgt])
+				else:
+					events.append("%s rode in reprisal against %s and left %d head short" % [p, tgt, n2])
 			"fine":
-				var n3: int = 3 + _rng.randi() % 4
-				s["cattle"] = int(s["cattle"]) - n3
-				_st[tgt]["cattle"] = int(_st[tgt]["cattle"]) + n3
-				_st[tgt]["grievance"][p] = maxf(float(_st[tgt]["grievance"][p]) - 0.5, 0.0)
-				events.append("%s paid a fine in cattle to %s" % [p, tgt])
+				var n3: int = mini(3 + _rng.randi() % 4, int(s["cattle"]))
+				if n3 <= 0:
+					events.append("%s has nothing left to settle with, and says so" % p)
+				else:
+					s["cattle"] = int(s["cattle"]) - n3
+					_st[tgt]["cattle"] = int(_st[tgt]["cattle"]) + n3
+					_st[tgt]["grievance"][p] = maxf(float(_st[tgt]["grievance"][p]) - 0.5, 0.0)
+					events.append("%s paid %d head to %s to settle it" % [p, n3, tgt])
 			"refuse":
 				_st[tgt]["grievance"][p] = minf(float(_st[tgt]["grievance"][p]) + 0.3, 1.0)
 				s["pressure"] = minf(float(s["pressure"]) + 0.1, 1.0)
@@ -223,6 +262,28 @@ func _tick() -> void:
 		for q in NEIGHBOURS[p]:
 			if float(_st[q]["pressure"]) > 0.6:
 				_st[p]["pressure"] = minf(float(_st[p]["pressure"]) + 0.03, 1.0)
+	# CROSSINGS become news. Events are bubble-limited; a settlement going under is not -- it is
+	# heard three links away as hearsay, and that hearsay is the draw that moves the player.
+	for p in PLACES:
+		var c0: int = int(before[p]["cattle"])
+		var c1: int = int(_st[p]["cattle"])
+		var r0: float = float(before[p]["pressure"])
+		var r1: float = float(_st[p]["pressure"])
+		if c0 > 25 and c1 <= 25:
+			news.append("%s is thinning out, %d head where there were half again as many" % [p, c1])
+		if c0 > 12 and c1 <= 12:
+			news.append("%s is down to %d head. That is not a herd, that is seed stock" % [p, c1])
+		if r0 <= 0.75 and r1 > 0.75:
+			news.append("%s has put men on the wall and left them there" % p)
+		if r0 >= 0.25 and r1 < 0.25:
+			news.append("%s has stood down. Gates open, herds out wide" % p)
+	for nw in news:
+		if nw.begins_with(_here):
+			_say("[color=#d9a86f]· %s[/color]" % nw)
+		else:
+			var carrier: String = ["Word up the road", "A trader has it", "It gets here by evening",
+				"Somebody came through with it"][_rng.randi() % 4]
+			_say("[color=#d9a86f]%s — %s.[/color]" % [carrier, nw])
 	# only events in your bubble reach you (R4): here, your place and its neighbours
 	for e in events:
 		var vis := false
@@ -248,10 +309,81 @@ func _routines(place: String) -> void:
 
 # --- commands ------------------------------------------------------------------------------------
 
+# CONDITION is observable; INTENTION is inferred. M3's lesson was about predicting what a place
+# will DO -- that stays behind modulated routines. What state a place is IN is visible to anyone
+# who walks in, and hiding it just starved the prose of anything to be made of.
+func _condition(place: String) -> Array:
+	var s: Dictionary = _st[place]
+	var c := int(s["cattle"])
+	var pr := float(s["pressure"])
+	var out: Array = []
+	if c <= 12:
+		out.append("The pens are all but empty. %d head, and people counting them again." % c)
+	elif c <= 25:
+		out.append("Thin herds — %d head, where the ground would carry twice that." % c)
+	elif c >= 62:
+		out.append("Cattle everywhere, %d head, more than the grazing wants." % c)
+	else:
+		out.append("%d head in the pens, about what the ground carries." % c)
+	if pr > 0.8:
+		out.append("Men on the wall who should be at work. Nobody is pretending otherwise.")
+	elif pr > 0.55:
+		out.append("The gate is watched. Nobody goes out alone.")
+	elif pr < 0.15:
+		out.append("Doors open, children out past the ditch.")
+	return out
+
+# The draw. What you can see from here of somewhere else -- indirect, never a marker.
+func _horizon(place: String) -> Array:
+	var out: Array = []
+	for q in NEIGHBOURS[place]:
+		var qs: Dictionary = _st[q]
+		var qp := float(qs["pressure"])
+		var qc := int(qs["cattle"])
+		if qc <= 12:
+			out.append("Nothing moves on the %s road but people leaving it." % q)
+		elif qp > 0.75:
+			out.append("Smoke over %s, more of it than cooking accounts for." % q)
+		elif qp > 0.55:
+			out.append("Riders came down from %s and did not stop to talk." % q)
+		elif qc >= 62:
+			out.append("They are driving cattle somewhere up by %s, and taking their time about it." % q)
+	return out
+
+func _talk(place: String) -> String:
+	var who: String = NAMES[place][_rng.randi() % NAMES[place].size()]
+	var s: Dictionary = _st[place]
+	var pr := float(s["pressure"])
+	var c := int(s["cattle"])
+	if pr > 0.75:
+		return "%s will not stop to talk, and nor will anyone. They are watching the road." % who
+	var worst := ""
+	var wg := 0.0
+	for q in s["grievance"]:
+		if float(s["grievance"][q]) > wg:
+			wg = float(s["grievance"][q])
+			worst = q
+	if wg > 0.5:
+		return "%s talks about %s, and what is owed, and how long it has been owed." % [who, worst]
+	if c <= 15:
+		return "%s does the sum out loud — %d head — and then does it again." % [who, c]
+	var n: String = NEIGHBOURS[place][_rng.randi() % NEIGHBOURS[place].size()]
+	var ns: Dictionary = _st[n]
+	if float(ns["pressure"]) > 0.7:
+		return "%s says nobody has come down from %s in days. Not even to trade." % [who, n]
+	if int(ns["cattle"]) <= 20:
+		return "%s heard %s is selling things %s should not be selling." % [who, n, n]
+	if int(ns["cattle"]) > c + 15:
+		return "%s mentions how well %s is doing, in the tone people keep for that." % [who, n]
+	return "%s talks about weather, and the ford, and a boat that never came back." % who
+
 func _arrive() -> void:
-	var s: Dictionary = _st[_here]
 	_say("\n[b]%s[/b] — %s" % [_here, FLAVOUR[_here]])
 	_say("[i]cycle %d of %d[/i]" % [_cycle, RUN_CYCLES])
+	for line in _condition(_here):
+		_say(line)
+	for line in _horizon(_here):
+		_say("[color=#8f9bb3]%s[/color]" % line)
 
 func _do(raw: String) -> void:
 	var parts := raw.strip_edges().to_lower().split(" ", false)
@@ -276,20 +408,14 @@ func _do(raw: String) -> void:
 				_say("[i]Not somewhere you can walk to from here.[/i]")
 		"ask":
 			_activity[_here] = int(_activity[_here]) + 1
-			var other: String = NEIGHBOURS[_here][_rng.randi() % NEIGHBOURS[_here].size()]
-			var g: float = float(_st[_here]["grievance"].get(other, 0.0))
-			if g > 0.5:
-				_say("They will not shut up about %s. Something is owed." % other)
-			elif float(_st[_here]["pressure"]) > 0.55:
-				_say("Nobody wants to talk. Someone asks what you want here.")
-			else:
-				_say("Talk of weather, of %s, of a boat that never came back." % other)
+			_say(_talk(_here))
 			_advance()
 		"warn":
 			if arg in PLACES:
 				_activity[arg] = int(_activity[arg]) + 2
 				_st[arg]["pressure"] = minf(float(_st[arg]["pressure"]) + 0.25, 1.0)
 				_say("You tell %s what you have seen. They take it badly, and seriously." % arg)
+				_say("[color=#8f9bb3]By evening %s has more men on the gate than the gate needs.[/color]" % arg)
 				_advance()
 			else:
 				_say("[i]Warn whom?[/i]")
@@ -298,11 +424,13 @@ func _do(raw: String) -> void:
 			var t := _target(_here)
 			_st[_here]["grievance"][t] = minf(float(_st[_here]["grievance"][t]) + 0.35, 1.0)
 			_say("You say the thing that was already being thought, only louder.")
+			_say("[color=#8f9bb3]By dark, %s is a name people here say without lowering their voice.[/color]" % t)
 			_advance()
 		"gift":
 			_activity[_here] = int(_activity[_here]) + 2
 			_st[_here]["pressure"] = maxf(float(_st[_here]["pressure"]) - 0.3, 0.0)
 			_say("You give away something you will want later. They notice.")
+			_say("[color=#8f9bb3]Whatever %s was bracing for, it stops bracing quite so hard.[/color]" % _here)
 			_advance()
 		"think":
 			_reflect()
@@ -348,6 +476,12 @@ func _ending() -> void:
 		_say("You were here, and it went on without you. That is most of what happened.")
 	else:
 		_say("You spent your time in %s. They will remember a stranger who kept turning up." % most)
+	for p in PLACES:
+		if int(_st[p]["cattle"]) <= 15:
+			if int(_activity[p]) == 0:
+				_say("%s is down to %d head. You never went there." % [p, int(_st[p]["cattle"])])
+			else:
+				_say("%s is down to %d head, and you watched some of it happen." % [p, int(_st[p]["cattle"])])
 	if hp > 0.65:
 		_say("%s was still bracing for something when you left." % hottest)
 	elif hp < 0.3:
@@ -451,6 +585,9 @@ func _build_ui() -> void:
 	_entry.text_submitted.connect(func(t: String):
 		_say("[color=#7f9fd9]> %s[/color]" % t)
 		_entry.clear()
-		_do(t))
+		_do(t)
+		# keep the caret in the box -- submitting should never cost you a click
+		if _entry.editable:
+			_entry.grab_focus())
 	root.add_child(_entry)
 	_entry.grab_focus()
