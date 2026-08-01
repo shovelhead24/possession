@@ -175,14 +175,19 @@ const MAX_PATCHES := 40           # ring needs 36 at 84km; headroom for overlap/
 const PATCHES := [
 	{"name": "schwarzwald", "arc_pct": 0.028, "tint": Color(0.13, 0.22, 0.14), "trees": 1.0, "tree_hi": 1400.0, "weather": "fresh"},
 	{"name": "cork_city", "arc_pct": 0.056, "tint": Color(0.34, 0.38, 0.30), "trees": 0.3, "tree_hi": 200.0, "weather": "fresh"},
-	{"name": "savannah", "arc_pct": 0.084, "tint": Color(0.30, 0.38, 0.26), "trees": 0.3, "tree_hi": 120.0, "weather": "fresh"},
+	# COASTAL BATCH. The ring came out ~95% land because every box was centred on a landform; these
+	# five are centred on WATER. Sea fraction, measured: palawan 88%, lofoten 84%, cape 80%,
+	# halong 64%, big_sur 29%. They also retire the last two duplicate slots and the two patches
+	# that had drifted out of character once the boxes went to 84km, so coverage is now 35/35 unique.
+	{"name": "big_sur", "arc_pct": 0.084, "tint": Color(0.24, 0.30, 0.20), "trees": 0.5, "tree_hi": 1200.0, "weather": "fresh"},
 	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0, "weather": "overcast"},
 	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.36, 0.40, 0.24), "trees": 0.5, "tree_hi": 400.0, "weather": "fresh"},
 	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.26, 0.36, 0.20), "trees": 0.6, "tree_hi": 900.0, "weather": "fresh"},
 	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "overcast"},
 	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh"},
 	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.36, 0.42, 0.32), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast"},
-	{"name": "ebro_delta", "arc_pct": 0.280, "tint": Color(0.42, 0.44, 0.34), "trees": 0.1, "tree_hi": 60.0, "weather": "fresh"},
+	# fynbos, not forest -- scrub to the waterline on both oceans, and almost no trees
+	{"name": "cape_peninsula", "arc_pct": 0.280, "tint": Color(0.38, 0.38, 0.28), "trees": 0.15, "tree_hi": 700.0, "weather": "clear"},
 	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
 	{"name": "scablands", "arc_pct": 0.336, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
 	{"name": "loop_head", "arc_pct": 0.364, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 250.0, "weather": "overcast"},
@@ -190,7 +195,7 @@ const PATCHES := [
 	{"name": "atacama", "arc_pct": 0.420, "tint": Color(0.58, 0.44, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
 	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
 	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.26, 0.34, 0.24), "trees": 0.4, "tree_hi": 500.0, "weather": "overcast"},
-	{"name": "great_plains", "arc_pct": 0.504, "tint": Color(0.48, 0.46, 0.28), "trees": 0.05, "tree_hi": 1500.0, "weather": "clear"},
+	{"name": "palawan", "arc_pct": 0.504, "tint": Color(0.18, 0.28, 0.20), "trees": 0.9, "tree_hi": 900.0, "weather": "overcast", "style": "meru", "foliage": Color(1.05, 1.02, 0.66), "tree_mul": 1.3},
 	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.46, 0.44, 0.28), "trees": 0.05, "tree_hi": 1900.0, "weather": "clear"},
 	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh"},
 	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "overcast"},
@@ -209,9 +214,9 @@ const PATCHES := [
 	# sitting on the Majapahit capital. Tropical treeline runs high, so the massif is wooded almost
 	# to the summit. "style": meru gives it tiered roofs instead of the default gable.
 	{"name": "java_majapahit", "arc_pct": 0.924, "tint": Color(0.17, 0.27, 0.16), "trees": 1.0, "tree_hi": 2900.0, "weather": "overcast", "style": "meru", "foliage": Color(1.06, 1.02, 0.62), "tree_mul": 1.45},
-	# closing the loop back toward 0% -- repeats, so the hub-spire approach isn't a procedural gap
-	{"name": "iceland_highland", "arc_pct": 0.952, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "overcast"},
-	{"name": "badlands_sd", "arc_pct": 0.980, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "clear"},
+	{"name": "halong_bay", "arc_pct": 0.952, "tint": Color(0.20, 0.30, 0.22), "trees": 0.7, "tree_hi": 600.0, "weather": "overcast", "style": "meru", "foliage": Color(1.02, 1.03, 0.72), "tree_mul": 1.1},
+	# arctic: birch scrub in the shelter of the fjords, bare rock above it
+	{"name": "lofoten", "arc_pct": 0.980, "tint": Color(0.34, 0.36, 0.32), "trees": 0.08, "tree_hi": 250.0, "weather": "overcast"},
 ]
 const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
 const HOME_TREE_HI := 600.0
