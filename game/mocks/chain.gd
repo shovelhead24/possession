@@ -111,6 +111,8 @@ var _entry: LineEdit
 var _purse := 6                # head you are driving. Everything costs; nothing was free before.
 var _standing := {}            # how each place regards you, -1..1
 var _frozen := {}              # cycles a place is sitting on its hands (omen)
+var _ended := false            # run finished; notes still accepted, nothing else
+var _auto := false             # autoplay harness: never writes Khaibit
 var _rng := RandomNumberGenerator.new()
 var _transcript: FileAccess = null
 const TRANSCRIPT := "user://chain_transcript.txt"
@@ -146,9 +148,11 @@ func _ready() -> void:
 	_say("[b]CHAIN[/b] — three settlements, thirty cycles, no missions.\n")
 	if not _khaibit.is_empty():
 		_say("[i]Something remembers the last time. Some places will be less patient.[/i]\n")
-	_say("You are driving six head of cattle and nobody sent you. Type [b]help[/b] for what you can do.\n")
+	_say("You are driving six head of cattle and nobody sent you. Type [b]help[/b] for what you can do.")
+	_say("[color=#b9a0d9]Thinking out loud is free: [b];[/b] followed by whatever you are thinking.[/color]\n")
 	_arrive()
 	if "--autoplay" in OS.get_cmdline_user_args():
+		_auto = true
 		_autoplay()
 
 func _autoplay() -> void:
@@ -158,10 +162,11 @@ func _autoplay() -> void:
 	var verbs := ["watch", "listen", "count", "walk", "ask", "ask about Corrin", "drink",
 		"trade", "gift", "incite", "mediate", "lie Slievan", "swear Corrin", "purse",
 		"know", "look", "think", "wait", "stay", "toll", "omen", "hostage",
-		"go Ardvane", "go Corrin", "go Slievan", "warn Corrin", "warn Slievan"]
-	while _cycle < RUN_CYCLES and _entry.editable:
+		"go Ardvane", "go Corrin", "go Slievan", "warn Corrin", "warn Slievan",
+		"; autoplay note, checking the channel", "note the other form of the same"]
+	while _cycle < RUN_CYCLES and not _ended:
 		_do(verbs[_rng.randi() % verbs.size()])
-	if _entry.editable:
+	if not _ended:
 		_do("leave")
 	get_tree().quit()
 
@@ -436,11 +441,68 @@ func _arrive() -> void:
 	for line in _horizon(_here):
 		_say("[color=#8f9bb3]%s[/color]" % line)
 
+# --- notes: the third channel ---------------------------------------------------------------
+# The transcript records what happened, #STATE records what was actually underneath, and a note
+# records what the player BELIEVED at that moment. Readability is the gap between the last two,
+# and there is no way to measure it except by asking someone to say what they think while they
+# think it. Free, and deliberately side-effect-free: taking a note must never cost a day or move
+# the world, or it stops being an observation and becomes a move.
+func _note(txt: String) -> void:
+	if txt.strip_edges() == "":
+		_say("[i]Say what you are thinking. (note <whatever>, or just ; <whatever>)[/i]")
+		return
+	_say("[color=#b9a0d9]  ✎ %s[/color]" % txt)
+	if not _transcript:
+		return
+	var row := {"cycle": _cycle, "here": _here, "purse": _purse, "note": txt,
+		"about_to": {}, "places": {}}
+	for p in PLACES:
+		# the distribution each place is sitting on for NEXT cycle -- the thing the modulated
+		# routines are supposed to telegraph. Pure: no RNG is touched, so notes cannot alter the run.
+		row["about_to"][p] = _intent_probs(p, _cycle + 1)
+		row["places"][p] = {
+			"pressure": snappedf(float(_st[p]["pressure"]), 0.01),
+			"cattle": int(_st[p]["cattle"]),
+			"last": _st[p]["last"],
+			"standing": snappedf(float(_standing[p]), 0.01),
+			"activity": int(_activity[p]),
+			"known": bool(_known[p]),
+		}
+	_transcript.store_line("#NOTE " + JSON.stringify(row))
+	_transcript.flush()
+
+func _intent_probs(place: String, cycle: int) -> Dictionary:
+	# same softmax as _commit, but deterministic and unsampled -- reports the landscape, not a roll
+	var w := _disposition(place, cycle)
+	var temp := 0.45
+	var total := 0.0
+	var exps := {}
+	for k in w:
+		var e: float = exp(maxf(float(w[k]), 0.0) / temp)
+		exps[k] = e
+		total += e
+	var out := {}
+	for k in exps:
+		var pr: float = snappedf(float(exps[k]) / maxf(total, 0.0001), 0.01)
+		if pr >= 0.05:
+			out[k] = pr
+	return out
+
 func _do(raw: String) -> void:
+	var rawt := raw.strip_edges()
+	if rawt.begins_with(";"):
+		_note(rawt.substr(1).strip_edges())
+		return
 	var parts := raw.strip_edges().to_lower().split(" ", false)
 	if parts.is_empty():
 		return
 	var cmd: String = parts[0]
+	if cmd == "note" or cmd == "n":
+		_note(rawt.substr(cmd.length()).strip_edges())
+		return
+	if _ended:
+		_say("[i]That run is done. You can still leave a note.[/i]")
+		return
 	var arg: String = " ".join(Array(parts).slice(1)).capitalize() if parts.size() > 1 else ""
 	if parts.size() > 2 and parts[1] == "about":          # "ask about corrin"
 		arg = " ".join(Array(parts).slice(2)).capitalize()
@@ -691,11 +753,12 @@ func _journal() -> void:
 		_say("[i]There is a verb for each thing you know. You will have to guess which.[/i]")
 
 func _help() -> void:
-	_say("[b]look[/b] · [b]purse[/b] · [b]know[/b] · [b]think[/b] — free")
+	_say("[b]look[/b] · [b]purse[/b] · [b]know[/b] · [b]think[/b] · [b]note <text>[/b] [i](or ; <text>)[/i] — free")
 	_say("[b]watch[/b] · [b]listen[/b] · [b]count[/b] · [b]walk[/b] · [b]ask[/b] [i](or: ask about <place>)[/i] · [b]drink[/b] — a day, for knowing")
 	_say("[b]trade[/b] · [b]gift[/b] · [b]warn <place>[/b] · [b]incite[/b] · [b]lie <place>[/b] · [b]mediate[/b] · [b]swear <place>[/b] — a day, for doing")
 	_say("[b]go <place>[/b] · [b]stay[/b] · [b]wait[/b] · [b]leave[/b]")
 	_say("[i]Some places have a way in. You will not be told what it is, or what to type.[/i]")
+	_say("[color=#b9a0d9][i]Notes cost nothing and change nothing. Say what you think is going on, even when you turn out to be wrong — especially then.[/i][/color]")
 
 func _reflect() -> void:
 	# the bias becomes KNOWN only after enough attention -- earned, never offered
@@ -770,10 +833,15 @@ func _ending() -> void:
 	_save_khaibit()
 	_say("\n[i]Khaibit remembers. Run it again.[/i]")
 	_log_state("end")
+	# The most valuable note is the one written straight after the ending, so the run stays open
+	# for notes only. The transcript closes on exit instead, which also catches quitting mid-run.
+	_ended = true
+	_say("[color=#b9a0d9]The run is over, but notes still work. Say what you made of it.[/color]")
+
+func _exit_tree() -> void:
 	if _transcript:
 		_transcript.close()
 		_transcript = null
-	_entry.editable = false
 
 
 # --- cross-run persistence (Khaibit) -------------------------------------------------------------
@@ -788,6 +856,10 @@ func _load_khaibit() -> void:
 func _save_khaibit() -> void:
 	# Khaibit writes SYNCOPATIONS: it raises local pressure where the player was active, perturbing
 	# inputs to next run. It never scripts an outcome and never touches anywhere you ignored.
+	# autoplay is a test harness -- it must not write into real cross-run memory. Fourteen
+	# smoke runs had already pinned every place at the 0.45 ceiling before this was noticed.
+	if _auto:
+		return
 	var out := {}
 	for p in PLACES:
 		var prev: float = float(_khaibit.get(p, 0.0))
@@ -855,14 +927,13 @@ func _build_ui() -> void:
 	_out.add_theme_font_size_override("normal_font_size", 17)
 	root.add_child(_out)
 	_entry = LineEdit.new()
-	_entry.placeholder_text = "watch / go <place> / ask / warn <place> / incite / gift / think / wait / leave"
+	_entry.placeholder_text = "help for verbs   ·   ; to note what you are thinking"
 	_entry.custom_minimum_size = Vector2(0, 40)
 	_entry.text_submitted.connect(func(t: String):
 		_say("[color=#7f9fd9]> %s[/color]" % t)
 		_entry.clear()
 		_do(t)
 		# deferred: grabbing focus inline is undone by Godot's own input pass afterwards
-		if _entry.editable:
-			_entry.call_deferred("grab_focus"))
+		_entry.call_deferred("grab_focus"))
 	root.add_child(_entry)
 	_entry.grab_focus()
