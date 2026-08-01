@@ -9,182 +9,70 @@ Thinking out loud is free: ; followed by whatever you are thinking.
 
 Ardvane — a ford town, wide and muddy, everything passing through it
 cycle 0 of 30
-52 head in the pens, about what the ground carries.
+45 head in the pens, about what the ground carries.
+> ;how coudl nobody have sent me?
+  ✎ how coudl nobody have sent me?
+> help
 
-You travel to Slievan.
-· Corrin lifted 9 head from Ardvane
-
-Slievan — a coast settlement, boats drawn up, salt in everything
-cycle 1 of 30
-42 head in the pens, about what the ground carries.
-Doors open, children out past the ditch.
-
-You are driving 6 head.
-Ardvane: a stranger who keeps turning up
-Corrin: a stranger who keeps turning up
-Slievan: a stranger who keeps turning up
-
-You do not know Slievan well enough for that to mean anything.
-
-You do not know Slievan well enough for that to mean anything.
-
-You trade. Three head come your way and Slievan is glad of the custom.
-· Corrin paid 5 head to Ardvane to settle it
-
-You say, where it will be repeated, that you are for Corrin.
-It will be repeated.
-· Slievan refused to settle with Corrin
-
-You tell Slievan what you have seen. They take it badly, and seriously.
-By evening Slievan has more men on the gate than the gate needs.
-
-You walk the pens and count, which nobody stops you doing.
-    Slievan: 39 head
-    nobody here will tell you what Corrin is running
+look · purse · know · think · note <text> (or ; <text>) — free
+watch · listen · count · walk · ask (or: ask about <place>) · drink — a day, for knowing
+trade · gift · warn <place> · incite · lie <place> · mediate · swear <place> — a day, for doing
+go <place> · stay · wait · leave
+Some places have a way in. You will not be told what it is, or what to type.
+Notes cost nothing and change nothing. Say what you think is going on, even when you turn out to be wrong — especially then.
+> drink
 
 You stand a round. It costs you a beast and buys you an evening.
-Tolm talks about weather, and the ford, and a boat that never came back.
+the Boru woman talks about weather, and the ford, and a boat that never came back.
     the herds went out and came back
-· Corrin lifted 5 head from Slievan
-· Slievan lifted 8 head from Corrin
+> ask
 
-You do not know Slievan well enough for that to mean anything.
+the ferryman talks about weather, and the ford, and a boat that never came back.
+· Ardvane paid 4 head to Corrin to settle it
+> ask about boat
 
-You do not know Slievan well enough for that to mean anything.
+the ferryman mentions how well Corrin is doing, in the tone people keep for that.
+· Corrin refused to settle with Ardvane
+> ask about corrin
 
-· Corrin refused to settle with Slievan
+the Boru woman says Corrin is fat and easy and sleeping with the door open.
+· Ardvane rode in reprisal against Corrin and left 3 head short
+> ask about boru
 
-You stand a round. It costs you a beast and buys you an evening.
-Bride Cathan talks about Corrin, and what is owed, and how long it has been owed.
-    someone slaughtered more than they can eat
-Corrin has stood down. Gates open, herds out wide. You had it from a man who would not give his name.
-
-You say, where it will be repeated, that you are for Corrin.
-It will be repeated.
-· Slievan refused to settle with Corrin
-
-Tolm talks about Corrin, and what is owed, and how long it has been owed.
-· Corrin rode in reprisal against Slievan and left 3 head short
-
-You keep your mouth shut and your ears open.
-    the herds went out late
-· Slievan refused to settle with Corrin
-
-You walk the pens and count, which nobody stops you doing.
-    Slievan: 39 head
-    nobody here will tell you what Corrin is running
+old Mael talks about weather, and the ford, and a boat that never came back.
+> ;there are no answers to my questions
+  ✎ there are no answers to my questions
+> go corrin
 
 You travel to Corrin.
-Slievan has put men on the wall and left them there. You had it from a drover coming the other way.
-· Ardvane lifted 9 head from Corrin
-· Corrin rode in reprisal against Slievan and left 4 head short
-· Slievan lifted 5 head from Corrin
+· Corrin refused to settle with Slievan
 
 Corrin — a hold above the treeline, stone and wind, watching both ways
-cycle 13 of 30
-32 head in the pens, about what the ground carries.
-Smoke over Slievan, more of it than cooking accounts for.
+cycle 6 of 30
+55 head in the pens, about what the ground carries.
+> ask
 
-You say, where it will be repeated, that you are for Corrin.
-It will be repeated.
-· Corrin is thinning out, 19 head where there were half again as many
-· Corrin has put men on the wall and left them there
-· Ardvane rode in reprisal against Corrin and left 3 head short
-· Corrin paid 4 head to Slievan to settle it
-· Slievan lifted 6 head from Corrin
-  ✎ autoplay note, checking the channel
+Nass of the upper house talks about weather, and the ford, and a boat that never came back.
+· Slievan paid 3 head to Corrin to settle it
+> ask about ardvane
 
-You tell Corrin what you have seen. They take it badly, and seriously.
-By evening Corrin has more men on the gate than the gate needs.
-· Slievan lifted 5 head from Corrin
-
-You tell Corrin what you have seen. They take it badly, and seriously.
-By evening Corrin has more men on the gate than the gate needs.
-
-You tell Slievan what you have seen. They take it badly, and seriously.
-By evening Slievan has more men on the gate than the gate needs.
-· Corrin lifted 6 head from Slievan
-· Slievan rode in reprisal against Corrin and left 4 head short
-
-You do not know Corrin well enough for that to mean anything.
-
-You say, where it will be repeated, that you are for Corrin.
-It will be repeated.
-· Corrin is down to 11 head. That is not a herd, that is seed stock
-· Ardvane lifted 5 head from Corrin
-
-You say, where it will be repeated, that you are for Corrin.
-It will be repeated.
-· Ardvane lifted 9 head from Corrin
-· Corrin rode in reprisal against Ardvane and left 3 head short
-
-What you have on them
-  Ardvane — 0 days spent on them. Not enough.
-  Corrin — you have seen enough of them. Go there and think.
-  Slievan — you have seen enough of them. Go there and think.
-
-You say the thing that was already being thought, only louder.
-By dark, Slievan is a name people here say without lowering their voice.
-Ardvane has stood down. Gates open, herds out wide. You had it from a man who would not give his name.
-· Corrin rode in reprisal against Slievan and left 6 head short
-
-You keep your mouth shut and your ears open.
-    the herds went out and came back
-· Slievan lifted 2 head from Corrin
-
-the reeve will not stop to talk, and nor will anyone. They are watching the road.
-· Slievan rode on Corrin and found the pens already bare
-
-You keep your mouth shut and your ears open.
-    the horses are not in the low field
+the reeve allows that Ardvane is having a time of it, and leaves it there.
 · Ardvane refused to settle with Corrin
-· Corrin refused to settle with Slievan
+> ask about boru
 
-· Corrin refused to settle with Slievan
+a woman with a broken hand talks about weather, and the ford, and a boat that never came back.
+> ; the text box continues to lose focus after each entry
+  ✎ the text box continues to lose focus after each entry
+> leave
 
-You do not know Corrin well enough for that to mean anything.
-  ✎ the other form of the same
-
-Corrin has nothing spare, and would take it badly if you asked.
-
-· Ardvane paid 3 head to Corrin to settle it
-· Corrin rode in reprisal against Slievan and left 6 head short
-
-You stand a round. It costs you a beast and buys you an evening.
-Nass of the upper house will not stop to talk, and nor will anyone. They are watching the road.
-    the herds came in close, tighter than grazing needs
-· Corrin lifted 6 head from Slievan
-· Slievan lifted 8 head from Corrin
-
-You tell Corrin what you have seen. They take it badly, and seriously.
-By evening Corrin has more men on the gate than the gate needs.
-· Corrin paid 1 head to Slievan to settle it
-· Slievan paid 5 head to Corrin to settle it
-
-You stand a round. It costs you a beast and buys you an evening.
-Sgian will not stop to talk, and nor will anyone. They are watching the road.
-    the herds went out and came back
-· Corrin lifted 8 head from Slievan
-
-Not somewhere you can walk to from here.
-
-Sgian will not stop to talk, and nor will anyone. They are watching the road.
-
-Thin herds — 13 head, where the ground would carry twice that.
-Men on the wall who should be at work. Nobody is pretending otherwise.
-They are driving cattle somewhere up by Ardvane, and taking their time about it.
-Smoke over Slievan, more of it than cooking accounts for.
-
-Four head, given openly, in front of people who will remember it.
-Whatever Corrin was bracing for, it stops bracing quite so hard.
-· Ardvane refused to settle with Corrin
 
 — you leave the ring —
 
-You spent your time in Corrin. They will remember a stranger who kept turning up.
-Corrin would have you back.
-Ardvane will tell the story of you for a while, and not kindly.
-Slievan was still bracing for something when you left.
+You spent your time in Ardvane. They will remember a stranger who kept turning up.
+Ardvane would have you back.
+You leave the chain quieter than you found it. Nobody will say it was you.
 
 Khaibit remembers. Run it again.
 The run is over, but notes still work. Say what you made of it.
+> ; mechanically progressing but narratively still uncompelling
+  ✎ mechanically progressing but narratively still uncompelling
