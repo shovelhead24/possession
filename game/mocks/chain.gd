@@ -34,7 +34,7 @@ const FLAVOUR := {
 }
 # Hidden biases -- EARNED, never offered. Discovered by watching, then usable.
 const BIAS := {
-	"Ardvane": {"key": "tolls", "desc": "Ardvane will always choose the option that keeps the ford open. Threaten trade and it folds."},
+	"Ardvane": {"key": "tolls", "desc": "Ardvane will always choose the option that keeps the ford open. Threaten the toll and it folds."},
 	"Corrin":  {"key": "taboo", "desc": "Corrin will not act on a day it considers ill-omened. Give it an omen and it waits."},
 	"Slievan": {"key": "kin",   "desc": "Slievan counts kin above cattle. It will pay a fine it cannot afford to get a hostage back."},
 }
@@ -81,6 +81,17 @@ const MOD := {
 		"feast": "the long tables are out in the yard", "moot": "families eating together who normally do not",
 	},
 }
+# what an action leaves behind, readable off the ground a day later ("walk")
+const TRACE := {
+	"lift": "hoofprints going out and more coming back",
+	"reprisal": "a gate mended in a hurry, and badly",
+	"fine": "a driven herd, moving the wrong way for grazing",
+	"refuse": "a party turned back at the boundary stone",
+	"market": "cart ruts, and straw all over the road",
+	"herds_down": "everything walked in tight and kept there",
+	"feast": "ashes, and bones nobody buried",
+	"moot": "many feet, all going to one place and back",
+}
 const FLAT := {
 	"herds": "the herds went out and came back",
 	"forge": "the forge ran, about as usual",
@@ -97,6 +108,9 @@ var _known := {}               # biases the player has inferred
 var _log_lines: Array[String] = []
 var _out: RichTextLabel
 var _entry: LineEdit
+var _purse := 6                # head you are driving. Everything costs; nothing was free before.
+var _standing := {}            # how each place regards you, -1..1
+var _frozen := {}              # cycles a place is sitting on its hands (omen)
 var _rng := RandomNumberGenerator.new()
 var _transcript: FileAccess = null
 const TRANSCRIPT := "user://chain_transcript.txt"
@@ -126,11 +140,13 @@ func _ready() -> void:
 				_st[p]["grievance"][q] = 0.0
 		_activity[p] = 0
 		_known[p] = false
+		_standing[p] = 0.0
+		_frozen[p] = 0
 	_build_ui()
 	_say("[b]CHAIN[/b] — three settlements, thirty cycles, no missions.\n")
 	if not _khaibit.is_empty():
 		_say("[i]Something remembers the last time. Some places will be less patient.[/i]\n")
-	_say("Commands: [b]watch[/b]  [b]go <place>[/b]  [b]ask[/b]  [b]warn <place>[/b]  [b]incite[/b]  [b]gift[/b]  [b]wait[/b]  [b]think[/b]  [b]leave[/b]\n")
+	_say("You are driving six head of cattle and nobody sent you. Type [b]help[/b] for what you can do.\n")
 	_arrive()
 	if "--autoplay" in OS.get_cmdline_user_args():
 		_autoplay()
@@ -139,7 +155,9 @@ func _autoplay() -> void:
 	# Drives a whole run with random verbs so content changes can be smoke-tested without a human
 	# at the keyboard. It is NOT a substitute for playing -- it proves the paths execute and lets
 	# the prose be read in bulk. Whether any of it reads is still the meat model's call.
-	var verbs := ["watch", "watch", "ask", "ask", "wait", "think", "gift", "incite",
+	var verbs := ["watch", "listen", "count", "walk", "ask", "ask about Corrin", "drink",
+		"trade", "gift", "incite", "mediate", "lie Slievan", "swear Corrin", "purse",
+		"know", "look", "think", "wait", "stay", "toll", "omen", "hostage",
 		"go Ardvane", "go Corrin", "go Slievan", "warn Corrin", "warn Slievan"]
 	while _cycle < RUN_CYCLES and _entry.editable:
 		_do(verbs[_rng.randi() % verbs.size()])
@@ -210,6 +228,9 @@ func _tick() -> void:
 	for p in PLACES:
 		before[p] = {"cattle": int(_st[p]["cattle"]), "pressure": float(_st[p]["pressure"])}
 	for p in PLACES:
+		if int(_frozen.get(p, 0)) > 0:
+			_frozen[p] = int(_frozen[p]) - 1
+			continue
 		var act := _commit(p, _cycle)
 		var s: Dictionary = _st[p]
 		s["last"] = act
@@ -281,9 +302,10 @@ func _tick() -> void:
 		if nw.begins_with(_here):
 			_say("[color=#d9a86f]· %s[/color]" % nw)
 		else:
-			var carrier: String = ["Word up the road", "A trader has it", "It gets here by evening",
-				"Somebody came through with it"][_rng.randi() % 4]
-			_say("[color=#d9a86f]%s — %s.[/color]" % [carrier, nw])
+			var carrier: String = ["a drover coming the other way", "a boat that put in at dawn",
+				"two women on the ford road", "a smith's lad repeating what he heard",
+				"a man who would not give his name"][_rng.randi() % 5]
+			_say("[color=#d9a86f]%s. You had it from %s.[/color]" % [nw, carrier])
 	# only events in your bubble reach you (R4): here, your place and its neighbours
 	for e in events:
 		var vis := false
@@ -293,11 +315,15 @@ func _tick() -> void:
 		if vis:
 			_say("[color=#c8b48f]· %s[/color]" % e)
 
-func _routines(place: String) -> void:
+func _routines(place: String, budget: int = 99) -> void:
 	var intent := _commit(place, _cycle + 1)     # LEADING indicator: preparation for next cycle
 	var rr := RandomNumberGenerator.new()
 	rr.seed = hash("%s:%d" % [place, _cycle])
+	var shown := 0
 	for routine in MOD:
+		if shown >= budget:
+			break
+		shown += 1
 		var roll := rr.randf()
 		if roll < 0.60:
 			_say("    " + MOD[routine][intent])
@@ -350,11 +376,36 @@ func _horizon(place: String) -> Array:
 			out.append("They are driving cattle somewhere up by %s, and taking their time about it." % q)
 	return out
 
+# Asking one place about another. What they will tell you is gated on what they think of you --
+# standing is the difference between a fact and a shrug.
+func _talk_about(place: String, other: String) -> String:
+	var who: String = NAMES[place][_rng.randi() % NAMES[place].size()]
+	var st := float(_standing[place])
+	if st < -0.3:
+		return "%s says they would not know, in a tone that ends it." % who
+	if not (other in NEIGHBOURS[place]):
+		return "%s has not been as far as %s in years, and says so like it is a boast." % [who, other]
+	var os: Dictionary = _st[other]
+	var g := float(_st[place]["grievance"].get(other, 0.0))
+	if g > 0.6:
+		return "%s will talk about %s all night, and none of it fit to repeat." % [who, other]
+	if st < 0.1:
+		return "%s allows that %s is having a time of it, and leaves it there." % [who, other]
+	if int(os["cattle"]) <= 15:
+		return "%s says %s is down to nothing — %d head — and that people are walking out of it." % [who, other, int(os["cattle"])]
+	if float(os["pressure"]) > 0.7:
+		return "%s says %s has the gates shut and men on them, and has had for days." % [who, other]
+	if float(os["pressure"]) < 0.2:
+		return "%s says %s is fat and easy and sleeping with the door open." % [who, other]
+	return "%s says %s is much as it ever is, which is not saying much." % [who, other]
+
 func _talk(place: String) -> String:
 	var who: String = NAMES[place][_rng.randi() % NAMES[place].size()]
 	var s: Dictionary = _st[place]
 	var pr := float(s["pressure"])
 	var c := int(s["cattle"])
+	if float(_standing[place]) < -0.4:
+		return "Nobody here has anything to say to you. That is itself an answer."
 	if pr > 0.75:
 		return "%s will not stop to talk, and nor will anyone. They are watching the road." % who
 	var worst := ""
@@ -391,29 +442,109 @@ func _do(raw: String) -> void:
 		return
 	var cmd: String = parts[0]
 	var arg: String = " ".join(Array(parts).slice(1)).capitalize() if parts.size() > 1 else ""
+	if parts.size() > 2 and parts[1] == "about":          # "ask about corrin"
+		arg = " ".join(Array(parts).slice(2)).capitalize()
+	var where: String = arg if arg in PLACES else _here   # place-verbs default to here
 	_say("")
 	match cmd:
-		"watch", "look":
+		# --- free. Looking costs no day; you are standing there anyway. -------------------
+		"look", "l":
+			for line in _condition(_here):
+				_say(line)
+			for line in _horizon(_here):
+				_say("[color=#8f9bb3]%s[/color]" % line)
+		"purse", "me":
+			_say("You are driving %d head." % _purse)
+			for p in PLACES:
+				_say("[color=#8f9bb3]%s: %s[/color]" % [p, _standing_line(p)])
+		"know", "journal", "j":
+			_journal()
+		"help", "?", "verbs":
+			_help()
+		"think", "t":
+			_reflect()
+
+		# --- a day each, and each buys a different kind of knowing -----------------------
+		"watch", "w":
 			_activity[_here] = int(_activity[_here]) + 1
 			_say("You watch %s for a day." % _here)
 			_routines(_here)
 			_advance()
-		"go":
-			if arg in PLACES and arg != _here:
-				_here = arg
-				_say("You travel to %s." % arg)
-				_advance()
-				_arrive()
-			else:
-				_say("[i]Not somewhere you can walk to from here.[/i]")
-		"ask":
+		"listen":
+			# cheaper than watching: one line, no context. Enough to notice, not to read.
 			_activity[_here] = int(_activity[_here]) + 1
-			_say(_talk(_here))
+			_say("You keep your mouth shut and your ears open.")
+			_routines(_here, 1)
 			_advance()
+		"count":
+			# the herds are the one thing these people count themselves, so you can too
+			_activity[_here] = int(_activity[_here]) + 1
+			_say("You walk the pens and count, which nobody stops you doing.")
+			_say("    %s: %d head" % [_here, int(_st[_here]["cattle"])])
+			for q in NEIGHBOURS[_here]:
+				if float(_standing[_here]) > 0.1:
+					_say("    they say %s is running about %d" % [q, int(_st[q]["cattle"])])
+				else:
+					_say("    nobody here will tell you what %s is running" % q)
+			_advance()
+		"walk":
+			# traces: what a place DID last is written on the ground
+			_activity[_here] = int(_activity[_here]) + 1
+			_say("You walk the road out and back.")
+			for q in [_here] + NEIGHBOURS[_here]:
+				var la: String = str(_st[q]["last"])
+				if la == "":
+					_say("    nothing lately out of %s" % q)
+				else:
+					_say("    %s: %s" % [q, TRACE.get(la, "hard to read")])
+			_advance()
+		"ask", "a":
+			_activity[_here] = int(_activity[_here]) + 1
+			if arg in PLACES and arg != _here:
+				_say(_talk_about(_here, arg))
+			else:
+				_say(_talk(_here))
+			_advance()
+		"drink":
+			if _purse < 1:
+				_say("[i]You have nothing to stand a round with.[/i]")
+			else:
+				_purse -= 1
+				_activity[_here] = int(_activity[_here]) + 2
+				_standing[_here] = minf(float(_standing[_here]) + 0.15, 1.0)
+				_say("You stand a round. It costs you a beast and buys you an evening.")
+				_say(_talk(_here))
+				_routines(_here, 1)
+				_advance()
+
+		# --- doing things to people ------------------------------------------------------
+		"trade":
+			if int(_st[_here]["cattle"]) < 30:
+				_say("[i]%s has nothing spare, and would take it badly if you asked.[/i]" % _here)
+			else:
+				_st[_here]["cattle"] = int(_st[_here]["cattle"]) - 3
+				_purse += 3
+				_standing[_here] = minf(float(_standing[_here]) + 0.1, 1.0)
+				_st[_here]["pressure"] = maxf(float(_st[_here]["pressure"]) - 0.05, 0.0)
+				_say("You trade. Three head come your way and %s is glad of the custom." % _here)
+				_advance()
+		"gift":
+			if _purse < 4:
+				_say("[i]A gift worth the name is four head. You have %d.[/i]" % _purse)
+			else:
+				_purse -= 4
+				_activity[_here] = int(_activity[_here]) + 2
+				_standing[_here] = minf(float(_standing[_here]) + 0.25, 1.0)
+				_st[_here]["cattle"] = int(_st[_here]["cattle"]) + 4
+				_st[_here]["pressure"] = maxf(float(_st[_here]["pressure"]) - 0.3, 0.0)
+				_say("Four head, given openly, in front of people who will remember it.")
+				_say("[color=#8f9bb3]Whatever %s was bracing for, it stops bracing quite so hard.[/color]" % _here)
+				_advance()
 		"warn":
 			if arg in PLACES:
 				_activity[arg] = int(_activity[arg]) + 2
 				_st[arg]["pressure"] = minf(float(_st[arg]["pressure"]) + 0.25, 1.0)
+				_standing[arg] = minf(float(_standing[arg]) + 0.1, 1.0)
 				_say("You tell %s what you have seen. They take it badly, and seriously." % arg)
 				_say("[color=#8f9bb3]By evening %s has more men on the gate than the gate needs.[/color]" % arg)
 				_advance()
@@ -423,23 +554,148 @@ func _do(raw: String) -> void:
 			_activity[_here] = int(_activity[_here]) + 2
 			var t := _target(_here)
 			_st[_here]["grievance"][t] = minf(float(_st[_here]["grievance"][t]) + 0.35, 1.0)
+			_standing[_here] = maxf(float(_standing[_here]) - 0.1, -1.0)
 			_say("You say the thing that was already being thought, only louder.")
 			_say("[color=#8f9bb3]By dark, %s is a name people here say without lowering their voice.[/color]" % t)
 			_advance()
-		"gift":
-			_activity[_here] = int(_activity[_here]) + 2
-			_st[_here]["pressure"] = maxf(float(_st[_here]["pressure"]) - 0.3, 0.0)
-			_say("You give away something you will want later. They notice.")
-			_say("[color=#8f9bb3]Whatever %s was bracing for, it stops bracing quite so hard.[/color]" % _here)
+		"lie":
+			# big swing, real risk. The less they trust you the likelier it comes apart.
+			if not (arg in PLACES) or arg == _here:
+				_say("[i]Lie to them about whom?[/i]")
+			else:
+				_activity[_here] = int(_activity[_here]) + 2
+				var risk: float = 0.4 - float(_standing[_here]) * 0.3
+				if _rng.randf() < risk:
+					_standing[_here] = maxf(float(_standing[_here]) - 0.5, -1.0)
+					_say("You tell them what %s is supposed to have said. Somebody here knows better." % arg)
+					_say("[color=#d97f7f]It is around by morning. They look at you differently now.[/color]")
+				else:
+					_st[_here]["grievance"][arg] = minf(float(_st[_here]["grievance"][arg]) + 0.6, 1.0)
+					_say("You tell them what %s is supposed to have said. It lands." % arg)
+					_say("[color=#8f9bb3]Nobody asks how you came to know it.[/color]")
+				_advance()
+		"mediate":
+			if float(_standing[_here]) < 0.3:
+				_say("[i]You are not enough to them yet for that to be anything but cheek.[/i]")
+			else:
+				var t2 := _target(_here)
+				_st[_here]["grievance"][t2] = maxf(float(_st[_here]["grievance"][t2]) - 0.4, 0.0)
+				_st[t2]["grievance"][_here] = maxf(float(_st[t2]["grievance"][_here]) - 0.4, 0.0)
+				_st[_here]["pressure"] = maxf(float(_st[_here]["pressure"]) - 0.1, 0.0)
+				_activity[_here] = int(_activity[_here]) + 2
+				_activity[t2] = int(_activity[t2]) + 1
+				_say("You carry words between %s and %s until both are sick of you." % [_here, t2])
+				_say("[color=#8f9bb3]Nothing is settled. It is quieter, though.[/color]")
+				_advance()
+		"swear":
+			# pick a side, in public. Cheap to say, expensive everywhere else.
+			_standing[where] = minf(float(_standing[where]) + 0.4, 1.0)
+			for q in PLACES:
+				if q != where:
+					_standing[q] = maxf(float(_standing[q]) - 0.2, -1.0)
+			_activity[where] = int(_activity[where]) + 2
+			_say("You say, where it will be repeated, that you are for %s." % where)
+			_say("[color=#8f9bb3]It will be repeated.[/color]")
 			_advance()
-		"think":
-			_reflect()
-		"wait":
+
+		# --- earned levers. Locked until you have read the place. -------------------------
+		"toll":
+			if not _lever_ok(where, "tolls"):
+				return
+			_st[where]["pressure"] = maxf(float(_st[where]["pressure"]) - 0.5, 0.0)
+			for q in PLACES:
+				if q != where:
+					_st[where]["grievance"][q] = 0.0
+			_purse += 5
+			_standing[where] = maxf(float(_standing[where]) - 0.2, -1.0)
+			_say("You let it be known the ford could close. You do not say by whose hand.")
+			_say("[color=#8fd9c4]%s folds. It always folds. Five head to make you go away.[/color]" % where)
+			_advance()
+		"omen":
+			if not _lever_ok(where, "taboo"):
+				return
+			_frozen[where] = 2
+			_standing[where] = maxf(float(_standing[where]) - 0.1, -1.0)
+			_say("You mention what you saw over the ridge, and let them make of it what they will.")
+			_say("[color=#8fd9c4]%s will not stir for two days now. Nobody will say why.[/color]" % where)
+			_advance()
+		"hostage":
+			if not _lever_ok(where, "kin"):
+				return
+			var take: int = mini(8, int(_st[where]["cattle"]))
+			_st[where]["cattle"] = int(_st[where]["cattle"]) - take
+			_purse += take
+			_standing[where] = maxf(float(_standing[where]) - 0.6, -1.0)
+			_st[where]["pressure"] = minf(float(_st[where]["pressure"]) + 0.3, 1.0)
+			_say("You take somebody's brother. You are careful about which brother.")
+			_say("[color=#8fd9c4]%s pays %d head it cannot spare, and pays it fast.[/color]" % [where, take])
+			_advance()
+
+		# --- moving and ending -------------------------------------------------------------
+		"go", "g":
+			if arg in PLACES and arg != _here:
+				_here = arg
+				_say("You travel to %s." % arg)
+				_advance()
+				_arrive()
+			else:
+				_say("[i]Not somewhere you can walk to from here.[/i]")
+		"stay":
+			_say("You stay put and let the days go over you.")
+			_activity[_here] = int(_activity[_here]) + 2
+			for i in 3:
+				if _entry.editable:
+					_advance()
+		"wait", "z":
 			_advance()
 		"leave":
 			_ending()
 		_:
-			_say("[i]No.[/i]")
+			_say("[i]Nothing you know how to do. Try [b]help[/b].[/i]")
+
+func _lever_ok(place: String, key: String) -> bool:
+	# The whole point of earning a read is being able to USE it. Before this, discovering a bias
+	# was the reward AND the dead end -- no verb was attached to any of them.
+	if not bool(_known[place]):
+		_say("[i]You do not know %s well enough for that to mean anything.[/i]" % place)
+		return false
+	if str(BIAS[place]["key"]) != key:
+		_say("[i]That is not where %s is soft.[/i]" % place)
+		return false
+	return true
+
+func _standing_line(place: String) -> String:
+	var v := float(_standing[place])
+	if v > 0.5:
+		return "they would put you up for the winter"
+	if v > 0.15:
+		return "they are glad enough to see you"
+	if v < -0.5:
+		return "they would not spit on you if you were burning"
+	if v < -0.15:
+		return "they watch you the way you watch a dog you do not know"
+	return "a stranger who keeps turning up"
+
+func _journal() -> void:
+	_say("[b]What you have on them[/b]")
+	var any := false
+	for p in PLACES:
+		if bool(_known[p]):
+			_say("[color=#8fd9c4]  %s — %s[/color]" % [p, BIAS[p]["desc"]])
+			any = true
+		elif int(_activity[p]) >= 4:
+			_say("[color=#d9c48f]  %s — you have seen enough of them. Go there and think.[/color]" % p)
+		else:
+			_say("[color=#8f9bb3]  %s — %d days spent on them. Not enough.[/color]" % [p, int(_activity[p])])
+	if any:
+		_say("[i]There is a verb for each thing you know. You will have to guess which.[/i]")
+
+func _help() -> void:
+	_say("[b]look[/b] · [b]purse[/b] · [b]know[/b] · [b]think[/b] — free")
+	_say("[b]watch[/b] · [b]listen[/b] · [b]count[/b] · [b]walk[/b] · [b]ask[/b] [i](or: ask about <place>)[/i] · [b]drink[/b] — a day, for knowing")
+	_say("[b]trade[/b] · [b]gift[/b] · [b]warn <place>[/b] · [b]incite[/b] · [b]lie <place>[/b] · [b]mediate[/b] · [b]swear <place>[/b] — a day, for doing")
+	_say("[b]go <place>[/b] · [b]stay[/b] · [b]wait[/b] · [b]leave[/b]")
+	_say("[i]Some places have a way in. You will not be told what it is, or what to type.[/i]")
 
 func _reflect() -> void:
 	# the bias becomes KNOWN only after enough attention -- earned, never offered
@@ -482,6 +738,25 @@ func _ending() -> void:
 				_say("%s is down to %d head. You never went there." % [p, int(_st[p]["cattle"])])
 			else:
 				_say("%s is down to %d head, and you watched some of it happen." % [p, int(_st[p]["cattle"])])
+	if _purse > 12:
+		_say("You leave driving %d head that were not yours when you came." % _purse)
+	elif _purse <= 0:
+		_say("You leave with nothing, having arrived with six.")
+	var friend := ""
+	var fv := 0.0
+	var enemy := ""
+	var ev := 0.0
+	for p in PLACES:
+		if float(_standing[p]) > fv:
+			fv = float(_standing[p])
+			friend = p
+		if float(_standing[p]) < ev:
+			ev = float(_standing[p])
+			enemy = p
+	if friend != "":
+		_say("%s would have you back." % friend)
+	if enemy != "" and ev < -0.4:
+		_say("%s will tell the story of you for a while, and not kindly." % enemy)
 	if hp > 0.65:
 		_say("%s was still bracing for something when you left." % hottest)
 	elif hp < 0.3:
@@ -586,8 +861,8 @@ func _build_ui() -> void:
 		_say("[color=#7f9fd9]> %s[/color]" % t)
 		_entry.clear()
 		_do(t)
-		# keep the caret in the box -- submitting should never cost you a click
+		# deferred: grabbing focus inline is undone by Godot's own input pass afterwards
 		if _entry.editable:
-			_entry.grab_focus())
+			_entry.call_deferred("grab_focus"))
 	root.add_child(_entry)
 	_entry.grab_focus()
