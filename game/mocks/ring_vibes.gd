@@ -191,6 +191,15 @@ const PATCHES := [
 const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
 const HOME_TREE_HI := 600.0
 var _tree_center := Vector2.ZERO      # (arc, lat) the current forest was scattered around
+# Real-OSM buildings (tools/dem/fetch_osm_buildings.py). Position is real; footprint and roof are
+# stand-ins, exactly as the road drape is real geometry with invented surfacing.
+const BLDG_RADIUS := 3000.0        # instance houses within this of the camera, metres
+const BLDG_RESCATTER := 500.0      # camera travel before the visible set is rebuilt
+const BLDG_MAX := 8000             # hard instance cap
+var _bldg := PackedFloat32Array()  # world arc, lat, w, d, yaw, height -- 6 floats per building
+var _bldg_mmi: MultiMeshInstance3D = null
+var _bldg_center := Vector2(1e12, 1e12)
+var _bldg_shown := 0
 const TREE_RESCATTER := 700.0         # re-scatter once the camera has moved this far from it
 # A scatter walks a 90,000-position grid with per-candidate terrain lookups (~100ms). At 5x fly
 # boost you cross TREE_RESCATTER every 0.17s, which would mean ~6 full scatters per SECOND and a
@@ -1070,6 +1079,7 @@ func _rebuild() -> void:
 
 	_build_walls()
 	_scatter_trees()
+	_load_buildings()
 	_update_hud()
 
 const WALL_BASE_H := -200.0   # absolute height (below lowest terrain), from ring centre — not terrain-relative
@@ -1208,6 +1218,7 @@ func _process(delta: float) -> void:
 		_scatter_trees()
 		_tree_cd = TREE_RESCATTER_CD
 	_update_tree_lod()
+	_refill_buildings()
 	_update_hud()
 
 # ---------------------------------------------------------------------------
@@ -1391,6 +1402,159 @@ func _fill_mm(mmi: MultiMeshInstance3D, xfs: Array) -> void:
 	mm.instance_count = xfs.size()
 	for i in xfs.size():
 		mm.set_instance_transform(i, xfs[i])
+
+# ---------------------------------------------------------------------------
+# Rudimentary buildings, placed from REAL OpenStreetMap footprints
+# see .decisions/terrain.md — same principle as the road drape: position is real, detail is not.
+# tools/dem/fetch_osm_buildings.py writes <patch>_bldg.dat as
+#   "BLD1" | u32 count | count x (arc_local, lat_local, w, d, yaw, height) float32
+# arc_local/lat_local are metres from the PATCH CENTRE; the home DEM uses its camera_px origin
+# instead, so the offset is applied here per patch rather than baked into the file.
+# ---------------------------------------------------------------------------
+
+func _house_mesh() -> ArrayMesh:
+	# Unit house: footprint 1x1 in x/z, total height 1, walls to 0.72, gable ridge along z.
+	# Instance transforms scale it to real width/depth/height, so one mesh covers every building.
+	# Vertex colours carry wall-vs-roof; per-instance colour tints the whole thing for variety.
+	#
+	# Winding defines the normals here (generate_normals at the end) rather than both being
+	# asserted separately -- stating them independently is how you get geometry that is lit
+	# correctly and culled inside out, or vice versa. See the shader-winding note in
+	# .decisions/terrain.md: never hand-assert a normal and a winding and hope they agree.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wall := Color(0.82, 0.80, 0.75)
+	var roof := Color(0.30, 0.29, 0.31)
+	var wt := 0.72
+	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
+		for v in [a, c, b, a, d, c]:
+			st.set_color(col)
+			st.add_vertex(v)
+	var tri := func(a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
+		for v in [a, c, b]:
+			st.set_color(col)
+			st.add_vertex(v)
+	# walls, each wound as seen from OUTSIDE the house
+	quad.call(Vector3(-0.5, 0, 0.5), Vector3(0.5, 0, 0.5), Vector3(0.5, wt, 0.5), Vector3(-0.5, wt, 0.5), wall)
+	quad.call(Vector3(0.5, 0, -0.5), Vector3(-0.5, 0, -0.5), Vector3(-0.5, wt, -0.5), Vector3(0.5, wt, -0.5), wall)
+	quad.call(Vector3(0.5, 0, 0.5), Vector3(0.5, 0, -0.5), Vector3(0.5, wt, -0.5), Vector3(0.5, wt, 0.5), wall)
+	quad.call(Vector3(-0.5, 0, -0.5), Vector3(-0.5, 0, 0.5), Vector3(-0.5, wt, 0.5), Vector3(-0.5, wt, -0.5), wall)
+	# roof planes, ridge along z at x=0
+	quad.call(Vector3(-0.5, wt, 0.5), Vector3(0.0, 1.0, 0.5), Vector3(0.0, 1.0, -0.5), Vector3(-0.5, wt, -0.5), roof)
+	quad.call(Vector3(0.0, 1.0, 0.5), Vector3(0.5, wt, 0.5), Vector3(0.5, wt, -0.5), Vector3(0.0, 1.0, -0.5), roof)
+	# gable ends
+	tri.call(Vector3(-0.5, wt, 0.5), Vector3(0.5, wt, 0.5), Vector3(0.0, 1.0, 0.5), wall)
+	tri.call(Vector3(0.5, wt, -0.5), Vector3(-0.5, wt, -0.5), Vector3(0.0, 1.0, -0.5), wall)
+	st.generate_normals()
+	return st.commit()
+
+func _build_buildings() -> void:
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 0.92
+	mat.specular = 0.1
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = _house_mesh()
+	mm.mesh.surface_set_material(0, mat)
+	_bldg_mmi = MultiMeshInstance3D.new()
+	_bldg_mmi.multimesh = mm
+	_bldg_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_bldg_mmi)
+
+func _load_bldg_file(name: String, arc_off: float, lat_off: float) -> int:
+	var path := "res://mocks/dem/%s_bldg.dat" % name
+	if not FileAccess.file_exists(path):
+		return 0
+	var b := FileAccess.get_file_as_bytes(path)
+	if b.size() < 8 or b.decode_u8(0) != 0x42 or b.decode_u8(1) != 0x4C:   # "BL"
+		print("ring_vibes: %s_bldg.dat has a bad header, skipped" % name)
+		return 0
+	var n := int(b.decode_u32(4))
+	if b.size() < 8 + n * 24:
+		print("ring_vibes: %s_bldg.dat truncated (%d of %d records), using what is there"
+			% [name, (b.size() - 8) / 24, n])
+		n = (b.size() - 8) / 24
+	var circ: float = CIRCUMFERENCES[c_idx]
+	for i in n:
+		var o := 8 + i * 24
+		_bldg.append(fposmod(b.decode_float(o) + arc_off, circ))
+		_bldg.append(b.decode_float(o + 4) + lat_off)
+		_bldg.append(b.decode_float(o + 8))
+		_bldg.append(b.decode_float(o + 12))
+		_bldg.append(b.decode_float(o + 16))
+		_bldg.append(b.decode_float(o + 20))
+	return n
+
+func _load_buildings() -> void:
+	_bldg = PackedFloat32Array()
+	var total := 0
+	# home patch: origin is camera_px, not the DEM centre (see _dem_hf_cam / _biome_at).
+	# Slug comes from the file path -- _dem_name is the DISPLAY name out of the JSON
+	# ("Millstreet (Cork-Kerry route)") and will not match anything on disk.
+	if _dem_w > 0:
+		var ax := (float(_dem_w) * 0.5 - float(_dem_cam.x)) * _dem_mpp
+		var lx := (float(_dem_cam.y) - float(_dem_h) * 0.5) * _dem_mpp
+		total += _load_bldg_file(DEM_R16.get_file().get_basename(), ax, lx)
+	# splice patches: origin is the patch centre on the ring midline
+	for i in _patch_names.size():
+		var r := _patch_rects[i]
+		total += _load_bldg_file(str(_patch_names[i]), r.x, r.y)
+	if total > 0:
+		if _bldg_mmi == null:
+			_build_buildings()
+		_refill_buildings(true)
+		print("ring_vibes: %d OSM buildings loaded" % total)
+
+func _refill_buildings(force := false) -> void:
+	# Only the ones near you get instanced. 60k buildings sit in memory happily; 60k MultiMesh
+	# instances do not, and almost all of them are over the horizon anyway.
+	if _bldg_mmi == null or _bldg.is_empty():
+		return
+	var cam := _cam.global_position
+	var r := _radius()
+	var cam_arc: float = atan2(cam.x, r - cam.y) * r
+	var here := Vector2(cam_arc, cam.z)
+	if not force and here.distance_to(_bldg_center) < BLDG_RESCATTER:
+		return
+	_bldg_center = here
+	var circ: float = CIRCUMFERENCES[c_idx]
+	var xfs := []
+	var cols := []
+	var rng := RandomNumberGenerator.new()
+	var i := 0
+	while i < _bldg.size():
+		var d_arc: float = absf(wrapf(_bldg[i] - here.x, -circ * 0.5, circ * 0.5))
+		if d_arc < BLDG_RADIUS and absf(_bldg[i + 1] - here.y) < BLDG_RADIUS:
+			var ground := _surface_pos(_bldg[i], _bldg[i + 1])
+			if ground.length() > 0.0 and _terrain_h(_bldg[i], _bldg[i + 1]) > SEA_LEVEL + 0.5:
+				var up := _ring_up(ground)
+				var ax := up.cross(Vector3.FORWARD).normalized()
+				if ax.length_squared() < 0.25:
+					ax = up.cross(Vector3.RIGHT).normalized()
+				var az := ax.cross(up).normalized()
+				var cs := cos(_bldg[i + 4])
+				var sn := sin(_bldg[i + 4])
+				var rx := (ax * cs + az * sn).normalized()
+				var rz := (az * cs - ax * sn).normalized()
+				# Basis(x, y, z) takes COLUMNS, so scale bakes in cleanly. Basis.scaled() would
+				# scale along global axes instead and shear every rotated house.
+				xfs.append(Transform3D(
+					Basis(rx * _bldg[i + 2], up * _bldg[i + 5], rz * _bldg[i + 3]),
+					ground - up * 0.4))
+				rng.seed = i
+				var t := rng.randf_range(0.82, 1.12)
+				cols.append(Color(t, t * rng.randf_range(0.97, 1.02), t * rng.randf_range(0.94, 1.0)))
+		if xfs.size() >= BLDG_MAX:
+			break
+		i += 6
+	var mm := _bldg_mmi.multimesh
+	mm.instance_count = xfs.size()
+	for k in xfs.size():
+		mm.set_instance_transform(k, xfs[k])
+		mm.set_instance_color(k, cols[k])
+	_bldg_shown = xfs.size()
 
 func _update_tree_lod(force := false) -> void:
 	if _tree_mm.is_empty():
@@ -1753,6 +1917,8 @@ func _update_hud() -> void:
 		"TERRAIN %s   LOD nodes %d   trees %d (LOD0/1/2/bill %d/%d/%d/%d)" % [
 			("none (noise)" if _dem_w == 0 else "%s  height x%.0f" % [_dem_name, dem_scale]),
 			_used, _tree_ground.size(), lc[0], lc[1], lc[2], lc[3]],
+		"        OSM buildings %d of %d in range %.1fkm" % [
+			_bldg_shown, _bldg.size() / 6, BLDG_RADIUS / 1000.0],
 		"        splice here: %s   (%d placed)   [,] [.] jump splice   hi-res: %s" % [
 			_here_splice(), _patch_rects.size(),
 			(_patch_names[_hires_idx] if _hires_idx >= 0 else ("loading..." if _hires_pending >= 0 else "-"))],
