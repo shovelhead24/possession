@@ -10,6 +10,7 @@ One line per area file — decisions are the source of truth, this is just a map
 - ending.md — leave-ending mechanism (proximity-easy, vignette-assembled) + presentation (fixed sequence, delayed title, black screen close)
 - engine.md — Godot-level gotchas: reload via quit(), not reload_current_scene()
 - knowledge.md — no omniscient map; the knowledge pyramid is the map, the night sky acquires it
+- meta.md — the project as a product: renamed Possession → **Shortcut** (names the replay loop, the Ren/film-edit ending, the Displacement, and the irony); "the Cut" kept as a location archetype
 - lore.md — the Displacement (rogue AI, ring-scale portal, explains degradation + the shootdown); two signals (pre-game beacon vs the survivors' relay — the armada answers THEM); reactivatable ancients; Earth zoo
 - rendering.md — texture fidelity baseline: deliberately ~2001/Halo-CE; modern budget spent on scale/lighting, never texels
 - terrain.md — prebaked layered world: bake DAG + gates, recipe-versioned; render-authoritative object placement; CDLOD morphing quadtree (clipmap rejected on measurement) + object-LOD trees; real-DEM splices tiling the ring in three resolution tiers, shader-clamped ocean
