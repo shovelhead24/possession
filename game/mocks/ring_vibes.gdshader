@@ -28,7 +28,10 @@ uniform float wall_ramp = 2500.0;
 // regardless of how many unique splices were placed. UV carries ring (arc, lat) in metres.
 uniform sampler2DArray patch_col_tex : source_color;
 uniform int patch_count = 0;
-uniform vec4 patch_rect[40];
+uniform vec4 patch_rect[40];   // SAMPLING extent
+uniform float patch_own[40];   // OWNERSHIP half-arc -- see cdlod_ring.gdshader; the two shaders
+                               // must resolve seams identically or the band and the near terrain
+                               // disagree about which patch owns the overlap.
 uniform vec4 patch_tint[40];
 uniform float ring_circumference = 3000000.0;
 uniform vec2 home_patch_size = vec2(84000.0);   // millstreet footprint, for the tiled fallback
@@ -57,7 +60,7 @@ void fragment() {
 		vec4 r = patch_rect[i];
 		float d_arc = UV.x - r.x;
 		d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);
-		if (abs(d_arc) < r.z && abs(UV.y - r.y) < r.w) {
+		if (abs(d_arc) < patch_own[i] && abs(UV.y - r.y) < r.w) {
 			pi = i;
 			puv = vec2(d_arc / (2.0 * r.z) + 0.5, 0.5 - (UV.y - r.y) / (2.0 * r.w));
 			break;

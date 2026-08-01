@@ -256,6 +256,9 @@ var _patch_names: Array = []
 # NOT line up with PATCHES indices. Everything downstream must go through these parallel arrays --
 # indexing PATCHES with a loaded-patch index silently reads a different location's biome/filename
 # (caught by the --selftest: it made 6 of 10 streams load the wrong file and fail).
+var _patch_own := PackedFloat32Array()   # ownership half-arc per patch: half the gap to
+                                        # its nearest neighbour. NOT _patch_rects.z, which
+                                        # is the sampling extent and must stay unclipped.
 var _patch_meta: Array = []
 # Per-patch height re-basing -- OFF by design (2026-07-29, user call: "lock them to their real
 # heights"). Splices are real places with real absolute elevations: the Bolivian altiplano floors at
@@ -372,6 +375,7 @@ func _ready() -> void:
 		_mat.set_shader_parameter("patch_col_tex", _patch_col_tex)
 		_mat.set_shader_parameter("patch_count", _patch_rects.size())
 		_mat.set_shader_parameter("patch_rect", _patch_rects)
+		_mat.set_shader_parameter("patch_own", _patch_own)
 		_mat.set_shader_parameter("patch_tint", _patch_tints)
 		_mat.set_shader_parameter("ring_circumference", CIRCUMFERENCES[c_idx])
 	if _dem_w > 0:
@@ -422,6 +426,7 @@ func _ready() -> void:
 			mat.set_shader_parameter("patch_col_tex", _patch_col_tex)
 			mat.set_shader_parameter("patch_count", _patch_rects.size())
 			mat.set_shader_parameter("patch_rect", _patch_rects)
+			mat.set_shader_parameter("patch_own", _patch_own)
 			mat.set_shader_parameter("patch_tint", _patch_tints)
 			mat.set_shader_parameter("patch_offset", _patch_offset)
 			mat.set_shader_parameter("ring_circumference", CIRCUMFERENCES[c_idx])
@@ -798,6 +803,7 @@ func _hires_poll() -> void:
 					m.set_shader_parameter("hires_detail_tex", _hires_detail_tex)
 				m.set_shader_parameter("hires_has_detail", _hires_detail_tex != null)
 				m.set_shader_parameter("hires_rect", rect)
+				m.set_shader_parameter("hires_own", _patch_own[_hires_idx])
 				m.set_shader_parameter("hires_offset", _patch_offset[_hires_idx])
 				m.set_shader_parameter("hires_valid", true)
 			print("ring_vibes: streamed %s @ %d^2%s" % [
@@ -925,6 +931,7 @@ func _load_patches() -> void:
 	if imgs.is_empty():
 		print("ring_vibes: no secondary splice patches found (run tools/dem export for them)")
 		return
+	_clip_patch_overlap()
 	_patch_tex = Texture2DArray.new()
 	_patch_tex.create_from_images(imgs)
 	_patch_col_tex = Texture2DArray.new()
@@ -933,6 +940,35 @@ func _load_patches() -> void:
 		imgs.size(), PATCH_RES, (" + %d^2 imagery" % PATCH_COL_RES) if any_col else " (tints only, no sat yet)",
 		str(_patch_names)])
 
+func _clip_patch_overlap() -> void:
+	# CLEAN SEAMS, NO OVERLAP. Patches are ~97km wide but seated 84km apart, so every adjacent pair
+	# overlapped by ~13km, and with real (un-rebased) elevations the two claimants disagree about the
+	# ground by tens of metres. That produced a genuine second terrain layer with its own houses on
+	# it: the shader tests in_hires() first over the streamed patch's whole extent, while the CPU only
+	# uses hires when _patch_at() -- which returns the first index that matches -- returns that same
+	# patch. Inside the overlap the two picked differently, so objects sat on a surface the GPU was
+	# not drawing there. Backface culling hid the upper layer until you flew above it.
+	#
+	# Ownership gets half the gap to the nearest neighbour, so exactly one patch claims any arc and
+	# CPU and GPU cannot disagree. SAMPLING still uses the full extent -- clipping that instead would
+	# squash every patch's heights and imagery into 84km of the 97km they cover.
+	var circ: float = CIRCUMFERENCES[c_idx]
+	_patch_own = PackedFloat32Array()
+	_patch_own.resize(_patch_rects.size())
+	var clipped := 0
+	for i in _patch_rects.size():
+		var nearest := circ
+		for j in _patch_rects.size():
+			if i == j:
+				continue
+			var d: float = absf(wrapf(_patch_rects[j].x - _patch_rects[i].x, -circ * 0.5, circ * 0.5))
+			nearest = minf(nearest, d)
+		_patch_own[i] = minf(nearest * 0.5, _patch_rects[i].z)
+		if _patch_own[i] < _patch_rects[i].z:
+			clipped += 1
+	if clipped > 0:
+		print("ring_vibes: %d patch(es) clipped to non-overlapping arc windows" % clipped)
+
 func _patch_at(arc: float, lat: float) -> int:
 	# CPU mirror of the shader's patch lookup. Arc is compared with wraparound so a patch near the
 	# 0%/100% seam still matches from either side.
@@ -940,7 +976,9 @@ func _patch_at(arc: float, lat: float) -> int:
 	for i in _patch_rects.size():
 		var r := _patch_rects[i]
 		var d_arc: float = absf(wrapf(arc - r.x, -circumference * 0.5, circumference * 0.5))
-		if d_arc < r.z and absf(lat - r.y) < r.w:
+		# fall back to the sampling extent if ownership has not been computed yet
+		var own: float = _patch_own[i] if i < _patch_own.size() else r.z
+		if d_arc < own and absf(lat - r.y) < r.w:
 			return i
 	return -1
 

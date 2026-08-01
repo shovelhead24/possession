@@ -32,7 +32,12 @@ uniform float sat_gain = 1.35;
 uniform sampler2DArray patch_tex;                          // heights (RF)
 uniform sampler2DArray patch_col_tex : source_color;       // Sentinel-2 imagery per patch
 uniform int patch_count = 0;
-uniform vec4 patch_rect[40];   // (arc_centre, lat_centre, half_arc, half_lat) in metres
+uniform vec4 patch_rect[40];   // (arc_centre, lat_centre, half_arc, half_lat) in metres -- SAMPLING extent
+// OWNERSHIP half-arc, which is not the same thing. Patches are ~97km wide but seated 84km apart, so
+// their sampling extents overlap by ~13km. Ownership is clipped to half the gap so exactly one patch
+// claims any given arc; sampling still uses the full extent, or the imagery would squash by 15%.
+uniform float patch_own[40];
+uniform float hires_own = 0.0;
 uniform vec4 patch_tint[40];   // fallback colour for patches whose imagery hasn't been fetched
 // Height re-basing, metres. Splices are real places at real elevations (altiplano 3562m, Camargue
 // 1m), so butting them edge-to-edge produced 3.5km cliffs at patch boundaries. Patches well above
@@ -127,7 +132,7 @@ int patch_at(vec2 wxz) {
 		float half_c = ring_circumference * 0.5;
 		float d_arc = wxz.x - r.x;
 		d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);   // wrap to [-C/2, C/2]
-		if (abs(d_arc) < r.z && abs(wxz.y - r.y) < r.w) {
+		if (abs(d_arc) < patch_own[i] && abs(wxz.y - r.y) < r.w) {
 			return i;
 		}
 	}
@@ -146,7 +151,14 @@ vec2 patch_uv(int i, vec2 wxz) {
 
 // is this point inside the streamed high-res patch?
 bool in_hires(vec2 wxz) {
+	// tested against the OWNERSHIP window, not the sampling extent -- otherwise the streamed patch
+	// keeps claiming ground inside its neighbour's window while the CPU, which resolves ownership
+	// differently, places objects on a surface this is not drawing.
 	if (!hires_valid) { return false; }
+	float half_c = ring_circumference * 0.5;
+	float d_arc = wxz.x - hires_rect.x;
+	d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);
+	if (abs(d_arc) >= hires_own || abs(wxz.y - hires_rect.y) >= hires_rect.w) { return false; }
 	vec2 uv = rect_uv(hires_rect, wxz);
 	return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0;
 }
