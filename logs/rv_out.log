@@ -5,9 +5,15 @@ ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x38
 ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "savannah", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "ebro_delta", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "great_plains", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "iceland_highland", "badlands_sd"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (427 ms)
+ring_vibes: far band rebuilt around arc 0 km (434 ms)
 ring_vibes: 27500 trees placed (3 variants x 4 LODs, distance-bucketed)
 ring_vibes: millstreet — 47438 of 59966 buildings kept (12528 fell outside the 50km ring width)
 ring_vibes: java_majapahit — 11229 of 59973 buildings kept (48744 fell outside the 50km ring width)
 ring_vibes: buildings in range at arc 0 lat 0 -> style0=292, style1=0
 ring_vibes: 58667 OSM buildings loaded (2 styles)
+ring_vibes: 26443 trees placed (3 variants x 4 LODs, distance-bucketed)
+ring_vibes: buildings in range at arc -266000 lat -18000 -> style0=0, style1=6137
+ring_vibes: warped to java_majapahit (settlement) (91.1% arc)
+ring_vibes: 27396 trees placed (3 variants x 4 LODs, distance-bucketed)
+ring_vibes: far band rebuilt around arc -328 km (499 ms)
+ring_vibes: streamed java_majapahit @ 1536^2

@@ -236,7 +236,8 @@ const HIRES_RES := 1536       # streamed height resolution
 # cheap there, whereas heights cost a GDScript decode loop per texel. 2048^2 RGB is ~12.6MB each;
 # with the height field that is ~35MB resident for the active patch, comfortable on shared-memory UHD.
 # (The home patch still uses its native 4096^2 imagery, so it remains slightly ahead.)
-const HIRES_TEX_RES := 2048
+const HIRES_TEX_RES := 4096   # matches the Sentinel-2 source exactly (24 m/px over an 84km patch);
+                              # 2048 was throwing away half the imagery we had already fetched
 var _hires_tex: ImageTexture = null
 var _hires_col_tex: ImageTexture = null
 var _hires_detail_tex: ImageTexture = null
