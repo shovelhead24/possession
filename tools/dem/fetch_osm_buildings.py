@@ -67,13 +67,31 @@ KINDS = {
 STOREY_M = 3.1
 
 
+# The ring is 50km wide but a patch box is ~84-97km tall, so the top and bottom of every bbox lands
+# outside the world and is thrown away at load. Asking for it anyway wastes the query cap on
+# buildings that cannot exist: Cape Peninsula kept 1,383 of 59,999 because Cape Town sits in the
+# discarded band. Clip the request to the strip that survives.
+RING_WIDTH_KM = 50.0
+
+
+def ring_strip():
+    """(lat_min, lat_max) narrowed to the part of the box that lands on the ring."""
+    span_km = (fd.LAT_MAX - fd.LAT_MIN) * 111.32
+    if span_km <= RING_WIDTH_KM:
+        return fd.LAT_MIN, fd.LAT_MAX
+    mid = (fd.LAT_MIN + fd.LAT_MAX) * 0.5
+    half = (fd.LAT_MAX - fd.LAT_MIN) * 0.5 * (RING_WIDTH_KM * 0.94 / span_km)
+    return mid - half, mid + half
+
+
 def build_query(limit):
     # nwr rather than way: a fair number of buildings are multipolygon relations, and node-only
     # buildings exist in sparsely mapped areas. center gives one point for each regardless.
+    lo, hi = ring_strip()
     return (
         "[out:json][timeout:180];"
         'nwr["building"](%f,%f,%f,%f);'
-        "out center %d;" % (fd.LAT_MIN, fd.LON_MIN, fd.LAT_MAX, fd.LON_MAX, limit)
+        "out center %d;" % (lo, fd.LON_MIN, hi, fd.LON_MAX, limit)
     )
 
 
