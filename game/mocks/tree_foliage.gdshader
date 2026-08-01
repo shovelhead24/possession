@@ -8,13 +8,17 @@ uniform sampler2D tex : source_color;
 uniform float cut = 0.5;          // alpha cutout
 uniform float wrap = 0.55;        // 0 = plain lambert (harsh), 1 = flat; 0.55 = soft canopy
 uniform float sun_gain = 0.85;    // tame the peak so the horizontal cap doesn't over-expose
+// Per-biome foliage tint. The mesh pack is Irish firs and they are the only trees we have, so a
+// tropical patch gets them recoloured rather than looking like Cork transplanted onto Java. A tint
+// is not a teak tree, but at canopy distance the hue difference is most of the read.
+uniform vec3 tint : source_color = vec3(1.0);
 
 void fragment() {
 	vec4 c = texture(tex, UV);
 	if (c.a < cut) {
 		discard;
 	}
-	ALBEDO = c.rgb;
+	ALBEDO = c.rgb * tint;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
 	if (!FRONT_FACING) {

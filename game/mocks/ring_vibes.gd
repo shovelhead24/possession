@@ -183,8 +183,11 @@ const PATCHES := [
 	{"name": "tepui", "arc_pct": 0.840, "tint": Color(0.24, 0.32, 0.24), "trees": 0.5, "tree_hi": 1500.0, "weather": "overcast"},
 	{"name": "iceland_highland", "arc_pct": 0.868, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "overcast"},
 	{"name": "badlands_sd", "arc_pct": 0.896, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "clear"},
+	# East Java: teak over volcanic ash, Arjuno-Welirang at 3,339m, and Trowulan -- a living town
+	# sitting on the Majapahit capital. Tropical treeline runs high, so the massif is wooded almost
+	# to the summit. "style": meru gives it tiered roofs instead of the default gable.
+	{"name": "java_majapahit", "arc_pct": 0.924, "tint": Color(0.17, 0.27, 0.16), "trees": 1.0, "tree_hi": 2900.0, "weather": "overcast", "style": "meru", "foliage": Color(1.06, 1.02, 0.62), "tree_mul": 1.45},
 	# closing the loop back toward 0% -- repeats, so the hub-spire approach isn't a procedural gap
-	{"name": "scablands", "arc_pct": 0.924, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
 	{"name": "iceland_highland", "arc_pct": 0.952, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "overcast"},
 	{"name": "badlands_sd", "arc_pct": 0.980, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "clear"},
 ]
@@ -197,7 +200,8 @@ const BLDG_RADIUS := 3000.0        # instance houses within this of the camera, 
 const BLDG_RESCATTER := 500.0      # camera travel before the visible set is rebuilt
 const BLDG_MAX := 8000             # hard instance cap
 var _bldg := PackedFloat32Array()  # world arc, lat, w, d, yaw, height -- 6 floats per building
-var _bldg_mmi: MultiMeshInstance3D = null
+var _bldg_mmi: Array = []           # one MultiMeshInstance3D per building style
+var _bldg_style := PackedByteArray()  # style index per building
 var _bldg_center := Vector2(1e12, 1e12)
 var _bldg_shown := 0
 const TREE_RESCATTER := 700.0         # re-scatter once the camera has moved this far from it
@@ -734,13 +738,17 @@ func _biome_at(arc: float, lat: float) -> Dictionary:
 		var fx := _dem_hf_cam.x + arc / _dem_hf_mpp
 		var fy := _dem_hf_cam.y - lat / _dem_hf_mpp
 		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
-			return {"trees": HOME_TREES, "tree_hi": HOME_TREE_HI, "weather": "fresh"}
+			return {"trees": HOME_TREES, "tree_hi": HOME_TREE_HI, "weather": "fresh",
+				"foliage": Color(1, 1, 1), "tree_mul": 1.0}
 	var pi := _patch_at(arc, lat)
 	if pi >= 0:
 		var p: Dictionary = _patch_meta[pi]   # NOT PATCHES[pi] -- indices diverge, see _patch_meta
 		return {"trees": float(p.get("trees", 0.5)), "tree_hi": float(p.get("tree_hi", 800.0)),
-				"weather": str(p.get("weather", "fresh"))}
-	return {"trees": 0.35, "tree_hi": 700.0, "weather": "fresh"}   # procedural filler
+				"weather": str(p.get("weather", "fresh")),
+				"foliage": p.get("foliage", Color(1, 1, 1)),
+				"tree_mul": float(p.get("tree_mul", 1.0))}
+	return {"trees": 0.35, "tree_hi": 700.0, "weather": "fresh",
+			"foliage": Color(1, 1, 1), "tree_mul": 1.0}   # procedural filler
 
 func _here_splice() -> String:
 	# which splice the camera is currently standing in, for the HUD
@@ -1358,6 +1366,16 @@ func _scatter_trees() -> void:
 	# dunes are genuinely bare rather than sprouting Irish conifers.
 	var biome := _biome_at(_tree_center.x, _tree_center.y)
 	var density: float = biome["trees"] * TREE_DENSITY
+	# recolour and resize the fir pack per biome -- it is the only tree mesh we have, so a
+	# tropical patch gets tinted firs rather than looking like Cork transplanted onto Java.
+	var fol: Color = biome.get("foliage", Color(1, 1, 1))
+	var tmul: float = float(biome.get("tree_mul", 1.0))
+	for vlods in _tree_mm:
+		for mmi in vlods:
+			if mmi != null and mmi.multimesh != null and mmi.multimesh.mesh != null:
+				var sm := mmi.multimesh.mesh.surface_get_material(0) as ShaderMaterial
+				if sm != null:
+					sm.set_shader_parameter("tint", Vector3(fol.r, fol.g, fol.b))
 	var tree_hi: float = biome["tree_hi"]
 	if density <= 0.0:
 		_update_tree_lod(true)
@@ -1382,7 +1400,7 @@ func _scatter_trees() -> void:
 				if ok:
 					var ground := _surface_pos(jx, jz)
 					var up := _ring_up(ground)
-					var sc: float = _tree_scale * rng.randf_range(0.8, 1.3)
+					var sc: float = _tree_scale * tmul * rng.randf_range(0.8, 1.3)
 					var basis := Basis()
 					basis.y = up
 					basis.x = up.cross(Vector3.FORWARD).normalized()
@@ -1448,22 +1466,65 @@ func _house_mesh() -> ArrayMesh:
 	st.generate_normals()
 	return st.commit()
 
+func _joglo_mesh() -> ArrayMesh:
+	# Javanese domestic form: low walls under a big tiered roof. That ratio -- wall almost nothing,
+	# roof almost everything -- is what reads as South-East Asian at a glance, far more than any
+	# ornament would at this distance. Lower hip skirt overhangs the walls; steep pyramid above.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wall := Color(0.74, 0.70, 0.62)
+	var roof := Color(0.26, 0.19, 0.15)
+	var wt := 0.30            # wall top -- deliberately low
+	var eave := 0.62          # skirt overhang half-extent
+	var mid := 0.30           # where the skirt meets the upper pyramid
+	var midy := 0.58
+	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
+		for v in [a, c, b, a, d, c]:
+			st.set_color(col)
+			st.add_vertex(v)
+	var tri := func(a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
+		for v in [a, c, b]:
+			st.set_color(col)
+			st.add_vertex(v)
+	# walls
+	quad.call(Vector3(-0.42, 0, 0.42), Vector3(0.42, 0, 0.42), Vector3(0.42, wt, 0.42), Vector3(-0.42, wt, 0.42), wall)
+	quad.call(Vector3(0.42, 0, -0.42), Vector3(-0.42, 0, -0.42), Vector3(-0.42, wt, -0.42), Vector3(0.42, wt, -0.42), wall)
+	quad.call(Vector3(0.42, 0, 0.42), Vector3(0.42, 0, -0.42), Vector3(0.42, wt, -0.42), Vector3(0.42, wt, 0.42), wall)
+	quad.call(Vector3(-0.42, 0, -0.42), Vector3(-0.42, 0, 0.42), Vector3(-0.42, wt, 0.42), Vector3(-0.42, wt, -0.42), wall)
+	# lower hip skirt: outer ring at eave height, inner ring at midy
+	var e := 0.34
+	quad.call(Vector3(-eave, e, eave), Vector3(eave, e, eave), Vector3(mid, midy, mid), Vector3(-mid, midy, mid), roof)
+	quad.call(Vector3(eave, e, -eave), Vector3(-eave, e, -eave), Vector3(-mid, midy, -mid), Vector3(mid, midy, -mid), roof)
+	quad.call(Vector3(eave, e, eave), Vector3(eave, e, -eave), Vector3(mid, midy, -mid), Vector3(mid, midy, mid), roof)
+	quad.call(Vector3(-eave, e, -eave), Vector3(-eave, e, eave), Vector3(-mid, midy, mid), Vector3(-mid, midy, -mid), roof)
+	# steep upper pyramid
+	var apex := Vector3(0, 1.0, 0)
+	tri.call(Vector3(-mid, midy, mid), Vector3(mid, midy, mid), apex, roof)
+	tri.call(Vector3(mid, midy, -mid), Vector3(-mid, midy, -mid), apex, roof)
+	tri.call(Vector3(mid, midy, mid), Vector3(mid, midy, -mid), apex, roof)
+	tri.call(Vector3(-mid, midy, -mid), Vector3(-mid, midy, mid), apex, roof)
+	st.generate_normals()
+	return st.commit()
+
 func _build_buildings() -> void:
 	var mat := StandardMaterial3D.new()
 	mat.vertex_color_use_as_albedo = true
 	mat.roughness = 0.92
-	mat.specular = 0.1
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = true
-	mm.mesh = _house_mesh()
-	mm.mesh.surface_set_material(0, mat)
-	_bldg_mmi = MultiMeshInstance3D.new()
-	_bldg_mmi.multimesh = mm
-	_bldg_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(_bldg_mmi)
+	mat.metallic_specular = 0.1
+	_bldg_mmi = []
+	for m in [_house_mesh(), _joglo_mesh()]:
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = true
+		mm.mesh = m
+		mm.mesh.surface_set_material(0, mat)
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(mmi)
+		_bldg_mmi.append(mmi)
 
-func _load_bldg_file(name: String, arc_off: float, lat_off: float) -> int:
+func _load_bldg_file(name: String, arc_off: float, lat_off: float, style: int) -> int:
 	var path := "res://mocks/dem/%s_bldg.dat" % name
 	if not FileAccess.file_exists(path):
 		return 0
@@ -1485,10 +1546,12 @@ func _load_bldg_file(name: String, arc_off: float, lat_off: float) -> int:
 		_bldg.append(b.decode_float(o + 12))
 		_bldg.append(b.decode_float(o + 16))
 		_bldg.append(b.decode_float(o + 20))
+		_bldg_style.append(style)
 	return n
 
 func _load_buildings() -> void:
 	_bldg = PackedFloat32Array()
+	_bldg_style = PackedByteArray()
 	var total := 0
 	# home patch: origin is camera_px, not the DEM centre (see _dem_hf_cam / _biome_at).
 	# Slug comes from the file path -- _dem_name is the DISPLAY name out of the JSON
@@ -1496,21 +1559,22 @@ func _load_buildings() -> void:
 	if _dem_w > 0:
 		var ax := (float(_dem_w) * 0.5 - float(_dem_cam.x)) * _dem_mpp
 		var lx := (float(_dem_cam.y) - float(_dem_h) * 0.5) * _dem_mpp
-		total += _load_bldg_file(DEM_R16.get_file().get_basename(), ax, lx)
+		total += _load_bldg_file(DEM_R16.get_file().get_basename(), ax, lx, 0)
 	# splice patches: origin is the patch centre on the ring midline
 	for i in _patch_names.size():
 		var r := _patch_rects[i]
-		total += _load_bldg_file(str(_patch_names[i]), r.x, r.y)
+		var style := 1 if str(_patch_meta[i].get("style", "gable")) == "meru" else 0
+		total += _load_bldg_file(str(_patch_names[i]), r.x, r.y, style)
 	if total > 0:
-		if _bldg_mmi == null:
+		if _bldg_mmi.is_empty():
 			_build_buildings()
 		_refill_buildings(true)
-		print("ring_vibes: %d OSM buildings loaded" % total)
+		print("ring_vibes: %d OSM buildings loaded (%d styles)" % [total, _bldg_mmi.size()])
 
 func _refill_buildings(force := false) -> void:
-	# Only the ones near you get instanced. 60k buildings sit in memory happily; 60k MultiMesh
+	# Only the ones near you get instanced. 120k buildings sit in memory happily; 120k MultiMesh
 	# instances do not, and almost all of them are over the horizon anyway.
-	if _bldg_mmi == null or _bldg.is_empty():
+	if _bldg_mmi.is_empty() or _bldg.is_empty():
 		return
 	var cam := _cam.global_position
 	var r := _radius()
@@ -1522,13 +1586,17 @@ func _refill_buildings(force := false) -> void:
 	var circ: float = CIRCUMFERENCES[c_idx]
 	var xfs := []
 	var cols := []
+	for _s in _bldg_mmi:
+		xfs.append([])
+		cols.append([])
 	var rng := RandomNumberGenerator.new()
+	var shown := 0
 	var i := 0
 	while i < _bldg.size():
 		var d_arc: float = absf(wrapf(_bldg[i] - here.x, -circ * 0.5, circ * 0.5))
 		if d_arc < BLDG_RADIUS and absf(_bldg[i + 1] - here.y) < BLDG_RADIUS:
-			var ground := _surface_pos(_bldg[i], _bldg[i + 1])
-			if ground.length() > 0.0 and _terrain_h(_bldg[i], _bldg[i + 1]) > SEA_LEVEL + 0.5:
+			if _terrain_h(_bldg[i], _bldg[i + 1]) > SEA_LEVEL + 0.5:
+				var ground := _surface_pos(_bldg[i], _bldg[i + 1])
 				var up := _ring_up(ground)
 				var ax := up.cross(Vector3.FORWARD).normalized()
 				if ax.length_squared() < 0.25:
@@ -1540,21 +1608,24 @@ func _refill_buildings(force := false) -> void:
 				var rz := (az * cs - ax * sn).normalized()
 				# Basis(x, y, z) takes COLUMNS, so scale bakes in cleanly. Basis.scaled() would
 				# scale along global axes instead and shear every rotated house.
-				xfs.append(Transform3D(
+				var si: int = _bldg_style[i / 6] if (i / 6) < _bldg_style.size() else 0
+				xfs[si].append(Transform3D(
 					Basis(rx * _bldg[i + 2], up * _bldg[i + 5], rz * _bldg[i + 3]),
 					ground - up * 0.4))
 				rng.seed = i
 				var t := rng.randf_range(0.82, 1.12)
-				cols.append(Color(t, t * rng.randf_range(0.97, 1.02), t * rng.randf_range(0.94, 1.0)))
-		if xfs.size() >= BLDG_MAX:
+				cols[si].append(Color(t, t * rng.randf_range(0.97, 1.02), t * rng.randf_range(0.94, 1.0)))
+				shown += 1
+		if shown >= BLDG_MAX:
 			break
 		i += 6
-	var mm := _bldg_mmi.multimesh
-	mm.instance_count = xfs.size()
-	for k in xfs.size():
-		mm.set_instance_transform(k, xfs[k])
-		mm.set_instance_color(k, cols[k])
-	_bldg_shown = xfs.size()
+	for s in _bldg_mmi.size():
+		var mm: MultiMesh = _bldg_mmi[s].multimesh
+		mm.instance_count = xfs[s].size()
+		for k in xfs[s].size():
+			mm.set_instance_transform(k, xfs[s][k])
+			mm.set_instance_color(k, cols[s][k])
+	_bldg_shown = shown
 
 func _update_tree_lod(force := false) -> void:
 	if _tree_mm.is_empty():

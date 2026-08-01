@@ -30,6 +30,20 @@ H_SCALE = 4
 # pins for the preview image, and the camera anchor export_to_game.py spawns
 # above. Add new candidates here as they're scouted/verified.
 LOCATIONS = {
+    "java_majapahit": dict(
+        # East Java, the Majapahit heartland. Chosen so the patch contains the actual empire:
+        # Trowulan (the 14th-c capital, still a living town on top of its own ruins), Mount
+        # Penanggungan (sacred, terraced with 80-odd Majapahit-era sanctuaries), and the
+        # Arjuno-Welirang massif at 3,339m for relief. Volcanic ash soil, teak forest.
+        lat_min=-8.030, lat_max=-7.270, lon_min=112.120, lon_max=112.880, zoom=12,
+        camera=(-7.5468, 112.3830),
+        markers=[
+            (-7.5468, 112.3830, "Trowulan"),
+            (-7.6217, 112.6297, "Penanggungan"),
+            (-7.7583, 112.5892, "Arjuno-Welirang"),
+        ],
+        label="Java (Majapahit heartland, East Java)",
+    ),
     "millstreet": dict(
         lat_min=51.82, lat_max=52.50, lon_min=-9.55, lon_max=-8.42, zoom=12,
         camera=(52.0603, -9.0633),

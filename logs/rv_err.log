@@ -1,7 +1,0 @@
-WARNING: Godot 3.x SpatialMaterial remapped parameter not found: specular
-   at: _set (scene/resources/material.cpp:4112)
-   GDScript backtrace (most recent call first):
-       [0] _build_buildings (res://mocks/ring_vibes.gd:1455)
-       [1] _load_buildings (res://mocks/ring_vibes.gd:1506)
-       [2] _rebuild (res://mocks/ring_vibes.gd:1082)
-       [3] _ready (res://mocks/ring_vibes.gd:437)
