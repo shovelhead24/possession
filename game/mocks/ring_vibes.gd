@@ -947,12 +947,30 @@ func _patch_height(i: int, arc: float, lat: float) -> float:
 	var u: float = clampf(d_arc / (2.0 * r.z) + 0.5, 0.0, 0.999)
 	var v: float = clampf(0.5 - (lat - r.y) / (2.0 * r.w), 0.0, 0.999)
 	var field: PackedFloat32Array = _patch_fields[i]
-	var px := int(u * float(PATCH_RES))
-	var py := int(v * float(PATCH_RES))
-	return (field[py * PATCH_RES + px] + _patch_offset[i]) * dem_scale
+	return (_bilerp(field, PATCH_RES, PATCH_RES,
+			u * float(PATCH_RES) - 0.5, v * float(PATCH_RES) - 0.5)
+			+ _patch_offset[i]) * dem_scale
 
 const SEA_LEVEL := 0.5      # must match cdlod_ring.gdshader's sea_level uniform
 var ocean_enabled := true
+
+func _bilerp(field: PackedFloat32Array, w: int, h: int, fx: float, fy: float) -> float:
+	# Matches GLSL texture() with linear filtering, which interpolates around (uv * size - 0.5) --
+	# the texel-CENTRE convention. Two bugs lived here and both put placed objects under the drawn
+	# surface: the patch and hires tiers sampled NEAREST while the shader sampled bilinear, and the
+	# home DEM sampled at uv*size instead of uv*size-0.5, half a texel off. At a 190m patch texel
+	# that is ~95m of horizontal error, which on any slope is metres of vertical -- hence the car
+	# driving under the ground in the starting area and buildings sinking on the Java volcano.
+	var x0 := int(floor(fx))
+	var y0 := int(floor(fy))
+	var tx := fx - float(x0)
+	var ty := fy - float(y0)
+	var x1 := clampi(x0 + 1, 0, w - 1)
+	var y1 := clampi(y0 + 1, 0, h - 1)
+	x0 = clampi(x0, 0, w - 1)
+	y0 = clampi(y0, 0, h - 1)
+	return lerpf(lerpf(field[y0 * w + x0], field[y0 * w + x1], tx),
+			lerpf(field[y1 * w + x0], field[y1 * w + x1], tx), ty)
 
 func _terrain_h(arc: float, lat: float) -> float:
 	# clamp to sea level exactly as the shader does, so you stand ON the water surface rather than
@@ -968,13 +986,7 @@ func _terrain_h_raw(arc: float, lat: float) -> float:
 		var fx := _dem_hf_cam.x + arc / _dem_hf_mpp
 		var fy := _dem_hf_cam.y - lat / _dem_hf_mpp
 		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
-			var x0 := int(fx); var y0 := int(fy)
-			var tx := fx - float(x0); var ty := fy - float(y0)
-			var h00 := _dem_hf[y0 * _dem_hf_w + x0]
-			var h10 := _dem_hf[y0 * _dem_hf_w + x0 + 1]
-			var h01 := _dem_hf[(y0 + 1) * _dem_hf_w + x0]
-			var h11 := _dem_hf[(y0 + 1) * _dem_hf_w + x0 + 1]
-			return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), ty) * dem_scale
+			return _bilerp(_dem_hf, _dem_hf_w, _dem_hf_h, fx - 0.5, fy - 0.5) * dem_scale
 	# outside the home DEM: try the secondary splice patches placed around the arc
 	var pi := _patch_at(arc, lat)
 	if pi >= 0:
@@ -985,7 +997,8 @@ func _terrain_h_raw(arc: float, lat: float) -> float:
 			var da: float = wrapf(arc - rr.x, -circ * 0.5, circ * 0.5)
 			var hu: float = clampf(da / (2.0 * rr.z) + 0.5, 0.0, 0.999)
 			var hv: float = clampf(0.5 - (lat - rr.y) / (2.0 * rr.w), 0.0, 0.999)
-			return (_hires_field[int(hv * _hires_res) * _hires_res + int(hu * _hires_res)]
+			return (_bilerp(_hires_field, _hires_res, _hires_res,
+					hu * float(_hires_res) - 0.5, hv * float(_hires_res) - 0.5)
 					+ _patch_offset[pi]) * dem_scale
 		return _patch_height(pi, arc, lat)
 	# no patch here: approximate procedural match to the shader's noise-heightmap fallback. Gaps are
