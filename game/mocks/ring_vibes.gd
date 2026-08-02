@@ -68,6 +68,7 @@ var _cam: Camera3D
 var _hud: Label
 var _perf: Label = null
 var _perf_t := 0.0
+var _probe_on := false
 var _mat: ShaderMaterial          # far band material (ring_vibes.gdshader, unchanged)
 var _band: MeshInstance3D
 var _noise := FastNoiseLite.new() # far-band decorative ridge/noise fallback only (see _far_terrain_h)
@@ -861,7 +862,14 @@ func _hires_poll() -> void:
 				m.set_shader_parameter("hires_own", _patch_own[_hires_idx])
 				m.set_shader_parameter("hires_offset", _patch_offset[_hires_idx])
 				m.set_shader_parameter("hires_valid", true)
-			print("ring_vibes: streamed %s @ %d^2%s" % [
+			# A landed stream CHANGES WHAT _terrain_h ANSWERS -- the hires tier now wins where the
+			# 512^2 array did, and the two disagree by whatever detail the array threw away. Anything
+			# already placed against the old tier is now at the wrong height, which is trees and the
+			# car ending up at one level and houses at another. Re-place both.
+			_scatter_trees()
+			_refill_buildings(true)
+			_build_hedge_ribbon()
+			print("ring_vibes: streamed %s @ %d^2%s — re-placed objects onto the new tier" % [
 				_patch_names[_hires_idx], _hires_res, "" if _hires_col_tex else " (no imagery)"])
 		_hires_pending = -1
 		return
@@ -2454,6 +2462,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_C: _clear_creatures()
 			KEY_M: _show_lod = not _show_lod
 			KEY_N: _haze_off = not _haze_off
+			KEY_Y: _probe_on = not _probe_on; _update_hud()
 			KEY_COMMA: _jump_splice(-1)
 			KEY_PERIOD: _jump_splice(1)
 			KEY_TAB: _hud_full = not _hud_full; _update_hud()
@@ -2506,6 +2515,83 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_Q: w_idx = 0; _rebuild()
 			KEY_W: w_idx = 1; _rebuild()
 			KEY_E: w_idx = 2; _rebuild()
+
+func _probe_tiers(arc: float, lat: float) -> Dictionary:
+	# Every height source that COULD answer at this point, side by side, plus which one actually
+	# does. The whole placement stack is "the CPU mirrors the shader"; when it does not, the symptom
+	# is always the same (something floats or sinks) and the cause has been different every time --
+	# nearest vs bilinear, half a texel, overlapping patch ownership, stale data after a stream
+	# landed. Guessing from a screenshot has cost more time than this readout will.
+	var out := {"home": NAN, "hires": NAN, "array": NAN, "proc": NAN,
+		"tier": "procedural", "pi": -1, "name": "-", "offset": 0.0, "own": 0.0, "rect": 0.0}
+
+	if _dem_hf_w > 0:
+		var fx := _dem_hf_cam.x + arc / _dem_hf_mpp
+		var fy := _dem_hf_cam.y - lat / _dem_hf_mpp
+		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
+			out["home"] = _bilerp(_dem_hf, _dem_hf_w, _dem_hf_h, fx - 0.5, fy - 0.5) * dem_scale
+			out["tier"] = "HOME"
+
+	var pi := _patch_at(arc, lat)
+	out["pi"] = pi
+	if pi >= 0:
+		var rr: Vector4 = _patch_rects[pi]
+		out["name"] = str(_patch_names[pi])
+		out["offset"] = _patch_offset[pi]
+		out["own"] = _patch_own[pi] if pi < _patch_own.size() else rr.z
+		out["rect"] = rr.z
+		out["array"] = _patch_height(pi, arc, lat)
+		if pi == _hires_idx and _hires_res > 0:
+			var circ: float = CIRCUMFERENCES[c_idx]
+			var da: float = wrapf(arc - rr.x, -circ * 0.5, circ * 0.5)
+			var hu: float = clampf(da / (2.0 * rr.z) + 0.5, 0.0, 0.999)
+			var hv: float = clampf(0.5 - (lat - rr.y) / (2.0 * rr.w), 0.0, 0.999)
+			out["hires"] = (_bilerp(_hires_field, _hires_res, _hires_res,
+				hu * float(_hires_res) - 0.5, hv * float(_hires_res) - 0.5)
+				+ _patch_offset[pi]) * dem_scale
+		if is_nan(float(out["home"])):
+			out["tier"] = "HIRES" if not is_nan(float(out["hires"])) else "ARRAY"
+	out["proc"] = maxf(_noise.get_noise_2d(arc * 0.05, lat * 0.05), 0.0) * DISP
+	return out
+
+func _probe_text() -> String:
+	if _cam == null:
+		return ""
+	var r := _radius()
+	var cam := _cam.global_position
+	var arc: float = atan2(cam.x, r - cam.y) * r
+	var lat: float = cam.z
+	var t := _probe_tiers(arc, lat)
+	var ground := _terrain_h(arc, lat)
+	var alt: float = r - Vector2(cam.x, r - cam.y).length()
+	var f := func(v) -> String:
+		return "     -  " if is_nan(float(v)) else "%8.1f" % float(v)
+	# disagreement between the tier in use and the next one down is the number that matters: it is
+	# exactly the gap that objects fall through
+	var chosen := float(ground)
+	var others := []
+	for k in ["home", "hires", "array"]:
+		if not is_nan(float(t[k])) and str(t["tier"]).to_lower() != k:
+			others.append(absf(float(t[k]) - chosen))
+	var worst: float = 0.0
+	for d in others:
+		worst = maxf(worst, float(d))
+	return "\n".join([
+		"PROBE   arc %.0f (%.2f%%)  lat %.0f   cam alt %.1f m   above ground %.1f m" % [
+			arc, 100.0 * fposmod(arc, CIRCUMFERENCES[c_idx]) / CIRCUMFERENCES[c_idx],
+			lat, alt, alt - ground],
+		"        patch %d %s   own +-%.0f  rect +-%.0f  offset %.1f  dem_scale %.0f" % [
+			t["pi"], t["name"], t["own"], t["rect"], t["offset"], dem_scale],
+		"        answering: %s     home %s  hires %s  array %s  proc %s" % [
+			t["tier"], f.call(t["home"]), f.call(t["hires"]), f.call(t["array"]), f.call(t["proc"])],
+		"        terrain_h %.1f   TIER DISAGREEMENT %.1f m %s" % [
+			ground, worst, "  <-- objects will float/sink by this" if worst > 2.0 else ""],
+		"        stream: %s @ %d^2 heights, colour %s   road mask %s" % [
+			(_patch_names[_hires_idx] if _hires_idx >= 0 else "none"),
+			_hires_res,
+			("%d^2" % HIRES_TEX_RES) if _hires_col_tex != null else "NONE (array 512^2 -> smeared)",
+			("%d^2" % ROAD_RES) if not _road_mask.is_empty() else "none (home patch only)"],
+	])
 
 func _update_hud() -> void:
 	if _hud == null:
@@ -2563,7 +2649,10 @@ func _update_hud() -> void:
 		"SLICE   creatures %d   %s" % [_creatures.size(), threat],
 		"        [K] deer herd   [J] wolf pack   [C] clear",
 		"",
-		"DBG     cam_theta %.1f deg   sun_theta %.1f deg   local_lit %.2f" % [
-			_dbg_cam_theta_deg, _dbg_sun_theta_deg, _dbg_local_lit],
+		"DBG     cam_theta %.1f deg   sun_theta %.1f deg   local_lit %.2f   [Y] probe %s" % [
+			_dbg_cam_theta_deg, _dbg_sun_theta_deg, _dbg_local_lit, "on" if _probe_on else "off"],
 	]
+	if _probe_on:
+		lines.append("")
+		lines.append(_probe_text())
 	_hud.text = "\n".join(lines)
