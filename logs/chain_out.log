@@ -3,76 +3,12 @@ OpenGL API 3.3.0 - Build 31.0.101.2137 - Compatibility - Using Device: Intel - I
 
 CHAIN — three settlements, thirty cycles, no missions.
 
+Something remembers the last time. Some places will be less patient.
+
 You are driving six head of cattle and nobody sent you. Type help for what you can do.
 Thinking out loud is free: ; followed by whatever you are thinking.
 
 
 Ardvane — a ford town, wide and muddy, everything passing through it
 cycle 0 of 30
-45 head in the pens, about what the ground carries.
-> ;how coudl nobody have sent me?
-  ✎ how coudl nobody have sent me?
-> help
-
-look · purse · know · think · note <text> (or ; <text>) — free
-watch · listen · count · walk · ask (or: ask about <place>) · drink — a day, for knowing
-trade · gift · warn <place> · incite · lie <place> · mediate · swear <place> — a day, for doing
-go <place> · stay · wait · leave
-Some places have a way in. You will not be told what it is, or what to type.
-Notes cost nothing and change nothing. Say what you think is going on, even when you turn out to be wrong — especially then.
-> drink
-
-You stand a round. It costs you a beast and buys you an evening.
-the Boru woman talks about weather, and the ford, and a boat that never came back.
-    the herds went out and came back
-> ask
-
-the ferryman talks about weather, and the ford, and a boat that never came back.
-· Ardvane paid 4 head to Corrin to settle it
-> ask about boat
-
-the ferryman mentions how well Corrin is doing, in the tone people keep for that.
-· Corrin refused to settle with Ardvane
-> ask about corrin
-
-the Boru woman says Corrin is fat and easy and sleeping with the door open.
-· Ardvane rode in reprisal against Corrin and left 3 head short
-> ask about boru
-
-old Mael talks about weather, and the ford, and a boat that never came back.
-> ;there are no answers to my questions
-  ✎ there are no answers to my questions
-> go corrin
-
-You travel to Corrin.
-· Corrin refused to settle with Slievan
-
-Corrin — a hold above the treeline, stone and wind, watching both ways
-cycle 6 of 30
-55 head in the pens, about what the ground carries.
-> ask
-
-Nass of the upper house talks about weather, and the ford, and a boat that never came back.
-· Slievan paid 3 head to Corrin to settle it
-> ask about ardvane
-
-the reeve allows that Ardvane is having a time of it, and leaves it there.
-· Ardvane refused to settle with Corrin
-> ask about boru
-
-a woman with a broken hand talks about weather, and the ford, and a boat that never came back.
-> ; the text box continues to lose focus after each entry
-  ✎ the text box continues to lose focus after each entry
-> leave
-
-
-— you leave the ring —
-
-You spent your time in Ardvane. They will remember a stranger who kept turning up.
-Ardvane would have you back.
-You leave the chain quieter than you found it. Nobody will say it was you.
-
-Khaibit remembers. Run it again.
-The run is over, but notes still work. Say what you made of it.
-> ; mechanically progressing but narratively still uncompelling
-  ✎ mechanically progressing but narratively still uncompelling
+54 head in the pens, about what the ground carries.

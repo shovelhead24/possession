@@ -17,6 +17,10 @@ uniform vec3 night_zenith : source_color = vec3(0.02, 0.03, 0.06);
 uniform vec3 night_horizon : source_color = vec3(0.07, 0.09, 0.15);
 uniform float star_density = 260.0;
 uniform float star_day_visibility = 0.4;   // stars dim, not gone, during the day
+// The stars have to wheel with the sun. Day/night here is the RING TURNING, and the sun and the
+// stars are both fixed in the same external frame -- so they share one apparent motion. A fixed
+// starfield under a moving sun says the sky is painted on, which was the tell.
+uniform float star_rot = 0.0;              // = sun_angle, radians about the ring axis (Z)
 
 float hash21(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -35,7 +39,14 @@ void sky() {
 	// cartesian grid goes dead wherever two axes compress toward zero, e.g. looking straight up,
 	// which is exactly the "no stars all the way around" gap found by flying up) -- fade near the
 	// horizon, dimmed by day.
-	vec2 sph = vec2(atan(dir.x, dir.z), asin(clamp(dir.y, -1.0, 1.0))) * star_density;
+	// Rotate the SAMPLING direction by +star_rot about Z, which makes a star appear to travel at
+	// -star_rot -- matching the sun, whose azimuth atan2(x, y) = atan2(sin a, cos a * cos tilt)
+	// runs at +a. Derived rather than eyeballed: getting this backwards would look almost right,
+	// with the stars sliding the wrong way at exactly the correct rate.
+	float sr_c = cos(star_rot);
+	float sr_s = sin(star_rot);
+	vec3 sdir = vec3(dir.x * sr_c - dir.y * sr_s, dir.x * sr_s + dir.y * sr_c, dir.z);
+	vec2 sph = vec2(atan(sdir.x, sdir.z), asin(clamp(sdir.y, -1.0, 1.0))) * star_density;
 	vec2 sgrid = floor(sph);
 	float h = hash21(sgrid);
 	float star = step(0.9975, h) * hash21(sgrid + vec2(3.7, 1.3));

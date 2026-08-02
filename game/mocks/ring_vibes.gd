@@ -1409,6 +1409,7 @@ func _process(delta: float) -> void:
 	var nh := NIGHT_HORIZON.lerp(vac, _space)
 	sky = sky.lerp(vac, _space)
 	_sky_mat.set_shader_parameter("star_day_visibility", lerpf(0.4, 1.0, _space))
+	_sky_mat.set_shader_parameter("star_rot", sun_angle)
 	if _env:
 		_env.ambient_light_energy = lerpf(0.4, 0.04, _space)
 	_sky_mat.set_shader_parameter("to_sun", to_sun)
