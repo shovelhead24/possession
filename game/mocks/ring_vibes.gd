@@ -115,6 +115,9 @@ const ROAD_RES := 2048
 const ROAD_ON := 0.14             # at/above this, it is road surface: nothing grows
 const ROAD_NEAR := 0.03           # above this but below ROAD_ON: roadside, plant a hedge
 var _road_mask := PackedByteArray()
+const HEDGE_TEX := "res://mocks/tex/hedge.jpg"
+var _hedge_mmi: MultiMeshInstance3D = null
+var _hedge_xf: Array = []
 var _detail_tex: ImageTexture = null
 var dem_scale := 1.0  # [H] cycles 1..5 — real-height exaggeration (DEM branch only)
 
@@ -1569,10 +1572,119 @@ func _road_at(arc: float, lat: float) -> float:
 	var v := (_dem_hf_cam.y - lat / _dem_hf_mpp) / float(_dem_hf_h)
 	if u < 0.0 or u >= 1.0 or v < 0.0 or v >= 1.0:
 		return 0.0
-	var idx := int(v * float(ROAD_RES)) * ROAD_RES + int(u * float(ROAD_RES))
-	if idx < 0 or idx >= _road_mask.size():
-		return 0.0
-	return float(_road_mask[idx]) / 255.0
+	# bilinear, like the shader. Nearest quantised the mask to 44m cells, so the on/off road
+	# decision stepped in blocks and the hedgerow inherited those steps.
+	var fx: float = u * float(ROAD_RES) - 0.5
+	var fy: float = v * float(ROAD_RES) - 0.5
+	var x0 := int(floor(fx))
+	var y0 := int(floor(fy))
+	var tx := fx - float(x0)
+	var ty := fy - float(y0)
+	var x1 := clampi(x0 + 1, 0, ROAD_RES - 1)
+	var y1 := clampi(y0 + 1, 0, ROAD_RES - 1)
+	x0 = clampi(x0, 0, ROAD_RES - 1)
+	y0 = clampi(y0, 0, ROAD_RES - 1)
+	var h0 := lerpf(float(_road_mask[y0 * ROAD_RES + x0]), float(_road_mask[y0 * ROAD_RES + x1]), tx)
+	var h1 := lerpf(float(_road_mask[y1 * ROAD_RES + x0]), float(_road_mask[y1 * ROAD_RES + x1]), tx)
+	return lerpf(h0, h1, ty) / 255.0
+
+func _hedge_texture() -> ImageTexture:
+	# Generated rather than authored: a hedge at driving distance is a texture of small dark gaps and
+	# lit leaf clumps, which is two octaves of noise and a vertical bias. Cheap, and it means no new
+	# art dependency for a mock.
+	var res := 256
+	var img := Image.create(res, res, false, Image.FORMAT_RGB8)
+	var leaf := FastNoiseLite.new()
+	leaf.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	leaf.frequency = 0.10
+	var fine := FastNoiseLite.new()
+	fine.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	fine.frequency = 0.42
+	var twig := FastNoiseLite.new()
+	twig.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	twig.frequency = 0.03
+	for y in res:
+		for x in res:
+			var c := leaf.get_noise_2d(float(x), float(y)) * 0.5 + 0.5
+			var f := fine.get_noise_2d(float(x), float(y)) * 0.5 + 0.5
+			# vertical streaks: growth runs upward, and it stops the tiling reading as a blob field
+			var t := twig.get_noise_2d(float(x) * 4.0, float(y) * 0.35) * 0.5 + 0.5
+			var v: float = clampf(0.30 + c * 0.55 + f * 0.22 - t * 0.20, 0.0, 1.0)
+			# darker toward the base of the tile: light does not reach into a hedge
+			v *= lerpf(0.55, 1.0, float(y) / float(res))
+			img.set_pixel(x, y, Color(0.10 + v * 0.22, 0.17 + v * 0.42, 0.07 + v * 0.16))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+func _hedge_mesh() -> ArrayMesh:
+	# One segment: a hedgerow cross-section extruded along its own length. Unit sized, so the
+	# instance transform sets length / thickness / height and consecutive segments butt together.
+	# Six-sided profile rather than a box -- a flat-topped slab reads as a wall, and the shoulders
+	# are what say "hedge" at the distance you actually see one from a car.
+	var prof := [
+		Vector2(-0.5, 0.0), Vector2(-0.5, 0.52), Vector2(-0.30, 0.88),
+		Vector2(0.0, 1.0), Vector2(0.30, 0.88), Vector2(0.5, 0.52), Vector2(0.5, 0.0),
+	]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var add := func(a: Vector3, b: Vector3, c: Vector3) -> void:
+		for v in [a, c, b]:
+			st.add_vertex(v)
+	for i in prof.size() - 1:
+		var p0: Vector2 = prof[i]
+		var p1: Vector2 = prof[i + 1]
+		var a := Vector3(-0.5, p0.y, p0.x)
+		var b := Vector3(0.5, p0.y, p0.x)
+		var c := Vector3(0.5, p1.y, p1.x)
+		var d := Vector3(-0.5, p1.y, p1.x)
+		add.call(a, b, c)
+		add.call(a, c, d)
+	# end caps, so a run that stops does not show hollow
+	for e in [-0.5, 0.5]:
+		for i in range(1, prof.size() - 2):
+			var t0 := Vector3(e, prof[0].y, 0.0)
+			var t1 := Vector3(e, prof[i].y, prof[i].x)
+			var t2 := Vector3(e, prof[i + 1].y, prof[i + 1].x)
+			if e < 0.0:
+				add.call(t0, t1, t2)
+			else:
+				add.call(t0, t2, t1)
+	st.generate_normals()
+	return st.commit()
+
+func _build_hedges() -> void:
+	var mat := StandardMaterial3D.new()
+	# real texture if one has been dropped in, generated foliage noise otherwise, so the mock
+	# still runs on a clean checkout (game/mocks/tex/ is an art drop, not a build artefact)
+	var tex: Texture2D = null
+	if ResourceLoader.exists(HEDGE_TEX):
+		tex = load(HEDGE_TEX) as Texture2D
+	mat.albedo_texture = tex if tex != null else _hedge_texture()
+	mat.uv1_triplanar = true          # no UV authoring needed on an extruded profile
+	mat.uv1_scale = Vector3(0.35, 0.35, 0.35)
+	mat.roughness = 1.0
+	mat.metallic_specular = 0.0
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = _hedge_mesh()
+	mm.mesh.surface_set_material(0, mat)
+	_hedge_mmi = MultiMeshInstance3D.new()
+	_hedge_mmi.multimesh = mm
+	_hedge_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_hedge_mmi)
+
+func _road_tangent(arc: float, lat: float) -> Vector2:
+	# Direction the road runs, from the mask gradient. The gradient points across the road (the mask
+	# rises toward the carriageway), so the tangent is its perpendicular. Without this every hedge
+	# segment took a random yaw and the "hedgerow" was a scatter of blocks at angles to each other,
+	# which is most of what read as jagged.
+	var d := 12.0
+	var gx := _road_at(arc + d, lat) - _road_at(arc - d, lat)
+	var gz := _road_at(arc, lat + d) - _road_at(arc, lat - d)
+	var g := Vector2(gx, gz)
+	if g.length_squared() < 1e-9:
+		return Vector2(1.0, 0.0)
+	return Vector2(-g.y, g.x).normalized()
 
 func _scatter_trees() -> void:
 	# conifers clumped by noise into woods + clearings, in a patch near spawn. Placed analytically
@@ -1607,6 +1719,7 @@ func _scatter_trees() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1234
 	var n_road := 0
+	_hedge_xf = []
 	var n_hedge := 0
 	var arc := -FOREST_HALF
 	while arc <= FOREST_HALF:
@@ -1634,10 +1747,25 @@ func _scatter_trees() -> void:
 				if ok:
 					var ground := _surface_pos(jx, jz)
 					var up := _ring_up(ground)
-					# hedge height, not tree height, with the occasional standard left to grow out of it
-					var sc: float = _tree_scale * tmul * (
-						(rng.randf_range(0.9, 1.4) if rng.randf() < 0.08 else rng.randf_range(0.22, 0.40))
-						if side else rng.randf_range(0.8, 1.3))
+					var up_t := up
+					var ax_t := up.cross(Vector3.FORWARD).normalized()
+					var az_t := ax_t.cross(up).normalized()
+					# A roadside cell becomes a HEDGE SEGMENT aligned to the road, except for the odd
+					# standard tree left to grow out of the line. Segments are a little longer than
+					# the scatter step so consecutive ones overlap into a continuous run.
+					var standard := rng.randf() < 0.09
+					if side and not standard:
+						var tg := _road_tangent(jx, jz)
+						var hx := (ax_t * tg.x + az_t * tg.y).normalized()
+						var hz := up_t.cross(hx).normalized()
+						_hedge_xf.append(Transform3D(
+							Basis(hx * rng.randf_range(9.5, 12.0), up_t * rng.randf_range(1.9, 2.9),
+								hz * rng.randf_range(1.3, 2.0)),
+							ground - up_t * 0.25))
+						n_hedge += 1
+						lat += 8.0
+						continue
+					var sc: float = _tree_scale * tmul * rng.randf_range(0.8, 1.3)
 					var basis := Basis()
 					basis.y = up
 					basis.x = up.cross(Vector3.FORWARD).normalized()
@@ -1650,6 +1778,9 @@ func _scatter_trees() -> void:
 						n_hedge += 1
 			lat += 8.0
 		arc += 8.0
+	if _hedge_mmi == null:
+		_build_hedges()
+	_fill_mm(_hedge_mmi, _hedge_xf)
 	_update_tree_lod(true)
 	print("ring_vibes: %d trees placed (%d variants x %d LODs) — %d hedgerow, %d rejected on road (mask %d KB)"
 		% [_tree_ground.size(), _tree_nvar, TREE_LODS, n_hedge, n_road, _road_mask.size() / 1024])

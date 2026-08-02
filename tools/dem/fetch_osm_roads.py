@@ -19,6 +19,11 @@ import fetch_dem as fd
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.normpath(os.path.join(HERE, "..", "..", "game", "mocks", "dem"))
 SIZE = 8192
+# PIL draws ALIASED lines, so every road that is not axis-aligned came out as a literal staircase
+# at 11 m/px -- visible in game as jagged roads and a jagged hedgerow following them. Rasterise at
+# SS times the output and box-filter down, which is proper antialiasing and costs one resize.
+SS = 3
+CACHE = os.path.join(HERE, "out", "osm_cache")
 
 WIDTHS = {"motorway": 3, "trunk": 3, "primary": 2, "secondary": 2, "tertiary": 1, "unclassified": 1}
 
@@ -47,18 +52,35 @@ def main(name):
         ("data=" + urllib.parse.quote(build_query())).encode(),
         {"User-Agent": "possession-game-dem-prototype/0.1 (solo dev tooling)",
          "Content-Type": "application/x-www-form-urlencoded"})
-    print("querying Overpass...")
-    with urllib.request.urlopen(req, timeout=300) as r:
-        ways = json.loads(r.read())["elements"]
+    os.makedirs(CACHE, exist_ok=True)
+    raw_path = os.path.join(CACHE, "%s_roads.json" % name)
+    if os.path.exists(raw_path) and "--force" not in sys.argv:
+        print("using cached %s (--force to refetch)" % os.path.relpath(raw_path, HERE))
+        raw = open(raw_path, "rb").read()
+    else:
+        print("querying Overpass...")
+        with urllib.request.urlopen(req, timeout=300) as r:
+            raw = r.read()
+        open(raw_path, "wb").write(raw)
+    ways = json.loads(raw)["elements"]
     print(f"{len(ways)} road ways")
 
-    img = Image.new("L", (SIZE, SIZE), 0)
+    big = SIZE * SS
+    img = Image.new("L", (big, big), 0)
     draw = ImageDraw.Draw(img)
     for way in ways:
-        wdt = WIDTHS.get(way.get("tags", {}).get("highway", ""), 1)
-        pts = [to_px(g["lat"], g["lon"]) for g in way.get("geometry", [])]
+        wdt = WIDTHS.get(way.get("tags", {}).get("highway", ""), 1) * SS
+        pts = [(x * SS, y * SS) for x, y in
+               (to_px(g["lat"], g["lon"]) for g in way.get("geometry", []))]
         if len(pts) > 1:
             draw.line(pts, fill=255, width=wdt, joint="curve")
+            # round caps: joint="curve" only rounds interior joints, so without this every way
+            # ends in a square stub that reads as a notch where two ways meet at an angle
+            r = wdt // 2
+            if r > 0:
+                for x, y in pts:
+                    draw.ellipse([x - r, y - r, x + r, y + r], fill=255)
+    img = img.resize((SIZE, SIZE), Image.BOX)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG")
