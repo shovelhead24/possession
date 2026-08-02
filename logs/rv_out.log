@@ -6,7 +6,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (602 ms)
+ring_vibes: far band rebuilt around arc 0 km (470 ms)
 ring_vibes: 13674 road centrelines loaded
 ring_vibes: 25309 trees placed (3 variants x 4 LODs) — 1036 standards, 3389 off-road, 8656 hedge quads
 ring_vibes: millstreet — 47438 of 59966 buildings kept (12528 fell outside the 50km ring width)

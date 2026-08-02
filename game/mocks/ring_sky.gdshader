@@ -20,7 +20,12 @@ uniform float star_day_visibility = 0.4;   // stars dim, not gone, during the da
 // The stars have to wheel with the sun. Day/night here is the RING TURNING, and the sun and the
 // stars are both fixed in the same external frame -- so they share one apparent motion. A fixed
 // starfield under a moving sun says the sky is painted on, which was the tell.
-uniform float star_rot = 0.0;              // = sun_angle, radians about the ring axis (Z)
+uniform float star_rot = 0.0;              // = sun_angle, radians
+// ...about the SUN'S OWN axis, not the ring axis. to_sun(a) = cos(a)*v + sin(a)*u with u=(1,0,0)
+// and v=(0,cos t,sin t), so the sun sweeps the plane those span and its rotation axis is
+// u x v = (0,-sin t, cos t) -- Z tilted by the sun tilt. Rotating the stars about plain Z instead
+// leaves them drifting away from the sun by the tilt angle over a day.
+uniform vec3 star_axis = vec3(0.0, 0.0, 1.0);
 
 float hash21(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -45,7 +50,8 @@ void sky() {
 	// with the stars sliding the wrong way at exactly the correct rate.
 	float sr_c = cos(star_rot);
 	float sr_s = sin(star_rot);
-	vec3 sdir = vec3(dir.x * sr_c - dir.y * sr_s, dir.x * sr_s + dir.y * sr_c, dir.z);
+	vec3 sdir = dir * sr_c + cross(star_axis, dir) * sr_s
+		+ star_axis * dot(star_axis, dir) * (1.0 - sr_c);   // Rodrigues about the sun's axis
 	vec2 sph = vec2(atan(sdir.x, sdir.z), asin(clamp(sdir.y, -1.0, 1.0))) * star_density;
 	vec2 sgrid = floor(sph);
 	float h = hash21(sgrid);

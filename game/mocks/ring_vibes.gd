@@ -1410,6 +1410,10 @@ func _process(delta: float) -> void:
 	sky = sky.lerp(vac, _space)
 	_sky_mat.set_shader_parameter("star_day_visibility", lerpf(0.4, 1.0, _space))
 	_sky_mat.set_shader_parameter("star_rot", sun_angle)
+	# the sun sweeps the plane spanned by (1,0,0) and (0,cos t,sin t); their cross product is
+	# its rotation axis, so the stars must turn about that same axis rather than about Z
+	_sky_mat.set_shader_parameter("star_axis",
+		Vector3(0.0, -sin(sun_tilt), cos(sun_tilt)).normalized())
 	if _env:
 		_env.ambient_light_energy = lerpf(0.4, 0.04, _space)
 	_sky_mat.set_shader_parameter("to_sun", to_sun)
