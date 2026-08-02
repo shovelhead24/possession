@@ -806,12 +806,23 @@ func _hires_decode(idx: int) -> void:
 			var res: int = mini(HIRES_RES, mini(w, h))
 			var floats := PackedFloat32Array()
 			floats.resize(res * res)
+			# box mean, matching the pre-filtered array tier. This runs on a WorkerThreadPool task,
+			# so the extra reads cost nothing the player can feel -- and without it this tier and the
+			# array tier answer different heights for the same ground.
 			for y in res:
-				var sy: int = mini(int(float(y) / float(res) * float(h)), h - 1)
-				var row := sy * w
+				var y0: int = int(float(y) * float(h) / float(res))
+				var y1: int = maxi(int(float(y + 1) * float(h) / float(res)), y0 + 1)
 				for x in res:
-					var sx: int = mini(int(float(x) / float(res) * float(w)), w - 1)
-					floats[y * res + x] = float(raw.decode_u16((row + sx) * 2)) / hs
+					var x0: int = int(float(x) * float(w) / float(res))
+					var x1: int = maxi(int(float(x + 1) * float(w) / float(res)), x0 + 1)
+					var acc := 0.0
+					var n := 0
+					for yy in range(y0, mini(y1, h)):
+						var row := yy * w
+						for xx in range(x0, mini(x1, w)):
+							acc += float(raw.decode_u16((row + xx) * 2))
+							n += 1
+					floats[y * res + x] = (acc / float(maxi(n, 1))) / hs
 			out["img"] = Image.create_from_data(res, res, false, Image.FORMAT_RF, floats.to_byte_array())
 			out["field"] = floats
 			out["res"] = res
@@ -969,14 +980,28 @@ func _load_patches() -> void:
 		var h := int(meta["h"])
 		var mpp := float(meta["m_per_px"])
 		var hs := float(meta.get("h_scale", 16.0))
-		var raw := FileAccess.get_file_as_bytes(base + ".r16")
 		var floats := PackedFloat32Array()
 		floats.resize(PATCH_RES * PATCH_RES)
-		for y in PATCH_RES:
-			var sy: int = mini(int(float(y) / float(PATCH_RES) * float(h)), h - 1)
-			for x in PATCH_RES:
-				var sx: int = mini(int(float(x) / float(PATCH_RES) * float(w)), w - 1)
-				floats[y * PATCH_RES + x] = float(raw.decode_u16((sy * w + sx) * 2)) / hs
+		# Prefer the box-filtered 512 written by export_to_game.py. Decimating here by POINT SAMPLE
+		# -- one source pixel per block, the rest discarded -- disagreed with the 1536 stream, which
+		# point-sampled at a different rate and so picked a different pixel. Measured difference from
+		# the block mean: 63.8m average at Millstreet, 40m at Cape, p99 in the hundreds. Objects were
+		# floating by whichever pixel each tier happened to land on.
+		var mip := base + "_512.r16"
+		var used_mip := false
+		if FileAccess.file_exists(mip):
+			var mraw := FileAccess.get_file_as_bytes(mip)
+			if mraw.size() >= PATCH_RES * PATCH_RES * 2:
+				for i in PATCH_RES * PATCH_RES:
+					floats[i] = float(mraw.decode_u16(i * 2)) / hs
+				used_mip = true
+		if not used_mip:
+			var raw := FileAccess.get_file_as_bytes(base + ".r16")
+			for y in PATCH_RES:
+				var sy: int = mini(int(float(y) / float(PATCH_RES) * float(h)), h - 1)
+				for x in PATCH_RES:
+					var sx: int = mini(int(float(x) / float(PATCH_RES) * float(w)), w - 1)
+					floats[y * PATCH_RES + x] = float(raw.decode_u16((sy * w + sx) * 2)) / hs
 		imgs.append(Image.create_from_data(PATCH_RES, PATCH_RES, false, Image.FORMAT_RF, floats.to_byte_array()))
 		_patch_fields.append(floats)
 		_patch_names.append(p["name"])

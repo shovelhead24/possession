@@ -44,6 +44,24 @@ def main(name):
     with open(os.path.join(DEST, f"{name}.r16"), "wb") as f:
         f.write(raw)
 
+    # Pre-filtered 512^2 for the resident Texture2DArray tier. The runtime used to decimate this
+    # itself by POINT SAMPLING -- taking one source pixel per 5x5 block and discarding the rest --
+    # and so did the 1536^2 stream, at a different rate. On Ha Long Bay, where limestone towers come
+    # straight out of the water, a 5x5 block spans sea level to tower top, so the two tiers landed on
+    # different pixels and disagreed about the ground by 13m. Arbitrary, not merely imprecise.
+    # A box mean makes both converge on the same local average instead. Done here because numpy does
+    # it instantly and GDScript would need 37M extra reads at load.
+    import numpy as _np
+    _a = _np.frombuffer(raw, dtype="<u2").reshape(h, w)
+    _R = 512
+    _fh, _fw = h // _R, w // _R
+    if _fh >= 1 and _fw >= 1:
+        _crop = _a[:_fh * _R, :_fw * _R].astype(_np.float32)
+        _mip = _crop.reshape(_R, _fh, _R, _fw).mean(axis=(1, 3))
+        _mip = _np.clip(_mip, 0, 65535).astype("<u2")
+        with open(os.path.join(DEST, f"{name}_512.r16"), "wb") as f:
+            f.write(_mip.tobytes())
+
     # Detail texture: R/G = normal perturbation (east/north gradients), B = height/4m.
     # Saved as PNG bytes in a .dat so Godot's importer ignores it; loaded manually at runtime.
     import numpy as np
