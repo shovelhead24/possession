@@ -107,6 +107,19 @@ varying float v_height;   // metres above the ring floor (v_h is normalised, no 
 varying vec2 v_ring;      // (arc, lat) -- needed in fragment for the splice-patch lookup
 varying float v_depth;    // metres below sea level (>0 = underwater); from the UNCLAMPED height
 
+float hash12(vec2 p) {
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+// value noise with a smoothstep fade -- continuous, so it mottles instead of tiling into squares
+float vnoise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = p - i;
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), f.x),
+		mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
 bool in_dem_bounds(vec2 uv) {
 	return uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0;
 }
@@ -295,11 +308,14 @@ void fragment() {
 	float d_cam = distance(cam_pos, v_world_pos);
 	float d_amt = detail_strength * (1.0 - smoothstep(0.0, detail_fade, d_cam));
 	if (d_amt > 0.001) {
+		// INTERPOLATED value noise, not floor()'d hash cells. The first version quantised to hard
+		// square cells, which reads as pixelation rather than ground -- the artefact looks like a
+		// resolution failure, which is precisely the impression this was meant to remove.
 		vec2 dq = v_ring / detail_scale;
-		float n1 = fract(sin(dot(floor(dq), vec2(127.1, 311.7))) * 43758.5453);
-		float n2 = fract(sin(dot(floor(dq * 0.31), vec2(269.5, 183.3))) * 43758.5453);
+		float g = (vnoise(dq) - 0.5) * 0.70
+			+ (vnoise(dq * 0.29 + 11.3) - 0.5) * 0.30
+			+ (vnoise(dq * 3.10 + 41.7) - 0.5) * 0.18;
 		// signed, mean-zero: this must not darken or brighten the ground overall, only break it up
-		float g = (n1 - 0.5) * 0.75 + (n2 - 0.5) * 0.25;
 		base *= 1.0 + g * d_amt;
 	}
 

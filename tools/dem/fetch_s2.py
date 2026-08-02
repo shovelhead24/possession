@@ -24,7 +24,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEST = os.path.normpath(os.path.join(HERE, "..", "..", "game", "mocks", "dem"))
 STAC = "https://earth-search.aws.element84.com/v1/search"
 
-OUT_W, OUT_H = 4096, 4096  # canvas ~20 m/px over the bbox — matches DEM detail scale
+# Sentinel-2 is 10 m/px native and a patch is ~84-97km, so ~8400px is the real information
+# content of the source. At 4096 we were storing ~24 m/px -- discarding well over half of what
+# the satellite actually resolves, and no amount of runtime upscaling gets it back (measured:
+# asking the runtime for 8192 off a 4096 canvas cost memory and time for nothing).
+# 8192 is ~11 m/px, essentially native. Costs ~4x the download and disk; as an S3TC texture it
+# still uses less VRAM than the 4096 raw drape did.
+OUT_W, OUT_H = 8192, 8192
 
 
 def stac_search():
