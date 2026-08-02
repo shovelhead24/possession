@@ -6,6 +6,7 @@ Usage: python fetch_osm_roads.py [location]
   location defaults to "millstreet" if omitted. Must match fetch_dem.py's LOCATIONS.
 """
 import io
+import struct
 import json
 import os
 import sys
@@ -88,6 +89,35 @@ def main(name):
     with open(os.path.join(DEST, f"{name}_roads.dat"), "wb") as f:
         f.write(buf.getvalue())
     img.resize((2048, 2048)).save(os.path.join(HERE, "out", f"{name}_roads_preview.png"))
+
+    # POLYLINES as well as the raster. The mask is right for drape and for "is this point on a road",
+    # but roadside hedging is a continuous ribbon following the centreline, and reconstructing a line
+    # by scattering objects over a blurred bitmap gives exactly what it sounds like: a dotted line of
+    # separate bushes. Written in the same patch-local metres the building records use.
+    meta_path = os.path.join(DEST, f"{name}.json")
+    if os.path.exists(meta_path):
+        meta = json.load(open(meta_path))
+        W, H, MPP = int(meta["w"]), int(meta["h"]), float(meta["m_per_px"])
+        lines = []
+        for way in ways:
+            g = way.get("geometry", [])
+            if len(g) < 2:
+                continue
+            pts = []
+            for node in g:
+                x, y = to_px(node["lat"], node["lon"])       # in SIZE-space
+                pts.append(((x / SIZE - 0.5) * W * MPP, (0.5 - y / SIZE) * H * MPP))
+            lines.append((WIDTHS.get(way.get("tags", {}).get("highway", ""), 1), pts))
+        out = os.path.join(DEST, f"{name}_roadlines.dat")
+        with open(out, "wb") as f:
+            f.write(b"RDL1")
+            f.write(struct.pack("<I", len(lines)))
+            for wdt, pts in lines:
+                f.write(struct.pack("<HH", wdt, len(pts)))
+                for px, py in pts:
+                    f.write(struct.pack("<2f", px, py))
+        print(f"wrote {name}_roadlines.dat: {len(lines)} ways, "
+              f"{sum(len(p) for _, p in lines)} points, {os.path.getsize(out)//1024} KB")
     print(f"wrote {name}_roads.dat ({len(buf.getvalue())//1_000_000} MB) + out/{name}_roads_preview.png")
 
 

@@ -66,6 +66,8 @@ var sun_paused := false
 
 var _cam: Camera3D
 var _hud: Label
+var _perf: Label = null
+var _perf_t := 0.0
 var _mat: ShaderMaterial          # far band material (ring_vibes.gdshader, unchanged)
 var _band: MeshInstance3D
 var _noise := FastNoiseLite.new() # far-band decorative ridge/noise fallback only (see _far_terrain_h)
@@ -116,8 +118,12 @@ const ROAD_ON := 0.14             # at/above this, it is road surface: nothing g
 const ROAD_NEAR := 0.03           # above this but below ROAD_ON: roadside, plant a hedge
 var _road_mask := PackedByteArray()
 const HEDGE_TEX := "res://mocks/tex/hedge.jpg"
-var _hedge_mmi: MultiMeshInstance3D = null
-var _hedge_xf: Array = []
+const HEDGE_RANGE := 2200.0       # metres of road either side of the camera that gets hedged
+const HEDGE_STEP := 11.0          # resample spacing along a centreline, metres
+const HEDGE_MAX_QUADS := 24000    # ceiling on the ribbon, so a dense junction cannot spike frame time
+var _hedge_mi: MeshInstance3D = null
+var _roadlines: Array = []
+var _hedge_quads := 0
 var _detail_tex: ImageTexture = null
 var dem_scale := 1.0  # [H] cycles 1..5 — real-height exaggeration (DEM branch only)
 
@@ -475,6 +481,20 @@ func _ready() -> void:
 	_hud.add_theme_constant_override("outline_size", 4)
 	_hud.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	hud_layer.add_child(_hud)
+	# always-on perf readout, top right, independent of [TAB]. Triangle count is the number that
+	# actually explains this scene's frame time, and it was invisible while we kept adding to it.
+	_perf = Label.new()
+	_perf.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_perf.anchor_left = 1.0
+	_perf.anchor_right = 1.0
+	_perf.offset_left = -300.0
+	_perf.offset_top = 12.0
+	_perf.offset_right = -12.0
+	_perf.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_perf.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+	_perf.add_theme_constant_override("outline_size", 4)
+	_perf.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	hud_layer.add_child(_perf)
 	# built here, not with the tuning panel below: _rebuild() populates it, so the container
 	# has to exist before _rebuild() runs or the menu comes up empty.
 	_build_warp_panel(hud_layer)
@@ -1225,6 +1245,7 @@ func _rebuild() -> void:
 	_lod_center_arc = _snap_lod_center()
 	_build_band(_lod_center_arc)
 	_build_walls()
+	_load_roadlines()   # before the scatter: that is what builds the ribbon
 	_scatter_trees()
 	_load_buildings()
 	_populate_warp_panel()
@@ -1425,6 +1446,17 @@ func _process(delta: float) -> void:
 		_tree_cd = TREE_RESCATTER_CD
 	_update_tree_lod()
 	_refill_buildings()
+	_perf_t -= delta
+	if _perf != null and _perf_t <= 0.0:
+		_perf_t = 0.25
+		var tris := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME)
+		var draws := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
+		_perf.text = "%d fps
+%s tris
+%d draws" % [
+			int(round(Engine.get_frames_per_second())),
+			("%.2fM" % (float(tris) / 1_000_000.0)) if tris > 1_000_000 else ("%dk" % (tris / 1000)),
+			draws]
 	# the band carries a hole where the CDLOD bubble sits, so it has to be rebuilt whenever the
 	# bubble moves to a new root. ~51k vertices of _far_terrain_h, so only on an actual change.
 	# ...but it costs ~430ms, and a root is only 65km, which at 20x fly speed is under a second.
@@ -1616,41 +1648,38 @@ func _hedge_texture() -> ImageTexture:
 	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)
 
-func _hedge_mesh() -> ArrayMesh:
-	# One segment: a hedgerow cross-section extruded along its own length. Unit sized, so the
-	# instance transform sets length / thickness / height and consecutive segments butt together.
-	# Six-sided profile rather than a box -- a flat-topped slab reads as a wall, and the shoulders
-	# are what say "hedge" at the distance you actually see one from a car.
-	var prof := [
-		Vector2(-0.5, 0.0), Vector2(-0.5, 0.52), Vector2(-0.30, 0.88),
-		Vector2(0.0, 1.0), Vector2(0.30, 0.88), Vector2(0.5, 0.52), Vector2(0.5, 0.0),
-	]
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var add := func(a: Vector3, b: Vector3, c: Vector3) -> void:
-		for v in [a, c, b]:
-			st.add_vertex(v)
-	for i in prof.size() - 1:
-		var p0: Vector2 = prof[i]
-		var p1: Vector2 = prof[i + 1]
-		var a := Vector3(-0.5, p0.y, p0.x)
-		var b := Vector3(0.5, p0.y, p0.x)
-		var c := Vector3(0.5, p1.y, p1.x)
-		var d := Vector3(-0.5, p1.y, p1.x)
-		add.call(a, b, c)
-		add.call(a, c, d)
-	# end caps, so a run that stops does not show hollow
-	for e in [-0.5, 0.5]:
-		for i in range(1, prof.size() - 2):
-			var t0 := Vector3(e, prof[0].y, 0.0)
-			var t1 := Vector3(e, prof[i].y, prof[i].x)
-			var t2 := Vector3(e, prof[i + 1].y, prof[i + 1].x)
-			if e < 0.0:
-				add.call(t0, t1, t2)
-			else:
-				add.call(t0, t2, t1)
-	st.generate_normals()
-	return st.commit()
+func _load_roadlines() -> void:
+	# Road CENTRELINES, patch-local metres, written alongside the raster mask by fetch_osm_roads.py.
+	# The mask stays the right tool for drape and for "am I on a road"; a hedgerow is a continuous
+	# ribbon along a line, and reconstructing a line by scattering objects over a blurred bitmap
+	# gives exactly what it sounds like -- a dotted line of separate bushes.
+	_roadlines = []
+	var path := "res://mocks/dem/%s_roadlines.dat" % DEM_R16.get_file().get_basename()
+	if not FileAccess.file_exists(path) or _dem_w == 0:
+		return
+	var b := FileAccess.get_file_as_bytes(path)
+	if b.size() < 8 or b.decode_u8(0) != 0x52 or b.decode_u8(1) != 0x44:   # "RD"
+		return
+	# home patch origin: camera_px, not the DEM centre (same offset the buildings use)
+	var ax := (float(_dem_w) * 0.5 - float(_dem_cam.x)) * _dem_mpp
+	var lx := (float(_dem_cam.y) - float(_dem_h) * 0.5) * _dem_mpp
+	var n := int(b.decode_u32(4))
+	var o := 8
+	for i in n:
+		if o + 4 > b.size():
+			break
+		var wdt := int(b.decode_u16(o))
+		var cnt := int(b.decode_u16(o + 2))
+		o += 4
+		var pts := PackedVector2Array()
+		for k in cnt:
+			if o + 8 > b.size():
+				break
+			pts.append(Vector2(b.decode_float(o) + ax, b.decode_float(o + 4) + lx))
+			o += 8
+		if pts.size() > 1:
+			_roadlines.append({"w": wdt, "pts": pts})
+	print("ring_vibes: %d road centrelines loaded" % _roadlines.size())
 
 func _build_hedges() -> void:
 	var mat := StandardMaterial3D.new()
@@ -1660,31 +1689,124 @@ func _build_hedges() -> void:
 	if ResourceLoader.exists(HEDGE_TEX):
 		tex = load(HEDGE_TEX) as Texture2D
 	mat.albedo_texture = tex if tex != null else _hedge_texture()
-	mat.uv1_triplanar = true          # no UV authoring needed on an extruded profile
-	mat.uv1_scale = Vector3(0.35, 0.35, 0.35)
+	mat.uv1_triplanar = true
+	mat.uv1_scale = Vector3(0.4, 0.4, 0.4)
 	mat.roughness = 1.0
 	mat.metallic_specular = 0.0
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = _hedge_mesh()
-	mm.mesh.surface_set_material(0, mat)
-	_hedge_mmi = MultiMeshInstance3D.new()
-	_hedge_mmi.multimesh = mm
-	_hedge_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(_hedge_mmi)
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_hedge_mi = MeshInstance3D.new()
+	_hedge_mi.material_override = mat
+	_hedge_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_hedge_mi)
 
-func _road_tangent(arc: float, lat: float) -> Vector2:
-	# Direction the road runs, from the mask gradient. The gradient points across the road (the mask
-	# rises toward the carriageway), so the tangent is its perpendicular. Without this every hedge
-	# segment took a random yaw and the "hedgerow" was a scatter of blocks at angles to each other,
-	# which is most of what read as jagged.
-	var d := 12.0
-	var gx := _road_at(arc + d, lat) - _road_at(arc - d, lat)
-	var gz := _road_at(arc, lat + d) - _road_at(arc, lat - d)
-	var g := Vector2(gx, gz)
-	if g.length_squared() < 1e-9:
-		return Vector2(1.0, 0.0)
-	return Vector2(-g.y, g.x).normalized()
+func _build_hedge_ribbon() -> void:
+	# ONE mesh, built by walking each road centreline near the camera and extruding a hedge profile
+	# up either side of it. A Cork boreen is a continuous green bank, not a row of shrubs -- and a
+	# ribbon is also far cheaper than the scatter it replaces: ~5,600 instances at ~40 tris each
+	# became a few thousand triangles total.
+	if _hedge_mi == null or _roadlines.is_empty():
+		return
+	var cam := _cam.global_position
+	var r := _radius()
+	var here := Vector2(atan2(cam.x, r - cam.y) * r, cam.z)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var quads := 0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 99
+	for line in _roadlines:
+		var pts: PackedVector2Array = line["pts"]
+		var off: float = 3.2 + float(line["w"]) * 2.6   # half carriageway + verge
+		var prev := []
+		var prev_ok := false
+		for i in pts.size() - 1:
+			var p0: Vector2 = pts[i]
+			var p1: Vector2 = pts[i + 1]
+			if (minf(p0.x, p1.x) - here.x > HEDGE_RANGE or here.x - maxf(p0.x, p1.x) > HEDGE_RANGE
+					or minf(p0.y, p1.y) - here.y > HEDGE_RANGE or here.y - maxf(p0.y, p1.y) > HEDGE_RANGE):
+				prev_ok = false
+				continue
+			# RESAMPLE. OSM puts a node only where a road changes direction, so a straight run can be
+			# 200m between points -- and a hedge drawn straight between them cuts through every rise
+			# in between. Step it at HEDGE_STEP so the ribbon follows the ground.
+			var seg := p1 - p0
+			var len_m := seg.length()
+			if len_m < 0.01:
+				continue
+			var steps: int = maxi(1, int(ceil(len_m / HEDGE_STEP)))
+			var tg := seg / len_m
+			var nrm := Vector2(-tg.y, tg.x)
+			for k in steps + 1:
+				var p := p0 + seg * (float(k) / float(steps))
+				if absf(p.x - here.x) > HEDGE_RANGE or absf(p.y - here.y) > HEDGE_RANGE:
+					prev_ok = false
+					continue
+				var cur := [p - nrm * off, p + nrm * off]
+				if prev_ok:
+					for side in 2:
+						_hedge_span(st, prev[side], cur[side], rng)
+						quads += 4
+				prev = cur
+				prev_ok = true
+				if quads > HEDGE_MAX_QUADS:
+					break
+			if quads > HEDGE_MAX_QUADS:
+				break
+		if quads > HEDGE_MAX_QUADS:
+			break
+	if quads == 0:
+		_hedge_mi.mesh = null
+		_hedge_quads = 0
+		return
+	st.generate_normals()
+	_hedge_mi.mesh = st.commit()
+	_hedge_quads = quads
+
+func _hedge_span(st: SurfaceTool, a: Vector2, b: Vector2, rng: RandomNumberGenerator) -> void:
+	# one length of hedge between two centreline offsets: a trapezoid section swept along the run.
+	# Height wobbles a little per span so the top is not a machined line.
+	var ha := _surface_pos(a.x, a.y)
+	var hb := _surface_pos(b.x, b.y)
+	var ua := _ring_up(ha)
+	var ub := _ring_up(hb)
+	var dir := (b - a)
+	if dir.length_squared() < 1e-6:
+		return
+	dir = dir.normalized()
+	# lateral offset in the ring frame: perpendicular to the run, in the local tangent plane
+	var la := _ring_lateral(ua, dir)
+	var lb := _ring_lateral(ub, dir)
+	var w := rng.randf_range(0.9, 1.35)
+	var h1 := rng.randf_range(1.7, 2.5)
+	var h2 := rng.randf_range(1.7, 2.5)
+	# profile: base wide, shoulder, narrower top -- the shape a flail-cut roadside hedge holds
+	var a0 := ha - la * w
+	var a1 := ha + la * w
+	var b0 := hb - la * w
+	var b1 := hb + la * w
+	var a0s := ha - la * w * 0.85 + ua * h1 * 0.55
+	var a1s := ha + la * w * 0.85 + ua * h1 * 0.55
+	var b0s := hb - lb * w * 0.85 + ub * h2 * 0.55
+	var b1s := hb + lb * w * 0.85 + ub * h2 * 0.55
+	var at := ha + ua * h1
+	var bt := hb + ub * h2
+	_hedge_quad(st, a0, b0, b0s, a0s)      # lower flank, one side
+	_hedge_quad(st, a0s, b0s, bt, at)      # upper flank to the ridge
+	_hedge_quad(st, a1s, b1s, b1, a1)      # lower flank, other side
+	_hedge_quad(st, at, bt, b1s, a1s)      # upper flank to the ridge
+
+func _ring_lateral(up: Vector3, dir: Vector2) -> Vector3:
+	# unit vector across the run, in the ground plane at this point
+	var ax := up.cross(Vector3.FORWARD).normalized()
+	if ax.length_squared() < 0.25:
+		ax = up.cross(Vector3.RIGHT).normalized()
+	var az := ax.cross(up).normalized()
+	var along := (ax * dir.x + az * dir.y).normalized()
+	return along.cross(up).normalized()
+
+func _hedge_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+	for v in [a, c, b, a, d, c]:
+		st.add_vertex(v)
 
 func _scatter_trees() -> void:
 	# conifers clumped by noise into woods + clearings, in a patch near spawn. Placed analytically
@@ -1719,7 +1841,6 @@ func _scatter_trees() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1234
 	var n_road := 0
-	_hedge_xf = []
 	var n_hedge := 0
 	var arc := -FOREST_HALF
 	while arc <= FOREST_HALF:
@@ -1747,24 +1868,13 @@ func _scatter_trees() -> void:
 				if ok:
 					var ground := _surface_pos(jx, jz)
 					var up := _ring_up(ground)
-					var up_t := up
-					var ax_t := up.cross(Vector3.FORWARD).normalized()
-					var az_t := ax_t.cross(up).normalized()
-					# A roadside cell becomes a HEDGE SEGMENT aligned to the road, except for the odd
-					# standard tree left to grow out of the line. Segments are a little longer than
-					# the scatter step so consecutive ones overlap into a continuous run.
-					var standard := rng.randf() < 0.09
-					if side and not standard:
-						var tg := _road_tangent(jx, jz)
-						var hx := (ax_t * tg.x + az_t * tg.y).normalized()
-						var hz := up_t.cross(hx).normalized()
-						_hedge_xf.append(Transform3D(
-							Basis(hx * rng.randf_range(9.5, 12.0), up_t * rng.randf_range(1.9, 2.9),
-								hz * rng.randf_range(1.3, 2.0)),
-							ground - up_t * 0.25))
-						n_hedge += 1
+					# The roadside ribbon owns the hedge now, so a roadside cell only ever contributes the
+					# occasional standard tree grown out of the line -- the rest would be inside the ribbon.
+					if side and rng.randf() > 0.09:
 						lat += 8.0
 						continue
+					if side:
+						n_hedge += 1
 					var sc: float = _tree_scale * tmul * rng.randf_range(0.8, 1.3)
 					var basis := Basis()
 					basis.y = up
@@ -1778,12 +1888,12 @@ func _scatter_trees() -> void:
 						n_hedge += 1
 			lat += 8.0
 		arc += 8.0
-	if _hedge_mmi == null:
+	if _hedge_mi == null:
 		_build_hedges()
-	_fill_mm(_hedge_mmi, _hedge_xf)
+	_build_hedge_ribbon()
 	_update_tree_lod(true)
-	print("ring_vibes: %d trees placed (%d variants x %d LODs) — %d hedgerow, %d rejected on road (mask %d KB)"
-		% [_tree_ground.size(), _tree_nvar, TREE_LODS, n_hedge, n_road, _road_mask.size() / 1024])
+	print("ring_vibes: %d trees placed (%d variants x %d LODs) — %d standards, %d off-road, %d hedge quads"
+		% [_tree_ground.size(), _tree_nvar, TREE_LODS, n_hedge, n_road, _hedge_quads])
 
 func _fill_mm(mmi: MultiMeshInstance3D, xfs: Array) -> void:
 	if mmi == null: return
