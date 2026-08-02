@@ -273,8 +273,22 @@ const HIRES_RES := 1536       # streamed height resolution
 # cheap there, whereas heights cost a GDScript decode loop per texel. 2048^2 RGB is ~12.6MB each;
 # with the height field that is ~35MB resident for the active patch, comfortable on shared-memory UHD.
 # (The home patch still uses its native 4096^2 imagery, so it remains slightly ahead.)
-const HIRES_TEX_RES := 4096   # matches the Sentinel-2 source exactly (24 m/px over an 84km patch);
-                              # 2048 was throwing away half the imagery we had already fetched
+# VRAM compression for the streamed drape. A PNG is compressed on DISK and then decompressed to
+# raw pixels in VRAM -- 4096^2 RGB8 is 50MB there no matter how small the file was. DXT/BPTC stay
+# compressed in memory and are decoded per-sample by the texture unit, so the saving is permanent
+# and free to read. [U] cycles them so they can be compared on the actual GPU rather than argued
+# about: DXT1 is 8x smaller than RGBA8 but blocky on gradients, BPTC is 4x and much closer to
+# lossless. Satellite imagery is high-frequency and noisy, which hides block artefacts well.
+enum TexMode { RAW, S3TC, BPTC }
+var _tex_mode: int = TexMode.RAW
+var _tex_step := 0
+var _tex_bytes := 0            # actual bytes of the streamed colour image, whatever the format
+# Matches the Sentinel-2 canvas fetch_s2.py writes (OUT_W/H = 4096), i.e. ~24 m/px over an 84km
+# patch. Going above this in the runtime only interpolates -- the extra pixels carry no
+# information. Real detail needs OUT_W/H raised and the imagery refetched; S2 is 10 m/px native,
+# so 8192 would be a genuine 2x and, as S3TC, would cost 32MB against the 48MB 4096-raw costs now.
+# A var rather than a const so a refetched patch can be tested without a rebuild.
+var hires_tex_res := 4096
 var _hires_tex: ImageTexture = null
 var _hires_col_tex: ImageTexture = null
 var _hires_detail_tex: ImageTexture = null
@@ -506,6 +520,10 @@ func _ready() -> void:
 	if _load_tree_lods():
 		pass  # _scatter_trees() runs inside _rebuild() below
 	_rebuild()
+	if "--texprobe" in OS.get_cmdline_user_args():
+		# nothing streams at spawn: the home DEM is not a splice patch, so _patch_at returns
+		# -1 and the streaming tier never engages. Warp into one so there is something to measure.
+		_warp_to(0)
 	if _dem_w > 0:
 		_cam.position.y = _terrain_h(0.0, 0.0) + 40.0  # spawn just above Millstreet
 
@@ -830,16 +848,23 @@ func _hires_decode(idx: int) -> void:
 			if FileAccess.file_exists(base + "_sat.dat"):
 				var ci := Image.new()
 				if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
-					ci.resize(HIRES_TEX_RES, HIRES_TEX_RES, Image.INTERPOLATE_LANCZOS)
+					ci.resize(hires_tex_res, hires_tex_res, Image.INTERPOLATE_LANCZOS)
 					ci.convert(Image.FORMAT_RGB8)
+					# compressing a 4096^2 is seconds of work -- it belongs here on the worker task,
+					# not on the frame that swaps the texture in
+					if _tex_mode == TexMode.S3TC:
+						ci.compress(Image.COMPRESS_S3TC, Image.COMPRESS_SOURCE_SRGB)
+					elif _tex_mode == TexMode.BPTC:
+						ci.compress(Image.COMPRESS_BPTC, Image.COMPRESS_SOURCE_SRGB)
 					out["col"] = ci
+					out["col_bytes"] = ci.get_data().size()
 			# full-res gradient normals, same asset the home patch uses. These were generated for
 			# every patch all along (export_to_game.py always writes them) and simply never loaded,
 			# which is why only the starting area had fine relief.
 			if FileAccess.file_exists(base + "_detail.dat"):
 				var di := Image.new()
 				if di.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_detail.dat")) == OK:
-					di.resize(HIRES_TEX_RES, HIRES_TEX_RES, Image.INTERPOLATE_LANCZOS)
+					di.resize(hires_tex_res, hires_tex_res, Image.INTERPOLATE_LANCZOS)
 					di.convert(Image.FORMAT_RGB8)
 					out["detail"] = di
 	_hires_result = out
@@ -856,6 +881,12 @@ func _hires_poll() -> void:
 		if r.get("ok", false) and int(r.get("idx", -1)) == _hires_pending:
 			_hires_tex = ImageTexture.create_from_image(r["img"])
 			_hires_col_tex = ImageTexture.create_from_image(r["col"]) if r.has("col") else null
+			_tex_bytes = int(r.get("col_bytes", 0))
+			if "--texprobe" in OS.get_cmdline_user_args():
+				print("TEXPROBE mode=%s res=%d bytes=%d (%.1f MB, RGB8 would be %.1f MB)" % [
+					["raw", "s3tc", "bptc"][_tex_mode], hires_tex_res, _tex_bytes,
+					float(_tex_bytes) / 1048576.0,
+					float(hires_tex_res * hires_tex_res * 3) / 1048576.0])
 			_hires_detail_tex = ImageTexture.create_from_image(r["detail"]) if r.has("detail") else null
 			_hires_idx = int(r["idx"])
 			_hires_field = r["field"]
@@ -1281,6 +1312,18 @@ func _rebuild() -> void:
 	_lod_center_arc = _snap_lod_center()
 	_build_band(_lod_center_arc)
 	_build_walls()
+	_report_tex_support()
+	# `-- --tex s3tc|bptc` picks a mode at launch, so all three can be measured without a human
+	# holding [U] down and reading a HUD
+	var _ua := OS.get_cmdline_user_args()
+	var _ti := _ua.find("--tex")
+	if _ti >= 0 and _ti + 1 < _ua.size():
+		match _ua[_ti + 1]:
+			"s3tc": _tex_mode = TexMode.S3TC
+			"bptc": _tex_mode = TexMode.BPTC
+	var _ri := _ua.find("--texres")
+	if _ri >= 0 and _ri + 1 < _ua.size():
+		hires_tex_res = int(_ua[_ri + 1])
 	_load_roadlines()   # before the scatter: that is what builds the ribbon
 	_scatter_trees()
 	_load_buildings()
@@ -1688,6 +1731,13 @@ func _hedge_texture() -> ImageTexture:
 			img.set_pixel(x, y, Color(0.10 + v * 0.22, 0.17 + v * 0.42, 0.07 + v * 0.16))
 	img.generate_mipmaps()
 	return ImageTexture.create_from_image(img)
+
+func _report_tex_support() -> void:
+	# asked, not assumed -- this targets the Compatibility renderer on Intel integrated, where a
+	# missing format means Godot silently decompresses on the CPU and the saving evaporates
+	print("ring_vibes: texture compression — s3tc %s, bptc %s, etc2 %s" % [
+		RenderingServer.has_os_feature("s3tc"), RenderingServer.has_os_feature("bptc"),
+		RenderingServer.has_os_feature("etc2")])
 
 func _load_roadlines() -> void:
 	# Road CENTRELINES, patch-local metres, written alongside the raster mask by fetch_osm_roads.py.
@@ -2488,6 +2538,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_M: _show_lod = not _show_lod
 			KEY_N: _haze_off = not _haze_off
 			KEY_Y: _probe_on = not _probe_on; _update_hud()
+			KEY_U:
+				# raw -> s3tc -> bptc, all at 4096. NOT 8192: fetch_s2.py writes a 4096 canvas, so asking
+				# for more here interpolates pixels that carry no information -- measurably slower to
+				# stream, measurably more memory, and not one extra thing visible on the ground.
+				_tex_step = (_tex_step + 1) % 3
+				_tex_mode = [TexMode.RAW, TexMode.S3TC, TexMode.BPTC][_tex_step]
+				_hires_idx = -1   # force a re-stream so the change is visible where you stand
+				_update_hud()
 			KEY_COMMA: _jump_splice(-1)
 			KEY_PERIOD: _jump_splice(1)
 			KEY_TAB: _hud_full = not _hud_full; _update_hud()
@@ -2611,10 +2669,14 @@ func _probe_text() -> String:
 			t["tier"], f.call(t["home"]), f.call(t["hires"]), f.call(t["array"]), f.call(t["proc"])],
 		"        terrain_h %.1f   TIER DISAGREEMENT %.1f m %s" % [
 			ground, worst, "  <-- objects will float/sink by this" if worst > 2.0 else ""],
+		"        texture [U] %s   %d^2 colour = %.1f MB in VRAM   (RGB8 would be %.1f MB)" % [
+			["RAW RGB8", "S3TC / DXT1", "BPTC / BC7"][_tex_mode], hires_tex_res,
+			float(_tex_bytes) / 1048576.0,
+			float(hires_tex_res * hires_tex_res * 3) / 1048576.0],
 		"        stream: %s @ %d^2 heights, colour %s   road mask %s" % [
 			(_patch_names[_hires_idx] if _hires_idx >= 0 else "none"),
 			_hires_res,
-			("%d^2" % HIRES_TEX_RES) if _hires_col_tex != null else "NONE (array 512^2 -> smeared)",
+			("%d^2" % hires_tex_res) if _hires_col_tex != null else "NONE (array 512^2 -> smeared)",
 			("%d^2" % ROAD_RES) if not _road_mask.is_empty() else "none (home patch only)"],
 	])
 
