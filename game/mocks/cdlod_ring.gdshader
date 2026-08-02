@@ -89,6 +89,14 @@ uniform bool ocean_enabled = true;
 uniform float sea_level = 0.5;
 uniform vec3 shallow_col : source_color = vec3(0.18, 0.42, 0.45);
 uniform vec3 deep_col : source_color = vec3(0.04, 0.10, 0.20);
+// CLOSE-RANGE DETAIL. The satellite drape is 4096^2 over a ~97km patch, i.e. 23.7 m per texel, and
+// Sentinel-2 is only 10m natively -- so no fetch resolution we can afford puts real texture under
+// your feet. Standing on it, one texel covers more ground than the car. The drape's job is the
+// large-scale pattern (fields, woodland, roads); the close-up has to come from a tiled layer that
+// MODULATES it rather than replacing it, so the satellite still decides what colour this ground is.
+uniform float detail_scale = 3.5;      // metres per detail cell
+uniform float detail_strength = 0.30;
+uniform float detail_fade = 260.0;     // metres over which it fades out
 
 varying float v_h;
 varying vec3 v_n;
@@ -282,6 +290,19 @@ void fragment() {
 			base = mix(base, pc, 0.9 * feather);
 		}
 	}
+	// tiled ground detail, faded in over the last few hundred metres. Two octaves off the ring
+	// coordinate itself (metres), so it does not swim, tile visibly against the drape, or need UVs.
+	float d_cam = distance(cam_pos, v_world_pos);
+	float d_amt = detail_strength * (1.0 - smoothstep(0.0, detail_fade, d_cam));
+	if (d_amt > 0.001) {
+		vec2 dq = v_ring / detail_scale;
+		float n1 = fract(sin(dot(floor(dq), vec2(127.1, 311.7))) * 43758.5453);
+		float n2 = fract(sin(dot(floor(dq * 0.31), vec2(269.5, 183.3))) * 43758.5453);
+		// signed, mean-zero: this must not darken or brighten the ground overall, only break it up
+		float g = (n1 - 0.5) * 0.75 + (n2 - 0.5) * 0.25;
+		base *= 1.0 + g * d_amt;
+	}
+
 	// ocean: colour by depth over the (already flattened) surface. Shoreline is feathered over the
 	// first couple of metres so coasts don't end on a hard line.
 	bool is_water = ocean_enabled && v_depth > 0.0;
