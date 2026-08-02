@@ -118,9 +118,12 @@ const ROAD_ON := 0.14             # at/above this, it is road surface: nothing g
 const ROAD_NEAR := 0.03           # above this but below ROAD_ON: roadside, plant a hedge
 var _road_mask := PackedByteArray()
 const HEDGE_TEX := "res://mocks/tex/hedge.jpg"
-const HEDGE_RANGE := 2200.0       # metres of road either side of the camera that gets hedged
+# 2200m needed ~42k quads to cover rural Cork road density and so ran into the cap, which breaks
+# out of the build in list order rather than by distance -- meaning the road you are ON can go
+# unhedged while one 2km away is done. 1400m covers completely inside the budget.
+const HEDGE_RANGE := 1400.0       # metres of road either side of the camera that gets hedged
 const HEDGE_STEP := 11.0          # resample spacing along a centreline, metres
-const HEDGE_MAX_QUADS := 24000    # ceiling on the ribbon, so a dense junction cannot spike frame time
+const HEDGE_MAX_QUADS := 30000    # ceiling on the ribbon, so a dense junction cannot spike frame time
 var _hedge_mi: MeshInstance3D = null
 var _roadlines: Array = []
 var _hedge_quads := 0
