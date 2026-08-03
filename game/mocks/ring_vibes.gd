@@ -280,15 +280,15 @@ const HIRES_RES := 1536       # streamed height resolution
 # about: DXT1 is 8x smaller than RGBA8 but blocky on gradients, BPTC is 4x and much closer to
 # lossless. Satellite imagery is high-frequency and noisy, which hides block artefacts well.
 enum TexMode { RAW, S3TC, BPTC }
-var _tex_mode: int = TexMode.RAW
-var _tex_step := 0
+var _tex_mode: int = TexMode.S3TC   # measured 8MB vs 48MB at 4096; [U] to compare
+var _tex_step := 1   # matches the S3TC default above
 var _tex_bytes := 0            # actual bytes of the streamed colour image, whatever the format
 # Matches the Sentinel-2 canvas fetch_s2.py writes (OUT_W/H = 4096), i.e. ~24 m/px over an 84km
 # patch. Going above this in the runtime only interpolates -- the extra pixels carry no
 # information. Real detail needs OUT_W/H raised and the imagery refetched; S2 is 10 m/px native,
 # so 8192 would be a genuine 2x and, as S3TC, would cost 32MB against the 48MB 4096-raw costs now.
 # A var rather than a const so a refetched patch can be tested without a rebuild.
-var hires_tex_res := 4096
+var hires_tex_res := 8192   # CAP, not a target -- see the resize in _hires_decode
 var _hires_tex: ImageTexture = null
 var _hires_col_tex: ImageTexture = null
 var _hires_detail_tex: ImageTexture = null
@@ -848,7 +848,12 @@ func _hires_decode(idx: int) -> void:
 			if FileAccess.file_exists(base + "_sat.dat"):
 				var ci := Image.new()
 				if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
-					ci.resize(hires_tex_res, hires_tex_res, Image.INTERPOLATE_LANCZOS)
+					# Never upsample. Take the smaller of the cap and what the file actually contains, so a
+					# patch refetched at 8192 gets 8192 and one still on the old 4096 canvas stays 4096 --
+					# rather than inventing pixels, which measurably cost memory and stream time for nothing.
+					var tgt: int = mini(hires_tex_res, mini(ci.get_width(), ci.get_height()))
+					if ci.get_width() != tgt or ci.get_height() != tgt:
+						ci.resize(tgt, tgt, Image.INTERPOLATE_LANCZOS)
 					ci.convert(Image.FORMAT_RGB8)
 					# compressing a 4096^2 is seconds of work -- it belongs here on the worker task,
 					# not on the frame that swaps the texture in
@@ -2669,10 +2674,10 @@ func _probe_text() -> String:
 			t["tier"], f.call(t["home"]), f.call(t["hires"]), f.call(t["array"]), f.call(t["proc"])],
 		"        terrain_h %.1f   TIER DISAGREEMENT %.1f m %s" % [
 			ground, worst, "  <-- objects will float/sink by this" if worst > 2.0 else ""],
-		"        texture [U] %s   %d^2 colour = %.1f MB in VRAM   (RGB8 would be %.1f MB)" % [
-			["RAW RGB8", "S3TC / DXT1", "BPTC / BC7"][_tex_mode], hires_tex_res,
+		"        texture [U] %s   colour = %.1f MB in VRAM   (RGB8 would be %.1f MB)" % [
+			["RAW RGB8", "S3TC / DXT1", "BPTC / BC7"][_tex_mode],
 			float(_tex_bytes) / 1048576.0,
-			float(hires_tex_res * hires_tex_res * 3) / 1048576.0],
+			float(_tex_bytes) * (6.0 if _tex_mode == TexMode.S3TC else (3.0 if _tex_mode == TexMode.BPTC else 1.0)) / 1048576.0],
 		"        stream: %s @ %d^2 heights, colour %s   road mask %s" % [
 			(_patch_names[_hires_idx] if _hires_idx >= 0 else "none"),
 			_hires_res,
