@@ -1,0 +1,55 @@
+WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+   at: looking_at (core/math/basis.cpp:1044)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+   at: looking_at (core/math/basis.cpp:1044)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+   at: looking_at (core/math/basis.cpp:1044)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+   at: looking_at (core/math/basis.cpp:1044)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+WARNING: Target and up vectors are colinear. This is not advised as it may cause unwanted rotation around local Z axis.
+   at: looking_at (core/math/basis.cpp:1044)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+ERROR: Node origin and target are in the same position, look_at() failed.
+   at: look_at_from_position (scene/3d/node_3d.cpp:1231)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+ERROR: Node origin and target are in the same position, look_at() failed.
+   at: look_at_from_position (scene/3d/node_3d.cpp:1231)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+ERROR: Node origin and target are in the same position, look_at() failed.
+   at: look_at_from_position (scene/3d/node_3d.cpp:1231)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+ERROR: Node origin and target are in the same position, look_at() failed.
+   at: look_at_from_position (scene/3d/node_3d.cpp:1231)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+ERROR: Node origin and target are in the same position, look_at() failed.
+   at: look_at_from_position (scene/3d/node_3d.cpp:1231)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
+ERROR: Node origin and target are in the same position, look_at() failed.
+   at: look_at_from_position (scene/3d/node_3d.cpp:1231)
+   GDScript backtrace (most recent call first):
+       [0] _drive_tick (res://mocks/ring_vibes.gd:2426)
+       [1] _process (res://mocks/ring_vibes.gd:1519)
