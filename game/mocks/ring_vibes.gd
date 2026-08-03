@@ -2654,16 +2654,30 @@ func _probe_text() -> String:
 	var alt: float = r - Vector2(cam.x, r - cam.y).length()
 	var f := func(v) -> String:
 		return "     -  " if is_nan(float(v)) else "%8.1f" % float(v)
-	# disagreement between the tier in use and the next one down is the number that matters: it is
-	# exactly the gap that objects fall through
+	# WHICH disagreement matters. Objects only fall through a gap when the CPU and the shader
+	# resolve to different tiers -- and they now share their selection rule, so they should not.
+	# A difference between the tier in use and one nobody is reading is not an error: the array
+	# averages over a far wider footprint than the stream, so on steep ground they legitimately
+	# answer differently. Flagging that as a fault made the probe cry wolf at Big Sur.
 	var chosen := float(ground)
-	var others := []
-	for k in ["home", "hires", "array"]:
-		if not is_nan(float(t[k])) and str(t["tier"]).to_lower() != k:
-			others.append(absf(float(t[k]) - chosen))
 	var worst: float = 0.0
-	for d in others:
-		worst = maxf(worst, float(d))
+	var idle: float = 0.0
+	for k in ["home", "hires", "array"]:
+		if is_nan(float(t[k])) or str(t["tier"]).to_lower() == k:
+			continue
+		idle = maxf(idle, absf(float(t[k]) - chosen))
+	# the shader picks home -> hires -> array by the same tests; if that ever diverges from what
+	# _terrain_h_raw just did, THAT is the bug, and it is what this line is watching for
+	var gpu_tier := "procedural"
+	if not is_nan(float(t["home"])):
+		gpu_tier = "HOME"
+	elif not is_nan(float(t["hires"])):
+		gpu_tier = "HIRES"
+	elif not is_nan(float(t["array"])):
+		gpu_tier = "ARRAY"
+	var agree: bool = gpu_tier == str(t["tier"])
+	if not agree:
+		worst = idle
 	return "\n".join([
 		"PROBE   arc %.0f (%.2f%%)  lat %.0f   cam alt %.1f m   above ground %.1f m" % [
 			arc, 100.0 * fposmod(arc, CIRCUMFERENCES[c_idx]) / CIRCUMFERENCES[c_idx],
@@ -2672,8 +2686,12 @@ func _probe_text() -> String:
 			t["pi"], t["name"], t["own"], t["rect"], t["offset"], dem_scale],
 		"        answering: %s     home %s  hires %s  array %s  proc %s" % [
 			t["tier"], f.call(t["home"]), f.call(t["hires"]), f.call(t["array"]), f.call(t["proc"])],
-		"        terrain_h %.1f   TIER DISAGREEMENT %.1f m %s" % [
-			ground, worst, "  <-- objects will float/sink by this" if worst > 2.0 else ""],
+		"        terrain_h %.1f   CPU %s / GPU %s %s" % [
+			ground, t["tier"], gpu_tier,
+			("AGREE" if agree else "MISMATCH %.1f m <-- objects WILL float/sink" % worst)],
+		"        idle-tier spread %.1f m %s" % [idle,
+			"(nothing reads it here; wider averaging footprint on steep ground)" if agree
+			else "(and the two sides disagree about which to use)"],
 		"        texture [U] %s   colour = %.1f MB in VRAM   (RGB8 would be %.1f MB)" % [
 			["RAW RGB8", "S3TC / DXT1", "BPTC / BC7"][_tex_mode],
 			float(_tex_bytes) / 1048576.0,
