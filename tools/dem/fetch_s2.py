@@ -40,7 +40,12 @@ def stac_search():
         "datetime": "2023-04-01T00:00:00Z/2026-06-30T23:59:59Z",
         "query": {"eo:cloud_cover": {"lt": 45}},
         "sortby": [{"field": "properties.eo:cloud_cover", "direction": "asc"}],
-        "limit": 30,
+        # 30 was too few for a patch spanning more than one MGRS tile: sorted purely by cloud
+        # cover, all 30 can come from the SAME tile and the rest of the bbox never gets filled.
+        # Cape Peninsula straddles two and came out 57.9% covered, the remainder falling back to
+        # flat tint. The loop already stops early once filled.all(), so a bigger pool costs
+        # nothing when the first few scenes are enough.
+        "limit": 120,
     }
     req = urllib.request.Request(
         STAC, json.dumps(body).encode(), {"Content-Type": "application/json"})
