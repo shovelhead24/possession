@@ -7,6 +7,7 @@ _sat.dat is already 8192 is skipped, so re-running picks up where it stopped.
 
 usage:  python refetch_s2_8k.py [--dry] [names...]
 """
+import json
 import os
 import struct
 import subprocess
@@ -30,6 +31,24 @@ def png_size(path):
         return None
 
 
+def current(name, dem_km):
+    """Is this patch's drape both 8192 AND covering the ground its heightfield covers?
+
+    Checking resolution alone is not enough. Every patch was briefly 8192 and wrong, because
+    fetch_s2.py run directly uses the AUTHORED bbox while the heights were exported against a
+    re-centred ~90km one -- so the drape was the central ~22km stretched over the whole patch. A
+    driver that only looked at pixel count skipped all 39 as finished.
+    """
+    side = os.path.join(DEST, name + "_sat.json")
+    if not os.path.exists(side):
+        return False
+    try:
+        d = json.load(open(side))
+    except (OSError, ValueError):
+        return False
+    return int(d.get("px", 0)) >= TARGET and abs(float(d.get("span_km", 0)) - dem_km) < 5.0
+
+
 def main():
     import fetch_dem as fd
     names = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -40,8 +59,9 @@ def main():
     for n in names:
         if not os.path.exists(os.path.join(DEST, n + ".json")):
             continue                       # never exported; nothing to drape
-        sz = png_size(os.path.join(DEST, n + "_sat.dat"))
-        (done if sz and sz[0] >= TARGET else todo).append(n)
+        meta = json.load(open(os.path.join(DEST, n + ".json")))
+        dem_km = meta["w"] * meta["m_per_px"] / 1000.0
+        (done if current(n, dem_km) else todo).append(n)
 
     print("already at %d: %d  (%s)" % (TARGET, len(done), ", ".join(done) or "-"))
     print("to fetch: %d  (~%.1f h at 33 min each)\n" % (len(todo), len(todo) * 33 / 60.0))

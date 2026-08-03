@@ -55,6 +55,22 @@ def stac_search():
 
 def main(name):
     fd.set_location(name)
+    # MATCH THE HEIGHTFIELD, ALWAYS. set_location() gives the AUTHORED bbox, but the exported patch
+    # was re-centred to a uniform footprint by pipeline.py (which sets fd.PATCH_SIZE_KM before
+    # calling). Running this script directly therefore silently fetched imagery for a different --
+    # usually far smaller -- piece of ground than the heights cover: for most patches the authored
+    # box is ~22km against a ~90km patch, so the drape came out 4x too zoomed and geographically
+    # wrong everywhere but the centre. It looked like a successful fetch, and overwrote good data.
+    # Deriving the span from the exported .json makes the two agree by construction rather than by
+    # the caller remembering a flag.
+    meta_path = os.path.join(DEST, f"{name}.json")
+    if os.path.exists(meta_path):
+        meta = json.load(open(meta_path))
+        span_km = meta["w"] * meta["m_per_px"] / 1000.0
+        fd._expand_bbox(span_km)
+        print(f"bbox matched to the exported heightfield: {span_km:.1f} km across")
+    else:
+        print("WARNING: no {name}.json — using the authored bbox, which may not match any export")
     items = stac_search()
     print(f"{len(items)} candidate scenes (sorted by cloud cover)")
     canvas = np.zeros((OUT_H, OUT_W, 3), dtype=np.uint8)
@@ -105,6 +121,13 @@ def main(name):
     os.makedirs(DEST, exist_ok=True)
     with open(os.path.join(DEST, f"{name}_sat.dat"), "wb") as f:
         f.write(buf.getvalue())
+    # Record what this drape actually covers. Resolution alone is not enough to tell whether a
+    # sat.dat is current: every patch was briefly 8192 AND wrong, fetched against the authored
+    # bbox instead of the exported one. A driver that checks only pixel count would skip all of
+    # them as done.
+    json.dump({"px": OUT_W, "span_km": round((fd.LAT_MAX - fd.LAT_MIN) * 111.32, 2)},
+        open(os.path.join(DEST, f"{name}_sat.json"), "w"))
+
     print(f"coverage {100.0*filled.mean():.1f}%  wrote {name}_sat.dat "
           f"({len(buf.getvalue())//1_000_000} MB) + out/{name}_s2_preview.jpg")
 
