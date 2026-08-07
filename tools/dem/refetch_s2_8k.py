@@ -68,19 +68,31 @@ def main():
     if "--dry" in sys.argv:
         return
 
-    t0 = time.time()
+    worked = []
     for i, n in enumerate(todo, 1):
+        tp = time.time()
         print("[%d/%d] %s ..." % (i, len(todo), n), flush=True)
         r = subprocess.run([sys.executable, os.path.join(HERE, "fetch_s2.py"), n],
                            capture_output=True, text=True, cwd=HERE)
         tail = [l for l in r.stdout.splitlines() if "coverage" in l or "wrote" in l]
         print("      %s" % (tail[-1] if tail else "FAILED rc=%d %s"
                             % (r.returncode, r.stderr.strip()[-200:])), flush=True)
-        el = (time.time() - t0) / 60.0
-        print("      elapsed %.0f min, ~%.0f min left\n"
-              % (el, el / i * (len(todo) - i)), flush=True)
+        # Time the WORK, not the wall clock. This machine sleeps, and a run that had done 4 patches
+        # in 2.6 hours of real effort reported "4 in 94 hours, 47 days remaining" across a 3.8-day
+        # suspend -- so I stopped a job that was performing exactly to estimate. Per-patch durations
+        # are immune to that: a gap far longer than any patch has ever taken is a suspend, not work.
+        dt = time.time() - tp
+        if dt < 4 * 3600:
+            worked.append(dt)
+        else:
+            print("      (%.1f h gap -- machine slept; not counted toward the rate)" % (dt / 3600.0))
+        if worked:
+            avg = sum(worked) / len(worked) / 60.0
+            print("      %.0f min for this one, %.0f min avg, ~%.0f min of work left\n"
+                  % (dt / 60.0, avg, avg * (len(todo) - i)), flush=True)
         time.sleep(5)
-    print("done in %.1f h" % ((time.time() - t0) / 3600.0))
+    print("done: %.1f h of actual fetching across %d patches"
+          % (sum(worked) / 3600.0, len(worked)))
 
 
 if __name__ == "__main__":

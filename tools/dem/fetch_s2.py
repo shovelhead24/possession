@@ -125,7 +125,8 @@ def main(name):
     # sat.dat is current: every patch was briefly 8192 AND wrong, fetched against the authored
     # bbox instead of the exported one. A driver that checks only pixel count would skip all of
     # them as done.
-    json.dump({"px": OUT_W, "span_km": round((fd.LAT_MAX - fd.LAT_MIN) * 111.32, 2)},
+    json.dump({"px": OUT_W, "span_km": round((fd.LAT_MAX - fd.LAT_MIN) * 111.32, 2),
+               "coverage": round(100.0 * float(filled.mean()), 1)},
         open(os.path.join(DEST, f"{name}_sat.json"), "w"))
 
     print(f"coverage {100.0*filled.mean():.1f}%  wrote {name}_sat.dat "
