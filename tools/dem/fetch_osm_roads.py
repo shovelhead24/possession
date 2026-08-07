@@ -48,6 +48,9 @@ def to_px(lat, lon):
 
 def main(name):
     fd.set_location(name)
+    span = fd.match_export(name)   # authored bbox != exported patch; see fetch_dem.match_export
+    print("bbox matched to the exported heightfield: %s"
+          % ("%.1f km" % span if span else "NO EXPORT — using authored bbox"))
     req = urllib.request.Request(
         "https://overpass-api.de/api/interpreter",
         ("data=" + urllib.parse.quote(build_query())).encode(),

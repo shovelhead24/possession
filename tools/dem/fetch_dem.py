@@ -441,6 +441,31 @@ def _expand_bbox(size_km):
     LON_MIN, LON_MAX = clon - dlon / 2.0, clon + dlon / 2.0
 
 
+def match_export(name, dest=None):
+    """Re-centre the active bbox onto the ground the EXPORTED patch actually covers.
+
+    set_location() gives the AUTHORED bbox, but pipeline.py re-centres every patch to a uniform
+    footprint before exporting heights -- so for most patches the authored box is ~22km against a
+    ~90km patch. Any fetcher that skips this silently pulls data for a different, usually much
+    smaller, piece of ground and maps it across the whole patch. That produced 32 satellite drapes
+    4x too zoomed, all reporting success. Roads and buildings had the same defect.
+
+    Call this straight after set_location() in every fetcher. Returns the span in km, or None if
+    the patch has not been exported yet.
+    """
+    import json as _json
+    if dest is None:
+        dest = os.path.normpath(os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "..", "..", "game", "mocks", "dem"))
+    meta_path = os.path.join(dest, "%s.json" % name)
+    if not os.path.exists(meta_path):
+        return None
+    meta = _json.load(open(meta_path))
+    span_km = meta["w"] * meta["m_per_px"] / 1000.0
+    _expand_bbox(span_km)
+    return span_km
+
+
 def set_location(name):
     global LAT_MIN, LAT_MAX, LON_MIN, LON_MAX, ZOOM, MARKERS, LOCATION_NAME
     loc = LOCATIONS[name]

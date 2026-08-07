@@ -149,6 +149,9 @@ def footprint(tags, rng):
 
 def main(name, limit, force):
     fd.set_location(name)
+    span = fd.match_export(name)   # authored bbox != exported patch; see fetch_dem.match_export
+    print("bbox matched to the exported heightfield: %s"
+          % ("%.1f km" % span if span else "NO EXPORT — using authored bbox"))
     os.makedirs(CACHE, exist_ok=True)
     os.makedirs(DEST, exist_ok=True)
     raw_path = os.path.join(CACHE, "%s_bldg.json" % name)
