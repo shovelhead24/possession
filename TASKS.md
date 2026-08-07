@@ -19,6 +19,21 @@ Rules:
 - [ ] **Image-review patches 11–20** — same.
 - [ ] **Image-review patches 21–30** — same.
 - [ ] **Image-review patches 31–39** — same.
+- [ ] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
+      patch; do junctions mesh or interpenetrate; do they follow the ground or float; do they sit on
+      the correct side of the carriageway. Read the PNGs, do not assume.
+- [ ] **Hedge variety.** One profile and one texture everywhere is wrong. Needs: type per biome
+      (Irish blackthorn bank vs Mediterranean dry-stone-and-scrub vs tropical none), height/width
+      variation along a run, gaps and gateways, and the odd wall instead of hedge.
+- [ ] **Vegetation model imports.** The fir pack is the only tree asset and it is doing Java, Cape
+      fynbos and Lofoten birch scrub via a colour tint. Import proper species; check
+      `assets/grass_pack_of_9_vars_lowpoly_game_ready.zip` and `low_poly_red_spruce_tree...zip`
+      which are unused.
+- [ ] **Triangle budget.** 727k tris / 13 fps at ground level in the home patch, trees dominating
+      (24k instances, 24k billboards). Profile per system, then cut. Driving at 13 fps is not fun.
+- [ ] **Rolling wheels.** The car's wheels do not turn or steer. Also suspension travel over the
+      terrain it now follows correctly.
+- [ ] **Vehicle variety.** One box car. `assets/halo_warthog.zip` exists and is unused.
 - [ ] **Offroad feel.** Particle/dust when the car leaves the carriageway (`_road_at` already gives
       the trigger), plus grip and camera-shake difference on/off road. Off-roading is meant to be a
       real mode, not a punishment.

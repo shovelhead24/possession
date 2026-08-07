@@ -531,6 +531,8 @@ func _ready() -> void:
 		_run_selftest()
 	if OS.get_cmdline_user_args().has("--align"):
 		_align_sweep()
+	if OS.get_cmdline_user_args().has("--shots"):
+		_shot_run()
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
 	_clouds.ring_radius = _radius()   # must be set BEFORE _ready() builds the bent sheets
 	_clouds.ring_width = WIDTHS[w_idx]
@@ -745,6 +747,73 @@ func _build_dem_texture() -> void:
 	print("ring_vibes: DEM texture %dx%d, mpp=%.1f" % [dw, dh, _dem_hf_mpp])
 
 const ALIGN_N := 11               # grid resolution per patch for --align
+
+func _shot_run() -> void:
+	# `-- --shots [patch,patch,...]` warps to each patch, waits for its stream, and writes a set of
+	# framings to logs/shots/. Exists so I can LOOK at my own work instead of shipping it and
+	# waiting to be told it is wrong -- which is how the inside-out houses, the pixelated ground,
+	# the scattered hedges and the misaligned drape all reached the screen.
+	await get_tree().create_timer(1.5).timeout
+	var dir := "res://../logs/shots"
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
+	var args := OS.get_cmdline_user_args()
+	var want: Array = []
+	var si := args.find("--shots")
+	if si >= 0 and si + 1 < args.size() and not args[si + 1].begins_with("--"):
+		want = Array(args[si + 1].split(","))
+	if want.is_empty():
+		want = ["millstreet", "dordogne", "java_majapahit", "halong_bay"]
+
+	for pname in want:
+		var idx := _patch_names.find(pname)
+		if idx < 0 and pname != "millstreet":
+			print("SHOT skip %s (not loaded)" % pname)
+			continue
+		if pname == "millstreet":
+			_warp_to(-1)
+		else:
+			_warp_to(idx)
+		# let the stream land, or the shot shows the 512 array tier and proves nothing
+		var waited := 0.0
+		while _hires_idx != idx and waited < 20.0 and idx >= 0:
+			await get_tree().create_timer(0.5).timeout
+			waited += 0.5
+		# ground level, looking along -- the framing that actually shows roads, hedges and scale
+		var r := _radius()
+		var cam := _cam.global_position
+		var arc: float = atan2(cam.x, r - cam.y) * r
+		var lat: float = cam.z
+		# clean frames: the HUD is not the thing being reviewed, and a shot taken inside a tree
+		# tells you nothing. Step off the exact scatter centre before framing.
+		if _hud: _hud.visible = false
+		if _perf: _perf.visible = false
+		arc += 60.0
+		for shot in [
+				{"n": "ground", "h": 2.2, "pitch": -0.04, "fov": 70.0},
+				{"n": "road", "h": 6.0, "pitch": -0.18, "fov": 60.0},
+				{"n": "air", "h": 400.0, "pitch": -0.55, "fov": 70.0},
+			]:
+			_cam.position = _ring_pos(arc / r, lat, _terrain_h(arc, lat) + float(shot["h"]))
+			_cam.fov = float(shot["fov"])
+			_look = Vector2(0.0, float(shot["pitch"]))
+			_apply_look()
+			_scatter_trees()
+			_refill_buildings(true)
+			_build_hedge_ribbon()
+			# two frames: one to submit the new transforms, one to render them
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+			var img := get_viewport().get_texture().get_image()
+			var path := "%s/%s_%s.png" % [dir, pname, shot["n"]]
+			img.save_png(path)
+			print("SHOT %-18s %-7s tris=%d fps=%d  %s" % [
+				pname, shot["n"],
+				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
+				int(Engine.get_frames_per_second()), path])
+	if _hud: _hud.visible = true
+	if _perf: _perf.visible = true
+	print("SHOTS done")
+	get_tree().quit()
 
 func _align_sweep() -> void:
 	# `-- --align` sweeps a GRID of sample points across every patch and checks that the CPU and the
