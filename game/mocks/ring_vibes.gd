@@ -196,40 +196,40 @@ const PATCHES := [
 	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0, "weather": "overcast"},
 	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.36, 0.40, 0.24), "trees": 0.5, "tree_hi": 400.0, "weather": "fresh"},
 	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.26, 0.36, 0.20), "trees": 0.6, "tree_hi": 900.0, "weather": "fresh"},
-	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "overcast"},
+	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "storm"},
 	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh"},
 	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.36, 0.42, 0.32), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast"},
 	# fynbos, not forest -- scrub to the waterline on both oceans, and almost no trees
 	{"name": "cape_peninsula", "arc_pct": 0.280, "tint": Color(0.38, 0.38, 0.28), "trees": 0.15, "tree_hi": 700.0, "weather": "clear"},
-	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
-	{"name": "scablands", "arc_pct": 0.336, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
-	{"name": "loop_head", "arc_pct": 0.364, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 250.0, "weather": "overcast"},
-	{"name": "monument_valley", "arc_pct": 0.392, "tint": Color(0.62, 0.38, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
-	{"name": "atacama", "arc_pct": 0.420, "tint": Color(0.58, 0.44, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
-	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "clear"},
-	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.26, 0.34, 0.24), "trees": 0.4, "tree_hi": 500.0, "weather": "overcast"},
-	{"name": "palawan", "arc_pct": 0.504, "tint": Color(0.18, 0.28, 0.20), "trees": 0.9, "tree_hi": 900.0, "weather": "overcast", "style": "meru", "foliage": Color(1.05, 1.02, 0.66), "tree_mul": 1.3},
-	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.46, 0.44, 0.28), "trees": 0.05, "tree_hi": 1900.0, "weather": "clear"},
+	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
+	{"name": "scablands", "arc_pct": 0.336, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
+	{"name": "loop_head", "arc_pct": 0.364, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 250.0, "weather": "storm"},
+	{"name": "monument_valley", "arc_pct": 0.392, "tint": Color(0.62, 0.38, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
+	{"name": "atacama", "arc_pct": 0.420, "tint": Color(0.58, 0.44, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
+	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
+	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.26, 0.34, 0.24), "trees": 0.4, "tree_hi": 500.0, "weather": "monsoon"},
+	{"name": "palawan", "arc_pct": 0.504, "tint": Color(0.18, 0.28, 0.20), "trees": 0.9, "tree_hi": 900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.05, 1.02, 0.66), "tree_mul": 1.3},
+	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.46, 0.44, 0.28), "trees": 0.05, "tree_hi": 1900.0, "weather": "cirrus"},
 	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh"},
-	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "overcast"},
+	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "storm"},
 	{"name": "priests_leap", "arc_pct": 0.616, "tint": Color(0.28, 0.34, 0.26), "trees": 0.5, "tree_hi": 450.0, "weather": "overcast"},
-	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.34, 0.34, 0.26), "trees": 0.5, "tree_hi": 700.0, "weather": "overcast"},
+	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.34, 0.34, 0.26), "trees": 0.5, "tree_hi": 700.0, "weather": "storm"},
 	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.50, 0.48, 0.46), "trees": 0.7, "tree_hi": 2000.0, "weather": "fresh"},
 	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.40, 0.42, 0.38), "trees": 0.7, "tree_hi": 1500.0, "weather": "fresh"},
-	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0, "weather": "overcast"},
+	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0, "weather": "storm"},
 	{"name": "olympic_forest", "arc_pct": 0.756, "tint": Color(0.14, 0.24, 0.16), "trees": 1.0, "tree_hi": 1200.0, "weather": "overcast"},
-	{"name": "borneo_highland", "arc_pct": 0.784, "tint": Color(0.16, 0.28, 0.16), "trees": 1.0, "tree_hi": 2500.0, "weather": "overcast"},
-	{"name": "costa_rica_jungle", "arc_pct": 0.812, "tint": Color(0.16, 0.30, 0.18), "trees": 1.0, "tree_hi": 2000.0, "weather": "overcast"},
-	{"name": "tepui", "arc_pct": 0.840, "tint": Color(0.24, 0.32, 0.24), "trees": 0.5, "tree_hi": 1500.0, "weather": "overcast"},
-	{"name": "iceland_highland", "arc_pct": 0.868, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "overcast"},
-	{"name": "badlands_sd", "arc_pct": 0.896, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "clear"},
+	{"name": "borneo_highland", "arc_pct": 0.784, "tint": Color(0.16, 0.28, 0.16), "trees": 1.0, "tree_hi": 2500.0, "weather": "monsoon"},
+	{"name": "costa_rica_jungle", "arc_pct": 0.812, "tint": Color(0.16, 0.30, 0.18), "trees": 1.0, "tree_hi": 2000.0, "weather": "monsoon"},
+	{"name": "tepui", "arc_pct": 0.840, "tint": Color(0.24, 0.32, 0.24), "trees": 0.5, "tree_hi": 1500.0, "weather": "monsoon"},
+	{"name": "iceland_highland", "arc_pct": 0.868, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "storm"},
+	{"name": "badlands_sd", "arc_pct": 0.896, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "cirrus"},
 	# East Java: teak over volcanic ash, Arjuno-Welirang at 3,339m, and Trowulan -- a living town
 	# sitting on the Majapahit capital. Tropical treeline runs high, so the massif is wooded almost
 	# to the summit. "style": meru gives it tiered roofs instead of the default gable.
-	{"name": "java_majapahit", "arc_pct": 0.924, "tint": Color(0.17, 0.27, 0.16), "trees": 1.0, "tree_hi": 2900.0, "weather": "overcast", "style": "meru", "foliage": Color(1.06, 1.02, 0.62), "tree_mul": 1.45},
-	{"name": "halong_bay", "arc_pct": 0.952, "tint": Color(0.20, 0.30, 0.22), "trees": 0.7, "tree_hi": 600.0, "weather": "overcast", "style": "meru", "foliage": Color(1.02, 1.03, 0.72), "tree_mul": 1.1},
+	{"name": "java_majapahit", "arc_pct": 0.924, "tint": Color(0.17, 0.27, 0.16), "trees": 1.0, "tree_hi": 2900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.06, 1.02, 0.62), "tree_mul": 1.45},
+	{"name": "halong_bay", "arc_pct": 0.952, "tint": Color(0.20, 0.30, 0.22), "trees": 0.7, "tree_hi": 600.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.02, 1.03, 0.72), "tree_mul": 1.1},
 	# arctic: birch scrub in the shelter of the fjords, bare rock above it
-	{"name": "lofoten", "arc_pct": 0.980, "tint": Color(0.34, 0.36, 0.32), "trees": 0.08, "tree_hi": 250.0, "weather": "overcast"},
+	{"name": "lofoten", "arc_pct": 0.980, "tint": Color(0.34, 0.36, 0.32), "trees": 0.08, "tree_hi": 250.0, "weather": "storm"},
 ]
 const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
 const HOME_TREE_HI := 600.0
@@ -529,6 +529,8 @@ func _ready() -> void:
 
 	if OS.get_cmdline_user_args().has("--selftest"):
 		_run_selftest()
+	if OS.get_cmdline_user_args().has("--align"):
+		_align_sweep()
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
 	_clouds.ring_radius = _radius()   # must be set BEFORE _ready() builds the bent sheets
 	_clouds.ring_width = WIDTHS[w_idx]
@@ -741,6 +743,90 @@ func _build_dem_texture() -> void:
 	_dem_hf_mpp = _dem_mpp * 2.0
 	_dem_hf_cam = Vector2(float(_dem_cam.x) * 0.5, float(_dem_cam.y) * 0.5)
 	print("ring_vibes: DEM texture %dx%d, mpp=%.1f" % [dw, dh, _dem_hf_mpp])
+
+const ALIGN_N := 11               # grid resolution per patch for --align
+
+func _align_sweep() -> void:
+	# `-- --align` sweeps a GRID of sample points across every patch and checks that the CPU and the
+	# shader would resolve to the same height tier at each one. The [Y] probe only ever answers for
+	# the point the camera happens to occupy, which is exactly why this class of bug kept surviving:
+	# every fix looked correct where I was standing. Ownership boundaries, the streamed patch's own
+	# rect edge, and the lat clamp are all places the two sides can diverge, and none of them are
+	# where you naturally stand.
+	await get_tree().create_timer(1.0).timeout
+	print("\nALIGN: %d patches, %dx%d samples each" % [_patch_rects.size(), ALIGN_N, ALIGN_N])
+	var bad_total := 0
+	var worst_all := 0.0
+	var worst_where := ""
+	for i in _patch_rects.size():
+		var r: Vector4 = _patch_rects[i]
+		var own: float = _patch_own[i] if i < _patch_own.size() else r.z
+		var lat_lim: float = minf(r.w, WIDTHS[w_idx] * 0.47)
+		var bad := 0
+		var worst := 0.0
+		var sea := 0
+		# sample right out to the ownership edge -- the interior was never the problem
+		for gy in ALIGN_N:
+			for gx in ALIGN_N:
+				var fx := (float(gx) / float(ALIGN_N - 1)) * 2.0 - 1.0
+				var fy := (float(gy) / float(ALIGN_N - 1)) * 2.0 - 1.0
+				var arc: float = r.x + fx * own * 0.995
+				var lat: float = r.y + fy * lat_lim * 0.995
+				var t := _probe_tiers(arc, lat)
+				# what the shader's sample_h_raw would pick, in its order
+				var gpu := "procedural"
+				if not is_nan(float(t["home"])):
+					gpu = "HOME"
+				elif not is_nan(float(t["hires"])):
+					gpu = "HIRES"
+				elif not is_nan(float(t["array"])):
+					gpu = "ARRAY"
+				if gpu != str(t["tier"]):
+					bad += 1
+					var g := _terrain_h(arc, lat)
+					var o: float = float(t[gpu.to_lower()]) if not is_nan(float(t.get(gpu.to_lower(), NAN))) else g
+					worst = maxf(worst, absf(o - g))
+				if _terrain_h(arc, lat) <= SEA_LEVEL + 0.5:
+					sea += 1
+		bad_total += bad
+		if worst > worst_all:
+			worst_all = worst
+			worst_where = str(_patch_names[i])
+		var tag := "ok" if bad == 0 else ("MISMATCH x%d, worst %.1fm" % [bad, worst])
+		print("ALIGN  %-18s arc %5.1f%%  own +-%5.0fm  sea %3d%%   %s" % [
+			_patch_names[i], 100.0 * r.x / CIRCUMFERENCES[c_idx], own,
+			100 * sea / (ALIGN_N * ALIGN_N), tag])
+	print("ALIGN: %d/%d sample points disagree about which tier to use%s" % [
+		bad_total, _patch_rects.size() * ALIGN_N * ALIGN_N,
+		"" if bad_total == 0 else ("   worst %.1fm in %s" % [worst_all, worst_where])])
+	# second pass: do OBJECTS sit on the surface? placement and drawing share _terrain_h, so this is
+	# checking the thing that actually reaches the screen rather than the thing I keep reasoning about
+	var float_bad := 0
+	var float_worst := 0.0
+	var i2 := 0
+	while i2 < _bldg.size():
+		var gh := _terrain_h(_bldg[i2], _bldg[i2 + 1])
+		if gh > SEA_LEVEL + 0.5:
+			var hw: float = _bldg[i2 + 2] * 0.5
+			var hd: float = _bldg[i2 + 3] * 0.5
+			var yc := cos(_bldg[i2 + 4])
+			var ys := sin(_bldg[i2 + 4])
+			var top := -1e20
+			var low := 1e20
+			for sx in [-1.0, 1.0]:
+				for sz in [-1.0, 1.0]:
+					var c := _terrain_h(_bldg[i2] + sx * hw * yc - sz * hd * ys,
+						_bldg[i2 + 1] + sx * hw * ys + sz * hd * yc)
+					top = maxf(top, c)
+					low = minf(low, c)
+			# the undercroft is one building-height deep, so a drop bigger than that shows daylight
+			if top - low > _bldg[i2 + 5]:
+				float_bad += 1
+				float_worst = maxf(float_worst, top - low)
+		i2 += 6
+	print("ALIGN: %d/%d buildings on ground steeper than their undercroft can cover (worst %.1fm drop)"
+		% [float_bad, _bldg.size() / 6, float_worst])
+	get_tree().quit()
 
 func _run_selftest() -> void:
 	# `--selftest` (after a -- separator) walks every loaded splice and reports whether the

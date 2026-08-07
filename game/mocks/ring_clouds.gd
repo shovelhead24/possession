@@ -56,8 +56,26 @@ const WEATHER_PRESETS := {                               # per-layer [coverage, 
 	# rather than storm-dark; the live sliders are the real answer for dialling this in.
 	"overcast": {"layers": [[0.74, 0.11], [0.70, 0.11], [0.62, 0.12], [0.50, 0.14], [0.38, 0.15]],
 				 "brightness": 0.95, "self_shadow": 0.28},
+	# --- added 2026-08-04, once the portfolio stopped being all temperate --------------------
+	# The coverage array is a VERTICAL PROFILE (800m cumulus -> 3200m cirrus), which the first
+	# three only ever used as a single dial from empty to full. These use its shape.
+	#
+	# high thin streaks with nothing underneath: the arid sky, which is not the same as "clear"
+	# -- an empty sky reads as missing, a cirrus sky reads as dry.
+	"cirrus":   {"layers": [[0.00, 0.24], [0.00, 0.26], [0.03, 0.30], [0.16, 0.30], [0.46, 0.28]],
+				 "brightness": 1.18, "self_shadow": 0.86, "alpha": [0.85, 0.70, 0.60, 0.62, 0.68]},
+	# the dark one overcast deliberately is not. Overcast in life is bright-but-flat; this is
+	# the low, heavy, genuinely dim sky, weighted to the bottom of the stack.
+	"storm":    {"layers": [[0.90, 0.08], [0.86, 0.09], [0.72, 0.10], [0.52, 0.12], [0.28, 0.14]],
+				 "brightness": 0.52, "self_shadow": 0.14, "alpha": [1.0, 1.0, 0.95, 0.80, 0.60]},
+	# tropical: heavy below, a gap, then bright tops. That re-rise at the top layer is what
+	# gives towering build-ups instead of a lid -- the profile the equator actually has, and
+	# what java, palawan and halong were wearing temperate overcast for want of.
+	"monsoon":  {"layers": [[0.82, 0.09], [0.66, 0.12], [0.40, 0.18], [0.46, 0.16], [0.62, 0.13]],
+				 "brightness": 0.88, "self_shadow": 0.20, "alpha": [1.0, 0.92, 0.72, 0.80, 0.86]},
 }
-const WEATHER_NAMES := ["clear", "fresh", "overcast"]   # [Z] cycles light -> heavy
+# [Z] cycles these in order, so keep them sorted light -> heavy
+const WEATHER_NAMES := ["clear", "cirrus", "fresh", "monsoon", "overcast", "storm"]
 # Arc extent is what lets the deck reach the horizon: at 120km a 1000m cloud sits 0.48 deg above
 # horizontal (vs 4.1 deg at the old 14km, which is why it visibly stopped short of the horizon).
 # Only possible because the sheet now bends with the ring -- see cloud_layer_shader.gdshader.

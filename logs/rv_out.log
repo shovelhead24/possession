@@ -3,27 +3,3 @@ OpenGL API 3.3.0 - Build 31.0.101.2137 - Compatibility - Using Device: Intel - I
 
 ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x3840  sat_tex: yes
 ring_vibes: DEM texture 1920x1920, mpp=46.9
-ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
-ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
-ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (799 ms)
-ring_vibes: texture compression — s3tc true, bptc true, etc2 false
-ring_vibes: 13674 road centrelines loaded
-ring_vibes: 25309 trees placed (3 variants x 4 LODs) — 1036 standards, 3389 off-road, 8656 hedge quads
-ring_vibes: millstreet — 47438 of 59966 buildings kept (12528 fell outside the 50km ring width)
-ring_vibes: big_sur — 5215 of 6895 buildings kept (1680 fell outside the 50km ring width)
-ring_vibes: cape_peninsula — 5247 of 7766 buildings kept (2519 fell outside the 50km ring width)
-ring_vibes: palawan — 5819 of 10164 buildings kept (4345 fell outside the 50km ring width)
-ring_vibes: java_majapahit — 32533 of 59997 buildings kept (27464 fell outside the 50km ring width)
-ring_vibes: halong_bay — 2066 of 2129 buildings kept (63 fell outside the 50km ring width)
-ring_vibes: lofoten — 21385 of 25330 buildings kept (3945 fell outside the 50km ring width)
-ring_vibes: buildings in range at arc 0 lat 0 -> style0=292, style1=0
-ring_vibes: 119703 OSM buildings loaded (2 styles)
-ring_vibes: 4088 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: buildings in range at arc 834000 lat 18000 -> style0=2471, style1=0
-ring_vibes: warped to cape_peninsula (settlement) (27.8% arc)
-ring_vibes: far band rebuilt around arc 786 km (627 ms)
-ring_vibes: 1184 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: buildings in range at arc 834000 lat 18000 -> style0=2480, style1=0
-ring_vibes: streamed cape_peninsula @ 1536^2 — re-placed objects onto the new tier
-ring_vibes: 2050 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
