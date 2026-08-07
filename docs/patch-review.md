@@ -83,6 +83,26 @@ It takes the *worst* marker, so any patch with markers spanning a route scores b
 `millstreet` reads 44.7 km because its markers are the two ends of a road. Should use the camera
 anchor, or the mean. Not fixed yet.
 
+## Pass 2 — patches 1–10 alphabetical (2026-08-08)
+
+Imaged: `cairngorms`, `danube_delta`. The other eight measure consistent with their authored
+values, so by the rule in TASKS.md ("read the image before changing a biome number") they were not
+imaged and not changed.
+
+**`cairngorms` — corrected.** Heather moor throughout, forestry confined to the straths, bare
+granite plateau in the middle. `trees` 0.5 → 0.25 (roughly double the real canopy); `tree_hi`
+700 → 550 m (plantations stop well below the old ceiling); tint browner.
+
+**`danube_delta` — holds, with two defects.** The census's 92.2% vegetation is reed bed, not
+canopy, so `trees: 0.1` is correct and stays. But:
+
+1. **64% of it renders as ocean.** Delta land sits at 0–2 m and `SEA_LEVEL` is 0.5 m, so most of
+   the marsh is below the clamp. The heightfield says 63.8% sea; the imagery shows roughly 25%
+   water. In game this patch is mostly sea when it should be reed bed. Needs a per-patch sea
+   offset, which is a change beyond a biome number — not made.
+2. **Severe mosaic seams**, worse than mongolia's — whole rectangular blocks at different
+   exposure, very visible over the water. Same root cause: `fetch_s2.py` colour-matches nothing.
+
 ## Open
 
 - Re-run after the 8192 refetch completes; several previews are still the old canvas.

@@ -198,7 +198,9 @@ const PATCHES := [
 	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.26, 0.36, 0.20), "trees": 0.6, "tree_hi": 900.0, "weather": "fresh"},
 	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "storm"},
 	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh"},
-	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.36, 0.42, 0.32), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast"},
+	# imaged 2026-08-08: the 92% "vegetation" the census measures is REED BED, not canopy, so
+	# trees 0.1 is right and stays. Two defects logged instead -- see docs/patch-review.md.
+	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.30, 0.34, 0.24), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast"},
 	# fynbos, not forest -- scrub to the waterline on both oceans, and almost no trees
 	{"name": "cape_peninsula", "arc_pct": 0.280, "tint": Color(0.38, 0.38, 0.28), "trees": 0.15, "tree_hi": 700.0, "weather": "clear"},
 	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
@@ -213,7 +215,10 @@ const PATCHES := [
 	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh"},
 	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "storm"},
 	{"name": "priests_leap", "arc_pct": 0.616, "tint": Color(0.28, 0.34, 0.26), "trees": 0.5, "tree_hi": 450.0, "weather": "overcast"},
-	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.34, 0.34, 0.26), "trees": 0.5, "tree_hi": 700.0, "weather": "storm"},
+	# imaged 2026-08-08: heather moor throughout, forestry confined to the straths, bare granite
+	# plateau in the middle. Authored trees 0.5 was roughly double the real canopy, and the
+	# plantations stop well under the old 700m ceiling.
+	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.30, 0.27, 0.18), "trees": 0.25, "tree_hi": 550.0, "weather": "storm"},
 	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.50, 0.48, 0.46), "trees": 0.7, "tree_hi": 2000.0, "weather": "fresh"},
 	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.40, 0.42, 0.38), "trees": 0.7, "tree_hi": 1500.0, "weather": "fresh"},
 	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0, "weather": "storm"},

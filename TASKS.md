@@ -13,7 +13,7 @@ Rules:
 
 ## Now
 
-- [ ] **Image-review patches 1–10** (alphabetical from `atacama`). For each: read
+- [x] **Image-review patches 1–10** (alphabetical from `atacama`). For each: read
       `out/<name>_s2_preview.jpg`, confirm or correct `trees` / `tint` / `tree_hi` / `weather` in
       `PATCHES`, note seams or artefacts. Append findings to `docs/patch-review.md`.
 - [ ] **Image-review patches 11–20** — same.
@@ -42,6 +42,8 @@ Rules:
       `--force`.
 - [ ] **Hedgerows + verge everywhere.** Once `*_roadlines.dat` exists for all patches, the ribbon
       and the tree-clearing currently only run on the home patch — generalise past `millstreet`.
+- [ ] **Per-patch sea level.** danube_delta renders 64% ocean because delta land sits at 0-2m
+      under a global 0.5m SEA_LEVEL. Any low-lying patch has this. Needs a per-patch offset.
 - [ ] **Colour-match scenes at paste time** in `fetch_s2.py`. `mongolia_steppe` shows obvious
       rectangular seams where scenes of different balance were pasted.
 - [ ] **Reject building sites on cliffs.** `--align` says 8,235 of 119,703 sit on ground steeper
