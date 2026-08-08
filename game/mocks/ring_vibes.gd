@@ -215,7 +215,10 @@ const PATCHES := [
 	# tint was green where the dominant half is brown.
 	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.30, 0.26, 0.19), "trees": 0.4, "tree_hi": 500.0, "weather": "monsoon"},
 	{"name": "palawan", "arc_pct": 0.504, "tint": Color(0.18, 0.28, 0.20), "trees": 0.9, "tree_hi": 900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.05, 1.02, 0.66), "tree_mul": 1.3},
-	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.46, 0.44, 0.28), "trees": 0.05, "tree_hi": 1900.0, "weather": "cirrus"},
+	# imaged: olive-brown semi-arid, finely dissected, no tree in 93km. trees 0.05 confirmed --
+	# the census reads 80% "vegetation" here because excess-green fires on khaki. tint nudged
+	# warmer to the measured mean; tree_hi is vestigial at this density.
+	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.44, 0.40, 0.26), "trees": 0.05, "tree_hi": 1900.0, "weather": "cirrus"},
 	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh"},
 	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "storm"},
 	{"name": "priests_leap", "arc_pct": 0.616, "tint": Color(0.28, 0.34, 0.26), "trees": 0.5, "tree_hi": 450.0, "weather": "overcast"},

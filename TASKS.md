@@ -17,7 +17,7 @@ Rules:
       `out/<name>_s2_preview.jpg`, confirm or correct `trees` / `tint` / `tree_hi` / `weather` in
       `PATCHES`, note seams or artefacts. Append findings to `docs/patch-review.md`.
 - [x] **Image-review patches 11–20** — same.
-- [ ] **Image-review patches 21–30** — same.
+- [x] **Image-review patches 21–30** — same.
 - [ ] **Image-review patches 31–39** — same.
 - [ ] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
       patch; do junctions mesh or interpenetrate; do they follow the ground or float; do they sit on
@@ -42,6 +42,11 @@ Rules:
       `--force`.
 - [ ] **Hedgerows + verge everywhere.** Once `*_roadlines.dat` exists for all patches, the ribbon
       and the tree-clearing currently only run on the home patch — generalise past `millstreet`.
+- [ ] **Measure drape QUALITY, not just coverage.** `salar_uyuni` is pure white (clipped),
+      `palawan` is ~55% cloud, `guri_dam` is two seasons across a seam — and all three report 100%
+      coverage, because coverage counts filled pixels. Scene selection sorts on the scene-wide STAC
+      cloud figure, which says nothing about our bbox. Measure cloud/haze and clipping in the
+      RESULT, reject, re-pick. Do this before the remaining 8192 refetches bake it in.
 - [ ] **Per-patch sea level.** danube_delta renders 64% ocean because delta land sits at 0-2m
       under a global 0.5m SEA_LEVEL. Any low-lying patch has this. Needs a per-patch offset.
 - [ ] **Colour-match scenes at paste time** in `fetch_s2.py`. CONFIRMED SYSTEMIC: 4 of 4

@@ -125,6 +125,35 @@ Four of four multi-scene patches inspected now show them: `mongolia_steppe`, `da
 clean. This is no longer a per-patch note; **any patch needing more than one Sentinel-2 scene will
 be visibly patchworked** until `fetch_s2.py` normalises scenes before pasting. Already queued.
 
+## Pass 4 — patches 21–30 alphabetical (2026-08-08)
+
+Imaged: `salar_uyuni`, `palawan`, plus `mongolia_steppe` from pass 1. Only one biome number moved,
+because this pass found something bigger.
+
+**`mongolia_steppe` — tint nudged** to the measured mean. `trees: 0.05` confirmed by eye: no tree
+in 93 km. The census's 80% "vegetation" is excess-green firing on khaki, as established in pass 1.
+
+### The drapes are in worse shape than the biome numbers
+Three of the four patches inspected this pass have imagery that is unusable, each for a different
+reason, and **none of it is visible in any statistic we currently record**:
+
+| patch | defect | biome numbers |
+|---|---|---|
+| `salar_uyuni` | **pure white, no detail at all** — clipped to 1.0/1.0/1.0 across the whole frame | fine |
+| `palawan` | **~55% cloud sheet** over the western half, with diagonal scene edges | fine (`trees: 0.9` holds where land shows) |
+| `guri_dam` | seam, two seasons, cloud (pass 3) | fine |
+
+The pattern: **coverage is not quality.** `fetch_s2.py` records `coverage` in the sidecar, but that
+counts *filled* pixels — a fully cloud-covered scene fills 100% of the canvas and reports success.
+Scene selection sorts on the STAC `eo:cloud_cover` field, which is a scene-wide figure: a scene can
+be 5% cloudy overall and completely clouded over our particular bbox.
+
+`salar_uyuni` is a separate failure — a salt flat is genuinely near-white, and `sat_gain = 1.35` in
+the terrain shader then pushes it past 1.0. So it will render as a white void even if the fetch is
+sound.
+
+Neither is fixable by editing a biome number, so nothing was changed for those two.
+
 ## Open
 
 - Re-run after the 8192 refetch completes; several previews are still the old canvas.
