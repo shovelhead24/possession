@@ -22,7 +22,7 @@ Rules:
 - [x] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
       patch; do junctions mesh or interpenetrate; do they follow the ground or float; do they sit on
       the correct side of the carriageway. Read the PNGs, do not assume.
-- [ ] **Hedge junctions.** Verified straight runs only -- no junction happened to be in frame.
+- [x] **Hedge junctions.** Verified straight runs only -- no junction happened to be in frame.
       Where two roads meet, each lays its own ribbon and nothing merges them, so they almost
       certainly interpenetrate. Shoot a crossroads specifically.
 - [ ] **Hedge variety.** One profile and one texture everywhere is wrong. Needs: type per biome

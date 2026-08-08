@@ -2052,7 +2052,17 @@ func _build_hedge_ribbon() -> void:
 				var cur := [p - nrm * off, p + nrm * off]
 				if prev_ok:
 					for side in 2:
-						_hedge_span(st, prev[side], cur[side], rng)
+						# JUNCTIONS. Every road lays its own ribbon, and nothing merges them, so at a
+						# crossroads road A's hedge runs straight across road B's carriageway --
+						# a hedge growing over the tarmac you are trying to drive down. The road
+						# mask already knows where tarmac is, so ask it: if either end of this span
+						# sits on road surface, that is another road crossing and the hedge opens.
+						# Gateways and field entrances fall out of the same test for free.
+						var pa: Vector2 = prev[side]
+						var pb: Vector2 = cur[side]
+						if maxf(_road_at(pa.x, pa.y), _road_at(pb.x, pb.y)) >= ROAD_ON:
+							continue
+						_hedge_span(st, pa, pb, rng)
 						quads += 4
 				prev = cur
 				prev_ok = true
