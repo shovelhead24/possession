@@ -118,7 +118,12 @@ const ROAD_RES := 2048
 const ROAD_ON := 0.14             # at/above this, it is road surface: nothing grows
 const ROAD_NEAR := 0.03           # above this but below ROAD_ON: roadside, plant a hedge
 var _road_mask := PackedByteArray()
-const HEDGE_TEX := "res://mocks/tex/hedge.jpg"
+# Loaded as raw bytes from a .dat, not as a res:// texture. A .jpg dropped into the project has no
+# .import file until the Godot editor has been opened, so ResourceLoader.exists() returned false
+# and this silently fell through to the procedural fallback -- which looked like a working hedge
+# with a bad texture rather than a texture that never loaded at all. Same PNG-in-dat convention
+# the DEM drapes already use to sidestep the importer.
+const HEDGE_TEX := "res://mocks/dem/hedge_tex.dat"
 # 2200m needed ~42k quads to cover rural Cork road density and so ran into the cap, which breaks
 # out of the build in list order rather than by distance -- meaning the road you are ON can go
 # unhedged while one 2km away is done. 1400m covers completely inside the budget.
@@ -807,6 +812,28 @@ func _shot_run() -> void:
 		if _hud: _hud.visible = false
 		if _perf: _perf.visible = false
 		arc += 60.0
+		# STAND ON A ROAD. Framing the patch centre tells you nothing about hedgerows -- the
+		# centre is usually open country. Walk the centrelines for the nearest point and put the
+		# camera beside it, looking along the run, which is the only view that shows whether the
+		# ribbon follows the road, meshes at junctions, or floats.
+		var best_d := 1e20
+		var best_p := Vector2(arc, lat)
+		var best_t := Vector2(1.0, 0.0)
+		for line in _roadlines:
+			var pts: PackedVector2Array = line["pts"]
+			for i in pts.size():
+				var d: float = pts[i].distance_squared_to(Vector2(arc, lat))
+				if d < best_d:
+					best_d = d
+					best_p = pts[i]
+					best_t = (pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)])
+		if best_d < 1e19:
+			arc = best_p.x
+			lat = best_p.y
+			if best_t.length_squared() > 1e-6:
+				_look.x = atan2(best_t.y, best_t.x)
+			print("SHOT %s: framed on a road at %.0f,%.0f (%.0fm from centre)"
+				% [pname, arc, lat, sqrt(best_d)])
 		for shot in [
 				{"n": "ground", "h": 2.2, "pitch": -0.04, "fov": 70.0},
 				{"n": "road", "h": 6.0, "pitch": -0.18, "fov": 60.0},
@@ -814,7 +841,7 @@ func _shot_run() -> void:
 			]:
 			_cam.position = _ring_pos(arc / r, lat, _terrain_h(arc, lat) + float(shot["h"]))
 			_cam.fov = float(shot["fov"])
-			_look = Vector2(0.0, float(shot["pitch"]))
+			_look.y = float(shot["pitch"])
 			_apply_look()
 			_scatter_trees()
 			_refill_buildings(true)
@@ -1956,11 +1983,19 @@ func _build_hedges() -> void:
 	# real texture if one has been dropped in, generated foliage noise otherwise, so the mock
 	# still runs on a clean checkout (game/mocks/tex/ is an art drop, not a build artefact)
 	var tex: Texture2D = null
-	if ResourceLoader.exists(HEDGE_TEX):
-		tex = load(HEDGE_TEX) as Texture2D
+	if FileAccess.file_exists(HEDGE_TEX):
+		var img := Image.new()
+		if img.load_jpg_from_buffer(FileAccess.get_file_as_bytes(HEDGE_TEX)) == OK:
+			img.generate_mipmaps()
+			tex = ImageTexture.create_from_image(img)
+			print("ring_vibes: hedge texture %dx%d loaded" % [img.get_width(), img.get_height()])
+	if tex == null:
+		print("ring_vibes: hedge texture MISSING — falling back to generated noise")
 	mat.albedo_texture = tex if tex != null else _hedge_texture()
 	mat.uv1_triplanar = true
-	mat.uv1_scale = Vector3(0.4, 0.4, 0.4)
+	# 0.4 tiled the texture once per 2.5m, so a hedge showed a fraction of one tile and read
+	# as flat colour. Foliage wants many tiles across its face.
+	mat.uv1_scale = Vector3(1.6, 1.6, 1.6)
 	mat.roughness = 1.0
 	mat.metallic_specular = 0.0
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
@@ -1986,7 +2021,10 @@ func _build_hedge_ribbon() -> void:
 	rng.seed = 99
 	for line in _roadlines:
 		var pts: PackedVector2Array = line["pts"]
-		var off: float = 3.2 + float(line["w"]) * 2.6   # half carriageway + verge
+		# half carriageway plus a narrow verge. Was 3.2 + w*2.6, which stood them 6-8m off the
+		# centreline -- reading as a field boundary across a wide green bank rather than as
+		# hedge tight against a boreen.
+		var off: float = 2.4 + float(line["w"]) * 1.5
 		var prev := []
 		var prev_ok := false
 		for i in pts.size() - 1:
@@ -2032,9 +2070,20 @@ func _build_hedge_ribbon() -> void:
 	_hedge_mi.mesh = st.commit()
 	_hedge_quads = quads
 
+func _hedge_dims(p: Vector2) -> Vector2:
+	# Width and height as a SMOOTH FUNCTION OF POSITION, not a per-span random draw.
+	# Randomising per span meant span A's end vertices and span B's start vertices disagreed, so the
+	# run was visibly notched every 11m -- clearly wrong in the first screenshot of it. Two spans
+	# sharing a point now compute the same dimensions there by construction, so the ribbon is
+	# continuous while still varying along its length.
+	var n1 := sin(p.x * 0.021 + p.y * 0.013)
+	var n2 := sin(p.x * 0.0043 - p.y * 0.0071)
+	return Vector2(
+		0.75 + 0.28 * n1,                    # half-width: a hedge, not a bank
+		1.65 + 0.45 * n2 + 0.25 * n1)        # height
+
 func _hedge_span(st: SurfaceTool, a: Vector2, b: Vector2, rng: RandomNumberGenerator) -> void:
-	# one length of hedge between two centreline offsets: a trapezoid section swept along the run.
-	# Height wobbles a little per span so the top is not a machined line.
+	# one length of hedge between two centreline offsets: a trapezoid section swept along the run
 	var ha := _surface_pos(a.x, a.y)
 	var hb := _surface_pos(b.x, b.y)
 	var ua := _ring_up(ha)
@@ -2043,27 +2092,25 @@ func _hedge_span(st: SurfaceTool, a: Vector2, b: Vector2, rng: RandomNumberGener
 	if dir.length_squared() < 1e-6:
 		return
 	dir = dir.normalized()
-	# lateral offset in the ring frame: perpendicular to the run, in the local tangent plane
 	var la := _ring_lateral(ua, dir)
 	var lb := _ring_lateral(ub, dir)
-	var w := rng.randf_range(0.9, 1.35)
-	var h1 := rng.randf_range(1.7, 2.5)
-	var h2 := rng.randf_range(1.7, 2.5)
+	var da := _hedge_dims(a)
+	var db := _hedge_dims(b)
 	# profile: base wide, shoulder, narrower top -- the shape a flail-cut roadside hedge holds
-	var a0 := ha - la * w
-	var a1 := ha + la * w
-	var b0 := hb - la * w
-	var b1 := hb + la * w
-	var a0s := ha - la * w * 0.85 + ua * h1 * 0.55
-	var a1s := ha + la * w * 0.85 + ua * h1 * 0.55
-	var b0s := hb - lb * w * 0.85 + ub * h2 * 0.55
-	var b1s := hb + lb * w * 0.85 + ub * h2 * 0.55
-	var at := ha + ua * h1
-	var bt := hb + ub * h2
-	_hedge_quad(st, a0, b0, b0s, a0s)      # lower flank, one side
-	_hedge_quad(st, a0s, b0s, bt, at)      # upper flank to the ridge
-	_hedge_quad(st, a1s, b1s, b1, a1)      # lower flank, other side
-	_hedge_quad(st, at, bt, b1s, a1s)      # upper flank to the ridge
+	var a0 := ha - la * da.x
+	var a1 := ha + la * da.x
+	var b0 := hb - lb * db.x
+	var b1 := hb + lb * db.x
+	var a0s := ha - la * da.x * 0.82 + ua * da.y * 0.55
+	var a1s := ha + la * da.x * 0.82 + ua * da.y * 0.55
+	var b0s := hb - lb * db.x * 0.82 + ub * db.y * 0.55
+	var b1s := hb + lb * db.x * 0.82 + ub * db.y * 0.55
+	var at := ha + ua * da.y
+	var bt := hb + ub * db.y
+	_hedge_quad(st, a0, b0, b0s, a0s)
+	_hedge_quad(st, a0s, b0s, bt, at)
+	_hedge_quad(st, a1s, b1s, b1, a1)
+	_hedge_quad(st, at, bt, b1s, a1s)
 
 func _ring_lateral(up: Vector3, dir: Vector2) -> Vector3:
 	# unit vector across the run, in the ground plane at this point

@@ -185,6 +185,31 @@ place. Which is the argument for this review existing, and for re-running it whe
 (`salar_uyuni`, `palawan`, `guri_dam`). Patches whose statistics agreed with their authored values
 were neither imaged nor changed.
 
+## Hedgerow verification by screenshot (2026-08-08)
+
+Shot with `-- --shots millstreet`, which now walks the centrelines to frame ON a road — the patch
+centre is open country and showed no hedge at all, so the first framing verified nothing.
+
+**Working:** the ribbon follows the carriageway, sits on both sides, and runs continuously to the
+horizon. The core approach is sound.
+
+**Three defects, all fixed:**
+
+1. **Notched every 11 m.** `_hedge_span` drew width and height from a per-span random, so span A's
+   end vertices and span B's start vertices disagreed at the point they share. Now a smooth
+   function of position, so two spans meeting at a point compute the same dimensions there by
+   construction. Still varies along the run; no longer breaks.
+2. **The texture never loaded.** A `.jpg` dropped into the project has no `.import` file until the
+   Godot editor has been opened, so `ResourceLoader.exists()` returned false and it fell through to
+   the procedural fallback — which looked like a working hedge with a poor texture rather than a
+   texture that was never found. Now loaded as raw bytes from a `.dat`, the same convention the DEM
+   drapes already use to sidestep the importer.
+3. **Standing 6–8 m off the centreline**, which read as a field boundary across a wide verge rather
+   than hedge tight against a boreen. Now 3.9 m.
+
+**Not verified:** junctions. No crossroads fell in frame, and since each road lays its own ribbon
+with nothing merging them, they almost certainly interpenetrate where two meet. Queued separately.
+
 ## Open
 
 - Re-run after the 8192 refetch completes; several previews are still the old canvas.

@@ -19,9 +19,12 @@ Rules:
 - [x] **Image-review patches 11–20** — same.
 - [x] **Image-review patches 21–30** — same.
 - [x] **Image-review patches 31–39** — same.
-- [ ] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
+- [x] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
       patch; do junctions mesh or interpenetrate; do they follow the ground or float; do they sit on
       the correct side of the carriageway. Read the PNGs, do not assume.
+- [ ] **Hedge junctions.** Verified straight runs only -- no junction happened to be in frame.
+      Where two roads meet, each lays its own ribbon and nothing merges them, so they almost
+      certainly interpenetrate. Shoot a crossroads specifically.
 - [ ] **Hedge variety.** One profile and one texture everywhere is wrong. Needs: type per biome
       (Irish blackthorn bank vs Mediterranean dry-stone-and-scrub vs tropical none), height/width
       variation along a run, gaps and gateways, and the odd wall instead of hedge.
