@@ -25,9 +25,10 @@ Rules:
 - [x] **Hedge junctions.** Verified straight runs only -- no junction happened to be in frame.
       Where two roads meet, each lays its own ribbon and nothing merges them, so they almost
       certainly interpenetrate. Shoot a crossroads specifically.
-- [ ] **Hedge variety.** One profile and one texture everywhere is wrong. Needs: type per biome
-      (Irish blackthorn bank vs Mediterranean dry-stone-and-scrub vs tropical none), height/width
-      variation along a run, gaps and gateways, and the odd wall instead of hedge.
+- [x] **Hedge variety.** Four kinds by biome (bank / scrub / wall / none), width and height varying
+      smoothly along a run, position-hashed gaps for gateways. Still one PROFILE and one texture —
+      a stone wall currently differs from a hedge only in size and tint, which will not survive
+      being looked at. Needs its own geometry when the vegetation import lands.
 - [ ] **Vegetation model imports.** The fir pack is the only tree asset and it is doing Java, Cape
       fynbos and Lofoten birch scrub via a colour tint. Import proper species; check
       `assets/grass_pack_of_9_vars_lowpoly_game_ready.zip` and `low_poly_red_spruce_tree...zip`

@@ -129,9 +129,20 @@ const HEDGE_TEX := "res://mocks/dem/hedge_tex.dat"
 # unhedged while one 2km away is done. 1400m covers completely inside the budget.
 const HEDGE_RANGE := 1400.0       # metres of road either side of the camera that gets hedged
 const HEDGE_STEP := 11.0          # resample spacing along a centreline, metres
+# Roadside boundary CHARACTER per biome. One profile and one colour everywhere was wrong: an
+# Irish blackthorn bank, a Mediterranean dry-stone wall and a tropical roadside are not the same
+# object. Keyed off the biome tree density, which already tracks how much grows here.
+#   [half-width, height, colour, gap chance]  -- gap chance opens field entrances and lay-bys
+const HEDGE_KINDS := {
+	"bank":  {"w": 0.78, "h": 1.90, "col": Color(1.00, 1.00, 1.00), "gap": 0.04},   # Irish/Atlantic
+	"scrub": {"w": 0.62, "h": 1.15, "col": Color(1.06, 0.98, 0.72), "gap": 0.16},   # dry, gappy
+	"wall":  {"w": 0.45, "h": 1.05, "col": Color(0.86, 0.84, 0.76), "gap": 0.10},   # stone, arid
+	"none":  {"w": 0.00, "h": 0.00, "col": Color(1, 1, 1), "gap": 1.00},
+}
 const HEDGE_MAX_QUADS := 30000    # ceiling on the ribbon, so a dense junction cannot spike frame time
 var _hedge_mi: MeshInstance3D = null
 var _roadlines: Array = []
+var _junc := {}                   # 30m cells where two or more ways meet
 var _hedge_quads := 0
 var _detail_tex: ImageTexture = null
 var dem_scale := 1.0  # [H] cycles 1..5 — real-height exaggeration (DEM branch only)
@@ -1977,6 +1988,27 @@ func _load_roadlines() -> void:
 		if pts.size() > 1:
 			_roadlines.append({"w": wdt, "pts": pts})
 	print("ring_vibes: %d road centrelines loaded" % _roadlines.size())
+	_build_junctions()
+
+func _build_junctions() -> void:
+	# Mark where roads MEET, once, from the centrelines. Hash every point into 30m cells and record
+	# which way owns it; a cell holding points from more than one way is a junction. Done at load
+	# because the ribbon rebuilds every few hundred metres and this must not be paid per rebuild.
+	_junc = {}
+	var owner := {}
+	for wi in _roadlines.size():
+		var pts: PackedVector2Array = _roadlines[wi]["pts"]
+		for p in pts:
+			var key := Vector2i(int(floor(p.x / 30.0)), int(floor(p.y / 30.0)))
+			var prev = owner.get(key, -1)
+			if prev == -1:
+				owner[key] = wi
+			elif prev != wi:
+				_junc[key] = true
+	print("ring_vibes: %d junction cells from %d centrelines" % [_junc.size(), _roadlines.size()])
+
+func _near_junction(p: Vector2) -> bool:
+	return _junc.has(Vector2i(int(floor(p.x / 30.0)), int(floor(p.y / 30.0))))
 
 func _build_hedges() -> void:
 	var mat := StandardMaterial3D.new()
@@ -1999,6 +2031,7 @@ func _build_hedges() -> void:
 	mat.roughness = 1.0
 	mat.metallic_specular = 0.0
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.vertex_color_use_as_albedo = true   # per-kind tint rides on the vertex colour
 	_hedge_mi = MeshInstance3D.new()
 	_hedge_mi.material_override = mat
 	_hedge_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -2050,18 +2083,26 @@ func _build_hedge_ribbon() -> void:
 					prev_ok = false
 					continue
 				var cur := [p - nrm * off, p + nrm * off]
+				var junc := _near_junction(p)
 				if prev_ok:
 					for side in 2:
-						# JUNCTIONS. Every road lays its own ribbon, and nothing merges them, so at a
-						# crossroads road A's hedge runs straight across road B's carriageway --
-						# a hedge growing over the tarmac you are trying to drive down. The road
-						# mask already knows where tarmac is, so ask it: if either end of this span
-						# sits on road surface, that is another road crossing and the hedge opens.
-						# Gateways and field entrances fall out of the same test for free.
 						var pa: Vector2 = prev[side]
 						var pb: Vector2 = cur[side]
-						if maxf(_road_at(pa.x, pa.y), _road_at(pb.x, pb.y)) >= ROAD_ON:
+						# JUNCTIONS, from the precomputed flags rather than the road mask. The mask was the
+						# obvious tool and the wrong one: it is 2048 cells over 90km, i.e. 44m per cell, and
+						# the hedge sits 3.9m off the centreline -- so "beside the road" and "on the road"
+						# land in the SAME cell and it rejected 82% of the ribbon. Resolution has to match the
+						# question being asked of it.
+						if junc:
 							continue
+						var kind := _hedge_kind(pa.x, pa.y)
+						if float(kind["h"]) <= 0.01:
+							continue
+						# gaps: a real hedgerow is not continuous for kilometres. Hashed off position so the
+						# same gate is in the same place every rebuild rather than flickering as you drive.
+						if _hash2(floor(pa.x / 37.0), floor(pa.y / 37.0)) < float(kind["gap"]):
+							continue
+						st.set_color(kind["col"])
 						_hedge_span(st, pa, pb, rng)
 						quads += 4
 				prev = cur
@@ -2080,6 +2121,23 @@ func _build_hedge_ribbon() -> void:
 	_hedge_mi.mesh = st.commit()
 	_hedge_quads = quads
 
+func _hash2(a: float, b: float) -> float:
+	return fposmod(sin(a * 127.1 + b * 311.7) * 43758.5453, 1.0)
+
+func _hedge_kind(arc: float, lat: float) -> Dictionary:
+	# what bounds a road here. Deserts get a low stone wall or nothing, dry country gets gappy
+	# scrub, anywhere with real growth gets a proper bank. tree_hi doubles as a proxy for how
+	# vigorous the local growth is, which keeps this on one source of truth rather than a new table.
+	var b := _biome_at(arc, lat)
+	var t: float = float(b.get("trees", 0.5))
+	if t < 0.04:
+		return HEDGE_KINDS["none"]
+	if t < 0.20:
+		return HEDGE_KINDS["wall"]
+	if t < 0.45:
+		return HEDGE_KINDS["scrub"]
+	return HEDGE_KINDS["bank"]
+
 func _hedge_dims(p: Vector2) -> Vector2:
 	# Width and height as a SMOOTH FUNCTION OF POSITION, not a per-span random draw.
 	# Randomising per span meant span A's end vertices and span B's start vertices disagreed, so the
@@ -2088,9 +2146,10 @@ func _hedge_dims(p: Vector2) -> Vector2:
 	# continuous while still varying along its length.
 	var n1 := sin(p.x * 0.021 + p.y * 0.013)
 	var n2 := sin(p.x * 0.0043 - p.y * 0.0071)
+	var k := _hedge_kind(p.x, p.y)
 	return Vector2(
-		0.75 + 0.28 * n1,                    # half-width: a hedge, not a bank
-		1.65 + 0.45 * n2 + 0.25 * n1)        # height
+		float(k["w"]) * (1.0 + 0.34 * n1),
+		float(k["h"]) * (1.0 + 0.24 * n2 + 0.14 * n1))
 
 func _hedge_span(st: SurfaceTool, a: Vector2, b: Vector2, rng: RandomNumberGenerator) -> void:
 	# one length of hedge between two centreline offsets: a trapezoid section swept along the run
