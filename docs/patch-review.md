@@ -103,6 +103,28 @@ canopy, so `trees: 0.1` is correct and stays. But:
 2. **Severe mosaic seams**, worse than mongolia's — whole rectangular blocks at different
    exposure, very visible over the water. Same root cause: `fetch_s2.py` colour-matches nothing.
 
+## Pass 3 — patches 11–20 alphabetical (2026-08-08)
+
+`ebro_delta` and `great_plains` are retired; `millstreet` is the home patch. Imaged: `dolomites`,
+`guri_dam`, plus `dordogne` from pass 1.
+
+**`dordogne` — corrected.** `trees` 0.5 → 0.85, tint darker green. Confirmed dense forest.
+
+**`dolomites` — tint corrected.** `trees` 0.7 and `tree_hi` 2000 m both check out against a hard,
+clearly visible treeline. But the tint was pale limestone grey when conifer dominates the frame and
+the rock is only on the massif tops. Now dark green.
+
+**`guri_dam` — worst drape in the portfolio.** A hard vertical seam splits two entirely different
+scenes: dry brown scrub west, green forest and reservoir east, different seasons, different
+exposure, cloud over the eastern half. `trees` 0.4 averages the halves fairly and stays; tint was
+green where the dominant half is brown.
+
+### Seams are systemic, not incidental
+Four of four multi-scene patches inspected now show them: `mongolia_steppe`, `danube_delta`,
+`dolomites`, `guri_dam` — worst first. Only `dordogne`, which is covered by a single scene, is
+clean. This is no longer a per-patch note; **any patch needing more than one Sentinel-2 scene will
+be visibly patchworked** until `fetch_s2.py` normalises scenes before pasting. Already queued.
+
 ## Open
 
 - Re-run after the 8192 refetch completes; several previews are still the old canvas.

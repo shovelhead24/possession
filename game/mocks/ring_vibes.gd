@@ -194,7 +194,8 @@ const PATCHES := [
 	# that had drifted out of character once the boxes went to 84km, so coverage is now 35/35 unique.
 	{"name": "big_sur", "arc_pct": 0.084, "tint": Color(0.24, 0.30, 0.20), "trees": 0.5, "tree_hi": 1200.0, "weather": "fresh"},
 	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0, "weather": "overcast"},
-	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.36, 0.40, 0.24), "trees": 0.5, "tree_hi": 400.0, "weather": "fresh"},
+	# imaged: dense dark forest with agricultural clearings and a river. 0.5 was well under it.
+	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.20, 0.26, 0.15), "trees": 0.85, "tree_hi": 450.0, "weather": "fresh"},
 	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.26, 0.36, 0.20), "trees": 0.6, "tree_hi": 900.0, "weather": "fresh"},
 	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "storm"},
 	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh"},
@@ -209,7 +210,10 @@ const PATCHES := [
 	{"name": "monument_valley", "arc_pct": 0.392, "tint": Color(0.62, 0.38, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
 	{"name": "atacama", "arc_pct": 0.420, "tint": Color(0.58, 0.44, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
 	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
-	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.26, 0.34, 0.24), "trees": 0.4, "tree_hi": 500.0, "weather": "monsoon"},
+	# imaged: dry brown scrub west, reservoir and forest east, split by the worst mosaic seam in
+	# the portfolio -- two scenes, different seasons. trees 0.4 averages the two halves fairly;
+	# tint was green where the dominant half is brown.
+	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.30, 0.26, 0.19), "trees": 0.4, "tree_hi": 500.0, "weather": "monsoon"},
 	{"name": "palawan", "arc_pct": 0.504, "tint": Color(0.18, 0.28, 0.20), "trees": 0.9, "tree_hi": 900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.05, 1.02, 0.66), "tree_mul": 1.3},
 	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.46, 0.44, 0.28), "trees": 0.05, "tree_hi": 1900.0, "weather": "cirrus"},
 	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh"},
@@ -219,7 +223,9 @@ const PATCHES := [
 	# plateau in the middle. Authored trees 0.5 was roughly double the real canopy, and the
 	# plantations stop well under the old 700m ceiling.
 	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.30, 0.27, 0.18), "trees": 0.25, "tree_hi": 550.0, "weather": "storm"},
-	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.50, 0.48, 0.46), "trees": 0.7, "tree_hi": 2000.0, "weather": "fresh"},
+	# imaged: conifer fills the valleys, pale limestone massifs above a hard treeline. trees 0.7
+	# and tree_hi 2000 both check out; the TINT was set to the rock when forest dominates the frame.
+	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.26, 0.28, 0.22), "trees": 0.7, "tree_hi": 2000.0, "weather": "fresh"},
 	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.40, 0.42, 0.38), "trees": 0.7, "tree_hi": 1500.0, "weather": "fresh"},
 	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0, "weather": "storm"},
 	{"name": "olympic_forest", "arc_pct": 0.756, "tint": Color(0.14, 0.24, 0.16), "trees": 1.0, "tree_hi": 1200.0, "weather": "overcast"},

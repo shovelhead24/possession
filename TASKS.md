@@ -16,7 +16,7 @@ Rules:
 - [x] **Image-review patches 1–10** (alphabetical from `atacama`). For each: read
       `out/<name>_s2_preview.jpg`, confirm or correct `trees` / `tint` / `tree_hi` / `weather` in
       `PATCHES`, note seams or artefacts. Append findings to `docs/patch-review.md`.
-- [ ] **Image-review patches 11–20** — same.
+- [x] **Image-review patches 11–20** — same.
 - [ ] **Image-review patches 21–30** — same.
 - [ ] **Image-review patches 31–39** — same.
 - [ ] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
@@ -44,8 +44,10 @@ Rules:
       and the tree-clearing currently only run on the home patch — generalise past `millstreet`.
 - [ ] **Per-patch sea level.** danube_delta renders 64% ocean because delta land sits at 0-2m
       under a global 0.5m SEA_LEVEL. Any low-lying patch has this. Needs a per-patch offset.
-- [ ] **Colour-match scenes at paste time** in `fetch_s2.py`. `mongolia_steppe` shows obvious
-      rectangular seams where scenes of different balance were pasted.
+- [ ] **Colour-match scenes at paste time** in `fetch_s2.py`. CONFIRMED SYSTEMIC: 4 of 4
+      multi-scene patches are visibly patchworked (`guri_dam` worst — two seasons either side of a
+      hard vertical seam, then `danube_delta`, `mongolia_steppe`, `dolomites`). Only single-scene
+      patches are clean. Normalise exposure per scene against the overlap before pasting.
 - [ ] **Reject building sites on cliffs.** `--align` says 8,235 of 119,703 sit on ground steeper
       than their undercroft covers, worst a 1,195 m drop. Add a slope limit at placement.
 - [ ] **Regression sweep script.** Run `--align`, `--selftest`, `--texprobe`, diff against the last
