@@ -196,7 +196,9 @@ const PATCHES := [
 	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0, "weather": "overcast"},
 	# imaged: dense dark forest with agricultural clearings and a river. 0.5 was well under it.
 	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.20, 0.26, 0.15), "trees": 0.85, "tree_hi": 450.0, "weather": "fresh"},
-	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.26, 0.36, 0.20), "trees": 0.6, "tree_hi": 900.0, "weather": "fresh"},
+	# imaged: near-continuous forest, only narrow valley clearings and small towns on the roads.
+	# 99% measured and the image agrees, so 0.6 was well under. Forest carries over most summits.
+	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.13, 0.24, 0.12), "trees": 0.92, "tree_hi": 1100.0, "weather": "fresh"},
 	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "storm"},
 	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh"},
 	# imaged 2026-08-08: the 92% "vegetation" the census measures is REED BED, not canopy, so
@@ -229,7 +231,10 @@ const PATCHES := [
 	# imaged: conifer fills the valleys, pale limestone massifs above a hard treeline. trees 0.7
 	# and tree_hi 2000 both check out; the TINT was set to the rock when forest dominates the frame.
 	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.26, 0.28, 0.22), "trees": 0.7, "tree_hi": 2000.0, "weather": "fresh"},
-	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.40, 0.42, 0.38), "trees": 0.7, "tree_hi": 1500.0, "weather": "fresh"},
+	# imaged: spruce dominates, bare granite and tarns only on the central massif above a hard
+	# treeline. trees 0.7 and tree_hi 1500 both correct; the tint was rock-grey, same mistake as
+	# dolomites -- named for the headline feature instead of what fills the frame.
+	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.21, 0.26, 0.17), "trees": 0.7, "tree_hi": 1500.0, "weather": "fresh"},
 	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0, "weather": "storm"},
 	{"name": "olympic_forest", "arc_pct": 0.756, "tint": Color(0.14, 0.24, 0.16), "trees": 1.0, "tree_hi": 1200.0, "weather": "overcast"},
 	{"name": "borneo_highland", "arc_pct": 0.784, "tint": Color(0.16, 0.28, 0.16), "trees": 1.0, "tree_hi": 2500.0, "weather": "monsoon"},

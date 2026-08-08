@@ -154,6 +154,37 @@ sound.
 
 Neither is fixable by editing a biome number, so nothing was changed for those two.
 
+## Pass 5 — patches 31–39 alphabetical (2026-08-08). Review complete.
+
+`savannah` is retired. Imaged: `vermont`, `tatra_spruce`.
+
+**`vermont` — corrected.** Near-continuous forest, only narrow valley clearings and small towns
+strung along the roads. The measured 99% is real. `trees` 0.6 → 0.92, `tree_hi` 900 → 1100 m
+(forest carries over most summits here), tint much darker green.
+
+**`tatra_spruce` — tint corrected.** Spruce dominates; bare granite and glacial tarns only on the
+central massif above a hard treeline. `trees` 0.7 and `tree_hi` 1500 m both correct.
+
+### Two authoring mistakes, made repeatedly
+
+Across all 39 patches, the guessed values went wrong in exactly two ways:
+
+**1. Tint named for the headline feature, not what fills the frame.** `dolomites` and
+`tatra_spruce` were both set to pale rock grey when conifer covers 70%+ of the patch and the rock
+is confined to one massif. `guri_dam` was green when its dominant half is brown. The patch is named
+for the dramatic thing; the tint has to be the *average* thing.
+
+**2. `trees` systematically under-set on genuinely forested ground.** `dordogne` 0.5 → 0.85,
+`vermont` 0.6 → 0.92. Both were confirmed dense forest by eye. Nothing was ever set too high.
+
+Both are the same underlying error: the numbers were written from the place *name* rather than the
+place. Which is the argument for this review existing, and for re-running it whenever patches change.
+
+### Score
+39 patches, 11 imaged, 8 corrected, 2 confirmed-and-left, 3 drapes found unusable
+(`salar_uyuni`, `palawan`, `guri_dam`). Patches whose statistics agreed with their authored values
+were neither imaged nor changed.
+
 ## Open
 
 - Re-run after the 8192 refetch completes; several previews are still the old canvas.

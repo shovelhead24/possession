@@ -18,7 +18,7 @@ Rules:
       `PATCHES`, note seams or artefacts. Append findings to `docs/patch-review.md`.
 - [x] **Image-review patches 11–20** — same.
 - [x] **Image-review patches 21–30** — same.
-- [ ] **Image-review patches 31–39** — same.
+- [x] **Image-review patches 31–39** — same.
 - [ ] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
       patch; do junctions mesh or interpenetrate; do they follow the ground or float; do they sit on
       the correct side of the carriageway. Read the PNGs, do not assume.
