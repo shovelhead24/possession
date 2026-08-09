@@ -82,6 +82,77 @@ Rules:
 - [ ] **Fix marker displacement** in the census â€” it takes the worst marker, so any patch with
       route-spanning markers scores badly by design. Use the camera anchor.
 
+## Vehicles — the 40+ programme
+
+Framing, because this only works one way. **40 vehicles is not 40 models.** It is a small set of
+locomotion models, each parameterised, with generated or kitbashed meshes over the top. Done as
+bespoke assets it is forty art tasks and it never ships; done as ~7 movement classes x parameters
+it is a fortnight and the count falls out for free. Same argument as the tree species: the project
+already generates its houses, hedges, palms and textures.
+
+Prerequisite for everything below.
+
+- [ ] **Locomotion abstraction.** `_drive_tick` is one hardcoded wheeled model: fixed accel, fixed
+      grip, a heading integrated on the ring surface. Pull it into a `Locomotion` interface with
+      one implementation per class, and a `VehicleDef` resource carrying mass, power, grip,
+      turn rate, ride height, buoyancy, lift, and which locomotion drives it. Every item below is
+      then a data row plus a mesh, not new movement code.
+- [ ] **Vehicle definition table + `[L]` cycling through all of them**, with the census-style
+      discipline: each entry states what it is FOR, not just what it is.
+
+### Ground
+- [ ] **Wheeled variants** — the boreen runabout we have, a fast road car, a heavy 6x6, a bike, a
+      tractor, an articulated hauler. Differ by grip, mass, ride height, and how badly they lose off
+      the tarmac (the `_road_cells` test already exists).
+- [ ] **Tracked** — slow, unbothered by slope, ignores the road/offroad distinction that everything
+      else obeys. The `--align` slope data says where this actually matters.
+- [ ] **Hover / ground-effect** — ignores ground roughness, hates gradients, crosses water. The one
+      class that makes the coastal patches drivable.
+
+### Mounts and legged
+- [ ] **Legged locomotion**, shared by mounts and mechs: gait over terrain, step height, can climb
+      what wheels cannot. This is the one genuinely new movement model.
+- [ ] **Horses** — fast, tires, spooks. Creatures already exist (`[K]` deer, `[J]` wolves) so herd
+      behaviour and the mount are closer than they look.
+- [ ] **Elephants** — slow, unstoppable, flattens hedgerows and small trees. A reason for the
+      hedge/tree systems to be destructible.
+- [ ] **Mechs** — bipedal and quadrupedal, scale from 3m to 15m. Legged locomotion with a different
+      mass and step height.
+- [ ] **Powered suits** — the player IS the vehicle. Jump height, sprint, hard landings. Blurs into
+      the on-foot mode rather than being a separate thing to get into.
+
+### Water
+- [ ] **Boats** — the ocean is a flat clamp at `SEA_LEVEL` with no surface simulation, so this needs
+      a water plane with motion before a boat means anything. Coastal patches are 64-89% sea and
+      currently unreachable: palawan is 5% drivable, cape 8%, lofoten 10%.
+- [ ] **Amphibious + submersible** — the sea floor is real heightfield data below the clamp, so
+      there is already somewhere to go down to.
+
+### Air
+- [ ] **Rotary and fixed-wing** — FLY mode exists as a noclip camera; this needs actual flight with
+      stall, lift and ground effect. The atmosphere-exit work already models thinning air.
+- [ ] **Ring-specific flight.** Lift falls off as the atmosphere thins with altitude, and "up" is
+      toward the axis everywhere — a long enough climb crosses to the far side. Worth doing properly
+      because no other setting has this.
+
+### Orbital and beyond
+- [ ] **Leaving the atmosphere.** Already have the visual transition at 14-48km. Needs the flight
+      model to hand over to ballistic, and reaction control instead of aerodynamics.
+- [ ] **Ring-relative orbital mechanics.** You cannot orbit a ringworld the way you orbit a planet —
+      the mass distribution is wrong and the ring is spinning under you at ~2.1 km/s. Match the
+      spin and you hover over one spot; do not and the ring moves beneath you. That is a genuinely
+      novel traversal mechanic and probably the most interesting item on this list.
+- [ ] **Docking / boarding** at axis structures, which `docs/terrain/substrate.md` already places
+      for the leave-ending.
+
+### Cross-cutting
+- [ ] **Wear, fuel and damage** — the reason to change vehicle rather than keep the best one.
+- [ ] **Where vehicles COME from.** Found, salvaged, stolen, traded. Ties into the draws work:
+      a vehicle two valleys away is a reason to go there.
+- [ ] **Test harness for all of them** — extend `--shots` to spawn each vehicle, drive a fixed
+      course over road / offroad / slope / water, and report speed, tris and fps per vehicle so the
+      set can be compared rather than eyeballed one at a time.
+
 ## Blocked / waiting
 
 - 8192 refetch: running via the Startup task. ~36 patches left of awake time.
