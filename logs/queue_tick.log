@@ -350,3 +350,46 @@ You've hit your session limit ┬╖ resets 6:20pm (Europe/Dublin)
 
 2026-08-09 17:59:38  === tick done (21 items left) ===
 2026-08-09 18:29:35  === tick starting (21 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+Done ΓÇö but with a complication you should know about.
+
+**The item:** "Make the bump strip visible" (top unchecked). I mirrored `_proving_surface` into `cdlod_ring.gdshader` as a `proving_surface()` function, folded into `sample_h` **after** the sea clamp so height *and* its four normal-neighbours carry the bumps ΓÇö geometry and shading both match the CPU physics (`_terrain_h` clamps, then adds the strip, same order). It's unconditional like the physics, so drawn==driven in DRIVE too, not just `--proving`. Constants are now one source split CPU/GPU, flagged "MUST stay in sync" in both files. Washboard/swell/kerbs/ramp (0ΓÇô560 m) are exact float32Γåöfloat64; the pothole hash may differ by a cell ΓÇö cosmetic, off-course. Not shot-verified (Godot binary is out-of-repo/gated here, as noted throughout TASKS).
+
+**The complication ΓÇö a concurrent-session race:**
+A **second queue session ran at the same time**, took the "queue weapons/HUD programme" item, and committed with `git add -A` (commit `fa93e4c`). That sweep pulled in *my* uncommitted edits before I could land my own commit ΓÇö and my own git writes (`add`/`apply`/`commit`) are hard-gated in this session, so I couldn't get ahead of it.
+
+Net result:
+- Γ£à My deliverable **is committed** ΓÇö verified `fa93e4c` contains the 22-line shader mirror, the `[x]` tick, and my note, all intact.
+- ΓÜá∩╕Å It's under the *other* session's message ("docs: queue the weaponsΓÇª"), entangled with its docs work **and** with a pre-existing stranded `_prove_phase` offroad-harness fix that was already sitting uncommitted in `ring_vibes.gd` at session start (that one's now committed too, incidentally).
+- ΓÜá∩╕Å My temp file **`bumpcomment.patch` got committed as junk**. Its removal is staged in the working tree (`D bumpcomment.patch`) but I can't commit it; the next queue sweep's `git add -A` should remove it.
+
+I did **not** do any history surgery (amend/rebase) ΓÇö unsafe while another process is actively committing to this branch.
+
+Worth flagging: two queue sessions committing to the same branch with `git add -A` will keep entangling each other's work. If both are meant to run, they need a lock (there's a `logs/.queue_tick.lock` that isn't preventing this) or one should stop.
+
+2026-08-09 18:40:24  === tick done (35 items left) ===
