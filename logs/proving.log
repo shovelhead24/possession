@@ -6,7 +6,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (691 ms)
+ring_vibes: far band rebuilt around arc 0 km (456 ms)
 ring_vibes: texture compression — s3tc true, bptc true, etc2 false
 ring_vibes: grass pack loaded (1 surfaces)
 ring_vibes: 13674 road centrelines loaded (home + none)
@@ -27,21 +27,43 @@ ring_vibes: warthog model loaded (5.2m long, scale 0.967)
 PROVING GROUND — identical course, every vehicle
 
 vehicle    phase     top m/s   dist m   turn r   jolt m    grade   susp   air
-ring_vibes: 24353 trees placed (3 variants x 4 LODs) — 1476 standards, 4983 off-road, 30004 hedge quads
-box        accel         9.8    127.5      0.0     0.02     0.0    0.05     0
-box        brake         6.0     34.2      0.0     0.00     0.0    0.19     0
-box        circle       17.0      4.1     12.8     0.01     0.0    0.22     4
-box        rough        17.4    125.7      0.0     0.03     0.0    0.14     0
-box        climb        15.7    148.3      0.0     0.02     0.8    0.19     0
-ring_vibes: far band rebuilt around arc 852 km (1072 ms)
+ring_vibes: 24535 trees placed (3 variants x 4 LODs) — 1464 standards, 5047 off-road, 30004 hedge quads
+box        accel         9.8    127.8      0.0     0.01     0.0    0.05     0
+box        brake         6.0     34.3      0.0     0.00     0.0    0.19     0
+box        circle       17.4      4.9     12.9     0.01     0.0    0.22     4
+box        rough        17.5    125.3      0.0     0.04     0.0    0.14     0
+box        climb        15.7    149.8      0.0     0.01     0.8    0.19     0
+ring_vibes: far band rebuilt around arc 852 km (713 ms)
 ring_vibes: 33347 road centrelines loaded (home + cork_city)
 ring_vibes: 32287 junction cells, 2574784 road cells from 33347 centrelines
-ring_vibes: buildings in range at arc 900172 lat -0 -> style0=0, style1=0
+ring_vibes: buildings in range at arc 900139 lat -0 -> style0=0, style1=0
 ring_vibes: streamed cork_city @ 1536^2 — re-placed objects onto the new tier
 ring_vibes: 13985 road centrelines loaded (home + salar_uyuni)
 ring_vibes: 13471 junction cells, 1327373 road cells from 13985 centrelines
-ring_vibes: buildings in range at arc 900325 lat 0 -> style0=0, style1=0
+ring_vibes: buildings in range at arc 900248 lat -0 -> style0=0, style1=0
 ring_vibes: streamed salar_uyuni @ 1536^2 — re-placed objects onto the new tier
-box        bumps         9.8    381.4      0.0     1.50     0.0    0.34     4
+box        bumps         9.8    381.9      0.0     0.18     0.0    0.34     4
+ring_vibes: far band rebuilt around arc 0 km (1024 ms)
+ring_vibes: 24350 trees placed (3 variants x 4 LODs) — 1464 standards, 5082 off-road, 30008 hedge quads
+ring_vibes: 13674 road centrelines loaded (home + cape_peninsula)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 24350 trees placed (3 variants x 4 LODs) — 1464 standards, 5082 off-road, 30004 hedge quads
+ring_vibes: buildings in range at arc 38274 lat -15134 -> style0=1572, style1=0
+ring_vibes: streamed cape_peninsula @ 1536^2 — re-placed objects onto the new tier
+warthog    accel        20.8    231.4      0.0     0.08     0.0    0.10     0
+warthog    brake         7.0     40.0      0.0     0.00     0.0    0.25     0
+warthog    circle       26.8     18.2     21.1     0.02     0.0    0.25     4
+warthog    rough        24.9    213.8      0.0     0.05     0.0    0.13     0
+warthog    climb        22.5    252.2      0.0     0.05     1.2    0.25     0
+ring_vibes: far band rebuilt around arc 852 km (660 ms)
+ring_vibes: 33347 road centrelines loaded (home + cork_city)
+ring_vibes: 32287 junction cells, 2574784 road cells from 33347 centrelines
+ring_vibes: buildings in range at arc 900198 lat -0 -> style0=0, style1=0
+ring_vibes: streamed cork_city @ 1536^2 — re-placed objects onto the new tier
+ring_vibes: 13985 road centrelines loaded (home + salar_uyuni)
+ring_vibes: 13471 junction cells, 1327373 road cells from 13985 centrelines
+ring_vibes: buildings in range at arc 900360 lat -0 -> style0=0, style1=0
+ring_vibes: streamed salar_uyuni @ 1536^2 — re-placed objects onto the new tier
+warthog    bumps        20.8    716.5      0.0     0.76     0.0    0.46     4
 
 PROVING done

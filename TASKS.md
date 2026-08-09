@@ -155,11 +155,18 @@ Prerequisite for everything below.
       vs float64 — cosmetic, off-course. NOT run-verified: the Godot binary is out-of-repo/gated here,
       so no `--shots`; and `--shots <patch>` wouldn't frame arc 900k anyway. Drive to PROVE_STRIP_ARC
       to eyeball the strip once on the laptop.
-- [ ] **Locomotion abstraction.** `_drive_tick` is one hardcoded wheeled model: fixed accel, fixed
+- [x] **Locomotion abstraction.** `_drive_tick` is one hardcoded wheeled model: fixed accel, fixed
       grip, a heading integrated on the ring surface. Pull it into a `Locomotion` interface with
       one implementation per class, and a `VehicleDef` resource carrying mass, power, grip,
       turn rate, ride height, buoyancy, lift, and which locomotion drives it. Every item below is
       then a data row plus a mesh, not new movement code.
+- [ ] **HARNESS STILL LYING in two places, found while proving the abstraction.** (a) The box's
+      accel phase reads 9.8 m/s, which is exactly its OFF-road terminal (9.0 power / 0.9 combined
+      drag) -- so it is still leaving the 8m ribbon within a car length despite the earlier fix, and
+      the on-road figure has never actually been measured. The warthog's 20.8 sits between its
+      on-road and off-road terminals, same cause. (b) The box's bump-strip jolt fell from 1.50m to
+      0.18m across this change with nothing touching the strip, so the phase is probably no longer
+      starting on it. Fix the harness before trusting any handling number.
 - [ ] **Vehicle definition table + `[L]` cycling through all of them**, with the census-style
       discipline: each entry states what it is FOR, not just what it is.
 

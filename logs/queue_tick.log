@@ -393,3 +393,4 @@ I did **not** do any history surgery (amend/rebase) ΓÇö unsafe while another 
 Worth flagging: two queue sessions committing to the same branch with `git add -A` will keep entangling each other's work. If both are meant to run, they need a lock (there's a `logs/.queue_tick.lock` that isn't preventing this) or one should stop.
 
 2026-08-09 18:40:24  === tick done (35 items left) ===
+2026-08-09 18:59:38  === tick starting (35 items open) ===

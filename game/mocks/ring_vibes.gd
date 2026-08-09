@@ -385,6 +385,7 @@ var _car: Node3D = null
 var _wheels: Array = []           # [{pivot, mesh, front}] -- rolling and steering
 var _vehicles: Array = []         # [{root, wheels, name}] -- [L] cycles between them in DRIVE
 var _veh_idx := 0
+var _vehicle_defs := {}           # name -> VehicleDef, built lazily from VEHICLE_ROWS on first _vdef()
 const WARTHOG_PACK := "res://halo_warthog/scene.gltf"  # local-only asset (gitignored); box car is the fallback
 const VEHICLE_LEN := 5.2          # metres nose-to-tail; the box car is 4.2, the warthog reads as bigger
 # Scale and length-axis are measured from the model's AABB, so the only thing not derivable is which
@@ -886,12 +887,9 @@ var _body_height := 0.0
 # Each wheel samples the terrain under itself and compresses a spring. The body then sits on the
 # average and tilts to match the plane through the four contacts, so pitch and roll fall out of the
 # ground rather than being animated onto it.
+# Spring travel/sag/stiffness/damping are per-vehicle now -- they live on the VehicleDef
+# (vehicle_def.gd) so every vehicle rides its own springs over the bump strip.
 # ---------------------------------------------------------------------------
-
-const SUSP_TRAVEL := 0.34         # metres of travel, extension limit to bump stop
-const SUSP_SAG := 0.55            # where it sits parked, as a fraction of travel
-const SUSP_STIFF := 34.0
-const SUSP_DAMP := 6.0
 
 # A DELIBERATELY BUMPY STRIP for testing, laid over flat ground at a fixed arc nobody visits.
 # Real terrain is whatever it happens to be -- Millstreet is 95.7% drivable, so the "rough" phase was
@@ -928,6 +926,13 @@ func _proving_surface(arc: float, lat: float) -> float:
 	return -0.55 if fposmod(sin(px * 91.7 + py * 47.3) * 4371.0, 1.0) < 0.34 else 0.0
 
 func _susp_update(delta: float, pos: Vector3, up: Vector3, fwd: Vector3) -> void:
+	# springs come from the vehicle definition, not constants -- otherwise every vehicle rides
+	# identically over the bump strip and the proving table cannot tell them apart
+	var vd := _vdef()
+	var travel: float = vd.susp_travel
+	var sag: float = vd.susp_sag
+	var stiff: float = vd.susp_stiff
+	var damp: float = vd.susp_damp
 	# sample under each wheel, compress its spring, and let the body follow the contact plane
 	if _wheels.is_empty():
 		return
@@ -946,15 +951,15 @@ func _susp_update(delta: float, pos: Vector3, up: Vector3, fwd: Vector3) -> void
 		# not hang fully extended. Resting at full travel meant every wheel was permanently at the
 		# extension limit, so the airborne test read four wheels off the ground while braking on
 		# the flat, and there was no droop left to absorb anything.
-		var rest := gh + SUSP_TRAVEL * SUSP_SAG
+		var rest := gh + travel * sag
 		var cur: float = float(w.get("h", rest))
 		var vel: float = float(w.get("v", 0.0))
 		# spring toward rest, damped. Below the ground it pushes hard; above it just falls.
-		var accel := (rest - cur) * SUSP_STIFF - vel * SUSP_DAMP
+		var accel := (rest - cur) * stiff - vel * damp
 		# AIRBORNE means the spring is fully extended and STILL not reaching ground -- not merely
 		# "above the rest position", which is true for half of every oscillation and reported all
 		# four wheels off the ground while braking on the flat.
-		if cur - gh >= SUSP_TRAVEL:
+		if cur - gh >= travel:
 			accel = -9.81
 			airborne += 1
 		vel += accel * delta
@@ -964,7 +969,7 @@ func _susp_update(delta: float, pos: Vector3, up: Vector3, fwd: Vector3) -> void
 			vel = maxf(vel, 0.0)
 		w["h"] = cur
 		w["v"] = vel
-		var comp: float = clampf(rest - cur, -SUSP_TRAVEL, SUSP_TRAVEL)
+		var comp: float = clampf(rest - cur, -travel, travel)
 		_susp_travel = maxf(_susp_travel, absf(comp))
 		sum += cur
 		pitch += comp * signf(off.z)
@@ -3542,35 +3547,87 @@ func _apply_look() -> void:
 func _ring_up(pos: Vector3) -> Vector3:
 	return (Vector3(0.0, _radius(), pos.z) - pos).normalized()
 
+
+# ---------------------------------------------------------------------------
+# VEHICLE DEFINITIONS. Every number the handling model reads lives in a VehicleDef (vehicle_def.gd),
+# so adding a vehicle is a data row rather than new movement code -- the only way ~40 of them is a
+# fortnight instead of forty separate jobs. A row here overrides the resource's defaults; whatever it
+# omits (mass, buoyancy, lift on a plain car) keeps the default. Later a vehicle can be a .tres loaded
+# in place of a row without touching this code.
+#
+# `loco` picks the movement model. Each is a Locomotion function (_loco_<class>); they share the
+# ring-frame integration and differ only in how throttle, steering and terrain become velocity.
+# Anything not listed falls back to the wheeled model, so a new row is drivable before its class is
+# written.
+# ---------------------------------------------------------------------------
+const VEHICLE_ROWS := {
+	"box": {
+		"loco": "wheeled", "mass": 1200.0, "power": 9.0, "brake": 12.0, "top": 22.0, "reverse": -6.0,
+		"drag": 0.35, "offroad_drag": 0.55, "turn": 1.5, "offroad_turn": 0.45,
+		"grip_speed": 12.0, "ride": 0.40, "wheel_r": 0.45,
+		"susp_travel": 0.34, "susp_stiff": 34.0, "susp_damp": 6.0, "susp_sag": 0.55,
+	},
+	"warthog": {
+		# heavier and more powerful, softer springs, better off the tarmac -- which is the whole
+		# point of having more than one: they should not measure the same on the proving course.
+		"loco": "wheeled", "mass": 2400.0, "power": 12.0, "brake": 14.0, "top": 27.0, "reverse": -7.0,
+		"drag": 0.30, "offroad_drag": 0.34, "turn": 1.3, "offroad_turn": 0.20,
+		"grip_speed": 14.0, "ride": 0.55, "wheel_r": 0.52,
+		"susp_travel": 0.46, "susp_stiff": 26.0, "susp_damp": 5.0, "susp_sag": 0.55,
+	},
+}
+
+func _build_vehicle_defs() -> void:
+	# Turn each data row into a typed VehicleDef, applying the row over the resource's defaults.
+	for name in VEHICLE_ROWS:
+		var d := VehicleDef.new()
+		for k in VEHICLE_ROWS[name]:
+			d.set(k, VEHICLE_ROWS[name][k])
+		_vehicle_defs[name] = d
+
+func _vdef() -> VehicleDef:
+	# current vehicle's parameters, falling back to the box so an unregistered vehicle still drives
+	if _vehicle_defs.is_empty():
+		_build_vehicle_defs()
+	var name := str(_vehicles[_veh_idx]["name"]) if not _vehicles.is_empty() else "box"
+	return _vehicle_defs.get(name, _vehicle_defs["box"])
+
+func _loco_wheeled(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
+	# Grip and drag scale with how far off the tarmac we are. Everything here reads from `d`, so a
+	# tracked or hover model is a sibling _loco_<class> function rather than an edit to this one.
+	_car_speed = clampf(_car_speed + accel * delta, d.reverse, d.top)
+	_car_speed *= 1.0 - (d.drag + d.offroad_drag * _offroad) * delta
+	var bite: float = d.turn - d.offroad_turn * _offroad
+	_car_heading += steer * bite * delta 		* clampf(absf(_car_speed) / d.grip_speed, 0.0, 1.0) * signf(_car_speed)
+	_car_arc += cos(_car_heading) * _car_speed * delta
+	_car_lat += sin(_car_heading) * _car_speed * delta
+
 func _drive_tick(delta: float) -> void:
 	var accel := 0.0
 	var steer := 0.0
+	var d := _vdef()
 	if _proving:
 		# scripted course input, so every vehicle is driven identically and the table compares
-		accel = _prove_throttle * (9.0 if _prove_throttle > 0.0 else 12.0)
+		accel = _prove_throttle * (d.power if _prove_throttle > 0.0 else d.brake)
 		steer = _prove_steer
 	else:
-		if Input.is_key_pressed(KEY_W): accel += 9.0
-		if Input.is_key_pressed(KEY_S): accel -= 12.0
-	_car_speed = clampf(_car_speed + accel * delta, -6.0, 22.0)  # ~80 km/h top (was 160)
-	# offroad drags harder and steers vaguer -- the difference should be felt in the
-	# handling, not just seen in a particle effect. Off-roading is a mode, not a penalty:
-	# top speed drops maybe a third, it does not become unusable.
-	_car_speed *= 1.0 - (0.35 + 0.55 * _offroad) * delta
-	if not _proving:
+		if Input.is_key_pressed(KEY_W): accel += d.power
+		if Input.is_key_pressed(KEY_S): accel -= d.brake
 		if Input.is_key_pressed(KEY_A): steer -= 1.0
 		if Input.is_key_pressed(KEY_D): steer += 1.0
-	_car_heading += steer * (1.5 - 0.45 * _offroad) * delta * clampf(abs(_car_speed) / 12.0, 0.0, 1.0) * signf(_car_speed)
-	_car_arc += cos(_car_heading) * _car_speed * delta
-	_car_lat += sin(_car_heading) * _car_speed * delta
+	# LOCOMOTION DISPATCH -- one call per class, selected by the def's `loco`. Add a case here and a
+	# sibling _loco_<class> to make a whole vehicle class drivable. Off-roading is a mode, not a
+	# penalty: drag and steering bite both worsen off the tarmac, but the vehicle stays usable.
+	match d.loco:
+		"wheeled", _: _loco_wheeled(d, delta, accel, steer)
 	var pos := _car_pos(_car_arc, _car_lat) + _ring_up(_car_pos(_car_arc, _car_lat)) * _proving_surface(_car_arc, _car_lat)
 	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
 	var up := _ring_up(pos)
 	var fwd := (ahead - pos).normalized() if not pos.is_equal_approx(ahead) else up.cross(Vector3.FORWARD).normalized()
 	_susp_update(delta, pos, up, fwd)
-	_car.global_position = pos + up * 0.4
+	_car.global_position = pos + up * d.ride
 	if not pos.is_equal_approx(ahead):
-		_car.look_at(ahead + up * 0.4, up)
+		_car.look_at(ahead + up * d.ride, up)
 		# pitch and roll come from the contact plane, so braking dips the nose and a hollow
 		# under one wheel leans the body -- rather than the whole car sliding as one decal
 		_car.rotate_object_local(Vector3(1, 0, 0), _body_pitch)
@@ -3578,7 +3635,7 @@ func _drive_tick(delta: float) -> void:
 	# WHEELS. They were four static cylinders: the single loudest tell that a vehicle is a prop.
 	# Roll rate is circumference-correct rather than a guessed multiplier, so it never looks
 	# like it is skating.
-	_wheel_spin += (_car_speed * delta) / 0.45
+	_wheel_spin += (_car_speed * delta) / d.wheel_r
 	for w in _wheels:
 		# Node3D, not MeshInstance3D: the box car's wheels ARE meshes but the warthog's are
 		# transform nodes with meshes beneath. The stricter type threw every frame on the
