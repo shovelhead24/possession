@@ -1,4 +1,4 @@
-# extract-assets.ps1
+﻿# extract-assets.ps1
 # Extracts asset packs from assets/ into game/ if not already present.
 # Safe to run multiple times - skips packs that are already extracted.
 #

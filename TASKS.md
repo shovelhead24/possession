@@ -52,8 +52,12 @@ Rules:
 - [x] **Refetch buildings for the 7 patches that have them** â€” they were fetched against the
       authored bbox, so they're 10â€“16% out. `fetch_osm_buildings.py` is fixed; just re-run with
       `--force`.
-- [ ] **Hedgerows + verge everywhere.** Once `*_roadlines.dat` exists for all patches, the ribbon
-      and the tree-clearing currently only run on the home patch â€” generalise past `millstreet`.
+- [x] **Hedgerows + verge everywhere.** The live streaming landing path re-scattered trees and
+      rebuilt the ribbon but never reloaded the centrelines for the streamed patch, so in play both
+      stayed pinned to millstreet. The shot harness already swapped `_roadline_patch` per patch;
+      copied that swap into the stream-land path so the ribbon and tree-clearing follow you. Not
+      shot-verified: the sandbox can't launch the out-of-repo Godot binary, and `--shots` wouldn't
+      distinguish this anyway (that path had its own per-patch swap already).
 - [ ] **Measure drape QUALITY, not just coverage.** `salar_uyuni` is pure white (clipped),
       `palawan` is ~55% cloud, `guri_dam` is two seasons across a seam â€” and all three report 100%
       coverage, because coverage counts filled pixels. Scene selection sorts on the scene-wide STAC

@@ -1,4 +1,4 @@
-# Make the satellite refetch resume by itself at logon, with no Claude session and no terminal left
+﻿# Make the satellite refetch resume by itself at logon, with no Claude session and no terminal left
 # open. Uses the per-user Startup folder rather than a Scheduled Task because the latter needs
 # elevation and this does not.
 #

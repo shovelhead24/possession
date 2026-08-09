@@ -1,4 +1,4 @@
-# Fetch OSM roads + centrelines for every exported patch, resumably and politely.
+﻿# Fetch OSM roads + centrelines for every exported patch, resumably and politely.
 #
 # Driving is going to be a big part of the game, and right now Millstreet is the only patch with
 # road data -- so it is the only place with hedgerows, a verge, or trees kept off the carriageway.

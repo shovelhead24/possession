@@ -1,4 +1,4 @@
-# watch-and-run.ps1
+﻿# watch-and-run.ps1
 # Polls GitHub for new commits every 15 seconds.
 # When new code is detected, pulls and relaunches Godot automatically.
 # Logs Godot output to a rolling log file for troubleshooting.

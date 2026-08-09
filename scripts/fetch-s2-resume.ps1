@@ -1,4 +1,4 @@
-# Resume the 8192 satellite refetch. Safe to run at any time and as often as you like: the driver
+﻿# Resume the 8192 satellite refetch. Safe to run at any time and as often as you like: the driver
 # skips patches whose drape is already at the right resolution, extent AND coverage, so with nothing
 # outstanding it exits in a second.
 #

@@ -144,6 +144,7 @@ var _hedge_mi: MeshInstance3D = null
 var _roadlines: Array = []
 var _junc := {}                   # 30m cells where two or more ways meet
 var _road_cells := {}             # 8m cells containing carriageway
+var _roadline_patch := -1         # which splice's centrelines are resident
 var _grass_shown := 0
 var _species_now := "fir"
 var _hedge_quads := 0
@@ -912,6 +913,11 @@ func _shot_run() -> void:
 			_cam.fov = float(shot["fov"])
 			_look.y = float(shot["pitch"])
 			_apply_look()
+			# roadside furniture follows the streamed patch too, or hedges, verge and the grass
+			# road-avoidance stay stuck on the home patch wherever you actually are
+			if _roadline_patch != _hires_idx:
+				_roadline_patch = _hires_idx
+				_load_roadlines()
 			_scatter_trees()
 			_refill_buildings(true)
 			_build_hedge_ribbon()
@@ -1205,6 +1211,12 @@ func _hires_poll() -> void:
 			# 512^2 array did, and the two disagree by whatever detail the array threw away. Anything
 			# already placed against the old tier is now at the wrong height, which is trees and the
 			# car ending up at one level and houses at another. Re-place both.
+			# The centrelines must follow the stream too, or the ribbon and the tree-clearing stay
+			# pinned to the home patch wherever you drive -- the shot harness already does this, live
+			# play did not.
+			if _roadline_patch != _hires_idx:
+				_roadline_patch = _hires_idx
+				_load_roadlines()
 			_scatter_trees()
 			_refill_buildings(true)
 			_build_hedge_ribbon()
@@ -2181,23 +2193,17 @@ func _scatter_grass(force := false) -> void:
 	if force:
 		print("ring_vibes: %d grass instances in a %.0fm bubble" % [_grass_shown, GRASS_RADIUS])
 
-func _load_roadlines() -> void:
-	# Road CENTRELINES, patch-local metres, written alongside the raster mask by fetch_osm_roads.py.
-	# The mask stays the right tool for drape and for "am I on a road"; a hedgerow is a continuous
-	# ribbon along a line, and reconstructing a line by scattering objects over a blurred bitmap
-	# gives exactly what it sounds like -- a dotted line of separate bushes.
-	_roadlines = []
-	var path := "res://mocks/dem/%s_roadlines.dat" % DEM_R16.get_file().get_basename()
-	if not FileAccess.file_exists(path) or _dem_w == 0:
-		return
+func _load_roadline_file(name: String, arc_off: float, lat_off: float) -> int:
+	var path := "res://mocks/dem/%s_roadlines.dat" % name
+	if not FileAccess.file_exists(path):
+		return 0
 	var b := FileAccess.get_file_as_bytes(path)
 	if b.size() < 8 or b.decode_u8(0) != 0x52 or b.decode_u8(1) != 0x44:   # "RD"
-		return
-	# home patch origin: camera_px, not the DEM centre (same offset the buildings use)
-	var ax := (float(_dem_w) * 0.5 - float(_dem_cam.x)) * _dem_mpp
-	var lx := (float(_dem_cam.y) - float(_dem_h) * 0.5) * _dem_mpp
+		return 0
+	var circ: float = CIRCUMFERENCES[c_idx]
 	var n := int(b.decode_u32(4))
 	var o := 8
+	var added := 0
 	for i in n:
 		if o + 4 > b.size():
 			break
@@ -2208,11 +2214,33 @@ func _load_roadlines() -> void:
 		for k in cnt:
 			if o + 8 > b.size():
 				break
-			pts.append(Vector2(b.decode_float(o) + ax, b.decode_float(o + 4) + lx))
+			pts.append(Vector2(fposmod(b.decode_float(o) + arc_off, circ),
+				b.decode_float(o + 4) + lat_off))
 			o += 8
 		if pts.size() > 1:
 			_roadlines.append({"w": wdt, "pts": pts})
-	print("ring_vibes: %d road centrelines loaded" % _roadlines.size())
+			added += 1
+	return added
+
+func _load_roadlines() -> void:
+	# Road CENTRELINES for the home patch AND the patch you are standing in. The mask stays the right
+	# tool for the drape; a hedgerow is a ribbon along a line, and scattering objects over a blurred
+	# bitmap to reconstruct that line gives a dotted row of separate bushes.
+	#
+	# Two patches, not all 27: 250k points each, and _road_cells would hold millions of entries for
+	# ground nobody is within 100km of. Reloaded when the streamed patch changes, on the same trigger
+	# as the drape, so the roadside furniture follows you the way everything else already does.
+	_roadlines = []
+	var total := 0
+	if _dem_w > 0:
+		var ax := (float(_dem_w) * 0.5 - float(_dem_cam.x)) * _dem_mpp
+		var lx := (float(_dem_cam.y) - float(_dem_h) * 0.5) * _dem_mpp
+		total += _load_roadline_file(DEM_R16.get_file().get_basename(), ax, lx)
+	if _roadline_patch >= 0 and _roadline_patch < _patch_names.size():
+		var r: Vector4 = _patch_rects[_roadline_patch]
+		total += _load_roadline_file(str(_patch_names[_roadline_patch]), r.x, r.y)
+	print("ring_vibes: %d road centrelines loaded (home + %s)" % [
+		total, _patch_names[_roadline_patch] if _roadline_patch >= 0 else "none"])
 	_build_junctions()
 
 func _build_junctions() -> void:
@@ -2229,7 +2257,13 @@ func _build_junctions() -> void:
 		# the road between them unmarked, and grass grew down the middle of the carriageway.
 		for i in pts.size() - 1:
 			var seg := pts[i + 1] - pts[i]
-			var steps: int = maxi(1, int(ceil(seg.length() / 5.0)))
+			# A segment longer than any real road span is the arc seam: two consecutive points that
+			# wrapped to opposite ends of the ring. Walking that at 5m is 600,000 cells for one
+			# segment, which is how the cell count hit 26,976,535 for a patch with 8,450km of road.
+			var seg_len := seg.length()
+			if seg_len > 5000.0:
+				continue
+			var steps: int = maxi(1, int(ceil(seg_len / 5.0)))
 			for k in steps + 1:
 				var q := pts[i] + seg * (float(k) / float(steps))
 				_road_cells[Vector2i(int(floor(q.x / 8.0)), int(floor(q.y / 8.0)))] = true
@@ -2596,9 +2630,16 @@ func _scatter_trees() -> void:
 			# Nothing grows on the carriageway. The road mask has been in the shader since the
 			# drape went in, but the scatter could not read it, so conifers grew down the middle
 			# of every road in the starting area.
-			var rv := _road_at(jx, jz)
-			var on_road := rv >= ROAD_ON
-			var side := (not on_road) and rv >= ROAD_NEAR
+			# cells, not the raster mask: the mask only exists for the home patch, so away from it
+			# trees grew straight down the carriageway and no hedgerow was planted at all
+			var cell := Vector2i(int(floor(jx / 8.0)), int(floor(jz / 8.0)))
+			var on_road := _road_cells.has(cell)
+			var side := false
+			if not on_road:
+				for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+					if _road_cells.has(cell + d):
+						side = true
+						break
 			# ...and roads are LINED. A hedgerow ignores the forest mask entirely: it is there
 			# because the road is there, which is exactly how field boundaries work.
 			if on_road:

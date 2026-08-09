@@ -1,4 +1,4 @@
-# diagnose.ps1
+﻿# diagnose.ps1
 # Run this and paste the output into the chat for troubleshooting.
 # Usage: powershell -ExecutionPolicy Bypass -File "C:\Games\possession\scripts\diagnose.ps1"
 
