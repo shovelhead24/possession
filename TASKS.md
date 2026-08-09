@@ -69,16 +69,46 @@ Rules:
       three cited previews (palawan haze, salar clip, guri_dam is a SEASONAL seam not cloud -> the
       colour-match item, correctly not flagged here). NOT run-verified: python is gated in this
       sandbox, and the 8192 batch already reports 0-to-fetch, so no live refetch exercised it.
-- [ ] **Per-patch sea level.** danube_delta renders 64% ocean because delta land sits at 0-2m
+- [x] **Per-patch sea level.** danube_delta renders 64% ocean because delta land sits at 0-2m
       under a global 0.5m SEA_LEVEL. Any low-lying patch has this. Needs a per-patch offset.
-- [ ] **Colour-match scenes at paste time** in `fetch_s2.py`. CONFIRMED SYSTEMIC: 4 of 4
+      Done via the existing `patch_offset[]` path (already applied before the sea clamp in both
+      shader and CPU across all three tiers). New optional `sea_pct` field on a patch: at load the
+      offset is derived from that patch's own height distribution so the DEM sea fraction matches
+      the imagery. danube_delta set to 25% (census: 63.8% sea at 0.5m; human read ~25% water).
+      Self-calibrating, so it generalises to any low-lying splice. NOT run-verified: Godot binary
+      is out-of-repo/gated and python is gated in this sandbox, so no `--shots` and no offset
+      recompute exercised. Shoot danube_delta to confirm the reed bed now reads as land.
+- [x] **Colour-match scenes at paste time** in `fetch_s2.py`. CONFIRMED SYSTEMIC: 4 of 4
       multi-scene patches are visibly patchworked (`guri_dam` worst â€” two seasons either side of a
       hard vertical seam, then `danube_delta`, `mongolia_steppe`, `dolomites`). Only single-scene
       patches are clean. Normalise exposure per scene against the overlap before pasting.
-- [ ] **Reject building sites on cliffs.** `--align` says 8,235 of 119,703 sit on ground steeper
-      than their undercroft covers, worst a 1,195 m drop. Add a slope limit at placement.
-- [ ] **Regression sweep script.** Run `--align`, `--selftest`, `--texprobe`, diff against the last
-      known-good, report only what changed. This session's worst bugs were silent successes.
+      Done via `_match_exposure`: where an incoming scene's clean pixels land on ground an earlier
+      scene already painted clean, a per-channel mean/std map is fit over that overlap and applied
+      to the whole block before pasting, so the new scene matches its neighbour. First scene in a
+      region is the anchor (no overlap); contrast gain clamped [0.5,2.0]; overlaps below 5000 px are
+      left untouched. NOT run-verified: python is gated in this sandbox and regenerating a preview
+      means re-running fetch_s2 (a refetch, which the rules forbid). Shoot/re-preview guri_dam to
+      confirm the vertical season seam is gone.
+- [x] **Reject building sites on cliffs.** `--align` said 8,235 of 119,703 sat on ground steeper
+      than their undercroft covers, worst a 1,195 m drop. `_load_bldg_file` now runs the ALIGN float
+      test (max corner drop vs building height) per building before placing it, and skips the ones
+      that fail; the per-patch load line now reports the cliff count alongside the ring-width count.
+      Same `_terrain_h` the align check uses, and `_dem_hf`/`_patch_rects` are both loaded first, so
+      the sample is valid at load. NOT run-verified: the Godot binary is out-of-repo/gated here, so
+      no `--align` re-run — that count is the confirmation, and it should now drop toward 0.
+- [x] **Regression sweep script.** `scripts/regression-sweep.ps1` runs each of `--align`,
+      `--selftest`, `--texprobe`, pulls the deterministic signal lines from the run's godot.log
+      (per-patch ALIGN/SELFTEST/TEXPROBE lines, the two ALIGN summary counts, the streamed-OK
+      count, plus the one-time startup census of trees/buildings/centrelines/splice list), strips
+      volatile timings (`(1082 ms)`, `(2.5s)`) so a slow run isn't a false positive, and diffs each
+      against a blessed baseline in `logs/regression/baseline/`, printing ONLY changed lines.
+      Value moved = old->new (numbers masked to match line shape); patch added/removed = a whole
+      line. `-Accept` blesses the current output as the new known-good; exit 1 on any change so the
+      queue task can gate on it. align/selftest quit themselves (WaitForExit); texprobe never does,
+      so it waits for the TEXPROBE line then kills the process. NOT run-verified: the Godot binary
+      is out-of-repo/gated here and launching even the .ps1 needs interactive approval, so no live
+      sweep exercised it. Parse-reviewed by hand for PS5.1 (no ternary/`&&`, collection-unroll
+      guarded with `@()`). First run on the laptop seeds the baseline; bless once with `-Accept`.
 - [ ] **Fix marker displacement** in the census â€” it takes the worst marker, so any patch with
       route-spanning markers scores badly by design. Use the camera anchor.
 
@@ -101,6 +131,12 @@ Prerequisite for everything below.
       holds wrapped arcs and the lookup may be missing -- so `_offroad` sits at 1 and the drag
       matches exactly (9.0 accel / 0.9 drag = 10 m/s terminal, measured 9.8). Confirm before
       building anything on top of the handling model.
+- [x] **Suspension + calibrated bump strip.** Per-wheel spring, body pitch/roll from the contact
+      plane, and a 700m test surface (washboard, swell, kerbs, ramp-and-drop, potholes) so rough
+      ground is repeatable rather than whatever the patch happens to have.
+- [ ] **Make the bump strip visible.** It is CPU-side only, so the shader does not draw it — the
+      exact drawn-vs-driven mismatch this project keeps hitting. Mirror `_proving_surface` into
+      cdlod_ring.gdshader, or accept it and gate it behind a loud HUD warning.
 - [ ] **Locomotion abstraction.** `_drive_tick` is one hardcoded wheeled model: fixed accel, fixed
       grip, a heading integrated on the ring surface. Pull it into a `Locomotion` interface with
       one implementation per class, and a `VehicleDef` resource carrying mass, power, grip,

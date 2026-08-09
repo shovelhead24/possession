@@ -222,8 +222,9 @@ const PATCHES := [
 	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "storm", "species": "scrub"},
 	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh", "species": "scrub"},
 	# imaged 2026-08-08: the 92% "vegetation" the census measures is REED BED, not canopy, so
-	# trees 0.1 is right and stays. Two defects logged instead -- see docs/patch-review.md.
-	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.30, 0.34, 0.24), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast", "species": "scrub"},
+	# trees 0.1 is right and stays. sea_pct lifts the datum so the reed bed reads as land, not
+	# ocean: the DEM is 63.8% sea at the 0.5m clamp but the imagery is ~25% water (see patch-review).
+	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.30, 0.34, 0.24), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast", "species": "scrub", "sea_pct": 25.0},
 	# fynbos, not forest -- scrub to the waterline on both oceans, and almost no trees
 	{"name": "cape_peninsula", "arc_pct": 0.280, "tint": Color(0.38, 0.38, 0.28), "trees": 0.15, "tree_hi": 700.0, "weather": "clear", "species": "scrub"},
 	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
@@ -860,11 +861,122 @@ const PROVE_PHASES := [
 	{"name": "circle", "secs": 12.0, "throttle": 1.0, "steer": 1.0},
 	{"name": "rough",  "secs": 12.0, "throttle": 1.0, "steer": 0.0, "offroad": true},
 	{"name": "climb",  "secs": 14.0, "throttle": 1.0, "steer": 0.0, "uphill": true},
+	# the calibrated bump strip: washboard, swell, kerbs, a ramp and a drop, then potholes
+	{"name": "bumps",  "secs": 40.0, "throttle": 1.0, "steer": 0.0, "strip": true},
 ]
 
 var _prove_throttle := 0.0        # scripted input; _drive_tick reads these when _proving is set
 var _prove_steer := 0.0
 var _proving := false
+var _susp_travel := 0.0           # max compression seen this phase
+var _susp_airborne := 0
+var _body_pitch := 0.0
+var _body_roll := 0.0
+var _body_height := 0.0
+
+
+# ---------------------------------------------------------------------------
+# SUSPENSION, and a calibrated surface to test it on.
+#
+# There was none. The body was pinned to terrain height + 0.4 with the wheels welded to it, so it
+# slid over the ground like a decal -- no pitch under braking, no roll in a turn, no wheel dropping
+# into a hollow, and nothing to leave the ground. Which also meant "test suspension behaviour" had
+# nothing to measure.
+#
+# Each wheel samples the terrain under itself and compresses a spring. The body then sits on the
+# average and tilts to match the plane through the four contacts, so pitch and roll fall out of the
+# ground rather than being animated onto it.
+# ---------------------------------------------------------------------------
+
+const SUSP_TRAVEL := 0.34         # metres of travel, extension limit to bump stop
+const SUSP_SAG := 0.55            # where it sits parked, as a fraction of travel
+const SUSP_STIFF := 34.0
+const SUSP_DAMP := 6.0
+
+# A DELIBERATELY BUMPY STRIP for testing, laid over flat ground at a fixed arc nobody visits.
+# Real terrain is whatever it happens to be -- Millstreet is 95.7% drivable, so the "rough" phase was
+# measuring gentle pasture. Calibrated obstacles make the numbers mean something and repeat exactly.
+# CPU-side only: the shader does not know about it, so it is invisible. That is a deliberate
+# mismatch of the kind this project keeps getting bitten by, so it is confined to a strip that only
+# --proving drives to, and the HUD says so when you are standing on it.
+const PROVE_STRIP_ARC := 900_000.0     # 30% arc, well away from every splice
+const PROVE_STRIP_LAT := 0.0
+const PROVE_STRIP_LEN := 700.0
+
+func _proving_surface(arc: float, lat: float) -> float:
+	# 0 outside the strip. Inside, a sequence of calibrated obstacles laid end to end:
+	#   0-150m   washboard, 2.5m wavelength, 8cm  -- the corrugation that shakes a chassis apart
+	#   150-300m washboard, 9m wavelength, 45cm   -- the swell that unloads a suspension
+	#   300-420m four square steps, 10/20/30/40cm -- kerbs; where a wheel radius stops coping
+	#   420-560m ramp to 2.2m and a sharp drop    -- airtime and landing
+	#   560-700m random potholes                  -- asymmetric, so roll and single-wheel drop
+	var d := arc - PROVE_STRIP_ARC
+	if d < 0.0 or d > PROVE_STRIP_LEN or absf(lat - PROVE_STRIP_LAT) > 40.0:
+		return 0.0
+	if d < 150.0:
+		return sin(d * TAU / 2.5) * 0.08
+	if d < 300.0:
+		return sin(d * TAU / 9.0) * 0.45
+	if d < 420.0:
+		var step: float = floor((d - 300.0) / 30.0)
+		return clampf(step, 0.0, 3.0) * 0.10 + 0.10
+	if d < 560.0:
+		var r := (d - 420.0) / 140.0
+		return 2.2 * r if r < 0.85 else 0.0          # ramp then nothing: a drop, not a landing ramp
+	var px: float = floor((d - 560.0) / 12.0)
+	var py: float = floor(lat / 9.0)
+	return -0.55 if fposmod(sin(px * 91.7 + py * 47.3) * 4371.0, 1.0) < 0.34 else 0.0
+
+func _susp_update(delta: float, pos: Vector3, up: Vector3, fwd: Vector3) -> void:
+	# sample under each wheel, compress its spring, and let the body follow the contact plane
+	if _wheels.is_empty():
+		return
+	var right := fwd.cross(up).normalized()
+	var sum := 0.0
+	var pitch := 0.0
+	var roll := 0.0
+	var airborne := 0
+	for i in _wheels.size():
+		var w: Dictionary = _wheels[i]
+		var off: Vector3 = w.get("offset", Vector3.ZERO)
+		var wa := _car_arc + off.z * cos(_car_heading) - off.x * sin(_car_heading)
+		var wl := _car_lat + off.z * sin(_car_heading) + off.x * cos(_car_heading)
+		var gh := _terrain_h(wa, wl) + _proving_surface(wa, wl)
+		# STATIC SAG. A parked vehicle sits partway down its travel under its own weight; it does
+		# not hang fully extended. Resting at full travel meant every wheel was permanently at the
+		# extension limit, so the airborne test read four wheels off the ground while braking on
+		# the flat, and there was no droop left to absorb anything.
+		var rest := gh + SUSP_TRAVEL * SUSP_SAG
+		var cur: float = float(w.get("h", rest))
+		var vel: float = float(w.get("v", 0.0))
+		# spring toward rest, damped. Below the ground it pushes hard; above it just falls.
+		var accel := (rest - cur) * SUSP_STIFF - vel * SUSP_DAMP
+		# AIRBORNE means the spring is fully extended and STILL not reaching ground -- not merely
+		# "above the rest position", which is true for half of every oscillation and reported all
+		# four wheels off the ground while braking on the flat.
+		if cur - gh >= SUSP_TRAVEL:
+			accel = -9.81
+			airborne += 1
+		vel += accel * delta
+		cur += vel * delta
+		if cur < gh:
+			cur = gh
+			vel = maxf(vel, 0.0)
+		w["h"] = cur
+		w["v"] = vel
+		var comp: float = clampf(rest - cur, -SUSP_TRAVEL, SUSP_TRAVEL)
+		_susp_travel = maxf(_susp_travel, absf(comp))
+		sum += cur
+		pitch += comp * signf(off.z)
+		roll += comp * signf(off.x)
+		var mesh: Node3D = w["mesh"]
+		mesh.position.y = float(w.get("y0", mesh.position.y)) - comp
+		if not w.has("y0"):
+			w["y0"] = mesh.position.y + comp
+	_susp_airborne = airborne
+	_body_pitch = lerpf(_body_pitch, clampf(pitch * 0.5, -0.35, 0.35), delta * 8.0)
+	_body_roll = lerpf(_body_roll, clampf(roll * 0.5, -0.35, 0.35), delta * 8.0)
+	_body_height = lerpf(_body_height, sum / float(_wheels.size()), delta * 12.0)
 
 func _prove_run() -> void:
 	await get_tree().create_timer(1.5).timeout
@@ -881,8 +993,9 @@ func _prove_run() -> void:
 			want.append(str(v["name"]))
 
 	print("\nPROVING GROUND — identical course, every vehicle\n")
-	print("%-10s %-8s %8s %8s %8s %8s %8s" % [
-		"vehicle", "phase", "top m/s", "dist m", "turn r", "jolt m", "grade"])
+	print("%-10s %-8s %8s %8s %8s %8s %8s %6s %5s" % [
+		"vehicle", "phase", "top m/s", "dist m", "turn r", "jolt m", "grade",
+		"susp", "air"])
 	_proving = true
 	for vname in want:
 		var vi := -1
@@ -913,6 +1026,9 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 		start_lat = p.y
 	if bool(phase.get("offroad", false)):
 		start_lat += 60.0                      # well clear of the carriageway
+	if bool(phase.get("strip", false)):
+		start_arc = PROVE_STRIP_ARC - 20.0
+		start_lat = PROVE_STRIP_LAT
 	_car_arc = start_arc
 	_car_lat = start_lat
 	_car_speed = 0.0
@@ -935,6 +1051,8 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	var start := Vector2(_car_arc, _car_lat)
 	var h_start := _terrain_h(_car_arc, _car_lat)
 	var jolt := 0.0
+	_susp_travel = 0.0
+	var air := 0
 	var prev_h := h_start
 	var min_x := 1e20
 	var max_x := -1e20
@@ -947,6 +1065,7 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 		top = maxf(top, absf(_car_speed))
 		var h := _terrain_h(_car_arc, _car_lat)
 		jolt = maxf(jolt, absf(h - prev_h))
+		air = maxi(air, _susp_airborne)
 		prev_h = h
 		min_x = minf(min_x, _car_arc); max_x = maxf(max_x, _car_arc)
 		min_y = minf(min_y, _car_lat); max_y = maxf(max_y, _car_lat)
@@ -955,10 +1074,11 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	var turn_r: float = maxf(max_x - min_x, max_y - min_y) * 0.5
 	var climbed := _terrain_h(_car_arc, _car_lat) - h_start
 	var grade: float = 0.0 if dist < 1.0 else rad_to_deg(atan(climbed / dist))
-	print("%-10s %-8s %8.1f %8.1f %8.1f %8.2f %7.1f°" % [
+	print("%-10s %-8s %8.1f %8.1f %8.1f %8.2f %7.1f  %6.2f %5d" % [
 		vname, phase["name"], top, dist,
 		turn_r if str(phase["name"]) == "circle" else 0.0,
-		jolt, grade if str(phase["name"]) == "climb" else 0.0])
+		jolt, grade if str(phase["name"]) == "climb" else 0.0,
+		_susp_travel, air])
 
 func _shot_run() -> void:
 	# `-- --shots [patch,patch,...]` warps to each patch, waits for its stream, and writes a set of
@@ -1477,11 +1597,22 @@ func _load_patches() -> void:
 		_patch_fields.append(floats)
 		_patch_names.append(p["name"])
 		_patch_meta.append(p)
+		var off := 0.0
 		if REBASE_PATCHES:
 			var floor_h := _patch_floor(floats)
-			_patch_offset.append(REBASE_FLOOR - floor_h if floor_h > REBASE_ABOVE else 0.0)
-		else:
-			_patch_offset.append(0.0)   # real absolute elevation
+			off = REBASE_FLOOR - floor_h if floor_h > REBASE_ABOVE else 0.0
+		# Per-patch sea offset. A river delta or salt marsh sits within a metre or two of the global
+		# SEA_LEVEL clamp, so most of its land renders as ocean. Author the fraction the IMAGERY shows
+		# as water and lift the whole patch's datum so the DEM's sea fraction matches -- derived from
+		# THIS patch's own heights, so it generalises to any low-lying splice. Applied before the clamp
+		# in both shader (patch_offset[] in cdlod_ring.gdshader) and CPU, so placement stays in sync.
+		if p.has("sea_pct"):
+			var sorted := floats.duplicate()
+			sorted.sort()
+			var q: float = clampf(float(p["sea_pct"]) * 0.01, 0.0, 1.0)
+			var pct_h: float = sorted[clampi(int(q * float(sorted.size() - 1)), 0, sorted.size() - 1)]
+			off += SEA_LEVEL - pct_h
+		_patch_offset.append(off)   # 0 = real absolute elevation (REBASE off)
 		_patch_rects.append(Vector4(
 			fposmod(float(p["arc_pct"]) * circumference, circumference),   # arc centre
 			0.0,                                                            # lat centre (ring midline)
@@ -2957,18 +3088,42 @@ func _load_bldg_file(name: String, arc_off: float, lat_off: float, style: int) -
 	var best_key := 0
 	var best_n := 0
 	var kept := 0
+	var lat_out := 0
+	var cliff := 0
 	for i in n:
 		var o := 8 + i * 24
 		var lt := b.decode_float(o + 4) + lat_off
 		if absf(lt) > lat_lim:
+			lat_out += 1
 			continue
 		var ar := b.decode_float(o) + arc_off
-		_bldg.append(fposmod(ar, circ))
+		var aw := fposmod(ar, circ)
+		var bw := b.decode_float(o + 8)
+		var bd := b.decode_float(o + 12)
+		var byaw := b.decode_float(o + 16)
+		var bh := b.decode_float(o + 20)
+		# Reject cliff sites at placement. The undercroft is one building-height deep, so a footprint
+		# whose corners drop by more than that stands on daylight (mirrors the ALIGN float check).
+		var hw := bw * 0.5
+		var hd := bd * 0.5
+		var yc := cos(byaw)
+		var ys := sin(byaw)
+		var top := -1e20
+		var low := 1e20
+		for sx in [-1.0, 1.0]:
+			for sz in [-1.0, 1.0]:
+				var c := _terrain_h(aw + sx * hw * yc - sz * hd * ys, lt + sx * hw * ys + sz * hd * yc)
+				top = maxf(top, c)
+				low = minf(low, c)
+		if top - low > bh:
+			cliff += 1
+			continue
+		_bldg.append(aw)
 		_bldg.append(lt)
-		_bldg.append(b.decode_float(o + 8))
-		_bldg.append(b.decode_float(o + 12))
-		_bldg.append(b.decode_float(o + 16))
-		_bldg.append(b.decode_float(o + 20))
+		_bldg.append(bw)
+		_bldg.append(bd)
+		_bldg.append(byaw)
+		_bldg.append(bh)
 		_bldg_style.append(style)
 		kept += 1
 		# densest 4km cell, so a warp lands in the settlement rather than the middle of the bbox
@@ -2986,8 +3141,8 @@ func _load_bldg_file(name: String, arc_off: float, lat_off: float, style: int) -
 		var by: int = best_key - bx * 100000 - 50000
 		_bldg_focus[name] = Vector2((float(bx) + 0.5) * 4000.0, (float(by) + 0.5) * 4000.0)
 	if kept < n:
-		print("ring_vibes: %s — %d of %d buildings kept (%d fell outside the %0.0fkm ring width)"
-			% [name, kept, n, n - kept, WIDTHS[w_idx] / 1000.0])
+		print("ring_vibes: %s — %d of %d buildings kept (%d outside the %0.0fkm ring width, %d on cliffs)"
+			% [name, kept, n, lat_out, WIDTHS[w_idx] / 1000.0, cliff])
 	return kept
 	return n
 
@@ -3240,7 +3395,7 @@ func _make_car() -> Node3D:
 		wheel.position = Vector3.ZERO
 		pivot.add_child(wheel)
 		root.add_child(pivot)
-		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0})
+		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0, "offset": wp})
 	add_child(root)
 	return root
 
@@ -3342,7 +3497,8 @@ func _collect_wheels(root: Node) -> Array:
 			var key := String(n.name).to_lower()
 			if not seen.has(key):
 				seen[key] = true
-				out.append({"pivot": n, "mesh": n, "front": (n as Node3D).position.z > 0.0})
+				out.append({"pivot": n, "mesh": n, "front": (n as Node3D).position.z > 0.0,
+					"offset": (n as Node3D).position})
 				matched = true
 		if not matched:
 			for c in n.get_children():
@@ -3392,12 +3548,18 @@ func _drive_tick(delta: float) -> void:
 	_car_heading += steer * (1.5 - 0.45 * _offroad) * delta * clampf(abs(_car_speed) / 12.0, 0.0, 1.0) * signf(_car_speed)
 	_car_arc += cos(_car_heading) * _car_speed * delta
 	_car_lat += sin(_car_heading) * _car_speed * delta
-	var pos := _car_pos(_car_arc, _car_lat)
+	var pos := _car_pos(_car_arc, _car_lat) + _ring_up(_car_pos(_car_arc, _car_lat)) * _proving_surface(_car_arc, _car_lat)
 	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
 	var up := _ring_up(pos)
+	var fwd := (ahead - pos).normalized() if not pos.is_equal_approx(ahead) else up.cross(Vector3.FORWARD).normalized()
+	_susp_update(delta, pos, up, fwd)
 	_car.global_position = pos + up * 0.4
 	if not pos.is_equal_approx(ahead):
 		_car.look_at(ahead + up * 0.4, up)
+		# pitch and roll come from the contact plane, so braking dips the nose and a hollow
+		# under one wheel leans the body -- rather than the whole car sliding as one decal
+		_car.rotate_object_local(Vector3(1, 0, 0), _body_pitch)
+		_car.rotate_object_local(Vector3(0, 0, 1), _body_roll)
 	# WHEELS. They were four static cylinders: the single loudest tell that a vehicle is a prop.
 	# Roll rate is circumference-correct rather than a guessed multiplier, so it never looks
 	# like it is skating.

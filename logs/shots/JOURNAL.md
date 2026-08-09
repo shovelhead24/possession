@@ -74,3 +74,34 @@ centre".
 **Fell out:** the harness framed on the nearest centreline without a distance check, and
 `_roadlines` held only the home patch — so it flew 229km back to Millstreet to find a road while
 claiming to photograph Java. Now requires one within 5km and says so plainly when there is none.
+
+---
+
+## 2026-08-09 — suspension and the calibrated bump strip (`--proving`, no images)
+
+**Looking for:** how vehicles handle over rough ground. Not a screenshot session — handling is
+telemetry, not a picture — but recorded here because the findings belong with the rest.
+
+**Saw:** there was no suspension at all. The body was pinned to terrain height + 0.4 with wheels
+welded on, sliding over the ground like a decal. Nothing to measure.
+
+Also: the "rough" phase was driving real terrain 60m off the road, and Millstreet is 95.7% drivable
+pasture — jolt of 0.03m. It was measuring nothing.
+
+**Fell out:**
+- Per-wheel suspension: each wheel samples ground beneath itself, compresses a damped spring, and
+  the body takes pitch and roll from the plane through the four contacts. Braking dips the nose and
+  a hollow under one wheel leans the body, rather than the whole car tilting as one piece.
+- A calibrated bump strip at 30% arc: washboard at 2.5m/8cm, swell at 9m/45cm, four kerbs from
+  10-40cm, a 2.2m ramp with a sharp drop, then asymmetric potholes. Jolt 1.50m against 0.03m on
+  real terrain, and it repeats exactly.
+- Two modelling errors the telemetry caught immediately, neither visible from driving:
+  **airborne was defined as "above rest position"**, which is true for half of every oscillation and
+  reported four wheels off the ground while braking on the flat; and **rest was the fully-extended
+  position**, when a parked vehicle sits partway down its travel under its own weight. With static
+  sag the numbers went coherent: 0.05 travel on a smooth road, 0.19 under braking, 0.22 and four
+  wheels light at full lock, 0.34 bottomed out on the strip.
+
+**Note:** the strip is CPU-side only, so it is invisible — the shader knows nothing about it. That
+is deliberately the kind of drawn-vs-driven mismatch this project keeps getting bitten by, so it is
+confined to one 700m strip that only `--proving` drives to.

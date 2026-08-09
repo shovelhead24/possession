@@ -40,6 +40,34 @@ CLOUD_BRIGHT = 155   # mean channel value above which a colourless pixel reads a
 CLOUD_SAT = 28       # max-min channel spread below which "bright" means grey, not real colour
 CLIP_LEVEL = 250     # every channel at/above this -- highlight blown, no detail to recover
 MAX_SCENES = 10      # COG reads to spend hunting clean pixels; bounds an all-white / all-haze patch
+MATCH_MIN_OVERLAP = 5000  # clean-on-clean pixels needed before an exposure fit is trustworthy
+
+
+def _match_exposure(rgb, clean, canvas_block, good_block):
+    """Rescale this scene's colours to the exposure already on the canvas, per channel.
+
+    Every multi-scene patch came out visibly patchworked: each scene paints its own season and
+    exposure, so the boundary between two scenes is a hard seam (guri_dam worst -- summer one side,
+    winter the other). Where a new scene's clean pixels land on ground an earlier scene already
+    painted clean, the two are the SAME ground and should read identically. Fit a per-channel
+    mean/std map from this scene onto the canvas over that overlap and apply it to the whole block,
+    so the incoming scene matches its neighbour instead of clashing. The first scene in any region
+    has no overlap and is left as the anchor; later scenes are pulled toward it. An overlap too
+    small to trust (or with no spread) leaves the scene untouched; the contrast term is clamped so
+    an unrepresentative overlap can't invert or blow out the scene."""
+    ov = clean & good_block
+    if int(ov.sum()) < MATCH_MIN_OVERLAP:
+        return rgb
+    out = rgb.astype(np.float32)
+    for c in range(3):
+        s = out[..., c][ov]
+        d = canvas_block[..., c][ov].astype(np.float32)
+        s_std = s.std()
+        if s_std < 1.0:
+            continue
+        g = min(max(d.std() / s_std, 0.5), 2.0)
+        out[..., c] = (out[..., c] - s.mean()) * g + d.mean()
+    return np.clip(out, 0, 255).astype(np.uint8)
 
 
 def _cloud_clip(rgb):
@@ -134,6 +162,8 @@ def main(name):
                 valid = rgb.sum(axis=2) > 10          # skip nodata-black
                 cl, cp = _cloud_clip(rgb)
                 clean = valid & ~cl & ~cp
+                # detect on the raw scene, then match its exposure to the canvas before pasting
+                rgb = _match_exposure(rgb, clean, canvas[y0:y1, x0:x1], gwin)
                 fwin = filled[y0:y1, x0:x1]
                 wg = clean & ~gwin                    # clean pixels upgrade whatever is there
                 wf = valid & ~fwin & ~clean           # dirty pixels only fill an untouched hole
