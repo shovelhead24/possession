@@ -205,9 +205,29 @@ float sample_h_raw(vec2 wxz) {
 	return texture(heightmap, wxz / feature).r * disp;
 }
 
+// Mirror of ring_vibes.gd _proving_surface(). The calibrated bump strip is physics ground truth
+// (added to _terrain_h in _susp_update/_drive_tick, unconditionally), so the mesh must draw the
+// same displacement or the car bounces over geometry that isn't there -- the drawn-vs-driven
+// mismatch this project keeps hitting. Constants MUST stay identical to the GDScript. Costs ~two
+// compares to reject for 3,000km of arc that isn't the 700m strip. The 0-560m obstacles are exact
+// between float64 (CPU) and float32 (GPU); the 560m+ potholes are a large-argument sin() hash, so a
+// cell or two may differ by float precision -- cosmetic, and only where nobody drives outside --proving.
+float proving_surface(vec2 wxz) {
+	float d = wxz.x - 900000.0;                              // PROVE_STRIP_ARC
+	if (d < 0.0 || d > 700.0 || abs(wxz.y) > 40.0) return 0.0;  // PROVE_STRIP_LEN, _LAT
+	if (d < 150.0) return sin(d * 6.28318530718 / 2.5) * 0.08;
+	if (d < 300.0) return sin(d * 6.28318530718 / 9.0) * 0.45;
+	if (d < 420.0) return clamp(floor((d - 300.0) / 30.0), 0.0, 3.0) * 0.10 + 0.10;
+	if (d < 560.0) { float r = (d - 420.0) / 140.0; return (r < 0.85) ? 2.2 * r : 0.0; }
+	float px = floor((d - 560.0) / 12.0);
+	float py = floor(wxz.y / 9.0);
+	return (fract(sin(px * 91.7 + py * 47.3) * 4371.0) < 0.34) ? -0.55 : 0.0;
+}
+
 float sample_h(vec2 wxz) {
 	float h = sample_h_raw(wxz);
-	return (ocean_enabled && h < sea_level) ? sea_level : h;
+	h = (ocean_enabled && h < sea_level) ? sea_level : h;
+	return h + proving_surface(wxz);   // strip sits on top of clamped ground, matching the CPU path
 }
 
 void vertex() {

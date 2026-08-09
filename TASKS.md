@@ -125,18 +125,36 @@ Prerequisite for everything below.
 - [x] **Proving ground** (`-- --proving [vehicle,...]`). Scripted identical course per vehicle --
       accel, brake, full-lock circle, offroad, climb -- reporting top speed, distance, turning
       radius, jolt and grade. Mechanics before looks: handling cannot be judged from a screenshot.
-- [ ] **INVESTIGATE: offroad is FASTER than on-road in the proving numbers.** box tops 9.8 m/s in
+- [x] **INVESTIGATE: offroad is FASTER than on-road in the proving numbers.** box tops 9.8 m/s in
       the accel phase (on a road) and 17.5 m/s in the rough phase (deliberately 60m off it). That is
-      backwards. Most likely the accel phase is not actually starting on tarmac -- `_road_cells`
-      holds wrapped arcs and the lookup may be missing -- so `_offroad` sits at 1 and the drag
-      matches exactly (9.0 accel / 0.9 drag = 10 m/s terminal, measured 9.8). Confirm before
-      building anything on top of the handling model.
+      backwards. CONFIRMED — but not the wrapping guess. `_road_cells` is built from the SAME
+      `_roadlines` pts the phase reads for its start, so the start cell IS marked and the car DOES
+      begin on tarmac. The handling physics is right: on-road drag 0.35 -> ~22 m/s (clamp), off-road
+      0.90 -> 9*(1-0.9dt)/0.9 = 9.86, matching the measured 9.8. Two separate HARNESS faults:
+      (1) accel drove `heading = 0` straight off the 8m ribbon within a car length, so `_offroad`
+      ramped to 1 and it recorded the OFF-road terminal; (2) `_offroad` was never reset between
+      phases, so "rough" inherited the on-road value from the preceding circle and ramped down over
+      1/3s — the 17.5 was a transition OVERSHOOT, not steady state. Fixed in the harness only
+      (handling model untouched, per the gate): on-road phases now start pointed along the road
+      tangent, and every phase seeds `_offroad` from the cell it starts on. NOT run-verified: Godot
+      binary is out-of-repo/gated here, so no live `--proving`.
 - [x] **Suspension + calibrated bump strip.** Per-wheel spring, body pitch/roll from the contact
       plane, and a 700m test surface (washboard, swell, kerbs, ramp-and-drop, potholes) so rough
       ground is repeatable rather than whatever the patch happens to have.
-- [ ] **Make the bump strip visible.** It is CPU-side only, so the shader does not draw it — the
+- [x] **Make the bump strip visible.** It is CPU-side only, so the shader does not draw it — the
       exact drawn-vs-driven mismatch this project keeps hitting. Mirror `_proving_surface` into
       cdlod_ring.gdshader, or accept it and gate it behind a loud HUD warning.
+      Mirrored, not HUD-gated (the title asks for VISIBLE, and the HUD warning the old comment
+      claimed existed was never actually written). `proving_surface()` in cdlod_ring.gdshader is a
+      line-for-line copy of `_proving_surface`, folded into `sample_h` AFTER the sea clamp — so h and
+      its four normal-neighbours all carry the bumps, and geometry + shading match the physics ground
+      (`_terrain_h` clamps, then adds the strip, exactly the same order). Added unconditionally, like
+      the physics, so it's parity in DRIVE too, not just --proving. Constants are now one source split
+      CPU/GPU; both comments say MUST stay in sync. Caveat: washboard/swell/kerbs/ramp (0–560m) are
+      exact; the 560m+ potholes are a large-argument sin() hash, so a cell or two may differ float32
+      vs float64 — cosmetic, off-course. NOT run-verified: the Godot binary is out-of-repo/gated here,
+      so no `--shots`; and `--shots <patch>` wouldn't frame arc 900k anyway. Drive to PROVE_STRIP_ARC
+      to eyeball the strip once on the laptop.
 - [ ] **Locomotion abstraction.** `_drive_tick` is one hardcoded wheeled model: fixed accel, fixed
       grip, a heading integrated on the ring surface. Pull it into a `Locomotion` interface with
       one implementation per class, and a `VehicleDef` resource carrying mass, power, grip,
@@ -197,6 +215,58 @@ Prerequisite for everything below.
 - [ ] **Test harness for all of them** — extend `--shots` to spawn each vehicle, drive a fixed
       course over road / offroad / slope / water, and report speed, tris and fps per vehicle so the
       set can be compared rather than eyeballed one at a time.
+
+## Weapons, HUD and on-foot — the tech-tree programme
+
+Same framing as the vehicles, for the same reason. **A tech tree from a sharpened stick to a
+backpack MLRS is not 40 weapon models.** It is ~7 mechanics classes, each parameterised, with
+placeholder shapes over the top. Mechanics first: a weapon that looks right and feels wrong is
+worse than a grey box that feels right, and feel is measurable.
+
+The carbine already exists as a model with FP arms (`.decisions/` and `assets/`), so this is about
+behaviour, not art.
+
+### Test harness first — same lesson as the proving ground
+- [ ] **Firing range** (`-- --range [weapon,...]`). Targets at 5/10/25/50/100/200/400m, scripted
+      fire, reporting: time-to-first-hit, group size at each range, sustained rate, recoil recovery
+      time, projectile drop, and time-to-kill against a standard target. Identical course per weapon
+      so the table compares, exactly like `--proving`. **Build this before any weapon.**
+- [ ] **Ballistics on a ring.** Spin gravity is not gravity: a projectile in flight is in free fall
+      while the ring rotates under it, so long shots drift sideways and the drop is not symmetric.
+      At 2.1 km/s surface speed this is a real, measurable, novel effect. Worth getting right rather
+      than approximating with a gravity constant -- it is the kind of thing this setting can own.
+
+### Mechanics classes (each is a parameter set, not a weapon)
+- [ ] **Melee** — reach, wind-up, commitment. Spear, blade, club, improvised.
+- [ ] **Thrown** — arc, weight, fuse. Rock, spear, grenade, molotov, sticky charge.
+- [ ] **Tensioned** — draw time, hold penalty, drop. Sling, bow, crossbow, speargun.
+- [ ] **Chemical projectile** — the big family. Rate, recoil, magazine, reload, heat, spread growth.
+      Musket, bolt-action, carbine (exists), SMG, LMG, autocannon.
+- [ ] **Directed energy** — no drop, no lead, but heat and charge. Should feel unlike the others,
+      not just be a rifle with a beam.
+- [ ] **Guided / indirect** — mortar, rocket, the backpack MLRS. Fire-and-forget vs steered, minimum
+      arming range, and a real reason not to carry it everywhere.
+- [ ] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.
+
+### The tree itself
+- [ ] **Progression rules.** The player ARRIVES from a spacefaring civilisation and gets stripped of
+      it (`the-toll` in docs/vignettes.md). The tree is therefore about RECOVERING capability, not
+      inventing it -- a spear is what you use when they took your rifle. That inverts the usual
+      shape and is worth exploiting.
+- [ ] **Ammunition and scarcity** as the real balance lever, not damage numbers.
+- [ ] **Where weapons come from** — found, salvaged, traded, taken. Same hook as the vehicles;
+      ties into draws.
+
+### On foot
+- [ ] **FPS controls proper.** WALK mode is a camera with a speed. Needs: acceleration, crouch,
+      sprint with a cost, jump, fall damage, stance affecting spread, and the ring frame handled
+      correctly (up points at the axis, which the camera already does and the movement does not).
+- [ ] **HUD.** Currently a debug wall of text. Needs a real one -- and per
+      `.decisions/design-laws.md#diegetic-tools-not-hud`, **information must be a physical ownable
+      tool, not free overlay**. Ammo count comes from looking at the weapon; bearing comes from a
+      compass you found. That law makes this design work, not just layout work.
+- [ ] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
+      already exists.
 
 ## Blocked / waiting
 

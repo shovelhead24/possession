@@ -896,9 +896,9 @@ const SUSP_DAMP := 6.0
 # A DELIBERATELY BUMPY STRIP for testing, laid over flat ground at a fixed arc nobody visits.
 # Real terrain is whatever it happens to be -- Millstreet is 95.7% drivable, so the "rough" phase was
 # measuring gentle pasture. Calibrated obstacles make the numbers mean something and repeat exactly.
-# CPU-side only: the shader does not know about it, so it is invisible. That is a deliberate
-# mismatch of the kind this project keeps getting bitten by, so it is confined to a strip that only
-# --proving drives to, and the HUD says so when you are standing on it.
+# MIRRORED into cdlod_ring.gdshader's proving_surface() so the mesh draws exactly what the car drives
+# over -- the constants below and there are one source split across CPU and GPU and MUST stay in sync.
+# It is added unconditionally (not gated on _proving), so drive to this arc in DRIVE and you'll see it.
 const PROVE_STRIP_ARC := 900_000.0     # 30% arc, well away from every splice
 const PROVE_STRIP_LAT := 0.0
 const PROVE_STRIP_LEN := 700.0
@@ -1019,11 +1019,21 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	# pointed at the steepest ground nearby for "climb"
 	var start_arc := 0.0
 	var start_lat := 0.0
+	var road_heading := 0.0
+	var have_road := false
 	if not _roadlines.is_empty():
 		var pts: PackedVector2Array = _roadlines[mini(4, _roadlines.size() - 1)]["pts"]
-		var p: Vector2 = pts[mini(2, pts.size() - 1)]
+		var i0 := mini(2, pts.size() - 1)
+		var p: Vector2 = pts[i0]
 		start_arc = p.x
 		start_lat = p.y
+		# Tangent DOWN the carriageway. Heading 0 drove the car straight off the 8m ribbon within a
+		# car length, so "accel" measured the offroad terminal (9.8) not the road one (~22).
+		if i0 + 1 < pts.size():
+			var tdir := pts[i0 + 1] - p
+			if tdir.length() > 0.01:
+				road_heading = atan2(tdir.y, tdir.x)
+				have_road = true
 	if bool(phase.get("offroad", false)):
 		start_lat += 60.0                      # well clear of the carriageway
 	if bool(phase.get("strip", false)):
@@ -1032,7 +1042,12 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_car_arc = start_arc
 	_car_lat = start_lat
 	_car_speed = 0.0
-	_car_heading = 0.0
+	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false))
+	_car_heading = road_heading if pure_road else 0.0
+	# Seed the drag term from the ground we ACTUALLY start on. It was carried over from the previous
+	# phase and ramped over 1/3s, letting "rough" overshoot to 17.5 (an on-road transient) before it
+	# settled -- the reading that looked backwards next to accel's off-road 9.8.
+	_offroad = 0.0 if _road_cells.has(Vector2i(int(floor(_car_arc / 8.0)), int(floor(_car_lat / 8.0)))) else 1.0
 	if bool(phase.get("uphill", false)):
 		# aim at the steepest uphill within a short sweep, so "grade" means something
 		var best := -1.0
