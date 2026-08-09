@@ -36,7 +36,7 @@ Rules:
       does not help. There is no teak, palm, fynbos or birch in `assets/`, which means Java, Cape
       and Lofoten are still tinted Irish firs. This needs downloading models, not code. Candidates:
       a broadleaf, a palm, a low scrub bush.
-- [ ] **Triangle budget.** 727k tris / 13 fps at ground level in the home patch, trees dominating
+- [x] **Triangle budget.** 700k -> 316k. Trees were 71%; the fir pack's billboard tier cost ~16 tris, now 4. Next largest is the far band at 96k. Was: 727k / 13 fps, trees dominating
       (24k instances, 24k billboards). Profile per system, then cut. Driving at 13 fps is not fun.
 - [ ] **Rolling wheels.** The car's wheels do not turn or steer. Also suspension travel over the
       terrain it now follows correctly.

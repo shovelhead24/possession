@@ -786,6 +786,46 @@ func _build_dem_texture() -> void:
 
 const ALIGN_N := 11               # grid resolution per patch for --align
 
+func _tri_breakdown() -> String:
+	# Where the triangles actually go. Every cut so far has been aimed by guesswork at whatever was
+	# most visible in the last screenshot; this counts instances against their mesh so the biggest
+	# consumer is a fact rather than an impression.
+	var out: Array = []
+	var total := 0
+	var tri_of := func(m: Mesh) -> int:
+		if m == null:
+			return 0
+		var n := 0
+		for si in m.get_surface_count():
+			var arr := m.surface_get_arrays(si)
+			if arr.size() > Mesh.ARRAY_INDEX and arr[Mesh.ARRAY_INDEX] != null:
+				n += arr[Mesh.ARRAY_INDEX].size() / 3
+			elif arr.size() > Mesh.ARRAY_VERTEX and arr[Mesh.ARRAY_VERTEX] != null:
+				n += arr[Mesh.ARRAY_VERTEX].size() / 3
+		return n
+	var tree_t := 0
+	for vi in _tree_mm.size():
+		for l in TREE_LODS:
+			var mmi = _tree_mm[vi][l]
+			if mmi != null:
+				tree_t += mmi.multimesh.instance_count * int(tri_of.call(mmi.multimesh.mesh))
+	out.append("trees %d" % tree_t); total += tree_t
+	var b_t := 0
+	for mmi in _bldg_mmi:
+		b_t += mmi.multimesh.instance_count * int(tri_of.call(mmi.multimesh.mesh))
+	out.append("buildings %d" % b_t); total += b_t
+	var h_t: int = _hedge_quads * 2
+	out.append("hedges %d" % h_t); total += h_t
+	var g_t := 0
+	if _grass_mm != null:
+		g_t = _grass_mm.multimesh.instance_count * int(tri_of.call(_grass_mm.multimesh.mesh))
+	out.append("grass %d" % g_t); total += g_t
+	var terr := _used * GRID * GRID * 2
+	out.append("terrain ~%d (%d nodes)" % [terr, _used]); total += terr
+	var band := BAND_SEGS * BAND_ROWS * 2
+	out.append("far band %d" % band); total += band
+	return "TRIS  %s   accounted %d" % [", ".join(out), total]
+
 func _shot_run() -> void:
 	# `-- --shots [patch,patch,...]` warps to each patch, waits for its stream, and writes a set of
 	# framings to logs/shots/. Exists so I can LOOK at my own work instead of shipping it and
@@ -870,6 +910,7 @@ func _shot_run() -> void:
 			var img := get_viewport().get_texture().get_image()
 			var path := "%s/%s_%s.png" % [dir, pname, shot["n"]]
 			img.save_png(path)
+			print("      " + _tri_breakdown())
 			print("SHOT %-18s %-7s tris=%d fps=%d  %s" % [
 				pname, shot["n"],
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
@@ -1832,6 +1873,30 @@ func _rebake(out: ArrayMesh, src: Mesh, xf: Transform3D) -> void:
 		st.commit(out)
 		out.surface_set_material(out.get_surface_count() - 1, src.surface_get_material(s))
 
+func _billboard_from(src: Mesh) -> ArrayMesh:
+	# two crossed quads, unit height, origin at the base -- 4 triangles against the pack's ~16, and
+	# it inherits the source material so it still reads as the same tree at distance.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var w := 0.34
+	for pair in [[Vector3(-w, 0, 0), Vector3(w, 0, 0)], [Vector3(0, 0, -w), Vector3(0, 0, w)]]:
+		var a: Vector3 = pair[0]
+		var b: Vector3 = pair[1]
+		var at := a + Vector3(0, 1, 0)
+		var bt := b + Vector3(0, 1, 0)
+		st.set_uv(Vector2(0, 1)); st.add_vertex(a)
+		st.set_uv(Vector2(0, 0)); st.add_vertex(at)
+		st.set_uv(Vector2(1, 1)); st.add_vertex(b)
+		st.set_uv(Vector2(1, 1)); st.add_vertex(b)
+		st.set_uv(Vector2(0, 0)); st.add_vertex(at)
+		st.set_uv(Vector2(1, 0)); st.add_vertex(bt)
+	st.generate_normals()
+	var m := st.commit()
+	var sm := src.surface_get_material(0)
+	if sm != null:
+		m.surface_set_material(0, sm)
+	return m
+
 func _normalize_mesh(src: ArrayMesh) -> ArrayMesh:
 	# scale each LOD independently to unit height, base at y=0, centred on X/Z — so all LODs of a
 	# tree render the SAME size regardless of their intrinsic mesh scale (fixes LOD0-too-small /
@@ -1884,6 +1949,14 @@ func _load_tree_lods() -> bool:
 		var lods := []
 		for l in TREE_LODS:
 			lods.append(_normalize_mesh(by_variant[vnames[vi]].get(l, null)))
+		# THE PACK'S OWN FAR LOD IS NOT CHEAP. Measured: trees are 71% of the frame's triangles
+		# and 24,019 of 24,037 are already in this tier, so its mesh costs ~16 triangles, not the
+		# 2 a billboard implies. An artist LOD chain bottoms out at "very simple mesh"; it does not
+		# bottom out at a quad. Replace the last rung with a real crossed billboard carrying the
+		# same foliage material, which is what the tier was always meant to be.
+		var far: Mesh = lods[TREE_LODS - 1]
+		if far != null and far.get_surface_count() > 0:
+			lods[TREE_LODS - 1] = _billboard_from(far)
 		_tree_meshes.append(lods)
 	_tree_scale = TREE_H   # meshes normalized to unit height, so per-tree scale == world height
 	_tree_mm = []
