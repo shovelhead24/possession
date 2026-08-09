@@ -32,16 +32,16 @@ Rules:
 - [x] **Vegetation model imports.** Both unused packs opened. Grass pack is now close-range ground
       cover (42m bubble, ~3k instances, +12k tris) â€” the biggest win, since the drape is 11 m/px at
       best and the near field had no shape at all.
-- [ ] **STILL NO SPECIES VARIETY â€” blocked on assets.** The spruce pack is a second CONIFER, so it
+- [x] **Species variety — GENERATED (palm/broadleaf/scrub), not blocked. Old note: STILL NO SPECIES VARIETY â€” blocked on assets.** The spruce pack is a second CONIFER, so it
       does not help. There is no teak, palm, fynbos or birch in `assets/`, which means Java, Cape
       and Lofoten are still tinted Irish firs. This needs downloading models, not code. Candidates:
       a broadleaf, a palm, a low scrub bush.
 - [x] **Triangle budget.** 700k -> 316k. Trees were 71%; the fir pack's billboard tier cost ~16 tris, now 4. Next largest is the far band at 96k. Was: 727k / 13 fps, trees dominating
       (24k instances, 24k billboards). Profile per system, then cut. Driving at 13 fps is not fun.
-- [ ] **Rolling wheels.** The car's wheels do not turn or steer. Also suspension travel over the
+- [x] **Rolling wheels.** The car's wheels do not turn or steer. Also suspension travel over the
       terrain it now follows correctly.
 - [ ] **Vehicle variety.** One box car. `assets/halo_warthog.zip` exists and is unused.
-- [ ] **Offroad feel.** Particle/dust when the car leaves the carriageway (`_road_at` already gives
+- [x] **Offroad feel.** Particle/dust when the car leaves the carriageway (`_road_at` already gives
       the trigger), plus grip and camera-shake difference on/off road. Off-roading is meant to be a
       real mode, not a punishment.
 - [ ] **Refetch buildings for the 7 patches that have them** â€” they were fetched against the
@@ -80,3 +80,4 @@ Rules:
 - Height tier box-filtering; `--align` reports 0/4235 mismatches
 - S3TC/BPTC compression, `[U]`
 - `[Y]` probe, `patch_census.py`
+

@@ -380,6 +380,10 @@ var _fly_speed_idx := 0
 
 # Drive mode: car lives in ring coordinates, no physics — terrain sampled analytically
 var _car: Node3D = null
+var _wheels: Array = []           # [{pivot, mesh, front}] -- rolling and steering
+var _wheel_spin := 0.0
+var _dust: GPUParticles3D = null
+var _offroad := 0.0               # 0 = on tarmac, 1 = fully off it
 var _car_arc := 0.0
 var _car_lat := 0.0
 var _car_heading := 0.0
@@ -2957,7 +2961,44 @@ func _on_threat(active: bool) -> void:
 	_threat_active = active
 	_update_hud()
 
+func _make_dust() -> void:
+	# Dust off the back wheels once you leave the tarmac. The trigger was already free -- the 8m road
+	# cells exist for the grass -- so this is the cheap half of making off-road feel different.
+	var pm := ParticleProcessMaterial.new()
+	pm.direction = Vector3(0, 1, 0)
+	pm.spread = 35.0
+	pm.initial_velocity_min = 1.2
+	pm.initial_velocity_max = 3.4
+	pm.gravity = Vector3(0, -1.6, 0)
+	pm.scale_min = 0.5
+	pm.scale_max = 2.2
+	pm.damping_min = 1.0
+	pm.damping_max = 2.5
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(0.62, 0.55, 0.44, 0.55))
+	ramp.set_color(1, Color(0.62, 0.55, 0.44, 0.0))
+	var gt := GradientTexture1D.new()
+	gt.gradient = ramp
+	pm.color_ramp = gt
+	var qm := QuadMesh.new()
+	qm.size = Vector2(1.4, 1.4)
+	var dm := StandardMaterial3D.new()
+	dm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	dm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dm.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	dm.vertex_color_use_as_albedo = true
+	dm.albedo_color = Color(0.62, 0.55, 0.44, 0.5)
+	qm.material = dm
+	_dust = GPUParticles3D.new()
+	_dust.process_material = pm
+	_dust.draw_pass_1 = qm
+	_dust.amount = 48
+	_dust.lifetime = 1.6
+	_dust.emitting = false
+	add_child(_dust)
+
 func _make_car() -> Node3D:
+	_wheels = []
 	var root := Node3D.new()
 	var body := MeshInstance3D.new()
 	var bm := BoxMesh.new()
@@ -2990,7 +3031,17 @@ func _make_car() -> Node3D:
 		wheel.position = wp
 		wheel.material_override = wmat
 		root.add_child(wheel)
+		# front pair steers, all four roll. Held in a pivot so the roll (local X) and the steer
+		# (parent Y) do not fight each other on one transform.
+		var pivot := Node3D.new()
+		pivot.position = wp
+		root.remove_child(wheel)
+		wheel.position = Vector3.ZERO
+		pivot.add_child(wheel)
+		root.add_child(pivot)
+		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0})
 	add_child(root)
+	_make_dust()
 	return root
 
 func _car_pos(arc: float, lat: float) -> Vector3:
@@ -3020,11 +3071,14 @@ func _drive_tick(delta: float) -> void:
 	if Input.is_key_pressed(KEY_W): accel += 9.0
 	if Input.is_key_pressed(KEY_S): accel -= 12.0
 	_car_speed = clampf(_car_speed + accel * delta, -6.0, 22.0)  # ~80 km/h top (was 160)
-	_car_speed *= 1.0 - 0.35 * delta  # drag
+	# offroad drags harder and steers vaguer -- the difference should be felt in the
+	# handling, not just seen in a particle effect. Off-roading is a mode, not a penalty:
+	# top speed drops maybe a third, it does not become unusable.
+	_car_speed *= 1.0 - (0.35 + 0.55 * _offroad) * delta
 	var steer := 0.0
 	if Input.is_key_pressed(KEY_A): steer -= 1.0
 	if Input.is_key_pressed(KEY_D): steer += 1.0
-	_car_heading += steer * 1.5 * delta * clampf(abs(_car_speed) / 12.0, 0.0, 1.0) * signf(_car_speed)
+	_car_heading += steer * (1.5 - 0.45 * _offroad) * delta * clampf(abs(_car_speed) / 12.0, 0.0, 1.0) * signf(_car_speed)
 	_car_arc += cos(_car_heading) * _car_speed * delta
 	_car_lat += sin(_car_heading) * _car_speed * delta
 	var pos := _car_pos(_car_arc, _car_lat)
@@ -3033,6 +3087,24 @@ func _drive_tick(delta: float) -> void:
 	_car.global_position = pos + up * 0.4
 	if not pos.is_equal_approx(ahead):
 		_car.look_at(ahead + up * 0.4, up)
+	# WHEELS. They were four static cylinders: the single loudest tell that a vehicle is a prop.
+	# Roll rate is circumference-correct rather than a guessed multiplier, so it never looks
+	# like it is skating.
+	_wheel_spin += (_car_speed * delta) / 0.45
+	for w in _wheels:
+		var mesh: MeshInstance3D = w["mesh"]
+		mesh.rotation = Vector3(0.0, 0.0, PI * 0.5)
+		mesh.rotate_object_local(Vector3(0, 1, 0), -_wheel_spin)
+		var piv: Node3D = w["pivot"]
+		piv.rotation.y = (steer * -0.42) if bool(w["front"]) else 0.0
+	# OFFROAD. The road mask is 44m per cell, which cannot say "am I on this lane" -- but the
+	# 8m road cells built from the centrelines can, and already exist for the grass.
+	var on_road := _road_cells.has(Vector2i(int(floor(_car_arc / 8.0)), int(floor(_car_lat / 8.0))))
+	_offroad = move_toward(_offroad, 0.0 if on_road else 1.0, delta * 3.0)
+	if _dust:
+		_dust.global_position = pos
+		_dust.emitting = _offroad > 0.35 and absf(_car_speed) > 3.0
+		_dust.amount_ratio = clampf(_offroad * absf(_car_speed) / 18.0, 0.0, 1.0)
 	# chase cam SEATED on the terrain behind the car (analytic ring-space, exact match to render) —
 	# can never sink through a slope behind the car (the under-floor cause found in the LOD mock).
 	var cam_ground := _car_pos(_car_arc - cos(_car_heading) * 12.0, _car_lat - sin(_car_heading) * 12.0)
