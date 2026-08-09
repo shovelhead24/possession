@@ -126,23 +126,39 @@ def road_stats(name, meta):
 
 
 def marker_offset(name, meta, fd):
-    """How far the feature we CHOSE now sits from the patch centre. A patch whose named landmark is
-    30km off-centre is centred on something else -- which is precisely what 'drifted' means."""
+    """How far the patch has DRIFTED from what it was scouted as.
+
+    The measure used to be the worst-case marker distance, which is wrong by construction: markers
+    can span a route on purpose. Millstreet scored 44.7km because two of its markers are the ends of
+    a road, and cape 46.2km because Table Mountain and Cape Point genuinely are 46km apart. Both
+    were fine; the metric was not.
+
+    The camera anchor is the single point the patch was chosen FOR -- the viewpoint the scout stood
+    at. If re-centring to a uniform footprint moved the patch away from it, that is real drift, and
+    it is what "does this still show the place we picked" actually means.
+    """
     loc = fd.LOCATIONS.get(name, {})
-    ms = loc.get("markers") or []
-    if not ms:
+    cam = loc.get("camera")
+    if not cam:
         return {}
     fd.set_location(name)
     fd.match_export(name, DEST)
     clat = (fd.LAT_MIN + fd.LAT_MAX) * 0.5
     clon = (fd.LON_MIN + fd.LON_MAX) * 0.5
-    out = []
-    for m in ms:
-        dy = (m[0] - clat) * 111.32
-        dx = (m[1] - clon) * 111.32 * np.cos(np.radians(clat))
-        out.append({"name": m[2], "km_from_centre": round(float(np.hypot(dx, dy)), 1)})
-    return {"markers": out,
-            "worst_marker_km": round(max(o["km_from_centre"] for o in out), 1)}
+    half_km = (fd.LAT_MAX - fd.LAT_MIN) * 111.32 * 0.5
+    dy = (cam[0] - clat) * 111.32
+    dx = (cam[1] - clon) * 111.32 * np.cos(np.radians(clat))
+    drift = float(np.hypot(dx, dy))
+    out = {"anchor_km": round(drift, 1),
+           # as a fraction of the half-width: >1 means the thing we chose is off the patch entirely
+           "anchor_frac": round(drift / max(half_km, 0.001), 2)}
+    ms = loc.get("markers") or []
+    if ms:
+        # kept as information, no longer a verdict
+        out["marker_spread_km"] = round(max(
+            float(np.hypot((m[1] - clon) * 111.32 * np.cos(np.radians(clat)),
+                           (m[0] - clat) * 111.32)) for m in ms), 1)
+    return out
 
 
 def main():
@@ -172,10 +188,10 @@ def main():
             row["drape"] = json.load(open(side))
         rows[n] = row
         print("%-18s relief %6.0fm  sea %4.1f%%  veg %4s%%  bare %4s%%  drive %4.1f%%  "
-              "roads %6s km  marker %5s km"
+              "roads %6s km  drift %5s km"
               % (n, row["relief_m"], row["sea_pct"], row.get("veg_pct", "-"),
                  row.get("bare_pct", "-"), row["drivable_pct"],
-                 row.get("road_km", "-"), row.get("worst_marker_km", "-")))
+                 row.get("road_km", "-"), row.get("anchor_km", "-")))
 
     os.makedirs(OUT, exist_ok=True)
     with open(os.path.join(OUT, "patch_census.json"), "w") as f:

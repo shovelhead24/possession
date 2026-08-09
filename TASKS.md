@@ -109,7 +109,7 @@ Rules:
       is out-of-repo/gated here and launching even the .ps1 needs interactive approval, so no live
       sweep exercised it. Parse-reviewed by hand for PS5.1 (no ternary/`&&`, collection-unroll
       guarded with `@()`). First run on the laptop seeds the baseline; bless once with `-Accept`.
-- [ ] **Fix marker displacement** in the census â€” it takes the worst marker, so any patch with
+- [x] **Fix marker displacement** in the census â€” it takes the worst marker, so any patch with
       route-spanning markers scores badly by design. Use the camera anchor.
 
 ## Vehicles — the 40+ programme
