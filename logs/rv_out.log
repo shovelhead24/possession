@@ -6,19 +6,17 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (581 ms)
+ring_vibes: far band rebuilt around arc 0 km (765 ms)
 ring_vibes: texture compression — s3tc true, bptc true, etc2 false
 ring_vibes: grass pack loaded (1 surfaces)
 ring_vibes: 13674 road centrelines loaded
 ring_vibes: 13129 junction cells, 1138936 road cells from 13674 centrelines
 ring_vibes: hedge texture 1024x1024 loaded
 ring_vibes: 24037 trees placed (3 variants x 4 LODs) — 1538 standards, 5223 off-road, 14340 hedge quads
-ring_vibes: millstreet — 47438 of 59966 buildings kept (12528 fell outside the 50km ring width)
-ring_vibes: big_sur — 5215 of 6895 buildings kept (1680 fell outside the 50km ring width)
-ring_vibes: cape_peninsula — 5247 of 7766 buildings kept (2519 fell outside the 50km ring width)
-ring_vibes: palawan — 5819 of 10164 buildings kept (4345 fell outside the 50km ring width)
-ring_vibes: java_majapahit — 32533 of 59997 buildings kept (27464 fell outside the 50km ring width)
-ring_vibes: halong_bay — 2066 of 2129 buildings kept (63 fell outside the 50km ring width)
-ring_vibes: lofoten — 21385 of 25330 buildings kept (3945 fell outside the 50km ring width)
-ring_vibes: buildings in range at arc 0 lat 0 -> style0=292, style1=0
-ring_vibes: 119703 OSM buildings loaded (2 styles)
+ring_vibes: millstreet — 43447 of 59992 buildings kept (16545 fell outside the 50km ring width)
+ring_vibes: cape_peninsula — 8110 of 8118 buildings kept (8 fell outside the 50km ring width)
+ring_vibes: palawan — 6212 of 6215 buildings kept (3 fell outside the 50km ring width)
+ring_vibes: java_majapahit — 59958 of 59996 buildings kept (38 fell outside the 50km ring width)
+ring_vibes: lofoten — 21504 of 21589 buildings kept (85 fell outside the 50km ring width)
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=859, style1=0
+ring_vibes: 152763 OSM buildings loaded (2 styles)

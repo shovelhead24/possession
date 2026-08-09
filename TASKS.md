@@ -49,7 +49,7 @@ Rules:
 - [x] **Offroad feel.** Particle/dust when the car leaves the carriageway (`_road_at` already gives
       the trigger), plus grip and camera-shake difference on/off road. Off-roading is meant to be a
       real mode, not a punishment.
-- [ ] **Refetch buildings for the 7 patches that have them** â€” they were fetched against the
+- [x] **Refetch buildings for the 7 patches that have them** â€” they were fetched against the
       authored bbox, so they're 10â€“16% out. `fetch_osm_buildings.py` is fixed; just re-run with
       `--force`.
 - [ ] **Hedgerows + verge everywhere.** Once `*_roadlines.dat` exists for all patches, the ribbon
@@ -85,5 +85,6 @@ Rules:
 - Height tier box-filtering; `--align` reports 0/4235 mismatches
 - S3TC/BPTC compression, `[U]`
 - `[Y]` probe, `patch_census.py`
+
 
 
