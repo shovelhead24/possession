@@ -29,10 +29,13 @@ Rules:
       smoothly along a run, position-hashed gaps for gateways. Still one PROFILE and one texture —
       a stone wall currently differs from a hedge only in size and tint, which will not survive
       being looked at. Needs its own geometry when the vegetation import lands.
-- [ ] **Vegetation model imports.** The fir pack is the only tree asset and it is doing Java, Cape
-      fynbos and Lofoten birch scrub via a colour tint. Import proper species; check
-      `assets/grass_pack_of_9_vars_lowpoly_game_ready.zip` and `low_poly_red_spruce_tree...zip`
-      which are unused.
+- [x] **Vegetation model imports.** Both unused packs opened. Grass pack is now close-range ground
+      cover (42m bubble, ~3k instances, +12k tris) — the biggest win, since the drape is 11 m/px at
+      best and the near field had no shape at all.
+- [ ] **STILL NO SPECIES VARIETY — blocked on assets.** The spruce pack is a second CONIFER, so it
+      does not help. There is no teak, palm, fynbos or birch in `assets/`, which means Java, Cape
+      and Lofoten are still tinted Irish firs. This needs downloading models, not code. Candidates:
+      a broadleaf, a palm, a low scrub bush.
 - [ ] **Triangle budget.** 727k tris / 13 fps at ground level in the home patch, trees dominating
       (24k instances, 24k billboards). Profile per system, then cut. Driving at 13 fps is not fun.
 - [ ] **Rolling wheels.** The car's wheels do not turn or steer. Also suspension travel over the

@@ -143,6 +143,8 @@ const HEDGE_MAX_QUADS := 30000    # ceiling on the ribbon, so a dense junction c
 var _hedge_mi: MeshInstance3D = null
 var _roadlines: Array = []
 var _junc := {}                   # 30m cells where two or more ways meet
+var _road_cells := {}             # 8m cells containing carriageway
+var _grass_shown := 0
 var _hedge_quads := 0
 var _detail_tex: ImageTexture = null
 var dem_scale := 1.0  # [H] cycles 1..5 — real-height exaggeration (DEM branch only)
@@ -1530,6 +1532,7 @@ func _rebuild() -> void:
 	_build_band(_lod_center_arc)
 	_build_walls()
 	_report_tex_support()
+	_load_grass()
 	# `-- --tex s3tc|bptc` picks a mode at launch, so all three can be measured without a human
 	# holding [U] down and reading a HUD
 	var _ua := OS.get_cmdline_user_args()
@@ -1747,6 +1750,7 @@ func _process(delta: float) -> void:
 		_tree_cd = TREE_RESCATTER_CD
 	_update_tree_lod()
 	_refill_buildings()
+	_scatter_grass()
 	_perf_t -= delta
 	if _perf != null and _perf_t <= 0.0:
 		_perf_t = 0.25
@@ -1956,6 +1960,115 @@ func _report_tex_support() -> void:
 		RenderingServer.has_os_feature("s3tc"), RenderingServer.has_os_feature("bptc"),
 		RenderingServer.has_os_feature("etc2")])
 
+
+# ---------------------------------------------------------------------------
+# Close-range ground cover. The satellite drape is ~11 m/px at best, so the ground under the car has
+# no detail of its own -- the noise overlay breaks the colour up but nothing has SHAPE. Grass gives
+# the near field something with parallax, which is most of what sells speed when driving.
+# Deliberately tiny radius: this is a motion cue, not scenery, and the frame budget is already tight.
+# ---------------------------------------------------------------------------
+const GRASS_PACK := "res://grass_pack_of_9_vars_lowpoly_game_ready/scene.gltf"
+const GRASS_RADIUS := 42.0        # metres; beyond this the drape carries it
+const GRASS_MAX := 3000           # hard instance cap
+const GRASS_STEP := 1.6           # scatter spacing, metres
+var _grass_mm: MultiMeshInstance3D = null
+var _grass_centre := Vector2(1e12, 1e12)
+
+func _load_grass() -> bool:
+	if not ResourceLoader.exists(GRASS_PACK):
+		print("ring_vibes: grass pack not found, skipping ground cover")
+		return false
+	var packed := load(GRASS_PACK) as PackedScene
+	if packed == null:
+		return false
+	var inst := packed.instantiate()
+	# take the first mesh in the pack -- the 9 variants share one atlas, and at this size and
+	# distance the difference between them is well below a pixel
+	var found: Mesh = null
+	var stack: Array = [inst]
+	while not stack.is_empty():
+		var n = stack.pop_back()
+		if n is MeshInstance3D and found == null:
+			found = (n as MeshInstance3D).mesh
+		for c in n.get_children():
+			stack.append(c)
+	inst.queue_free()
+	if found == null:
+		print("ring_vibes: no mesh in the grass pack")
+		return false
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = found
+	_grass_mm = MultiMeshInstance3D.new()
+	_grass_mm.multimesh = mm
+	_grass_mm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# a 42m bubble that follows the camera has no business being frustum-culled against its own
+	# origin, and the AABB is otherwise computed from instance 0 alone
+	_grass_mm.custom_aabb = AABB(Vector3(-GRASS_RADIUS, -80, -GRASS_RADIUS),
+		Vector3(GRASS_RADIUS * 2, 160, GRASS_RADIUS * 2))
+	add_child(_grass_mm)
+	print("ring_vibes: grass pack loaded (%d surfaces)" % found.get_surface_count())
+	return true
+
+func _scatter_grass(force := false) -> void:
+	if _grass_mm == null:
+		return
+	var cam := _cam.global_position
+	var r := _radius()
+	var here := Vector2(atan2(cam.x, r - cam.y) * r, cam.z)
+	if not force and here.distance_to(_grass_centre) < GRASS_RADIUS * 0.35:
+		return
+	_grass_centre = here
+	var bio := _biome_at(here.x, here.y)
+	# grass follows the same biome signal as trees: bare ground stays bare. Scaled up a little at
+	# low tree density, because open grassland has MORE grass than woodland floor, not less.
+	var dens: float = clampf(0.35 + float(bio.get("trees", 0.5)) * 0.5, 0.0, 1.0)
+	var fol: Color = bio.get("foliage", Color(1, 1, 1))
+	var xfs: Array = []
+	var cols: Array = []
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(here.x) * 7919 + int(here.y)
+	var a := -GRASS_RADIUS
+	while a <= GRASS_RADIUS and xfs.size() < GRASS_MAX:
+		var l := -GRASS_RADIUS
+		while l <= GRASS_RADIUS and xfs.size() < GRASS_MAX:
+			if rng.randf() < dens:
+				var px := here.x + a + rng.randf_range(-0.8, 0.8)
+				var pz := here.y + l + rng.randf_range(-0.8, 0.8)
+				if Vector2(px - here.x, pz - here.y).length() <= GRASS_RADIUS:
+					var h := _terrain_h(px, pz)
+					# not in the sea, and not on the carriageway
+					# NOT the road mask: that is 44m per cell against a 42m grass radius, so it rejects
+					# everything -- the identical resolution mistake the hedge junction test just made.
+					if h > SEA_LEVEL + 0.5 and not _road_cells.has(
+						Vector2i(int(floor(px / 8.0)), int(floor(pz / 8.0)))):
+						var g := _surface_pos(px, pz)
+						var up := _ring_up(g)
+						var ax := up.cross(Vector3.FORWARD).normalized()
+						if ax.length_squared() < 0.25:
+							ax = up.cross(Vector3.RIGHT).normalized()
+						var az := ax.cross(up).normalized()
+						var yaw := rng.randf() * TAU
+						# the pack's clumps are authored small -- at 0.5-1.1 they were 5cm specks on the ground,
+						# invisible from a car. Roadside grass wants to be 40-90cm to read at all.
+						var sc := rng.randf_range(3.0, 6.5)
+						xfs.append(Transform3D(Basis(
+							(ax * cos(yaw) + az * sin(yaw)) * sc, up * sc,
+							(az * cos(yaw) - ax * sin(yaw)) * sc), g))
+						var t := rng.randf_range(0.75, 1.15)
+						cols.append(Color(fol.r * t, fol.g * t, fol.b * t))
+			l += GRASS_STEP
+		a += GRASS_STEP
+	var mm := _grass_mm.multimesh
+	mm.instance_count = xfs.size()
+	for i in xfs.size():
+		mm.set_instance_transform(i, xfs[i])
+		mm.set_instance_color(i, cols[i])
+	_grass_shown = xfs.size()
+	if force:
+		print("ring_vibes: %d grass instances in a %.0fm bubble" % [_grass_shown, GRASS_RADIUS])
+
 func _load_roadlines() -> void:
 	# Road CENTRELINES, patch-local metres, written alongside the raster mask by fetch_osm_roads.py.
 	# The mask stays the right tool for drape and for "am I on a road"; a hedgerow is a continuous
@@ -1995,9 +2108,19 @@ func _build_junctions() -> void:
 	# which way owns it; a cell holding points from more than one way is a junction. Done at load
 	# because the ribbon rebuilds every few hundred metres and this must not be paid per rebuild.
 	_junc = {}
+	_road_cells = {}
 	var owner := {}
 	for wi in _roadlines.size():
 		var pts: PackedVector2Array = _roadlines[wi]["pts"]
+		# WALK THE SEGMENTS, not just the nodes. OSM only puts a node where a road changes
+		# direction, so a straight run can be 200m between points -- marking nodes alone left
+		# the road between them unmarked, and grass grew down the middle of the carriageway.
+		for i in pts.size() - 1:
+			var seg := pts[i + 1] - pts[i]
+			var steps: int = maxi(1, int(ceil(seg.length() / 5.0)))
+			for k in steps + 1:
+				var q := pts[i] + seg * (float(k) / float(steps))
+				_road_cells[Vector2i(int(floor(q.x / 8.0)), int(floor(q.y / 8.0)))] = true
 		for p in pts:
 			var key := Vector2i(int(floor(p.x / 30.0)), int(floor(p.y / 30.0)))
 			var prev = owner.get(key, -1)
@@ -2005,7 +2128,8 @@ func _build_junctions() -> void:
 				owner[key] = wi
 			elif prev != wi:
 				_junc[key] = true
-	print("ring_vibes: %d junction cells from %d centrelines" % [_junc.size(), _roadlines.size()])
+	print("ring_vibes: %d junction cells, %d road cells from %d centrelines"
+		% [_junc.size(), _road_cells.size(), _roadlines.size()])
 
 func _near_junction(p: Vector2) -> bool:
 	return _junc.has(Vector2i(int(floor(p.x / 30.0)), int(floor(p.y / 30.0))))
@@ -3038,8 +3162,8 @@ func _update_hud() -> void:
 		"TERRAIN %s   LOD nodes %d   trees %d (LOD0/1/2/bill %d/%d/%d/%d)" % [
 			("none (noise)" if _dem_w == 0 else "%s  height x%.0f" % [_dem_name, dem_scale]),
 			_used, _tree_ground.size(), lc[0], lc[1], lc[2], lc[3]],
-		"        OSM buildings %d of %d in range %.1fkm" % [
-			_bldg_shown, _bldg.size() / 6, BLDG_RADIUS / 1000.0],
+		"        OSM buildings %d of %d in range %.1fkm   grass %d" % [
+			_bldg_shown, _bldg.size() / 6, BLDG_RADIUS / 1000.0, _grass_shown],
 		"        splice here: %s   (%d placed)   [,] [.] jump splice   hi-res: %s" % [
 			_here_splice(), _patch_rects.size(),
 			(_patch_names[_hires_idx] if _hires_idx >= 0 else ("loading..." if _hires_pending >= 0 else "-"))],
