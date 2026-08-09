@@ -381,6 +381,13 @@ var _fly_speed_idx := 0
 # Drive mode: car lives in ring coordinates, no physics — terrain sampled analytically
 var _car: Node3D = null
 var _wheels: Array = []           # [{pivot, mesh, front}] -- rolling and steering
+var _vehicles: Array = []         # [{root, wheels, name}] -- [L] cycles between them in DRIVE
+var _veh_idx := 0
+const WARTHOG_PACK := "res://halo_warthog/scene.gltf"  # local-only asset (gitignored); box car is the fallback
+const VEHICLE_LEN := 5.2          # metres nose-to-tail; the box car is 4.2, the warthog reads as bigger
+# Scale and length-axis are measured from the model's AABB, so the only thing not derivable is which
+# END is the nose. Eyeball logs/shots/vehicle_warthog.png; if it drives tail-first, set this to PI.
+const WARTHOG_YAW := 0.0
 var _wheel_spin := 0.0
 var _dust: GPUParticles3D = null
 var _offroad := 0.0               # 0 = on tarmac, 1 = fully off it
@@ -919,6 +926,27 @@ func _shot_run() -> void:
 				pname, shot["n"],
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
 				int(Engine.get_frames_per_second()), path])
+	# VEHICLES. The patch loop above never enters DRIVE, so an imported car model could be sideways,
+	# giant or underground and no frame would catch it. Enter DRIVE at home, let the chase cam settle,
+	# and shoot each vehicle from behind -- the framing that shows orientation, scale and grounding.
+	_warp_to(-1)
+	_set_mode(Mode.DRIVE)
+	# start the chase cam near the car, else it eases down from the last aerial framing (400 m up) and
+	# the car is a speck in the shot.
+	var cpos := _car_pos(_car_arc, _car_lat)
+	_cam.position = cpos + _ring_up(cpos) * 6.0
+	for _k in 30:
+		await get_tree().process_frame
+	for vi in _vehicles.size():
+		_select_vehicle(vi)
+		for _k in 24:
+			await get_tree().process_frame       # let the eased chase cam swing onto this one
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		var vname: String = _vehicles[vi]["name"]
+		var vpath := "%s/vehicle_%s.png" % [dir, vname]
+		get_viewport().get_texture().get_image().save_png(vpath)
+		print("SHOT vehicle %-8s %s" % [vname, vpath])
 	if _hud: _hud.visible = true
 	if _perf: _perf.visible = true
 	print("SHOTS done")
@@ -1583,6 +1611,7 @@ func _rebuild() -> void:
 	_build_band(_lod_center_arc)
 	_build_walls()
 	_report_tex_support()
+	_make_dust()
 	_load_grass()
 	# `-- --tex s3tc|bptc` picks a mode at launch, so all three can be measured without a human
 	# holding [U] down and reading a HUD
@@ -2961,6 +2990,7 @@ func _on_threat(active: bool) -> void:
 	_threat_active = active
 	_update_hud()
 
+
 func _make_dust() -> void:
 	# Dust off the back wheels once you leave the tarmac. The trigger was already free -- the 8m road
 	# cells exist for the grass -- so this is the cheap half of making off-road feel different.
@@ -3041,8 +3071,112 @@ func _make_car() -> Node3D:
 		root.add_child(pivot)
 		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0})
 	add_child(root)
-	_make_dust()
 	return root
+
+func _build_vehicles() -> void:
+	# One box car was the whole fleet; the halo_warthog model sat unused in assets/. Build both once
+	# and let [L] swap between them in DRIVE. The box keeps its rolling/steering wheels; the warthog
+	# is a proper silhouette. The asset is gitignored (local only), so a machine without it just gets
+	# the box -- hence the box stays index 0 and the fallback.
+	if not _vehicles.is_empty():
+		return
+	var box := _make_car()          # sets _wheels as a side effect
+	box.visible = false
+	_vehicles.append({"root": box, "wheels": _wheels, "name": "box"})
+	var hog := _make_warthog()
+	if hog:
+		hog.visible = false
+		_vehicles.append({"root": hog, "wheels": _collect_wheels(hog), "name": "warthog"})
+
+func _select_vehicle(i: int) -> void:
+	if _vehicles.is_empty():
+		return
+	_veh_idx = posmod(i, _vehicles.size())
+	for j in _vehicles.size():
+		_vehicles[j]["root"].visible = (j == _veh_idx and _mode == Mode.DRIVE)
+	var e: Dictionary = _vehicles[_veh_idx]
+	_car = e["root"]
+	_wheels = e["wheels"]
+	_update_hud()
+
+func _model_aabb(root_node: Node) -> AABB:
+	# Union of every child mesh AABB, each mapped through its transform chain relative to root_node.
+	# Godot resolves the GLTF's internal node transforms for us, so this footprint is exact without
+	# hand-reading the file -- scale and orientation come from data, not a guess.
+	var out := AABB()
+	var first := true
+	var stack: Array = [root_node]
+	while stack.size() > 0:
+		var n = stack.pop_back()
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh:
+			var box: AABB = _rel_xform(n, root_node) * (n as MeshInstance3D).mesh.get_aabb()
+			out = box if first else out.merge(box)
+			first = false
+		for c in n.get_children():
+			stack.append(c)
+	return out
+
+func _make_warthog() -> Node3D:
+	if not ResourceLoader.exists(WARTHOG_PACK):
+		print("ring_vibes: warthog pack not found ", WARTHOG_PACK, " — box car only")
+		return null
+	var packed := load(WARTHOG_PACK) as PackedScene
+	if not packed:
+		return null
+	var model := packed.instantiate() as Node3D
+	if model == null:
+		return null
+	var local := _model_aabb(model)
+	if local.size == Vector3.ZERO:
+		model.queue_free()
+		return null
+	# GLTF imports Y-up, so up is settled; only the horizontal facing is unknown. The longer footprint
+	# axis is the length -- turn it to lie along -Z, which is the car's forward (what look_at expects).
+	var rot := Basis.IDENTITY
+	if local.size.x > local.size.z:
+		rot = Basis(Vector3.UP, -PI * 0.5)
+	rot = Basis(Vector3.UP, WARTHOG_YAW) * rot     # nose-flip knob (see WARTHOG_YAW)
+	var oriented: AABB = Transform3D(rot, Vector3.ZERO) * local
+	var s: float = VEHICLE_LEN / maxf(oriented.size.z, 0.001)
+	var basis := rot.scaled(Vector3(s, s, s))
+	var final: AABB = Transform3D(basis, Vector3.ZERO) * local
+	# Centre the footprint over the root and sit its lowest point on y=0, matching how the box car's
+	# wheels bottom out at 0 (the drive tick lifts either the same amount).
+	var pos := Vector3(
+		-final.position.x - final.size.x * 0.5,
+		-final.position.y,
+		-final.position.z - final.size.z * 0.5)
+	model.transform = Transform3D(basis, pos)
+	var root := Node3D.new()
+	root.name = "Warthog"
+	root.add_child(model)
+	add_child(root)
+	print("ring_vibes: warthog model loaded (%.1fm long, scale %.3f)" % [final.size.z, s])
+	return root
+
+func _collect_wheels(root: Node) -> Array:
+	# The warthog was registered with an EMPTY wheel list, so swapping to it lost the rolling and
+	# steering the box car has -- the imported vehicle was the static prop the box no longer is.
+	# The pack names them Wheel1..Wheel4 and nests a mesh of the SAME name inside each, so take the
+	# outermost match only; spinning both would double the rotation.
+	var out: Array = []
+	var re := RegEx.new()
+	re.compile("(?i)^wheel[0-9]")
+	var seen := {}
+	var stack: Array = [root]
+	while not stack.is_empty():
+		var n = stack.pop_front()
+		var matched := false
+		if n is Node3D and re.search(String(n.name)) != null:
+			var key := String(n.name).to_lower()
+			if not seen.has(key):
+				seen[key] = true
+				out.append({"pivot": n, "mesh": n, "front": (n as Node3D).position.z > 0.0})
+				matched = true
+		if not matched:
+			for c in n.get_children():
+				stack.append(c)
+	return out
 
 func _car_pos(arc: float, lat: float) -> Vector3:
 	return _surface_pos(arc, lat)
@@ -3145,9 +3279,11 @@ func _walk_tick(delta: float) -> void:
 func _set_mode(m: Mode) -> void:
 	_mode = m
 	if m == Mode.DRIVE:
-		if not _car:
-			_car = _make_car()
-		_car.visible = true
+		if _vehicles.is_empty():
+			_build_vehicles()
+		_select_vehicle(_veh_idx)
+		if _car:
+			_car.visible = true
 		_car_speed = 0.0
 		# place the car where the CAMERA is (in ring coords) -- it kept its previous arc/lat before,
 		# so entering drive after jumping a splice snapped the car back to the last place you drove
@@ -3158,8 +3294,8 @@ func _set_mode(m: Mode) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		_captured = false
 	else:
-		if _car:
-			_car.visible = false
+		for e in _vehicles:
+			e["root"].visible = false
 		if m == Mode.WALK:
 			var w: float = WIDTHS[w_idx]
 			# derive arc from the ring angle, NOT world x -- those only coincide near arc 0, so
@@ -3242,6 +3378,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_COMMA: _jump_splice(-1)
 			KEY_PERIOD: _jump_splice(1)
 			KEY_TAB: _hud_full = not _hud_full; _update_hud()
+			KEY_L:
+				# swap vehicle -- only meaningful while driving, and only if the warthog asset loaded
+				if _mode == Mode.DRIVE and _vehicles.size() > 1:
+					_select_vehicle(_veh_idx + 1)
 			KEY_O:
 				# sliders need a visible cursor, so opening the panel releases mouse capture
 				_panel_open = not _panel_open
@@ -3403,7 +3543,8 @@ func _update_hud() -> void:
 	var fly_speed_name: String = ["normal", "boost", "5x boost", "20x boost"][_fly_speed_idx]
 	var mode := "FLY %s (WASD + Space/Ctrl, [Shift] cycle speed, ESC to release, [V] cycle mode)" % fly_speed_name if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] cycle drive/walk)"
 	if _mode == Mode.DRIVE:
-		mode = "DRIVE  %d km/h  (WASD steer, [V] cycle mode)" % int(abs(_car_speed) * 3.6)
+		var vn: String = _vehicles[_veh_idx]["name"] if _veh_idx < _vehicles.size() else "box"
+		mode = "DRIVE  %d km/h  [%s]  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn]
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	if not _hud_full:

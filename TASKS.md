@@ -40,7 +40,12 @@ Rules:
       (24k instances, 24k billboards). Profile per system, then cut. Driving at 13 fps is not fun.
 - [x] **Rolling wheels.** The car's wheels do not turn or steer. Also suspension travel over the
       terrain it now follows correctly.
-- [ ] **Vehicle variety.** One box car. `assets/halo_warthog.zip` exists and is unused.
+- [x] **Vehicle variety.** Box car + warthog model, [L] swaps between them in DRIVE. The halo_warthog
+      GLTF now loads as a second vehicle (scale and length-axis measured from its AABB; the box stays
+      the fallback when the gitignored asset is absent). NOT eyeballed: this sandbox can't launch the
+      Godot binary (it lives outside the repo) to run `-- --shots`. The shot harness now writes
+      vehicle_box/warthog.png at the end of a run — do a shot pass, and if the warthog drives
+      tail-first, set `WARTHOG_YAW = PI` in ring_vibes.gd (the only un-derivable bit).
 - [x] **Offroad feel.** Particle/dust when the car leaves the carriageway (`_road_at` already gives
       the trigger), plus grip and camera-shake difference on/off road. Off-roading is meant to be a
       real mode, not a punishment.
@@ -80,4 +85,5 @@ Rules:
 - Height tier box-filtering; `--align` reports 0/4235 mismatches
 - S3TC/BPTC compression, `[U]`
 - `[Y]` probe, `patch_census.py`
+
 
