@@ -92,6 +92,15 @@ already generates its houses, hedges, palms and textures.
 
 Prerequisite for everything below.
 
+- [x] **Proving ground** (`-- --proving [vehicle,...]`). Scripted identical course per vehicle --
+      accel, brake, full-lock circle, offroad, climb -- reporting top speed, distance, turning
+      radius, jolt and grade. Mechanics before looks: handling cannot be judged from a screenshot.
+- [ ] **INVESTIGATE: offroad is FASTER than on-road in the proving numbers.** box tops 9.8 m/s in
+      the accel phase (on a road) and 17.5 m/s in the rough phase (deliberately 60m off it). That is
+      backwards. Most likely the accel phase is not actually starting on tarmac -- `_road_cells`
+      holds wrapped arcs and the lookup may be missing -- so `_offroad` sits at 1 and the drag
+      matches exactly (9.0 accel / 0.9 drag = 10 m/s terminal, measured 9.8). Confirm before
+      building anything on top of the handling model.
 - [ ] **Locomotion abstraction.** `_drive_tick` is one hardcoded wheeled model: fixed accel, fixed
       grip, a heading integrated on the ring surface. Pull it into a `Locomotion` interface with
       one implementation per class, and a `VehicleDef` resource carrying mass, power, grip,

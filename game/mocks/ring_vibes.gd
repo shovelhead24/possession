@@ -583,6 +583,8 @@ func _ready() -> void:
 		_align_sweep()
 	if OS.get_cmdline_user_args().has("--shots"):
 		_shot_run()
+	if OS.get_cmdline_user_args().has("--proving"):
+		_prove_run()
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
 	_clouds.ring_radius = _radius()   # must be set BEFORE _ready() builds the bent sheets
 	_clouds.ring_width = WIDTHS[w_idx]
@@ -837,6 +839,126 @@ func _tri_breakdown() -> String:
 	var band := BAND_SEGS * BAND_ROWS * 2
 	out.append("far band %d" % band); total += band
 	return "TRIS  %s   accounted %d" % [", ".join(out), total]
+
+
+# ---------------------------------------------------------------------------
+# PROVING GROUND. `-- --proving [vehicle,vehicle]`
+#
+# Drives each vehicle through a fixed sequence of manoeuvres with scripted inputs and reports the
+# numbers: top speed, braking distance, turning circle, how much it loses off the tarmac, the
+# steepest grade it will still climb, and how hard it gets thrown around on rough ground.
+#
+# Mechanics before looks. A vehicle that reads well and handles badly is worse than a box that
+# handles well, and handling cannot be judged from a screenshot -- it needs the same treatment the
+# terrain got: measure it, compare the numbers, believe them over the impression. Every vehicle runs
+# the identical course, so the table is comparable rather than a list of separate impressions.
+# ---------------------------------------------------------------------------
+
+const PROVE_PHASES := [
+	{"name": "accel",  "secs": 14.0, "throttle": 1.0, "steer": 0.0},
+	{"name": "brake",  "secs": 6.0,  "throttle": -1.0, "steer": 0.0},
+	{"name": "circle", "secs": 12.0, "throttle": 1.0, "steer": 1.0},
+	{"name": "rough",  "secs": 12.0, "throttle": 1.0, "steer": 0.0, "offroad": true},
+	{"name": "climb",  "secs": 14.0, "throttle": 1.0, "steer": 0.0, "uphill": true},
+]
+
+var _prove_throttle := 0.0        # scripted input; _drive_tick reads these when _proving is set
+var _prove_steer := 0.0
+var _proving := false
+
+func _prove_run() -> void:
+	await get_tree().create_timer(1.5).timeout
+	_mode = Mode.DRIVE
+	if _vehicles.is_empty():
+		_build_vehicles()
+	var args := OS.get_cmdline_user_args()
+	var want: Array = []
+	var pi := args.find("--proving")
+	if pi >= 0 and pi + 1 < args.size() and not args[pi + 1].begins_with("--"):
+		want = Array(args[pi + 1].split(","))
+	if want.is_empty():
+		for v in _vehicles:
+			want.append(str(v["name"]))
+
+	print("\nPROVING GROUND — identical course, every vehicle\n")
+	print("%-10s %-8s %8s %8s %8s %8s %8s" % [
+		"vehicle", "phase", "top m/s", "dist m", "turn r", "jolt m", "grade"])
+	_proving = true
+	for vname in want:
+		var vi := -1
+		for j in _vehicles.size():
+			if str(_vehicles[j]["name"]) == vname:
+				vi = j
+		if vi < 0:
+			print("  skip %s (not built)" % vname)
+			continue
+		_select_vehicle(vi)
+		for phase in PROVE_PHASES:
+			await _prove_phase(vname, phase)
+	_proving = false
+	_prove_throttle = 0.0
+	_prove_steer = 0.0
+	print("\nPROVING done")
+	get_tree().quit()
+
+func _prove_phase(vname: String, phase: Dictionary) -> void:
+	# reset to a known start: on a road for the on-road phases, deliberately off it for "rough",
+	# pointed at the steepest ground nearby for "climb"
+	var start_arc := 0.0
+	var start_lat := 0.0
+	if not _roadlines.is_empty():
+		var pts: PackedVector2Array = _roadlines[mini(4, _roadlines.size() - 1)]["pts"]
+		var p: Vector2 = pts[mini(2, pts.size() - 1)]
+		start_arc = p.x
+		start_lat = p.y
+	if bool(phase.get("offroad", false)):
+		start_lat += 60.0                      # well clear of the carriageway
+	_car_arc = start_arc
+	_car_lat = start_lat
+	_car_speed = 0.0
+	_car_heading = 0.0
+	if bool(phase.get("uphill", false)):
+		# aim at the steepest uphill within a short sweep, so "grade" means something
+		var best := -1.0
+		for k in 16:
+			var a := TAU * float(k) / 16.0
+			var h0 := _terrain_h(_car_arc, _car_lat)
+			var h1 := _terrain_h(_car_arc + cos(a) * 40.0, _car_lat + sin(a) * 40.0)
+			if h1 - h0 > best:
+				best = h1 - h0
+				_car_heading = a
+	_prove_throttle = float(phase["throttle"])
+	_prove_steer = float(phase["steer"])
+
+	var t := 0.0
+	var top := 0.0
+	var start := Vector2(_car_arc, _car_lat)
+	var h_start := _terrain_h(_car_arc, _car_lat)
+	var jolt := 0.0
+	var prev_h := h_start
+	var min_x := 1e20
+	var max_x := -1e20
+	var min_y := 1e20
+	var max_y := -1e20
+	while t < float(phase["secs"]):
+		await get_tree().process_frame
+		var dt: float = get_process_delta_time()
+		t += dt
+		top = maxf(top, absf(_car_speed))
+		var h := _terrain_h(_car_arc, _car_lat)
+		jolt = maxf(jolt, absf(h - prev_h))
+		prev_h = h
+		min_x = minf(min_x, _car_arc); max_x = maxf(max_x, _car_arc)
+		min_y = minf(min_y, _car_lat); max_y = maxf(max_y, _car_lat)
+	var dist := Vector2(_car_arc, _car_lat).distance_to(start)
+	# turning circle from the swept bounding box, which is the diameter for a full lock circle
+	var turn_r: float = maxf(max_x - min_x, max_y - min_y) * 0.5
+	var climbed := _terrain_h(_car_arc, _car_lat) - h_start
+	var grade: float = 0.0 if dist < 1.0 else rad_to_deg(atan(climbed / dist))
+	print("%-10s %-8s %8.1f %8.1f %8.1f %8.2f %7.1f°" % [
+		vname, phase["name"], top, dist,
+		turn_r if str(phase["name"]) == "circle" else 0.0,
+		jolt, grade if str(phase["name"]) == "climb" else 0.0])
 
 func _shot_run() -> void:
 	# `-- --shots [patch,patch,...]` warps to each patch, waits for its stream, and writes a set of
@@ -3251,16 +3373,22 @@ func _ring_up(pos: Vector3) -> Vector3:
 
 func _drive_tick(delta: float) -> void:
 	var accel := 0.0
-	if Input.is_key_pressed(KEY_W): accel += 9.0
-	if Input.is_key_pressed(KEY_S): accel -= 12.0
+	var steer := 0.0
+	if _proving:
+		# scripted course input, so every vehicle is driven identically and the table compares
+		accel = _prove_throttle * (9.0 if _prove_throttle > 0.0 else 12.0)
+		steer = _prove_steer
+	else:
+		if Input.is_key_pressed(KEY_W): accel += 9.0
+		if Input.is_key_pressed(KEY_S): accel -= 12.0
 	_car_speed = clampf(_car_speed + accel * delta, -6.0, 22.0)  # ~80 km/h top (was 160)
 	# offroad drags harder and steers vaguer -- the difference should be felt in the
 	# handling, not just seen in a particle effect. Off-roading is a mode, not a penalty:
 	# top speed drops maybe a third, it does not become unusable.
 	_car_speed *= 1.0 - (0.35 + 0.55 * _offroad) * delta
-	var steer := 0.0
-	if Input.is_key_pressed(KEY_A): steer -= 1.0
-	if Input.is_key_pressed(KEY_D): steer += 1.0
+	if not _proving:
+		if Input.is_key_pressed(KEY_A): steer -= 1.0
+		if Input.is_key_pressed(KEY_D): steer += 1.0
 	_car_heading += steer * (1.5 - 0.45 * _offroad) * delta * clampf(abs(_car_speed) / 12.0, 0.0, 1.0) * signf(_car_speed)
 	_car_arc += cos(_car_heading) * _car_speed * delta
 	_car_lat += sin(_car_heading) * _car_speed * delta
@@ -3275,7 +3403,10 @@ func _drive_tick(delta: float) -> void:
 	# like it is skating.
 	_wheel_spin += (_car_speed * delta) / 0.45
 	for w in _wheels:
-		var mesh: MeshInstance3D = w["mesh"]
+		# Node3D, not MeshInstance3D: the box car's wheels ARE meshes but the warthog's are
+		# transform nodes with meshes beneath. The stricter type threw every frame on the
+		# warthog and the proving run surfaced it in seconds.
+		var mesh: Node3D = w["mesh"]
 		mesh.rotation = Vector3(0.0, 0.0, PI * 0.5)
 		mesh.rotate_object_local(Vector3(0, 1, 0), -_wheel_spin)
 		var piv: Node3D = w["pivot"]
