@@ -1,4 +1,4 @@
-# Work queue
+﻿# Work queue
 
 Durable queue for scheduled/resumed sessions. The cron schedule dies with a session; this file
 doesn't. A session that wakes takes the **top unchecked item**, does it, ticks it, commits.
@@ -6,19 +6,19 @@ doesn't. A session that wakes takes the **top unchecked item**, does it, ticks i
 Rules:
 - One item per wake. Finish it or leave a note saying where it stopped.
 - Read images before changing biome numbers. `tools/dem/patch_census.py` proposes; the image decides.
-- Never re-centre or refetch a patch unprompted — that destroys the old one.
+- Never re-centre or refetch a patch unprompted â€” that destroys the old one.
 - Don't write more docs unless the item asks for one.
 
 ---
 
 ## Now
 
-- [x] **Image-review patches 1–10** (alphabetical from `atacama`). For each: read
+- [x] **Image-review patches 1â€“10** (alphabetical from `atacama`). For each: read
       `out/<name>_s2_preview.jpg`, confirm or correct `trees` / `tint` / `tree_hi` / `weather` in
       `PATCHES`, note seams or artefacts. Append findings to `docs/patch-review.md`.
-- [x] **Image-review patches 11–20** — same.
-- [x] **Image-review patches 21–30** — same.
-- [x] **Image-review patches 31–39** — same.
+- [x] **Image-review patches 11â€“20** â€” same.
+- [x] **Image-review patches 21â€“30** â€” same.
+- [x] **Image-review patches 31â€“39** â€” same.
 - [x] **Verify hedgerows by screenshot** (`-- --shots <patch>`). Do they apply at all off the home
       patch; do junctions mesh or interpenetrate; do they follow the ground or float; do they sit on
       the correct side of the carriageway. Read the PNGs, do not assume.
@@ -26,13 +26,13 @@ Rules:
       Where two roads meet, each lays its own ribbon and nothing merges them, so they almost
       certainly interpenetrate. Shoot a crossroads specifically.
 - [x] **Hedge variety.** Four kinds by biome (bank / scrub / wall / none), width and height varying
-      smoothly along a run, position-hashed gaps for gateways. Still one PROFILE and one texture —
+      smoothly along a run, position-hashed gaps for gateways. Still one PROFILE and one texture â€”
       a stone wall currently differs from a hedge only in size and tint, which will not survive
       being looked at. Needs its own geometry when the vegetation import lands.
 - [x] **Vegetation model imports.** Both unused packs opened. Grass pack is now close-range ground
-      cover (42m bubble, ~3k instances, +12k tris) — the biggest win, since the drape is 11 m/px at
+      cover (42m bubble, ~3k instances, +12k tris) â€” the biggest win, since the drape is 11 m/px at
       best and the near field had no shape at all.
-- [ ] **STILL NO SPECIES VARIETY — blocked on assets.** The spruce pack is a second CONIFER, so it
+- [ ] **STILL NO SPECIES VARIETY â€” blocked on assets.** The spruce pack is a second CONIFER, so it
       does not help. There is no teak, palm, fynbos or birch in `assets/`, which means Java, Cape
       and Lofoten are still tinted Irish firs. This needs downloading models, not code. Candidates:
       a broadleaf, a palm, a low scrub bush.
@@ -44,27 +44,27 @@ Rules:
 - [ ] **Offroad feel.** Particle/dust when the car leaves the carriageway (`_road_at` already gives
       the trigger), plus grip and camera-shake difference on/off road. Off-roading is meant to be a
       real mode, not a punishment.
-- [ ] **Refetch buildings for the 7 patches that have them** — they were fetched against the
-      authored bbox, so they're 10–16% out. `fetch_osm_buildings.py` is fixed; just re-run with
+- [ ] **Refetch buildings for the 7 patches that have them** â€” they were fetched against the
+      authored bbox, so they're 10â€“16% out. `fetch_osm_buildings.py` is fixed; just re-run with
       `--force`.
 - [ ] **Hedgerows + verge everywhere.** Once `*_roadlines.dat` exists for all patches, the ribbon
-      and the tree-clearing currently only run on the home patch — generalise past `millstreet`.
+      and the tree-clearing currently only run on the home patch â€” generalise past `millstreet`.
 - [ ] **Measure drape QUALITY, not just coverage.** `salar_uyuni` is pure white (clipped),
-      `palawan` is ~55% cloud, `guri_dam` is two seasons across a seam — and all three report 100%
+      `palawan` is ~55% cloud, `guri_dam` is two seasons across a seam â€” and all three report 100%
       coverage, because coverage counts filled pixels. Scene selection sorts on the scene-wide STAC
       cloud figure, which says nothing about our bbox. Measure cloud/haze and clipping in the
       RESULT, reject, re-pick. Do this before the remaining 8192 refetches bake it in.
 - [ ] **Per-patch sea level.** danube_delta renders 64% ocean because delta land sits at 0-2m
       under a global 0.5m SEA_LEVEL. Any low-lying patch has this. Needs a per-patch offset.
 - [ ] **Colour-match scenes at paste time** in `fetch_s2.py`. CONFIRMED SYSTEMIC: 4 of 4
-      multi-scene patches are visibly patchworked (`guri_dam` worst — two seasons either side of a
+      multi-scene patches are visibly patchworked (`guri_dam` worst â€” two seasons either side of a
       hard vertical seam, then `danube_delta`, `mongolia_steppe`, `dolomites`). Only single-scene
       patches are clean. Normalise exposure per scene against the overlap before pasting.
 - [ ] **Reject building sites on cliffs.** `--align` says 8,235 of 119,703 sit on ground steeper
       than their undercroft covers, worst a 1,195 m drop. Add a slope limit at placement.
 - [ ] **Regression sweep script.** Run `--align`, `--selftest`, `--texprobe`, diff against the last
       known-good, report only what changed. This session's worst bugs were silent successes.
-- [ ] **Fix marker displacement** in the census — it takes the worst marker, so any patch with
+- [ ] **Fix marker displacement** in the census â€” it takes the worst marker, so any patch with
       route-spanning markers scores badly by design. Use the camera anchor.
 
 ## Blocked / waiting

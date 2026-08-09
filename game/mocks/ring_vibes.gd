@@ -145,6 +145,7 @@ var _roadlines: Array = []
 var _junc := {}                   # 30m cells where two or more ways meet
 var _road_cells := {}             # 8m cells containing carriageway
 var _grass_shown := 0
+var _species_now := "fir"
 var _hedge_quads := 0
 var _detail_tex: ImageTexture = null
 var dem_scale := 1.0  # [H] cycles 1..5 — real-height exaggeration (DEM branch only)
@@ -205,47 +206,47 @@ const MAX_PATCHES := 40           # ring needs 36 at 84km; headroom for overlap/
 # complete while tools/dem/pipeline.py is still running.
 const PATCHES := [
 	{"name": "schwarzwald", "arc_pct": 0.028, "tint": Color(0.13, 0.22, 0.14), "trees": 1.0, "tree_hi": 1400.0, "weather": "fresh"},
-	{"name": "cork_city", "arc_pct": 0.056, "tint": Color(0.34, 0.38, 0.30), "trees": 0.3, "tree_hi": 200.0, "weather": "fresh"},
+	{"name": "cork_city", "arc_pct": 0.056, "tint": Color(0.34, 0.38, 0.30), "trees": 0.3, "tree_hi": 200.0, "weather": "fresh", "species": "broadleaf"},
 	# COASTAL BATCH. The ring came out ~95% land because every box was centred on a landform; these
 	# five are centred on WATER. Sea fraction, measured: palawan 88%, lofoten 84%, cape 80%,
 	# halong 64%, big_sur 29%. They also retire the last two duplicate slots and the two patches
 	# that had drifted out of character once the boxes went to 84km, so coverage is now 35/35 unique.
-	{"name": "big_sur", "arc_pct": 0.084, "tint": Color(0.24, 0.30, 0.20), "trees": 0.5, "tree_hi": 1200.0, "weather": "fresh"},
-	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0, "weather": "overcast"},
+	{"name": "big_sur", "arc_pct": 0.084, "tint": Color(0.24, 0.30, 0.20), "trees": 0.5, "tree_hi": 1200.0, "weather": "fresh", "species": "broadleaf"},
+	{"name": "wye_valley", "arc_pct": 0.112, "tint": Color(0.32, 0.40, 0.22), "trees": 0.5, "tree_hi": 400.0, "weather": "overcast", "species": "broadleaf"},
 	# imaged: dense dark forest with agricultural clearings and a river. 0.5 was well under it.
-	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.20, 0.26, 0.15), "trees": 0.85, "tree_hi": 450.0, "weather": "fresh"},
+	{"name": "dordogne", "arc_pct": 0.140, "tint": Color(0.20, 0.26, 0.15), "trees": 0.85, "tree_hi": 450.0, "weather": "fresh", "species": "broadleaf"},
 	# imaged: near-continuous forest, only narrow valley clearings and small towns on the roads.
 	# 99% measured and the image agrees, so 0.6 was well under. Forest carries over most summits.
-	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.13, 0.24, 0.12), "trees": 0.92, "tree_hi": 1100.0, "weather": "fresh"},
-	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "storm"},
-	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh"},
+	{"name": "vermont", "arc_pct": 0.168, "tint": Color(0.13, 0.24, 0.12), "trees": 0.92, "tree_hi": 1100.0, "weather": "fresh", "species": "broadleaf"},
+	{"name": "mizen_head", "arc_pct": 0.196, "tint": Color(0.30, 0.38, 0.30), "trees": 0.25, "tree_hi": 300.0, "weather": "storm", "species": "scrub"},
+	{"name": "camargue", "arc_pct": 0.224, "tint": Color(0.40, 0.44, 0.36), "trees": 0.1, "tree_hi": 30.0, "weather": "fresh", "species": "scrub"},
 	# imaged 2026-08-08: the 92% "vegetation" the census measures is REED BED, not canopy, so
 	# trees 0.1 is right and stays. Two defects logged instead -- see docs/patch-review.md.
-	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.30, 0.34, 0.24), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast"},
+	{"name": "danube_delta", "arc_pct": 0.252, "tint": Color(0.30, 0.34, 0.24), "trees": 0.1, "tree_hi": 40.0, "weather": "overcast", "species": "scrub"},
 	# fynbos, not forest -- scrub to the waterline on both oceans, and almost no trees
-	{"name": "cape_peninsula", "arc_pct": 0.280, "tint": Color(0.38, 0.38, 0.28), "trees": 0.15, "tree_hi": 700.0, "weather": "clear"},
+	{"name": "cape_peninsula", "arc_pct": 0.280, "tint": Color(0.38, 0.38, 0.28), "trees": 0.15, "tree_hi": 700.0, "weather": "clear", "species": "scrub"},
 	{"name": "salar_uyuni", "arc_pct": 0.308, "tint": Color(0.78, 0.78, 0.80), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
 	{"name": "scablands", "arc_pct": 0.336, "tint": Color(0.44, 0.40, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
-	{"name": "loop_head", "arc_pct": 0.364, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 250.0, "weather": "storm"},
+	{"name": "loop_head", "arc_pct": 0.364, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 250.0, "weather": "storm", "species": "scrub"},
 	{"name": "monument_valley", "arc_pct": 0.392, "tint": Color(0.62, 0.38, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
 	{"name": "atacama", "arc_pct": 0.420, "tint": Color(0.58, 0.44, 0.32), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
-	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus"},
+	{"name": "namib_dunes", "arc_pct": 0.448, "tint": Color(0.64, 0.42, 0.24), "trees": 0.0, "tree_hi": 0.0, "weather": "cirrus", "species": "scrub"},
 	# imaged: dry brown scrub west, reservoir and forest east, split by the worst mosaic seam in
 	# the portfolio -- two scenes, different seasons. trees 0.4 averages the two halves fairly;
 	# tint was green where the dominant half is brown.
-	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.30, 0.26, 0.19), "trees": 0.4, "tree_hi": 500.0, "weather": "monsoon"},
-	{"name": "palawan", "arc_pct": 0.504, "tint": Color(0.18, 0.28, 0.20), "trees": 0.9, "tree_hi": 900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.05, 1.02, 0.66), "tree_mul": 1.3},
+	{"name": "guri_dam", "arc_pct": 0.476, "tint": Color(0.30, 0.26, 0.19), "trees": 0.4, "tree_hi": 500.0, "weather": "monsoon", "species": "broadleaf"},
+	{"name": "palawan", "arc_pct": 0.504, "tint": Color(0.18, 0.28, 0.20), "trees": 0.9, "tree_hi": 900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.05, 1.02, 0.66), "tree_mul": 1.3, "species": "palm"},
 	# imaged: olive-brown semi-arid, finely dissected, no tree in 93km. trees 0.05 confirmed --
 	# the census reads 80% "vegetation" here because excess-green fires on khaki. tint nudged
 	# warmer to the measured mean; tree_hi is vestigial at this density.
 	{"name": "mongolia_steppe", "arc_pct": 0.532, "tint": Color(0.44, 0.40, 0.26), "trees": 0.05, "tree_hi": 1900.0, "weather": "cirrus"},
-	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh"},
-	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "storm"},
+	{"name": "tuscany_hills", "arc_pct": 0.560, "tint": Color(0.42, 0.42, 0.26), "trees": 0.6, "tree_hi": 700.0, "weather": "fresh", "species": "broadleaf"},
+	{"name": "slea_head", "arc_pct": 0.588, "tint": Color(0.30, 0.38, 0.30), "trees": 0.2, "tree_hi": 350.0, "weather": "storm", "species": "scrub"},
 	{"name": "priests_leap", "arc_pct": 0.616, "tint": Color(0.28, 0.34, 0.26), "trees": 0.5, "tree_hi": 450.0, "weather": "overcast"},
 	# imaged 2026-08-08: heather moor throughout, forestry confined to the straths, bare granite
 	# plateau in the middle. Authored trees 0.5 was roughly double the real canopy, and the
 	# plantations stop well under the old 700m ceiling.
-	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.30, 0.27, 0.18), "trees": 0.25, "tree_hi": 550.0, "weather": "storm"},
+	{"name": "cairngorms", "arc_pct": 0.644, "tint": Color(0.30, 0.27, 0.18), "trees": 0.25, "tree_hi": 550.0, "weather": "storm", "species": "scrub"},
 	# imaged: conifer fills the valleys, pale limestone massifs above a hard treeline. trees 0.7
 	# and tree_hi 2000 both check out; the TINT was set to the rock when forest dominates the frame.
 	{"name": "dolomites", "arc_pct": 0.672, "tint": Color(0.26, 0.28, 0.22), "trees": 0.7, "tree_hi": 2000.0, "weather": "fresh"},
@@ -255,18 +256,18 @@ const PATCHES := [
 	{"name": "tatra_spruce", "arc_pct": 0.700, "tint": Color(0.21, 0.26, 0.17), "trees": 0.7, "tree_hi": 1500.0, "weather": "fresh"},
 	{"name": "norwegian_fjord", "arc_pct": 0.728, "tint": Color(0.30, 0.36, 0.32), "trees": 0.6, "tree_hi": 900.0, "weather": "storm"},
 	{"name": "olympic_forest", "arc_pct": 0.756, "tint": Color(0.14, 0.24, 0.16), "trees": 1.0, "tree_hi": 1200.0, "weather": "overcast"},
-	{"name": "borneo_highland", "arc_pct": 0.784, "tint": Color(0.16, 0.28, 0.16), "trees": 1.0, "tree_hi": 2500.0, "weather": "monsoon"},
-	{"name": "costa_rica_jungle", "arc_pct": 0.812, "tint": Color(0.16, 0.30, 0.18), "trees": 1.0, "tree_hi": 2000.0, "weather": "monsoon"},
-	{"name": "tepui", "arc_pct": 0.840, "tint": Color(0.24, 0.32, 0.24), "trees": 0.5, "tree_hi": 1500.0, "weather": "monsoon"},
-	{"name": "iceland_highland", "arc_pct": 0.868, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "storm"},
+	{"name": "borneo_highland", "arc_pct": 0.784, "tint": Color(0.16, 0.28, 0.16), "trees": 1.0, "tree_hi": 2500.0, "weather": "monsoon", "species": "broadleaf"},
+	{"name": "costa_rica_jungle", "arc_pct": 0.812, "tint": Color(0.16, 0.30, 0.18), "trees": 1.0, "tree_hi": 2000.0, "weather": "monsoon", "species": "broadleaf"},
+	{"name": "tepui", "arc_pct": 0.840, "tint": Color(0.24, 0.32, 0.24), "trees": 0.5, "tree_hi": 1500.0, "weather": "monsoon", "species": "broadleaf"},
+	{"name": "iceland_highland", "arc_pct": 0.868, "tint": Color(0.42, 0.36, 0.32), "trees": 0.02, "tree_hi": 400.0, "weather": "storm", "species": "scrub"},
 	{"name": "badlands_sd", "arc_pct": 0.896, "tint": Color(0.54, 0.44, 0.34), "trees": 0.05, "tree_hi": 900.0, "weather": "cirrus"},
 	# East Java: teak over volcanic ash, Arjuno-Welirang at 3,339m, and Trowulan -- a living town
 	# sitting on the Majapahit capital. Tropical treeline runs high, so the massif is wooded almost
 	# to the summit. "style": meru gives it tiered roofs instead of the default gable.
-	{"name": "java_majapahit", "arc_pct": 0.924, "tint": Color(0.17, 0.27, 0.16), "trees": 1.0, "tree_hi": 2900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.06, 1.02, 0.62), "tree_mul": 1.45},
-	{"name": "halong_bay", "arc_pct": 0.952, "tint": Color(0.20, 0.30, 0.22), "trees": 0.7, "tree_hi": 600.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.02, 1.03, 0.72), "tree_mul": 1.1},
+	{"name": "java_majapahit", "arc_pct": 0.924, "tint": Color(0.17, 0.27, 0.16), "trees": 1.0, "tree_hi": 2900.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.06, 1.02, 0.62), "tree_mul": 1.45, "species": "palm"},
+	{"name": "halong_bay", "arc_pct": 0.952, "tint": Color(0.20, 0.30, 0.22), "trees": 0.7, "tree_hi": 600.0, "weather": "monsoon", "style": "meru", "foliage": Color(1.02, 1.03, 0.72), "tree_mul": 1.1, "species": "broadleaf"},
 	# arctic: birch scrub in the shelter of the fjords, bare rock above it
-	{"name": "lofoten", "arc_pct": 0.980, "tint": Color(0.34, 0.36, 0.32), "trees": 0.08, "tree_hi": 250.0, "weather": "storm"},
+	{"name": "lofoten", "arc_pct": 0.980, "tint": Color(0.34, 0.36, 0.32), "trees": 0.08, "tree_hi": 250.0, "weather": "storm", "species": "scrub"},
 ]
 const HOME_TREES := 1.0        # millstreet: Irish valley, trees throughout
 const HOME_TREE_HI := 600.0
@@ -840,13 +841,17 @@ func _shot_run() -> void:
 					best_d = d
 					best_p = pts[i]
 					best_t = (pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)])
-		if best_d < 1e19:
+		# Only if a road is actually NEARBY. _roadlines currently holds the home patch only, so at
+		# any other patch the nearest point was 229km away and the shot framed empty ring instead
+		# of the place it claimed to be photographing -- 108k triangles of nothing.
+		if best_d < 5000.0 * 5000.0:
 			arc = best_p.x
 			lat = best_p.y
 			if best_t.length_squared() > 1e-6:
 				_look.x = atan2(best_t.y, best_t.x)
-			print("SHOT %s: framed on a road at %.0f,%.0f (%.0fm from centre)"
-				% [pname, arc, lat, sqrt(best_d)])
+			print("SHOT %s: framed on a road, %.0fm from the settlement" % [pname, sqrt(best_d)])
+		else:
+			print("SHOT %s: NO ROAD DATA within 5km — framing the settlement instead" % pname)
 		for shot in [
 				{"n": "ground", "h": 2.2, "pitch": -0.04, "fov": 70.0},
 				{"n": "road", "h": 6.0, "pitch": -0.18, "fov": 60.0},
@@ -1153,16 +1158,17 @@ func _biome_at(arc: float, lat: float) -> Dictionary:
 		var fy := _dem_hf_cam.y - lat / _dem_hf_mpp
 		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
 			return {"trees": HOME_TREES, "tree_hi": HOME_TREE_HI, "weather": "fresh",
-				"foliage": Color(1, 1, 1), "tree_mul": 1.0}
+				"foliage": Color(1, 1, 1), "tree_mul": 1.0, "species": "fir"}
 	var pi := _patch_at(arc, lat)
 	if pi >= 0:
 		var p: Dictionary = _patch_meta[pi]   # NOT PATCHES[pi] -- indices diverge, see _patch_meta
 		return {"trees": float(p.get("trees", 0.5)), "tree_hi": float(p.get("tree_hi", 800.0)),
 				"weather": str(p.get("weather", "fresh")),
 				"foliage": p.get("foliage", Color(1, 1, 1)),
+			"species": str(p.get("species", "fir")),
 				"tree_mul": float(p.get("tree_mul", 1.0))}
 	return {"trees": 0.35, "tree_hi": 700.0, "weather": "fresh",
-			"foliage": Color(1, 1, 1), "tree_mul": 1.0}   # procedural filler
+			"foliage": Color(1, 1, 1), "tree_mul": 1.0, "species": "fir"}   # procedural filler
 
 func _here_splice() -> String:
 	# which splice the camera is currently standing in, for the HUD
@@ -2318,6 +2324,128 @@ func _hedge_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3
 	for v in [a, c, b, a, d, c]:
 		st.add_vertex(v)
 
+
+# ---------------------------------------------------------------------------
+# Tree SPECIES, generated. The fir pack is the only imported tree, so Java, Cape fynbos and Lofoten
+# birch were all firs with a colour tint on them -- which reads as one forest painted five ways.
+# There is no teak, palm or scrub model in assets/, but this project already generates its houses,
+# its joglo roofs, its hedge profile and its hedge texture, and it targets 2001-era fidelity
+# deliberately (see .decisions/rendering.md). A palm is a trunk and eight fronds. Generate them.
+#
+# Unit height, +Y up, origin at the base -- same contract as the normalised fir meshes, so these
+# drop straight into the existing MultiMesh/LOD machinery without touching it.
+# ---------------------------------------------------------------------------
+
+func _sp_trunk(st: SurfaceTool, r0: float, r1: float, h: float, sides: int, col: Color) -> void:
+	for i in sides:
+		var a0 := TAU * float(i) / float(sides)
+		var a1 := TAU * float(i + 1) / float(sides)
+		var b0 := Vector3(cos(a0) * r0, 0.0, sin(a0) * r0)
+		var b1 := Vector3(cos(a1) * r0, 0.0, sin(a1) * r0)
+		var t0 := Vector3(cos(a0) * r1, h, sin(a0) * r1)
+		var t1 := Vector3(cos(a1) * r1, h, sin(a1) * r1)
+		for v in [b0, t0, b1, b1, t0, t1]:
+			st.set_color(col)
+			st.add_vertex(v)
+
+func _sp_blob(st: SurfaceTool, centre: Vector3, rx: float, ry: float, col: Color, seg: int) -> void:
+	# a squashed octahedron -- eight triangles reads as a canopy mass at the distance trees are seen
+	var top := centre + Vector3(0, ry, 0)
+	var bot := centre - Vector3(0, ry * 0.7, 0)
+	for i in seg:
+		var a0 := TAU * float(i) / float(seg)
+		var a1 := TAU * float(i + 1) / float(seg)
+		var p0 := centre + Vector3(cos(a0) * rx, 0, sin(a0) * rx)
+		var p1 := centre + Vector3(cos(a1) * rx, 0, sin(a1) * rx)
+		for v in [p0, top, p1, p1, bot, p0]:
+			st.set_color(col)
+			st.add_vertex(v)
+
+func _species_mesh(kind: String, variant: int, lod: int) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(kind) * 31 + variant
+	# THE FAR TIER MUST BE A BILLBOARD. The fir pack drops to 2 triangles out here; my first
+	# pass kept full geometry at every LOD and only thinned the segment count, so 27k palms cost
+	# 1,055,008 triangles and 3 fps at Java. A generated species has to honour the same LOD
+	# contract as an imported one, not just look right up close.
+	if lod >= TREE_LODS - 1:
+		var bc := Color(0.24, 0.36, 0.18) if kind != "scrub" else Color(0.26, 0.32, 0.18)
+		var bw := 0.34 if kind != "scrub" else 0.42
+		var bh := 1.0 if kind != "scrub" else 0.45
+		for pair in [[Vector3(-bw, 0, 0), Vector3(bw, 0, 0)], [Vector3(0, 0, -bw), Vector3(0, 0, bw)]]:
+			var a: Vector3 = pair[0]
+			var b: Vector3 = pair[1]
+			for v in [a, a + Vector3(0, bh, 0), b, b, a + Vector3(0, bh, 0), b + Vector3(0, bh, 0)]:
+				st.set_color(bc)
+				st.add_vertex(v)
+		st.generate_normals()
+		return st.commit()
+	# nearer tiers thin the segment count
+	var seg: int = [7, 5, 4][clampi(lod, 0, 2)]
+	var bark := Color(0.32, 0.24, 0.17)
+	match kind:
+		"palm":
+			# tall bare trunk, crown of drooping fronds. The bare trunk IS the read.
+			_sp_trunk(st, 0.022, 0.014, 0.80, maxi(seg - 2, 3), bark)
+			var frond := Color(0.30, 0.46, 0.20)
+			var n: int = [8, 5, 3][clampi(lod, 0, 2)]
+			for i in n:
+				var a := TAU * float(i) / float(n) + rng.randf() * 0.2
+				var dir := Vector3(cos(a), 0.0, sin(a))
+				var base := Vector3(0, 0.80, 0)
+				var mid := base + dir * 0.20 + Vector3(0, 0.13, 0)
+				var tip := base + dir * 0.40 - Vector3(0, 0.10, 0)
+				var w := dir.cross(Vector3.UP).normalized() * 0.045
+				for v in [base - w, mid - w * 0.7, mid + w * 0.7,
+						base - w, mid + w * 0.7, base + w,
+						mid - w * 0.7, tip, mid + w * 0.7]:
+					st.set_color(frond)
+					st.add_vertex(v)
+		"broadleaf":
+			# short trunk, two or three overlapping canopy masses -- a rounded silhouette, which is
+			# the entire difference from a conifer at any distance you actually see a tree from
+			_sp_trunk(st, 0.045, 0.030, 0.36, maxi(seg - 2, 3), bark)
+			var leaf := Color(0.20, 0.38, 0.16)
+			_sp_blob(st, Vector3(0, 0.62, 0), 0.32, 0.30, leaf, seg)
+			if lod < 2:
+				_sp_blob(st, Vector3(0.13, 0.52, 0.06), 0.20, 0.19, leaf.darkened(0.12), seg - 1)
+				_sp_blob(st, Vector3(-0.10, 0.55, -0.10), 0.18, 0.17, leaf.lightened(0.06), seg - 1)
+		_:   # "scrub" -- fynbos, birch scrub, anything low and woody. No trunk to speak of.
+			var bush := Color(0.26, 0.32, 0.18)
+			_sp_blob(st, Vector3(0, 0.34, 0), 0.40, 0.34, bush, seg)
+			if lod < 2:
+				_sp_blob(st, Vector3(0.20, 0.24, 0.10), 0.24, 0.22, bush.darkened(0.15), seg - 1)
+	st.generate_normals()
+	return st.commit()
+
+func _apply_species(kind: String) -> void:
+	# Swap the geometry inside the existing MultiMeshes rather than building a parallel system: the
+	# scatter, the distance bucketing and the LOD tables all keep working untouched, and only one
+	# species is ever on screen because the scatter is biome-local anyway.
+	if kind == _species_now or _tree_mm.is_empty():
+		return
+	_species_now = kind
+	if kind == "fir":
+		for vi in _tree_mm.size():
+			for l in TREE_LODS:
+				if _tree_mm[vi][l] != null and vi < _tree_meshes.size():
+					_tree_mm[vi][l].multimesh.mesh = _tree_meshes[vi][l]
+		return
+	var mat := StandardMaterial3D.new()
+	mat.vertex_color_use_as_albedo = true
+	mat.roughness = 1.0
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	for vi in _tree_mm.size():
+		for l in TREE_LODS:
+			if _tree_mm[vi][l] == null:
+				continue
+			var m := _species_mesh(kind, vi, l)
+			m.surface_set_material(0, mat)
+			_tree_mm[vi][l].multimesh.mesh = m
+	print("ring_vibes: tree species -> %s" % kind)
+
 func _scatter_trees() -> void:
 	# conifers clumped by noise into woods + clearings, in a patch near spawn. Placed analytically
 	# on the DEM+curve (no raycast — see file header). Positions/variants baked once; LOD tier
@@ -2334,6 +2462,7 @@ func _scatter_trees() -> void:
 	var density: float = biome["trees"] * TREE_DENSITY
 	# recolour and resize the fir pack per biome -- it is the only tree mesh we have, so a
 	# tropical patch gets tinted firs rather than looking like Cork transplanted onto Java.
+	_apply_species(str(biome.get("species", "fir")))
 	var fol: Color = biome.get("foliage", Color(1, 1, 1))
 	var tmul: float = float(biome.get("tree_mul", 1.0))
 	for vlods in _tree_mm:

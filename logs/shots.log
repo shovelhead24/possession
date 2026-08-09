@@ -6,11 +6,11 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (649 ms)
+ring_vibes: far band rebuilt around arc 0 km (617 ms)
 ring_vibes: texture compression — s3tc true, bptc true, etc2 false
 ring_vibes: grass pack loaded (1 surfaces)
 ring_vibes: 13674 road centrelines loaded
-ring_vibes: 13129 junction cells, 226571 road cells from 13674 centrelines
+ring_vibes: 13129 junction cells, 1138936 road cells from 13674 centrelines
 ring_vibes: hedge texture 1024x1024 loaded
 ring_vibes: 24037 trees placed (3 variants x 4 LODs) — 1538 standards, 5223 off-road, 14340 hedge quads
 ring_vibes: millstreet — 47438 of 59966 buildings kept (12528 fell outside the 50km ring width)
@@ -22,17 +22,23 @@ ring_vibes: halong_bay — 2066 of 2129 buildings kept (63 fell outside the 50km
 ring_vibes: lofoten — 21385 of 25330 buildings kept (3945 fell outside the 50km ring width)
 ring_vibes: buildings in range at arc 0 lat 0 -> style0=292, style1=0
 ring_vibes: 119703 OSM buildings loaded (2 styles)
-ring_vibes: 24037 trees placed (3 variants x 4 LODs) — 1538 standards, 5223 off-road, 14340 hedge quads
-ring_vibes: buildings in range at arc 0 lat 0 -> style0=292, style1=0
-ring_vibes: warped to home (0.0% arc)
-SHOT millstreet: framed on a road at 56,36 (37m from centre)
-ring_vibes: 24037 trees placed (3 variants x 4 LODs) — 1538 standards, 5223 off-road, 13956 hedge quads
-ring_vibes: buildings in range at arc 56 lat 36 -> style0=292, style1=0
-SHOT millstreet         ground  tris=702434 fps=28  res://../logs/shots/millstreet_ground.png
-ring_vibes: 24037 trees placed (3 variants x 4 LODs) — 1538 standards, 5223 off-road, 13956 hedge quads
-ring_vibes: buildings in range at arc 56 lat 36 -> style0=292, style1=0
-SHOT millstreet         road    tris=707256 fps=1  res://../logs/shots/millstreet_road.png
-ring_vibes: 24037 trees placed (3 variants x 4 LODs) — 1538 standards, 5223 off-road, 13956 hedge quads
-ring_vibes: buildings in range at arc 56 lat 36 -> style0=292, style1=0
-SHOT millstreet         air     tris=652084 fps=2  res://../logs/shots/millstreet_air.png
+ring_vibes: tree species -> palm
+ring_vibes: 27351 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -266000 lat -14000 -> style0=0, style1=13005
+ring_vibes: warped to java_majapahit (settlement) (91.1% arc)
+ring_vibes: 27158 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -328 km (866 ms)
+SHOT java_majapahit: NO ROAD DATA within 5km — framing the settlement instead
+ring_vibes: 27158 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -265940 lat -14000 -> style0=0, style1=13085
+ring_vibes: 27158 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -265940 lat -14000 -> style0=0, style1=13085
+ring_vibes: streamed java_majapahit @ 1536^2 — re-placed objects onto the new tier
+SHOT java_majapahit     ground  tris=593955 fps=29  res://../logs/shots/java_majapahit_ground.png
+ring_vibes: 27158 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -265940 lat -14000 -> style0=0, style1=13085
+SHOT java_majapahit     road    tris=593936 fps=1  res://../logs/shots/java_majapahit_road.png
+ring_vibes: 27158 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -265940 lat -14000 -> style0=0, style1=13085
+SHOT java_majapahit     air     tris=578180 fps=2  res://../logs/shots/java_majapahit_air.png
 SHOTS done
