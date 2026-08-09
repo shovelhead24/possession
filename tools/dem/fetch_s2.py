@@ -32,6 +32,29 @@ STAC = "https://earth-search.aws.element84.com/v1/search"
 # still uses less VRAM than the 4096 raw drape did.
 OUT_W, OUT_H = 8192, 8192
 
+# Quality, not just coverage. The STAC eo:cloud_cover we sort on is a scene-WIDE figure and says
+# nothing about our little bbox: the least-cloudy scene overall can still be solid haze over the
+# patch (palawan came out half grey sheet). So we grade every pixel we actually paste and re-pick.
+# Clouds and haze read bright AND desaturated; a blown highlight is near-white in every channel.
+CLOUD_BRIGHT = 155   # mean channel value above which a colourless pixel reads as cloud/haze
+CLOUD_SAT = 28       # max-min channel spread below which "bright" means grey, not real colour
+CLIP_LEVEL = 250     # every channel at/above this -- highlight blown, no detail to recover
+MAX_SCENES = 10      # COG reads to spend hunting clean pixels; bounds an all-white / all-haze patch
+
+
+def _cloud_clip(rgb):
+    """(cloud/haze mask, clipped-white mask) over an HxWx3 uint8 true-colour block.
+
+    Bright natural ground -- salt flats, snow, pale sand -- trips the cloud test too, on purpose:
+    it routes those pixels to the fallback tier so a genuinely clearer scene wins where one exists,
+    and they still get painted when none does (salar_uyuni is white because the ground is white)."""
+    a = rgb.astype(np.int16)
+    bright = a.mean(axis=2)
+    sat = a.max(axis=2) - a.min(axis=2)
+    cloud = (bright > CLOUD_BRIGHT) & (sat < CLOUD_SAT)
+    clip = a.min(axis=2) >= CLIP_LEVEL
+    return cloud, clip
+
 
 def stac_search():
     body = {
@@ -43,8 +66,8 @@ def stac_search():
         # 30 was too few for a patch spanning more than one MGRS tile: sorted purely by cloud
         # cover, all 30 can come from the SAME tile and the rest of the bbox never gets filled.
         # Cape Peninsula straddles two and came out 57.9% covered, the remainder falling back to
-        # flat tint. The loop already stops early once filled.all(), so a bigger pool costs
-        # nothing when the first few scenes are enough.
+        # flat tint. The loop stops early once every pixel is clean-covered (or MAX_SCENES reads
+        # in), so a bigger pool costs nothing when the first few scenes are enough.
         "limit": 120,
     }
     req = urllib.request.Request(
@@ -74,10 +97,12 @@ def main(name):
     items = stac_search()
     print(f"{len(items)} candidate scenes (sorted by cloud cover)")
     canvas = np.zeros((OUT_H, OUT_W, 3), dtype=np.uint8)
-    filled = np.zeros((OUT_H, OUT_W), dtype=bool)
+    filled = np.zeros((OUT_H, OUT_W), dtype=bool)   # any pixel written -- clean OR fallback
+    good = np.zeros((OUT_H, OUT_W), dtype=bool)      # written with a clean (cloud/clip-free) pixel
     # canvas geographic extent = the DEM bbox; simple lat/lon linear mapping (fine at this scale)
+    reads = 0
     for it in items:
-        if filled.all():
+        if good.all():
             break
         href = it["assets"]["visual"]["href"]
         cc = it["properties"].get("eo:cloud_cover", -1)
@@ -100,19 +125,34 @@ def main(name):
                 x1, y1 = min(x1, OUT_W), min(y1, OUT_H)
                 if x1 <= x0 or y1 <= y0:
                     continue
-                region = filled[y0:y1, x0:x1]
-                if region.all():
-                    continue
+                gwin = good[y0:y1, x0:x1]
+                if gwin.all():
+                    continue        # already clean here; don't spend a COG read to reconfirm it
                 data = src.read([1, 2, 3], window=win, out_shape=(3, y1 - y0, x1 - x0))
                 rgb = np.transpose(data, (1, 2, 0))
-                valid = rgb.sum(axis=2) > 10  # skip nodata-black
-                write = valid & ~region
-                canvas[y0:y1, x0:x1][write] = rgb[write]
-                filled[y0:y1, x0:x1] |= write
-                print(f"  {it['id']}  cloud={cc:.1f}%  pasted {write.sum()//1000}k px  "
-                      f"coverage now {100.0*filled.mean():.1f}%")
+                reads += 1
+                valid = rgb.sum(axis=2) > 10          # skip nodata-black
+                cl, cp = _cloud_clip(rgb)
+                clean = valid & ~cl & ~cp
+                fwin = filled[y0:y1, x0:x1]
+                wg = clean & ~gwin                    # clean pixels upgrade whatever is there
+                wf = valid & ~fwin & ~clean           # dirty pixels only fill an untouched hole
+                canvas[y0:y1, x0:x1][wg] = rgb[wg]
+                canvas[y0:y1, x0:x1][wf] = rgb[wf]
+                gwin |= wg
+                fwin |= wg | wf
+                print(f"  {it['id']}  stac_cloud={cc:.1f}%  clean {wg.sum()//1000}k  "
+                      f"fill {wf.sum()//1000}k  now {100.0*good.mean():.1f}% clean / "
+                      f"{100.0*filled.mean():.1f}% filled")
         except Exception as e:  # naive prototype: skip bad scenes, keep going
             print(f"  {it['id']} skipped: {e}")
+            continue
+        # Coverage first, quality second. A window that still has un-clean pixels keeps getting
+        # read so a later, clearer scene can re-pick it -- but an all-white salt flat or a
+        # permanently-hazy coast has no clean pixel to find, so cap the reads or it walks the whole
+        # 120-deep pool. Filling stays complete because dirty scenes still patch holes above.
+        if reads >= MAX_SCENES:
+            break
 
     img = Image.fromarray(canvas)
     img.save(os.path.join(HERE, "out", f"{name}_s2_preview.jpg"), quality=88)
@@ -121,16 +161,23 @@ def main(name):
     os.makedirs(DEST, exist_ok=True)
     with open(os.path.join(DEST, f"{name}_sat.dat"), "wb") as f:
         f.write(buf.getvalue())
-    # Record what this drape actually covers. Resolution alone is not enough to tell whether a
-    # sat.dat is current: every patch was briefly 8192 AND wrong, fetched against the authored
-    # bbox instead of the exported one. A driver that checks only pixel count would skip all of
-    # them as done.
+    # Record what this drape actually covers AND how good it is. Resolution alone is not enough to
+    # tell whether a sat.dat is current: every patch was briefly 8192 AND wrong, fetched against the
+    # authored bbox instead of the exported one. A driver that checks only pixel count would skip
+    # all of them as done. clean/cloud/clip grade the RESULT so a triage pass can find the drapes
+    # worth re-picking (heavy cloud) versus the ones that are simply white ground (nothing to fix).
+    fc, fp = _cloud_clip(canvas)
+    n = int(filled.sum()) or 1
     json.dump({"px": OUT_W, "span_km": round((fd.LAT_MAX - fd.LAT_MIN) * 111.32, 2),
-               "coverage": round(100.0 * float(filled.mean()), 1)},
+               "coverage": round(100.0 * float(filled.mean()), 1),
+               "clean": round(100.0 * float(good.sum()) / n, 1),
+               "cloud": round(100.0 * float((fc & filled).sum()) / n, 1),
+               "clip": round(100.0 * float((fp & filled).sum()) / n, 1)},
         open(os.path.join(DEST, f"{name}_sat.json"), "w"))
 
-    print(f"coverage {100.0*filled.mean():.1f}%  wrote {name}_sat.dat "
-          f"({len(buf.getvalue())//1_000_000} MB) + out/{name}_s2_preview.jpg")
+    print(f"coverage {100.0*filled.mean():.1f}%  clean {100.0*good.sum()/n:.1f}%  "
+          f"cloud {100.0*(fc & filled).sum()/n:.1f}%  clip {100.0*(fp & filled).sum()/n:.1f}%  "
+          f"wrote {name}_sat.dat ({len(buf.getvalue())//1_000_000} MB) + out/{name}_s2_preview.jpg")
 
 
 if __name__ == "__main__":

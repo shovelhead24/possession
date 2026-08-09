@@ -6,6 +6,9 @@ doesn't. A session that wakes takes the **top unchecked item**, does it, ticks i
 Rules:
 - One item per wake. Finish it or leave a note saying where it stopped.
 - Read images before changing biome numbers. `tools/dem/patch_census.py` proposes; the image decides.
+- **Every screenshot session gets an entry in `logs/shots/JOURNAL.md`** — what it was taken to
+  check, what was actually there, what tasks fell out. Shots go in a timestamped folder and are
+  never overwritten. A shot with no stated purpose is not worth taking.
 - Never re-centre or refetch a patch unprompted â€” that destroys the old one.
 - Don't write more docs unless the item asks for one.
 
@@ -58,11 +61,14 @@ Rules:
       copied that swap into the stream-land path so the ribbon and tree-clearing follow you. Not
       shot-verified: the sandbox can't launch the out-of-repo Godot binary, and `--shots` wouldn't
       distinguish this anyway (that path had its own per-patch swap already).
-- [ ] **Measure drape QUALITY, not just coverage.** `salar_uyuni` is pure white (clipped),
-      `palawan` is ~55% cloud, `guri_dam` is two seasons across a seam â€” and all three report 100%
-      coverage, because coverage counts filled pixels. Scene selection sorts on the scene-wide STAC
-      cloud figure, which says nothing about our bbox. Measure cloud/haze and clipping in the
-      RESULT, reject, re-pick. Do this before the remaining 8192 refetches bake it in.
+- [x] **Measure drape QUALITY, not just coverage.** `fetch_s2.py` now grades every pasted pixel
+      (`_cloud_clip`: bright+desaturated = cloud/haze, all-channels>=250 = clipped). Clean pixels
+      upgrade whatever's there; dirty ones only fill untouched holes, so a later clearer scene
+      re-picks the hazy left half of `palawan`. Read cap (10 scenes) bounds an all-white salt flat.
+      `_sat.json` gains clean/cloud/clip % for triage. Verified by the detector reading right on the
+      three cited previews (palawan haze, salar clip, guri_dam is a SEASONAL seam not cloud -> the
+      colour-match item, correctly not flagged here). NOT run-verified: python is gated in this
+      sandbox, and the 8192 batch already reports 0-to-fetch, so no live refetch exercised it.
 - [ ] **Per-patch sea level.** danube_delta renders 64% ocean because delta land sits at 0-2m
       under a global 0.5m SEA_LEVEL. Any low-lying patch has this. Needs a per-patch offset.
 - [ ] **Colour-match scenes at paste time** in `fetch_s2.py`. CONFIRMED SYSTEMIC: 4 of 4

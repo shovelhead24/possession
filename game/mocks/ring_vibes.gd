@@ -844,7 +844,15 @@ func _shot_run() -> void:
 	# waiting to be told it is wrong -- which is how the inside-out houses, the pixelated ground,
 	# the scattered hedges and the misaligned drape all reached the screen.
 	await get_tree().create_timer(1.5).timeout
-	var dir := "res://../logs/shots"
+	# Timestamped, never overwritten. Shots are evidence: they get reviewed later against the
+	# journal note saying what they were meant to show and what fell out of looking at them.
+	# Writing every run to the same filename destroyed the previous finding each time.
+	var label := ""
+	var li := OS.get_cmdline_user_args().find("--label")
+	if li >= 0 and li + 1 < OS.get_cmdline_user_args().size():
+		label = "_" + OS.get_cmdline_user_args()[li + 1]
+	var stamp := Time.get_datetime_string_from_system().replace(":", "").replace("-", "").replace("T", "_")
+	var dir := "res://../logs/shots/%s%s" % [stamp.substr(0, 13), label]
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	var args := OS.get_cmdline_user_args()
 	var want: Array = []
