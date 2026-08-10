@@ -420,8 +420,31 @@ Prerequisite for everything below.
       confirm it floats off, descends the synthesised floor, and crawls out the far side.
 
 ### Air
-- [ ] **Rotary and fixed-wing** — FLY mode exists as a noclip camera; this needs actual flight with
+- [x] **Rotary and fixed-wing** — FLY mode exists as a noclip camera; this needs actual flight with
       stall, lift and ground effect. The atmosphere-exit work already models thinning air.
+      The SEVENTH movement class, `_loco_air` + an `"air"` dispatch case — genuinely new code (the first
+      class to leave the surface and STAY off it; the suit only hops), with `_altitude`/`_vspeed` a new
+      driven vertical axis alongside `_dive`/`_jump_h`, lifted along ring-up in the same `pos` offset the
+      bump strip and dive already use (0 for every other class, so a no-op for them). Four traits ARE the
+      class: (1) LIFT not drive — a fixed-wing's lift is airspeed², a rotor makes its own airflow from
+      throttle so it HOVERS at zero speed, and that ONE difference is why rotary vs fixed-wing are two DATA
+      rows, not two functions (`stall_speed` 0 = rotary); (2) STALL — below `stall_speed` the wing lets go
+      (`AIR_STALL_LIFT`) and it drops, and a climb TRADES airspeed (`AIR_TRADE`), so pulling up too hard
+      stalls you — the coupling that makes stall live; (3) GROUND EFFECT — a wingspan of extra lift at the
+      deck, faded out with height, so it floats on take-off/landing (the item names it); (4) THINNING AIR
+      — lift scales by `_air_density`, the SAME atmosphere-exit `smoothstep(SPACE_LO, SPACE_HI)` the sky
+      thins by, so the ceiling is where the air runs out, not a clamp — the item's payoff ("the
+      atmosphere-exit work already models thinning air"). Turn: rotor pivots freely (like tracked/hover),
+      fixed-wing banks with airspeed-scaled authority (the boat's rudder rule). Two rows — `rotor` (hovers,
+      climbs vertically, pivots) and `airplane` (fast/far, must hold airspeed, wide banked turn). New
+      VehicleDef field `stall_speed` defaults 0 (a data contract like draft/dive_max; every other row/class
+      unchanged — no-change gate holds). Roster consumers (`[L]`/`--proving`/`--shots`/HUD) iterate
+      `VEHICLE_ROWS`, so both appear with no other edits; HUD reads ALT / STALL / climb keys. Placeholder
+      box still shows wheels, and the body bank/pitch SIGNS are cosmetic and NOT eyeballed (same caveat as
+      strider/sixby). NOT run-verified: the Godot binary is out-of-repo/gated here, so no `--proving` — and
+      flight handling can't be judged from a screenshot anyway (the reason the proving ground exists). Cycle
+      to `rotor`/`airplane` ([L]) on the laptop: the rotor should lift on the spot with Space, the airplane
+      should need a run-up to unstick and stall (nose-drop) if you climb too steep and bleed airspeed.
 - [ ] **Ring-specific flight.** Lift falls off as the atmosphere thins with altitude, and "up" is
       toward the axis everywhere — a long enough climb crosses to the far side. Worth doing properly
       because no other setting has this.

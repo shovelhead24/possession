@@ -412,6 +412,8 @@ var _wave_time := 0.0             # sea-swell clock; drives the shader's wave_ti
 var _aground := false             # a hull run into water shallower than its draft; kills way and rudder
 var _boat_vel := Vector2.ZERO     # hull velocity in ring (arc,lat) -- a boat's course is not its heading
 var _dive := 0.0                  # metres a submersible sits BELOW the water surface; 0 = surfaced (see _loco_sub)
+var _altitude := 0.0              # metres a flyer sits ABOVE the surface along ring-up; 0 = on the ground (see _loco_air)
+var _vspeed := 0.0                # a flyer's vertical speed, m/s along ring-up (climb +, sink -)
 var _car_arc := 0.0
 var _car_lat := 0.0
 var _car_heading := 0.0
@@ -1100,6 +1102,8 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_car_speed = 0.0
 	_boat_vel = Vector2.ZERO   # a hull starts each phase dead in the water, not carrying the last phase's course
 	_dive = 0.0           # each phase starts surfaced, so a sub's dive can't carry over between phases
+	_altitude = 0.0       # each phase starts on the ground, so a flyer's altitude can't carry over between phases
+	_vspeed = 0.0
 	_stamina = 1.0        # each phase measures a fresh mount, so the table isn't skewed by the prior phase
 	_spooked = 0.0
 	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false))
@@ -3788,6 +3792,8 @@ func _select_vehicle(i: int) -> void:
 	_jump_h = 0.0         # never leave the suit airborne when cycling off it; only the suit row jumps
 	_jump_v = 0.0
 	_land_dip = 0.0
+	_altitude = 0.0       # never cycle onto a flyer already airborne; a vehicle you board starts on the ground
+	_vspeed = 0.0
 	_update_hud()
 
 func _model_aabb(root_node: Node) -> AABB:
@@ -4177,6 +4183,31 @@ const VEHICLE_ROWS := {
 		"buoyancy": 1.0, "draft": 2.0, "dive_max": 55.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
 	},
+	# --- Air (TASKS.md "Air"). The SEVENTH movement class, _loco_air, and the first that leaves the surface and
+	# STAYS off it (the suit only hops). FLY mode is a noclip camera; these obey lift. `lift` is the class switch
+	# (>0 flies); stall_speed splits the two rows the item names -- a rotor (0) hovers and never stalls, a
+	# fixed-wing (>0) must hold airspeed or drop. Both fall out of the same function, the abstraction's payoff.
+	# Thinning air (the atmosphere-exit falloff, reused by _air_density) caps the ceiling for free.
+	"rotor": {
+		# FOR: going straight up and standing still in the air. It hovers, climbs vertically and pivots on the
+		# spot, reaching a ledge or rooftop no wheel or wing can -- the flyer for tight, slow, precise work.
+		"purpose": "the rotary — hovers, climbs vertically, pivots in place; slow but goes anywhere and waits there",
+		"loco": "air", "mass": 2400.0, "power": 8.0, "brake": 8.0, "top": 28.0, "reverse": -6.0,
+		"drag": 0.45, "offroad_drag": 0.0, "turn": 1.3, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 0.6, "wheel_r": 0.5, "length": 9.0, "tint": Color(0.28, 0.30, 0.34),
+		"lift": 1.0, "stall_speed": 0.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	"airplane": {
+		# FOR: covering ground fast. It must keep flying speed or the wing stalls, and it banks through a wide
+		# turn, but nothing else on the ring crosses a 3,000 km circumference at this pace -- the long-haul flyer.
+		"purpose": "the fixed-wing — fast and far, but must hold airspeed or stall and banks through a wide turn",
+		"loco": "air", "mass": 3200.0, "power": 12.0, "brake": 6.0, "top": 90.0, "reverse": 0.0,
+		"drag": 0.12, "offroad_drag": 0.0, "turn": 1.1, "offroad_turn": 0.0,
+		"grip_speed": 40.0, "ride": 0.5, "wheel_r": 0.5, "length": 11.0, "tint": Color(0.40, 0.40, 0.44),
+		"lift": 1.0, "stall_speed": 30.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
 }
 
 func _build_vehicle_defs() -> void:
@@ -4357,6 +4388,82 @@ func _loco_sub(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
 	_car_arc += cos(_car_heading) * _car_speed * delta
 	_car_lat += sin(_car_heading) * _car_speed * delta
 
+# Air-flight class constants (TASKS.md "Air"), like the hover/boat/sub terms. A naive but honest model: lift
+# vs weight decides whether it holds altitude, thinning air sets the ceiling, ground effect floats it near the
+# deck. The ring-frame ballistics subtlety (free fall while the ring spins under you) is the WEAPONS programme's
+# job -- a flyer under power feels a plain down-pull, so AIR_GRAVITY is a class constant like SUIT_GRAVITY.
+const AIR_GRAVITY := 9.0          # steady pull toward the surface, m/s^2
+const AIR_LIFT := 11.0            # lift authority scale, tuned so a fixed-wing near stall / a rotor at neutral holds level
+const AIR_VDRAG := 0.8            # vertical-speed damping, so climb and sink settle rather than run away
+const AIR_GROUND_EFFECT := 0.6    # extra lift fraction riding the cushion at zero height, faded out over a wingspan
+const AIR_STALL_LIFT := 0.2       # lift a stalled wing keeps below stall_speed -- enough to fall with, not to fly
+const AIR_ELEVATOR := 6.0         # m/s of climb/descent the pilot commands with Space/Shift
+const AIR_TRADE := 0.10           # airspeed a fixed-wing trades per m/s climbed (pull up -> bleed speed -> stall)
+const AIR_BANK := 0.7             # radians a fixed-wing visibly rolls into a full-authority turn
+
+func _air_density(alt: float) -> float:
+	# Reuse the atmosphere-exit falloff (SPACE_LO..SPACE_HI, the SAME smoothstep that fades haze/sky to vacuum
+	# in _process) so lift and the sky agree on where the air is: 1 at the surface, 0 above SPACE_HI. This is the
+	# item's payoff -- "the atmosphere-exit work already models thinning air" -- so a long enough climb runs the
+	# wing out of air and gives a natural ceiling, not a hard clamp.
+	return 1.0 - smoothstep(SPACE_LO, SPACE_HI, alt)
+
+func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator: float) -> void:
+	# ACTUAL FLIGHT -- the SEVENTH movement class, and the first to leave the surface and STAY off it (the suit's
+	# jump is a sub-second hop; this holds altitude). FLY mode is a noclip camera; this is a vehicle that obeys
+	# lift. Four traits, and together they are the class:
+	# (1) LIFT, not drive. It stays up only while the wing works. A fixed-wing's lift is airspeed^2; a rotor makes
+	#     its own airflow from power, so it hangs at zero speed -- that ONE difference is why rotary vs fixed-wing
+	#     are two DATA rows and not two functions (stall_speed 0 = rotary).
+	# (2) STALL. Below stall_speed a fixed-wing's wing lets go (AIR_STALL_LIFT) and it drops; you dive to rebuild
+	#     speed, which is why a climb trades airspeed (AIR_TRADE) -- pull up too hard and you stall.
+	# (3) GROUND EFFECT. Within a wingspan of the deck the wing rides a cushion and lift rises, so it floats on
+	#     take-off and landing -- the item names this one explicitly.
+	# (4) THINNING AIR. Lift scales with _air_density, the same atmosphere-exit falloff the sky thins by, so the
+	#     ceiling is where the air runs out -- the setting's own physics, for free.
+	var rotary := d.stall_speed <= 0.0
+	# airspeed on the existing longitudinal axis (W/S throttle), damped by drag like every other class
+	_car_speed = clampf(_car_speed + accel * delta, d.reverse, d.top)
+	_car_speed *= 1.0 - d.drag * delta
+	# LIFT SOURCE: fixed-wing from airspeed^2 (collapsing below stall); rotor from throttle so it can hover
+	var lift_src: float
+	if rotary:
+		# collective ~ neutral-plus-throttle: at rest it already balances weight (hovers), W climbs, S descends
+		lift_src = clampf(0.82 + (accel / maxf(d.power, 0.1)) * 0.40, 0.0, 1.3)
+	else:
+		var vr := absf(_car_speed) / maxf(d.stall_speed, 0.1)
+		lift_src = vr * vr
+		if absf(_car_speed) < d.stall_speed:
+			lift_src *= AIR_STALL_LIFT   # STALL: the wing lets go and it sinks until it has speed again
+	# GROUND EFFECT: a wingspan of extra lift at the deck, faded out with height
+	var span := maxf(d.length, 4.0)
+	var ge := 1.0 + AIR_GROUND_EFFECT * clampf(1.0 - _altitude / span, 0.0, 1.0)
+	# THINNING AIR: lift falls off with the same curve the sky thins by, so the air runs out overhead
+	var lift := AIR_LIFT * maxf(d.lift, 0.0) * _air_density(_altitude) * lift_src * ge
+	# vertical: lift up, gravity down, plus the pilot's elevator, all damped so it settles
+	_vspeed += (lift - AIR_GRAVITY + elevator * AIR_ELEVATOR) * delta
+	_vspeed *= 1.0 - AIR_VDRAG * delta
+	# ENERGY EXCHANGE (fixed-wing): a climb is paid for in airspeed, a dive buys it back -- the coupling that
+	# makes stall a live threat rather than a number. A rotor has no wing to trade, so it is exempt.
+	if not rotary:
+		_car_speed = clampf(_car_speed - _vspeed * AIR_TRADE * delta, d.reverse, d.top)
+	_altitude += _vspeed * delta
+	if _altitude <= 0.0:
+		# touchdown: a hard arrival costs speed (naive undercarriage), and it cannot sink through the ground
+		if _vspeed < -4.0:
+			_car_speed *= clampf(1.0 + _vspeed * 0.03, 0.4, 1.0)
+		_altitude = 0.0
+		_vspeed = maxf(_vspeed, 0.0)
+	# TURN: a rotor yaws freely (pivots like tracked/hover); a fixed-wing banks and needs airflow over the
+	# rudder, so its authority scales with airspeed (steerage) -- the same rule the boat's rudder obeys.
+	if rotary:
+		_car_heading += steer * d.turn * delta
+	else:
+		var steerage := clampf(absf(_car_speed) / maxf(d.grip_speed, 0.1), 0.0, 1.0)
+		_car_heading += steer * d.turn * delta * steerage
+	_car_arc += cos(_car_heading) * _car_speed * delta
+	_car_lat += sin(_car_heading) * _car_speed * delta
+
 # Gait signature: amplitude of the vertical bob and the fore-aft rock, per stride. Kept as constants
 # like the hover slope terms -- move to VehicleDef the day a mech's lumbering stride must differ from a
 # horse's (the next items). BOB is metres, ROCK is radians.
@@ -4482,6 +4589,9 @@ func _drive_tick(delta: float) -> void:
 		# being a separate thing to get into: Shift sprints (WALK's run key), Space jumps (FLY's rise key).
 		want_jump = Input.is_key_pressed(KEY_SPACE)
 		_sprinting = Input.is_key_pressed(KEY_SHIFT)
+	# elevator command for the air class: Space climbs, Shift descends -- the FLY-mode up/down keys, so flight
+	# plays like the noclip camera it replaces. 0 during proving and unread by every non-air class.
+	var elevator := (1.0 if want_jump else 0.0) - (1.0 if _sprinting else 0.0)
 	# LOCOMOTION DISPATCH -- one call per class, selected by the def's `loco`. Add a case here and a
 	# sibling _loco_<class> to make a whole vehicle class drivable. Off-roading is a mode, not a
 	# penalty: drag and steering bite both worsen off the tarmac, but the vehicle stays usable.
@@ -4491,11 +4601,13 @@ func _drive_tick(delta: float) -> void:
 		"legged": _loco_legged(d, delta, accel, steer)
 		"boat": _loco_boat(d, delta, accel, steer)
 		"sub": _loco_sub(d, delta, accel, steer)
+		"air": _loco_air(d, delta, accel, steer, elevator)
 		"wheeled", _: _loco_wheeled(d, delta, accel, steer)
 	var hover := d.loco == "hover"
 	var legged := d.loco == "legged"
 	var boat := d.loco == "boat"
 	var sub := d.loco == "sub"
+	var air := d.loco == "air"
 	# SUBMERSIBLE dive, integrated here where the vertical keys already live (like the suit's jump). _dive is
 	# metres below the surface: Shift descends, Space rises -- the WALK-run / FLY-rise keys, so it plays like
 	# on-foot and the boat's helpless grounding is inverted into an amphibian that simply goes under. It can
@@ -4520,6 +4632,8 @@ func _drive_tick(delta: float) -> void:
 	var strip: float = _proving_surface(_car_arc, _car_lat)
 	if hover:
 		strip = 0.0
+	elif air:
+		strip = 0.0   # a flyer rides no ground -- its clearance is _altitude, added along ring-up below
 	elif legged:
 		strip -= clampf(strip, -d.step_height, d.step_height)
 	elif boat:
@@ -4555,10 +4669,16 @@ func _drive_tick(delta: float) -> void:
 				_jump_h = 0.0
 				_jump_v = 0.0
 		_land_dip = lerpf(_land_dip, 0.0, delta * 6.0)
-	var pos := base + _ring_up(base) * (strip + bob + _jump_h - _land_dip)
+	# _altitude lifts a flyer off the deck along the same ring-up offset the bump strip / dive use; it is 0 for
+	# every other class (reset on cycle and never touched), so this is a no-op for them, like _dive / _jump_h.
+	var pos := base + _ring_up(base) * (strip + bob + _jump_h - _land_dip + _altitude)
 	if d.trample > 0.0:
 		_do_trample(d, pos)
 	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
+	if air:
+		# the look-at target is a SURFACE point; lift it to the flyer's altitude too, or the nose points at the
+		# ground below and pitches straight down. Level flight then reads level; the climb pitch is _body_pitch.
+		ahead += _ring_up(ahead) * _altitude
 	var up := _ring_up(pos)
 	var fwd := (ahead - pos).normalized() if not pos.is_equal_approx(ahead) else up.cross(Vector3.FORWARD).normalized()
 	if hover:
@@ -4570,6 +4690,13 @@ func _drive_tick(delta: float) -> void:
 		# body walks. Roll settles to level; there are no wheels to lean it into a hollow.
 		_body_pitch = sin(_gait_phase) * LEGGED_ROCK
 		_body_roll = lerpf(_body_roll, 0.0, delta * 8.0)
+	elif air:
+		# attitude from the controls, not a contact plane it isn't touching: a fixed-wing banks into its turn
+		# and both pitch to the climb rate. Signs are cosmetic (a placeholder box) and NOT eyeballed here --
+		# confirm the lean/pitch read right on the laptop, same caveat as the box showing wheels.
+		var bank: float = 0.0 if d.stall_speed <= 0.0 else -steer * AIR_BANK
+		_body_roll = lerpf(_body_roll, clampf(bank, -0.7, 0.7), delta * 4.0)
+		_body_pitch = lerpf(_body_pitch, clampf(_vspeed * 0.03, -0.5, 0.5), delta * 4.0)
 	elif boat:
 		# attitude from the wave slope under the hull, not from a contact plane or a stride
 		_boat_trim(d, delta)
@@ -4621,7 +4748,9 @@ func _drive_tick(delta: float) -> void:
 	var cam_up := _ring_up(cam_ground)
 	# drop the chase cam with a diving submersible so it follows underwater, keeping the same relative
 	# framing it had on the surface. _dive is 0 for every other class, so this is a no-op for them.
-	var cam_target: Vector3 = cam_ground + cam_up * (5.0 - _dive)
+	# lift the chase cam with a climbing flyer so it keeps its framing instead of craning up at the aircraft;
+	# _altitude is 0 for every non-air class, so this is a no-op for them (as _dive is for non-subs).
+	var cam_target: Vector3 = cam_ground + cam_up * (5.0 - _dive + _altitude)
 	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-6.0 * delta))
 	_cam.look_at(pos + up * 2.0, up)
 	_hud_timer += delta
@@ -4949,7 +5078,15 @@ func _update_hud() -> void:
 				subm = "  ASHORE"
 			elif vd.dive_max > 0.0:
 				subm = "  (Shift dive, Space surface)"
-		mode = "DRIVE  %d km/h  [%s] — %s%s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit, subm]
+		# a flyer reads its altitude and, for a fixed-wing, whether the wing is still flying -- STALL below stall
+		# speed -- so the class's live constraint is legible, not just felt as a sudden drop
+		var airinfo := ""
+		if vd.loco == "air":
+			airinfo = "  ALT %.0fm" % _altitude
+			if vd.stall_speed > 0.0 and absf(_car_speed) < vd.stall_speed:
+				airinfo += "  STALL"
+			airinfo += "  (Space climb, Shift descend)"
+		mode = "DRIVE  %d km/h  [%s] — %s%s%s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit, subm, airinfo]
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	if not _hud_full:

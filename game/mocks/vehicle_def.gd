@@ -77,6 +77,12 @@ extends Resource
 # surface amphibian (and unread by every other class), so this is a data contract like draft/lift.
 @export var dive_max := 0.0        # max depth below the surface it can dive, m; 0 = stays on the surface
 
+# Air (TASKS.md "Air"), read only by _loco_air. `lift` (above) is the class switch: >0 flies. stall_speed
+# splits the two rows the item names -- 0 is a ROTARY (makes its own airflow, so it hovers and never stalls),
+# >0 is a FIXED-WING that must hold that airspeed or the wing lets go and it drops. Default 0 keeps every other
+# row grounded (lift 0), so this is a data contract like draft/dive_max -- only the air rows switch it on.
+@export var stall_speed := 0.0     # min airspeed a fixed-wing needs for lift; 0 = rotary (hovers, no stall)
+
 @export var susp_travel := 0.34    # spring travel, extension limit to bump stop
 @export var susp_stiff := 34.0
 @export var susp_damp := 6.0
