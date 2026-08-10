@@ -363,15 +363,23 @@ Prerequisite for everything below.
       side a hull floats on is correct. See logs/shots/JOURNAL.md 2026-08-10 for the four defects those
       runs turned up and fixed on the way — no bathymetry, the phantom ocean, per-arc daylight, and the
       fps column being fiction. The three items below are the unfinished half of this.
-- [ ] **The near sea is not drawn by the terrain shader.** A probe that tinted CDLOD water magenta
-      came back with the water in frame UNTINTED — so the far band, or a hole where neither the LOD
-      bubble nor the band reaches, is covering it. Until this is understood the swell cannot be seen
-      however correct it is. Use the LOD debug view, not more screenshots.
-- [ ] **The colour-vs-geometry wave fade made slea_head worse.** Geometry has to stop at ~1.2km (the
-      gradient neighbours are node_size/grid apart out there, so a 68m wave sampled every few hundred
-      metres is noise) but colour is per-fragment and shouldn't. Splitting them turned the sea from
-      dark teal to flat pale blue. Shipped documented but unresolved — work out which term washes it
-      out (suspect the depth-scaled shoreline feather, or the fog toward sky_color).
+- [x] **The near sea is not drawn by the terrain shader.** It WAS drawn by it. The real fault was
+      `_select_lod` testing `_cam.position` (BENT world space) against `ox`/`oz` (absolute ring
+      coordinates). `_ring_pos` maps arc to r*sin(arc/R), so at arc -1,485,690 the camera's world x is
+      about -14,600 — the two only agree near arc 0. Everywhere else the distance came out enormous,
+      no node ever subdivided, and the entire ring away from home rendered at 65km ROOT nodes, ~2km
+      between vertices. A 68m swell sampled every 2km is far below Nyquist, which is why the sea was
+      flat however correct the wave function was. Same coordinate-space fault as the shader's cam_pos
+      morph term, which is fixed in the same change (both now take `_cam_ring`, the camera in ring
+      space). Verified: slea_head's sea framing went 110,260 -> 169,624 triangles and mizen_head now
+      shows actual wave crests rolling onto the shore. This was never a water bug — it degraded LOD
+      on every patch except home, and is very likely the tail of the "buildings sank away from home"
+      family.
+- [x] **The colour-vs-geometry wave fade made slea_head worse.** It didn't — the LOD fault above
+      did, and the fade split was innocent. With subdivision working, slea_head reads as teal water
+      with legible crest/trough banding. Keeping the split: geometry must still stop at ~1.2km (the
+      gradient neighbours are node_size/grid apart out there) while colour is per-fragment and
+      shouldn't. Left here as the record that the suspected cause was wrong.
 - [ ] **Phantom ocean outside patch data.** Off the edge of a patch the height sampler returns 0,
       which is below sea level, which renders and tests as ocean to the horizon. It silently broke the
       sea-framing search (it "found" 12m of water by walking off the data). Decide whether the void

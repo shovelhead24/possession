@@ -183,3 +183,36 @@ confirmed from these images.
   after advancing the sun, or drive a `launch`/`barge` offshore) to confirm the swell reads as waves
   and a hull rides the drawn surface — the night frames here can't. Handling (planing lift, rudder
   drift, grounding on the beach) is telemetry, not a picture, so it needs a drive, not a shot.
+
+---
+
+## 2026-08-10 (later) — the flat sea was a broken LOD, not a broken wave
+
+**Looking for:** what actually draws the near water, after six runs failed to show the swell. The
+previous entry's guess was the far band, or a hole between the bubble and the band.
+
+**Saw:** neither. `_select_lod` compares `_cam.position` — the BENT world position — against `ox`/`oz`,
+which are absolute ring coordinates. `_ring_pos` maps arc to `r*sin(arc/R)`, so at arc -1,485,690 the
+camera's world x is about -14,600. They only agree near arc 0. Everywhere else the subdivision
+distance came out enormous, nothing ever subdivided, and **the whole ring away from home was drawn at
+65km root nodes — roughly 2km between vertices.** A 68m swell sampled every 2km is far below Nyquist.
+The wave function was right the whole time; there was nowhere to put it.
+
+Fixed by computing `_cam_ring` (camera in ring space: arc, height above floor, lat) once per rebuild
+and using it for both the subdivision test and the shader's `cam_pos` morph term — which had the
+identical fault, logged in the previous entry and now closed by the same change.
+
+**Fell out:**
+- slea_head's sea framing: 110,260 -> 169,624 triangles, and the water went from flat pale blue to
+  teal with legible crest/trough banding. mizen_head shows actual wave crests rolling onto the shore.
+- The previous entry's suspicion that splitting the colour fade from the geometry fade had made
+  slea_head worse was WRONG — that change was innocent and is kept.
+- **This was never a water bug.** It degraded LOD on every patch except home, which makes it very
+  likely the unfinished tail of the "buildings sank away from home" family. Worth re-checking the
+  things that were blamed on streaming or on the band before this was known.
+- Frame cost is honest now and comfortable: 12.1-15.0ms (67-83 fps) at these framings.
+
+**Note:** mizen_head still came out at twilight. The per-arc sun formula lights some patches and not
+others, so the sign or offset in `sun_angle = -arc/r + 0.45` is not right for every arc. Minor, not
+chased.
+

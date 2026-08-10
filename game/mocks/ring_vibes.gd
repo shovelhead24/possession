@@ -407,6 +407,7 @@ var _land_dip := 0.0              # hard-landing body crouch, scaled by impact s
 var _sprinting := false           # sprint input held this tick (suit); _loco_legged reads it for the burst
 var _dust: GPUParticles3D = null
 var _offroad := 0.0               # 0 = on tarmac, 1 = fully off it
+var _cam_ring := Vector3.ZERO     # camera in RING space (arc, height, lat) -- see _select_lod
 var _wave_time := 0.0             # sea-swell clock; drives the shader's wave_time AND the CPU twin _wave_h
 var _aground := false             # a hull run into water shallower than its draft; kills way and rudder
 var _boat_vel := Vector2.ZERO     # hull velocity in ring (arc,lat) -- a boat's course is not its heading
@@ -2026,9 +2027,17 @@ func _select_lod(ox: float, oz: float, size: float, level: int) -> void:
 	if oz + size < -half_w or oz > half_w:
 		return
 	if level > 0:
-		var nx := clampf(_cam.position.x, ox, ox + size)
-		var nz := clampf(_cam.position.z, oz, oz + size)
-		if _cam.position.distance_to(Vector3(nx, 0.0, nz)) < _lod_range[level - 1]:
+		# _cam_ring, NOT _cam.position. ox/oz are absolute ring coordinates (arc, lat) but
+		# _cam.position is the BENT world position -- _ring_pos maps arc to r*sin(arc/R), so at arc
+		# -1,485,690 the camera's world x is about -14,600. The two only agree near arc 0, which is
+		# why this test passed at spawn and silently failed everywhere else: the distance came out
+		# enormous, no node ever subdivided, and the whole ring away from home was drawn at 65km root
+		# nodes. That is roughly 2km between vertices -- which is why the sea looked flat however
+		# correct the swell was, and it is the same coordinate-space fault already logged against the
+		# shader's cam_pos morph term.
+		var nx := clampf(_cam_ring.x, ox, ox + size)
+		var nz := clampf(_cam_ring.z, oz, oz + size)
+		if _cam_ring.distance_to(Vector3(nx, 0.0, nz)) < _lod_range[level - 1]:
 			var h := size * 0.5
 			_select_lod(ox, oz, h, level - 1)
 			_select_lod(ox + h, oz, h, level - 1)
@@ -2061,6 +2070,12 @@ func _emit_lod(ox: float, oz: float, size: float, level: int) -> void:
 
 func _rebuild_lod() -> void:
 	_used = 0
+	# The camera in RING space (arc, height above the floor, lat) -- the same coordinates the LOD
+	# nodes and the shader's wxz are in. Everything that compares a camera position against terrain
+	# coordinates must use this, not _cam.position; see the note in _select_lod.
+	var rr := _radius()
+	var axis_d := Vector2(_cam.position.x, rr - _cam.position.y).length()
+	_cam_ring = Vector3(atan2(_cam.position.x, rr - _cam.position.y) * rr, rr - axis_d, _cam.position.z)
 	var root_size: float = LEAF_SIZE * pow(2.0, MAX_LEVEL)
 	var roots := int(ceil(TERRAIN_SIZE / root_size))
 	var half := roots * root_size * 0.5
@@ -2073,11 +2088,10 @@ func _rebuild_lod() -> void:
 				root_size, MAX_LEVEL)
 	for i in range(_used, _pool.size()):
 		_pool[i].visible = false
-	var cp := Vector3(_cam.position.x, _cam.position.y, _cam.position.z)
 	var r := _radius()
 	var w: float = WIDTHS[w_idx]
 	for i in _used:
-		_mats[i].set_shader_parameter("cam_pos", cp)
+		_mats[i].set_shader_parameter("cam_pos", _cam_ring)
 		_mats[i].set_shader_parameter("wave_time", _wave_time)
 		_mats[i].set_shader_parameter("wave_amp", wave_amp)
 		_mats[i].set_shader_parameter("wave_center", _wave_center)
