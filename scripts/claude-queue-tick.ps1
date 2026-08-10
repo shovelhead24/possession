@@ -7,10 +7,13 @@
 # for hours -- long sleeps die when the laptop suspends, which is exactly how the last attempt
 # failed. Instead each run is short and decides for itself whether to work or stand down:
 #
+#   * paused by hand?       -> exit (logs/.queue_paused is the kill switch; no elevation needed)
 #   * already running?      -> exit (stale lock older than 3h is ignored)
+#   * working tree dirty?   -> exit; someone is mid-edit, or the last tick did not commit
 #   * cooling down?         -> exit until the recorded reset time passes
 #   * queue empty?          -> exit quietly
 #   * hit a usage limit?    -> record when to resume, exit
+#   * left work uncommitted -> pause the queue and say so, rather than let the next tick pile on
 #
 # So a suspend just means some firings are missed; the next one after wake picks up. Nothing has to
 # survive sleep except two small files.
@@ -30,6 +33,7 @@ $logs  = "$repo\logs"
 $log   = "$logs\queue_tick.log"
 $lock  = "$logs\.queue_tick.lock"
 $cool  = "$logs\.queue_cooldown"
+$pause = "$logs\.queue_paused"
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
 Set-Location $repo
 
@@ -58,6 +62,35 @@ if (Test-Path $cool) {
     }
     Remove-Item $cool -Force -ErrorAction SilentlyContinue
     Say "cooldown over, resuming"
+}
+
+# --- paused by hand? ------------------------------------------------------------------------
+# A kill switch that needs no elevation. Disabling the scheduled task requires an admin shell (and
+# is blocked outright for an agent), so there was no way to stop this thing short of unregistering
+# it. Create the file to stop the queue; delete it to resume.
+#   pause:   New-Item -ItemType File C:\Games\possession\logs\.queue_paused
+#   resume:  Remove-Item C:\Games\possession\logs\.queue_paused
+if (Test-Path $pause) {
+    $why = (Get-Content $pause -Raw -EA SilentlyContinue)
+    Say "skip: queue PAUSED. $($why.Trim())"
+    exit 0
+}
+
+# --- is someone else already working in here? -----------------------------------------------
+# THE IMPORTANT ONE. The lock above only serialises tick against tick; an interactive Claude
+# session takes no lock and is invisible to it, so both used to edit game/mocks/ring_vibes.gd at
+# the same time. On 2026-08-10 a tick silently replaced an in-progress VEHICLE_DEFS dictionary with
+# its own class -- the interactive session's version was simply gone -- and later declared a
+# variable the session was declaring, which would have been a duplicate-declaration parse error.
+#
+# A dirty tree means EITHER a person/session is mid-edit OR a previous tick did work and failed to
+# commit it. Both are reasons not to start: the second is how three ticks in a row were lost, each
+# piling more uncommitted work on top of a parse error nobody had noticed.
+$dirty = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" }
+if ($dirty.Count -gt 0) {
+    Say "skip: working tree is dirty ($($dirty.Count) files) -- someone is mid-edit, or a previous tick did not commit"
+    foreach ($d in $dirty | Select-Object -First 8) { Say "        $d" }
+    exit 0
 }
 
 # --- anything left to do? -------------------------------------------------------------------
@@ -95,6 +128,21 @@ if ($out -match '(?i)(usage limit|rate limit|quota|too many requests|limit reach
     }
     $resume.ToString('o') | Set-Content $cool -Encoding ascii
     Say "hit a usage limit -- standing down until $($resume.ToString('HH:mm'))"
+    exit 0
+}
+
+# --- did it actually commit? ----------------------------------------------------------------
+# A tick that does work and does not commit is worse than a tick that does nothing: the next firing
+# starts on top of it, and the one after that. That is exactly how three runs were lost on
+# 2026-08-10 -- a class_name that only resolves in the editor left the project unparseable, the
+# agent could not verify anything, no commit happened, and each following tick piled on more.
+# Nothing detected it. Now it does, and it stops the queue rather than compounding.
+$after = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" }
+if ($after.Count -gt 0) {
+    Say "PROBLEM: the run left $($after.Count) files uncommitted. Pausing the queue so the next tick does not pile on."
+    foreach ($d in $after | Select-Object -First 8) { Say "        $d" }
+    "Auto-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): a tick left work uncommitted. Review, commit or discard, then delete this file." |
+        Set-Content $pause -Encoding ascii
     exit 0
 }
 
