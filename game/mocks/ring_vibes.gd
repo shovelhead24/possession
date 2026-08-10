@@ -407,6 +407,9 @@ var _land_dip := 0.0              # hard-landing body crouch, scaled by impact s
 var _sprinting := false           # sprint input held this tick (suit); _loco_legged reads it for the burst
 var _dust: GPUParticles3D = null
 var _offroad := 0.0               # 0 = on tarmac, 1 = fully off it
+var _wave_time := 0.0             # sea-swell clock; drives the shader's wave_time AND the CPU twin _wave_h
+var _aground := false             # a hull run into water shallower than its draft; kills way and rudder
+var _boat_vel := Vector2.ZERO     # hull velocity in ring (arc,lat) -- a boat's course is not its heading
 var _car_arc := 0.0
 var _car_lat := 0.0
 var _car_heading := 0.0
@@ -1093,6 +1096,7 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_car_arc = start_arc
 	_car_lat = start_lat
 	_car_speed = 0.0
+	_boat_vel = Vector2.ZERO   # a hull starts each phase dead in the water, not carrying the last phase's course
 	_stamina = 1.0        # each phase measures a fresh mount, so the table isn't skewed by the prior phase
 	_spooked = 0.0
 	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false))
@@ -1179,6 +1183,14 @@ func _shot_run() -> void:
 	if want.is_empty():
 		want = ["millstreet", "dordogne", "java_majapahit", "halong_bay"]
 
+	# STOP THE CLOCK. It keeps running while the harness streams patches, so whether a shot came out
+	# lit depended on how long the fetch took -- the first palawan swell run came back black. The
+	# ANGLE is then set per patch inside the loop, not here: see the note at the warp.
+	sun_paused = true
+	# UNCAP THE FRAME TIMER. With vsync on, _measure_frame_ms can only ever report 16.6ms and every
+	# scene alike reads "60 fps" -- it would be timing the wait, not the work.
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+
 	for pname in want:
 		var idx := _patch_names.find(pname)
 		if idx < 0 and pname != "millstreet":
@@ -1198,6 +1210,13 @@ func _shot_run() -> void:
 		var cam := _cam.global_position
 		var arc: float = atan2(cam.x, r - cam.y) * r
 		var lat: float = cam.z
+		# DAYLIGHT IS PER-ARC. sun_angle is one global number, but on a ringworld whether it is day
+		# where you stand depends on where you stand: local up at arc theta is (-sin, cos, 0), so the
+		# sun is overhead when cos(theta + sun_angle) is 1. The terrain lighting already models this
+		# correctly ("your night, their day") -- which is why pinning a fixed global angle still gave
+		# three black frames at palawan. It was not a bug in the sun; the patch was genuinely on the
+		# far side of the ring. Set the angle to put THIS patch in mid-morning.
+		sun_angle = fposmod(-arc / r + 0.45, TAU)
 		# clean frames: the HUD is not the thing being reviewed, and a shot taken inside a tree
 		# tells you nothing. Step off the exact scatter centre before framing.
 		if _hud: _hud.visible = false
@@ -1229,12 +1248,52 @@ func _shot_run() -> void:
 			print("SHOT %s: framed on a road, %.0fm from the settlement" % [pname, sqrt(best_d)])
 		else:
 			print("SHOT %s: NO ROAD DATA within 5km — framing the settlement instead" % pname)
-		for shot in [
+		var frames := [
 				{"n": "ground", "h": 2.2, "pitch": -0.04, "fov": 70.0},
 				{"n": "road", "h": 6.0, "pitch": -0.18, "fov": 60.0},
 				{"n": "air", "h": 400.0, "pitch": -0.55, "fov": 70.0},
-			]:
-			_cam.position = _ring_pos(arc / r, lat, _terrain_h(arc, lat) + float(shot["h"]))
+			]
+		# ON THE WATER. None of the three framings above ever looks at sea -- they walk to a road or a
+		# settlement, both of which are on land by definition -- so a coastal patch photographed three
+		# times could still show no water at all, which is exactly what happened to the swell run.
+		# Spiral out from the framing point for water and sit just above it, looking level: the view
+		# that shows whether the surface moves.
+		#
+		# The candidate must have LAND IN SIGHT. Without that test the search happily "found" 12m-deep
+		# ocean 250m from palawan's anchor -- it had walked off the edge of the patch's data, and a
+		# no-data sample reads as height 0, which is below sea_level, which is sea. The whole ring is
+		# ringed by that phantom ocean (it is the magenta band on the horizon in the probe shot). Real
+		# coastal water has a coast; the void does not.
+		var sea_p := Vector2.ZERO
+		var sea_found := false
+		for ring_i in range(1, 40):
+			var rad := float(ring_i) * 250.0
+			for k in 12:
+				var a := TAU * float(k) / 12.0
+				var p := Vector2(arc + cos(a) * rad, lat + sin(a) * rad)
+				if absf(p.y) > WIDTHS[w_idx] * 0.45 or _sea_depth(p.x, p.y) <= 1.0:
+					continue
+				if not _land_in_sight(p.x, p.y):
+					continue
+				sea_p = p
+				sea_found = true
+				break
+			if sea_found:
+				break
+		if sea_found:
+			frames.append({"n": "sea", "h": 3.0, "pitch": -0.02, "fov": 70.0,
+				"arc": sea_p.x, "lat": sea_p.y})
+			print("SHOT %s: sea framing %.0fm out, depth %.1fm"
+				% [pname, sea_p.distance_to(Vector2(arc, lat)), _sea_depth(sea_p.x, sea_p.y)])
+			print("      swell here: %+.2fm, %+.2fm 20m on, %+.2fm 40m on"
+				% [_surface_h(sea_p.x, sea_p.y) - SEA_LEVEL,
+				_surface_h(sea_p.x + 20.0, sea_p.y) - SEA_LEVEL,
+				_surface_h(sea_p.x + 40.0, sea_p.y) - SEA_LEVEL])
+		for shot in frames:
+			# most framings share the patch's walk-to point; the sea framing carries its own
+			var sa: float = float(shot.get("arc", arc))
+			var sl: float = float(shot.get("lat", lat))
+			_cam.position = _ring_pos(sa / r, sl, _terrain_h(sa, sl) + float(shot["h"]))
 			_cam.fov = float(shot["fov"])
 			_look.y = float(shot["pitch"])
 			_apply_look()
@@ -1782,8 +1841,78 @@ func _bilerp(field: PackedFloat32Array, w: int, h: int, fx: float, fy: float) ->
 func _terrain_h(arc: float, lat: float) -> float:
 	# clamp to sea level exactly as the shader does, so you stand ON the water surface rather than
 	# on the seabed under it (render-authoritative placement).
+	#
+	# STATIC on purpose. This is the placement authority -- trees, buildings, hedges, road cells, the
+	# collision body and the --align selftest all call it, and every one of them wants an answer that
+	# does not change between two calls a frame apart. The swell is deliberately NOT here: adding it
+	# would make the forests bob. Anything that should ride the live water surface calls _surface_h
+	# below instead. Do not "unify" these two.
 	var h := _terrain_h_raw(arc, lat)
 	return SEA_LEVEL if (ocean_enabled and h < SEA_LEVEL) else h
+
+# --- SWELL, CPU side. Twin of wave_h/wave_fade in cdlod_ring.gdshader; the two must match to the
+# metre or a hull rides through the drawn surface. Same three sines, same fade terms, same centre.
+var _wave_center := Vector2.ZERO
+var wave_amp := 1.0
+const WAVE_NEAR := 400.0
+const WAVE_FAR := 1200.0
+
+func _wave_h(arc: float, lat: float) -> float:
+	var w := sin(arc * 0.031 + lat * 0.017 + _wave_time * 0.90) * 0.55
+	w += sin(arc * -0.013 + lat * 0.043 + _wave_time * 1.31) * 0.34
+	w += sin(arc * 0.071 + lat * -0.059 + _wave_time * 1.87) * 0.15
+	w += sin(arc * 0.21 + lat * 0.16 + _wave_time * 3.10) * 0.09
+	return w
+
+const SHOAL_D := 0.35   # see cdlod_ring.gdshader: 0.35 and not 8.0 because there is no bathymetry
+
+func _wave_fade(arc: float, lat: float, depth: float) -> float:
+	return smoothstep(0.0, SHOAL_D, depth) * (1.0
+		- smoothstep(WAVE_NEAR, WAVE_FAR, _wave_center.distance_to(Vector2(arc, lat))))
+
+# The LIVE surface: ground where there is ground, moving water where there is sea. What floats reads
+# this; what is planted reads _terrain_h.
+func _surface_h(arc: float, lat: float) -> float:
+	var h := _terrain_h_raw(arc, lat)
+	if ocean_enabled and h < SEA_LEVEL:
+		return SEA_LEVEL + _wave_h(arc, lat) * wave_amp * _wave_fade(arc, lat, SEA_LEVEL - h)
+	return h + _proving_surface(arc, lat)
+
+# How deep is the water here? Negative means dry land.
+#
+# NOT (SEA_LEVEL - height), which is the obvious implementation and is useless: Terrarium floors its
+# tiles at 0m, so 87.2% of palawan is EXACTLY 0.0 and the sea is a flat plate half a metre below the
+# clamp. There is no bathymetry anywhere on the ring. Measured, not assumed -- and it silently broke
+# two things built on top of it before it was caught: the swell faded itself to 2cm, and a barge with
+# a 2.4m draft would have been aground in mid-ocean.
+#
+# So depth is INFERRED FROM DISTANCE TO SHORE: probe outward for the nearest land and read off a
+# synthetic shelf. It is not real bathymetry, but it gets the property that actually matters for
+# boats -- shallow near the beach, deep offshore -- and it is derived from the coastline, which IS
+# real data. Replace it the day a bathymetric source lands.
+const SEA_SHELF := 400.0     # metres offshore at which the synthetic shelf reaches full depth
+const SEA_MAX_DEPTH := 12.0
+
+# Is there a coastline within a few km? Distinguishes real sea from the PHANTOM OCEAN that surrounds
+# every patch: outside a patch's data the height sampler returns 0, which is below SEA_LEVEL, which
+# renders and tests as water. It looks exactly like ocean and is not -- nothing is there.
+func _land_in_sight(arc: float, lat: float, radius: float = 2500.0) -> bool:
+	for rad in [600.0, 1200.0, radius]:
+		for k in 8:
+			var a := TAU * float(k) / 8.0
+			if _terrain_h_raw(arc + cos(a) * rad, lat + sin(a) * rad) > SEA_LEVEL:
+				return true
+	return false
+
+func _sea_depth(arc: float, lat: float) -> float:
+	if _terrain_h_raw(arc, lat) > SEA_LEVEL:
+		return -1.0
+	for rad in [25.0, 60.0, 120.0, 250.0, SEA_SHELF]:
+		for k in 8:
+			var a := TAU * float(k) / 8.0
+			if _terrain_h_raw(arc + cos(a) * rad, lat + sin(a) * rad) > SEA_LEVEL:
+				return SEA_MAX_DEPTH * (rad / SEA_SHELF)
+	return SEA_MAX_DEPTH
 
 func _terrain_h_raw(arc: float, lat: float) -> float:
 	# EXACT match to what the CDLOD shader draws (same half-res field + UV mapping) — render-
@@ -1949,6 +2078,9 @@ func _rebuild_lod() -> void:
 	var w: float = WIDTHS[w_idx]
 	for i in _used:
 		_mats[i].set_shader_parameter("cam_pos", cp)
+		_mats[i].set_shader_parameter("wave_time", _wave_time)
+		_mats[i].set_shader_parameter("wave_amp", wave_amp)
+		_mats[i].set_shader_parameter("wave_center", _wave_center)
 		_mats[i].set_shader_parameter("ring_radius", r)
 		_mats[i].set_shader_parameter("ring_width", w)
 		_mats[i].set_shader_parameter("wall_top", wall_top_h)
@@ -2071,6 +2203,12 @@ func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:
 			st.add_index(a + 1); st.add_index(b); st.add_index(b + 1)
 
 func _process(delta: float) -> void:
+	# Advance the swell and park its bubble on the camera, in ABSOLUTE ring arc -- the same
+	# coordinate _wave_h takes, so the CPU twin and the shader agree about where the waves are.
+	if _cam != null:
+		_wave_time += delta
+		var wr := _radius()
+		_wave_center = Vector2(atan2(_cam.position.x, wr - _cam.position.y) * wr, _cam.position.z)
 	var period: float = SUN_PERIODS[sun_speed_idx]
 	if period > 0.0 and not sun_paused:
 		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
@@ -3589,6 +3727,7 @@ func _select_vehicle(i: int) -> void:
 	_wheels = e["wheels"]
 	_stamina = 1.0        # a mount you climb onto is fresh; only the horse row reads this
 	_spooked = 0.0
+	_boat_vel = Vector2.ZERO   # never inherit a stale hull course; a boat you board is dead in the water
 	_jump_h = 0.0         # never leave the suit airborne when cycling off it; only the suit row jumps
 	_jump_v = 0.0
 	_land_dip = 0.0
@@ -3816,6 +3955,36 @@ const VEHICLE_ROWS := {
 		"lift": 1.0, "buoyancy": 0.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
 	},
+	# --- Boats (TASKS.md "Water"). The FIFTH movement class, _loco_boat, and the first that cannot go
+	# everywhere: it needs water under it. It exists now because the sea does -- the ocean used to be a
+	# flat clamp at SEA_LEVEL, indistinguishable from a salt pan, and the hover skiff already crossed
+	# that. With a swell to ride there is finally something a hull does that a cushion does not.
+	# The two rows are a real mechanical split, not two sets of numbers: PLANING vs DISPLACEMENT.
+	"launch": {
+		# FOR: crossing open water fast, and being punished for it in a sea. Gets over plane_speed,
+		# climbs onto its own bow wave and sheds most of its drag -- then skates through every turn
+		# (high drift) and pitches hard on the swell because a planing hull slams rather than parts.
+		# Shallow draft, so it can be driven right up a beach before it grounds.
+		"purpose": "the planing launch — fast over open water, skates through turns, slams in a swell",
+		"loco": "boat", "mass": 1400.0, "power": 8.0, "brake": 4.0, "top": 26.0, "reverse": -4.0,
+		"drag": 0.55, "offroad_drag": 0.0, "turn": 1.1, "offroad_turn": 0.0,
+		"grip_speed": 6.0, "ride": 0.55, "wheel_r": 0.45, "length": 6.0, "tint": Color(0.72, 0.70, 0.64),
+		"lift": 0.0, "buoyancy": 1.0, "draft": 0.8, "plane_speed": 9.0, "drift": 0.8,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	"barge": {
+		# FOR: the opposite argument. A displacement hull makes a wave and is held down by it, so it has
+		# no plane to climb onto and `top` is a hard ceiling however long you hold the throttle. In
+		# exchange the swell barely moves it and it tracks straight (low drift). Deep draft: it grounds
+		# a long way off the beach, which is what makes shallow water a real obstacle rather than
+		# scenery -- and the reason the coastal patches need reading as depth, not as "sea".
+		"purpose": "the displacement barge — slow, deep, unbothered by swell; grounds far off the beach",
+		"loco": "boat", "mass": 9000.0, "power": 2.2, "brake": 1.6, "top": 8.0, "reverse": -2.0,
+		"drag": 0.30, "offroad_drag": 0.0, "turn": 0.55, "offroad_turn": 0.0,
+		"grip_speed": 3.0, "ride": 0.70, "wheel_r": 0.45, "length": 14.0, "tint": Color(0.36, 0.33, 0.28),
+		"lift": 0.0, "buoyancy": 1.0, "draft": 2.4, "plane_speed": 0.0, "drift": 0.25,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
 	# --- Legged (TASKS.md "Mounts and legged"). The FOURTH movement class, _loco_legged, and the one
 	# genuinely new movement model: gait, not roll. Shared by mounts and mechs -- this row is the class
 	# exemplar; the horse, elephant, mech and powered-suit rows are the FOLLOWING items, each pure data
@@ -4002,6 +4171,74 @@ func _loco_hover(d: VehicleDef, delta: float, accel: float, steer: float) -> voi
 	_car_arc += (ch * _car_speed + (-sh) * slide) * delta
 	_car_lat += (sh * _car_speed + (ch) * slide) * delta
 
+# Boat trim: how hard the swell throws the hull about. Class constants like the hover slope terms --
+# a hull's response to a wave is hull shape, and every displacement hull answers a 1m swell much the
+# same way. PITCH/ROLL convert wave slope (m per m) to radians of body attitude.
+const BOAT_PITCH := 2.2
+const BOAT_ROLL := 1.8
+const BOAT_GROUND_DRAG := 6.0     # how violently a hull stops when it runs aground
+
+func _loco_boat(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
+	# A HULL IN WATER -- the fifth movement class, and the first one that can be somewhere it cannot
+	# go. Four departures, and together they are the class:
+	#
+	# (1) IT NEEDS WATER. Every other class can be put down anywhere on the ring and will move. Run a
+	#     boat at the beach and the hull touches: it grounds, dumps speed and stops steering. That is
+	#     why this item was gated on a water surface existing at all -- before the swell, "sea" was a
+	#     flat clamp indistinguishable from a salt pan, and the skiff already crossed it.
+	# (2) RUDDER, NOT STEERING. Turn authority is proportional to speed through the water, because a
+	#     rudder is a wing and a stationary rudder does nothing. This is the exact inverse of the
+	#     tracked/hover classes, which pivot on the spot: a boat with no way on cannot be turned, and
+	#     a boat that has just cut its engine still can, until it loses steerage.
+	# (3) IT DRIFTS. Every land class moves exactly along its heading -- `_car_arc += cos(heading) *
+	#     speed`. A hull does not. It carries a velocity VECTOR that the heading only slowly pulls
+	#     round, so it skates wide through a turn and crabs on. That is why _boat_vel exists rather
+	#     than reusing _car_speed alone.
+	# (4) DISPLACEMENT VS PLANING is a data row, not two functions. A displacement hull is held to its
+	#     hull speed by the wave it makes; a planing hull that gets over plane_speed climbs onto its
+	#     own bow wave and the drag falls away. Same code, two rows.
+	var depth := _sea_depth(_car_arc, _car_lat)
+	_aground = depth < d.draft
+	_car_speed = clampf(_car_speed + accel * delta, d.reverse, d.top)
+	# planing: over the threshold the hull lifts and sheds most of its wavemaking drag
+	var planing: bool = d.plane_speed > 0.0 and absf(_car_speed) > d.plane_speed
+	var drag: float = d.drag * (0.35 if planing else 1.0)
+	if _aground:
+		# keel in the mud. Bleed speed hard and lose the rudder with it.
+		drag += BOAT_GROUND_DRAG * clampf((d.draft - depth) / maxf(d.draft, 0.1), 0.0, 1.0)
+	_car_speed *= 1.0 - drag * delta
+	# rudder authority: needs water flowing past it. grip_speed is reused as "steerage way".
+	var steerage := clampf(absf(_car_speed) / maxf(d.grip_speed, 0.1), 0.0, 1.0)
+	if _aground:
+		steerage = 0.0
+	_car_heading += steer * d.turn * delta * steerage * signf(_car_speed)
+	# The hull's velocity vector chases the heading rather than snapping to it. drift=0 reproduces the
+	# land classes exactly (velocity is always along the nose), so this one function still covers a
+	# rigid-inflatable that does not skate.
+	var want := Vector2(cos(_car_heading), sin(_car_heading)) * _car_speed
+	if d.drift > 0.0:
+		# larger drift = slower to settle onto the new course = more skating
+		_boat_vel = _boat_vel.lerp(want, 1.0 - exp(-delta * (6.0 / maxf(d.drift, 0.01))))
+	else:
+		_boat_vel = want
+	_car_arc += _boat_vel.x * delta
+	_car_lat += _boat_vel.y * delta
+
+func _boat_trim(d: VehicleDef, delta: float) -> void:
+	# Attitude from the swell: sample the live water surface fore/aft and abeam and let the hull lie on
+	# the slope between, the same idea as the wheeled suspension's contact plane but with two samples
+	# per axis instead of four wheels. Uses _surface_h, NOT _terrain_h -- the whole point is to ride
+	# the water that is actually drawn.
+	var half: float = maxf(d.length, 1.0) * 0.5
+	var ch := cos(_car_heading)
+	var sh := sin(_car_heading)
+	var bow := _surface_h(_car_arc + ch * half, _car_lat + sh * half)
+	var stern := _surface_h(_car_arc - ch * half, _car_lat - sh * half)
+	var port := _surface_h(_car_arc - sh * half, _car_lat + ch * half)
+	var stbd := _surface_h(_car_arc + sh * half, _car_lat - ch * half)
+	_body_pitch = lerpf(_body_pitch, clampf((stern - bow) / (2.0 * half) * BOAT_PITCH, -0.4, 0.4), delta * 5.0)
+	_body_roll = lerpf(_body_roll, clampf((port - stbd) / (2.0 * half) * BOAT_ROLL, -0.4, 0.4), delta * 5.0)
+
 # Gait signature: amplitude of the vertical bob and the fore-aft rock, per stride. Kept as constants
 # like the hover slope terms -- move to VehicleDef the day a mech's lumbering stride must differ from a
 # horse's (the next items). BOB is metres, ROCK is radians.
@@ -4134,9 +4371,11 @@ func _drive_tick(delta: float) -> void:
 		"hover": _loco_hover(d, delta, accel, steer)
 		"tracked": _loco_tracked(d, delta, accel, steer)
 		"legged": _loco_legged(d, delta, accel, steer)
+		"boat": _loco_boat(d, delta, accel, steer)
 		"wheeled", _: _loco_wheeled(d, delta, accel, steer)
 	var hover := d.loco == "hover"
 	var legged := d.loco == "legged"
+	var boat := d.loco == "boat"
 	# A hover craft floats level at a fixed clearance: the calibrated bump strip never reaches it (that
 	# is what "ignores ground roughness" MEANS), so it is left out of its ground point. A walker STEPS
 	# over roughness up to its step_height -- feet absorb small features, so the body feels only the part
@@ -4147,6 +4386,12 @@ func _drive_tick(delta: float) -> void:
 		strip = 0.0
 	elif legged:
 		strip -= clampf(strip, -d.step_height, d.step_height)
+	elif boat:
+		# A hull rides the LIVE water, but `base` below is built from the static _terrain_h (which
+		# clamps the sea flat). The difference between the two IS the swell, so feeding it in here
+		# lifts the boat onto the drawn wave using the same ring-up offset the bump strip uses --
+		# no second position path, and it stays exactly consistent with what the shader displaced.
+		strip = _surface_h(_car_arc, _car_lat) - _terrain_h(_car_arc, _car_lat)
 	var base := _car_pos(_car_arc, _car_lat)
 	# gait bob rises the body on each stride, added along ring-up -- legs, not springs.
 	var bob: float = absf(sin(_gait_phase)) * LEGGED_BOB if legged else 0.0
@@ -4183,6 +4428,9 @@ func _drive_tick(delta: float) -> void:
 		# body walks. Roll settles to level; there are no wheels to lean it into a hollow.
 		_body_pitch = sin(_gait_phase) * LEGGED_ROCK
 		_body_roll = lerpf(_body_roll, 0.0, delta * 8.0)
+	elif boat:
+		# attitude from the wave slope under the hull, not from a contact plane or a stride
+		_boat_trim(d, delta)
 	else:
 		_susp_update(delta, pos, up, fwd)
 	_car.global_position = pos + up * d.ride

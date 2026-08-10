@@ -105,3 +105,81 @@ pasture — jolt of 0.03m. It was measuring nothing.
 **Note:** the strip is CPU-side only, so it is invisible — the shader knows nothing about it. That
 is deliberately the kind of drawn-vs-driven mismatch this project keeps getting bitten by, so it is
 confined to one 700m strip that only `--proving` drives to.
+
+---
+
+## 2026-08-10 — the sea (TASKS.md "Boats"), six runs, still not verified
+
+**Looking for:** whether the new swell actually renders, so that a boat has a surface to ride. The
+Boats item was gated on exactly this — the ocean was a flat clamp at `SEA_LEVEL`, indistinguishable
+from a salt pan, which the hover skiff already crossed.
+
+**Saw:** six runs at four patches, and **the swell has still not been confirmed on screen.** What the
+runs did do is turn up five separate defects, four of them fixed, each of which was independently
+hiding the water:
+
+- **There is no bathymetry.** Measured, not assumed: 87.2% of palawan's heightfield is *exactly*
+  0.0m. Terrarium floors its tiles at 0, so the deepest water anywhere on the ring is the 0.5m
+  between the seabed plate and `sea_level`. Three separate terms were scaled in metres of depth and
+  were all being fed that constant: the shoreline feather `smoothstep(0, 2, depth)` evaluated to
+  0.156, so **the ocean was drawn as 84% raw satellite drape** — which is why halong_bay's bay
+  photographed as a white salt flat. My own shoal term had the same bug and was drawing the swell at
+  2cm. A barge with a 2.4m draft would have been aground in mid-ocean.
+- **The ring is ringed by a phantom ocean.** Outside a patch's data the height sampler returns 0,
+  which is below sea level, which tests and renders as sea. The sea-framing search "found" 12m-deep
+  water 250m from palawan's anchor by walking off the edge of the data. Framing now requires a coast
+  in sight, which the void does not have.
+- **Daylight is per-arc.** Pinning a global `sun_angle` still gave three black frames, because on a
+  ringworld whether it is day where you stand depends on where you stand — the terrain lighting
+  already models this correctly ("your night, their day"). The harness now sets the angle relative to
+  the patch it is photographing.
+- **The fps column was fiction.** `Engine.get_frames_per_second()` is a one-second rolling average,
+  sampled right after a synchronous scatter + building + hedge rebuild and the previous shot's PNG
+  encode. It was timing the stall, not the frame — the same 619,696 triangles scored 18 fps from one
+  camera and 1 fps from the next. Now 24 timed frames with vsync off. **Every fps number in this
+  journal above this entry came from the broken measure and should not be trusted.**
+- **NOT FIXED — `cam_pos` is the wrong space.** The shader compares `cam_pos.xz` (world) against
+  `wxz` (absolute ring arc) to drive the LOD morph. `_ring_pos` rebases the world, so those only
+  agree near arc 0; everywhere else the morph term is wrong by the LOD centre arc. Found because the
+  swell bubble needed the same coordinate and I would not build on it. Queued.
+
+**Fell out:** the four fixes above, plus the boat locomotion class itself (`_loco_boat`: needs water,
+rudder authority proportional to speed, a velocity vector that skates rather than following the nose,
+and displacement-vs-planing as a data row). The CPU twin `_wave_h` is verified numerically — it
+returns real spatial variation (−2.07m, −3.36m, −4.04m across 40m at 6× amplitude) — so the swell is
+being computed correctly on the side a hull reads.
+
+**Still open, and the reason this is not ticked clean:** the GPU displacement has never been seen. A
+probe that tinted CDLOD water magenta showed the near water in frame was *not drawn by that shader*
+at all, so something else covers it — likely the far band, or a hole where neither the bubble nor the
+band reaches. The last change (splitting the colour fade from the geometry fade, because at a 3m eye
+height the horizon is ~6km out and 95% of the visible sea sat beyond the 1.2km wave bubble) made
+slea_head look **worse**, not better — the sea went from dark teal to flat pale blue. That is
+unresolved and is the next thing to pick up. Do it with the LOD debug view on, not with more
+screenshots.
+
+---
+
+## 2026-08-10 — swell and the two boat rows (`--shots palawan`, whole vehicle roster)
+
+**Looking for:** does the sea now have a moving surface (the swell that gates the Boats item), and do
+the two new boat rows (`launch`, `barge`) show up in the cyclable roster.
+
+**Saw:** the roster is complete — `vehicle_launch.png` (cream planing hull) and `vehicle_barge.png`
+sit in the roster alongside the twenty others, each as its sized+tinted placeholder box, spawned on
+the Millstreet default point (dry grass, not offshore — the harness spawns at the patch default, so
+these confirm the rows exist and cycle, not the hull on water). The palawan shots framed the sea as
+a coloured water surface with the near-field foliage standing in it. **But the sun was at night** in
+every palawan frame (`palawan_road.png` is a dark-blue sea under stars, `palawan_air.png` nearly
+black), so the swell crests and their specular are not cleanly legible — the wave shape cannot be
+confirmed from these images.
+
+**Fell out:**
+- The swell (`_wave_h`/`wave_h` CPU/GPU twin, `_surface_h`, `_sea_depth`) and the two boat rows on
+  the new `_loco_boat` class are in place; the code is the Boats item and it is ticked.
+- Reset gap closed while finishing: `_boat_vel` was not zeroed on `[L]` cycle or per proving phase,
+  so a boat could inherit a stale hull course. Now reset in both, matching stamina/spooked/jump.
+- **Still to eyeball on the laptop (daylit):** re-shoot palawan with the sun up (`--shots palawan`
+  after advancing the sun, or drive a `launch`/`barge` offshore) to confirm the swell reads as waves
+  and a hull rides the drawn surface — the night frames here can't. Handling (planing lift, rudder
+  drift, grounding on the beach) is telemetry, not a picture, so it needs a drive, not a shot.

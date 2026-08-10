@@ -62,6 +62,15 @@ extends Resource
 @export var jump := 0.0            # peak jump height in metres; 0 = grounded (launch v = sqrt(2 g jump))
 @export var sprint := 1.0          # top-speed multiplier while the sprint input is held; 1 = no sprint
 
+# Boats (TASKS.md "Water"), read only by _loco_boat. Like every contract above these default to values
+# that make a non-boat row behave exactly as before -- draft 0 never grounds, plane_speed 0 means
+# "displacement hull", which is what every land vehicle already effectively is.
+@export var draft := 0.0           # metres of hull below the waterline; grounds out in shallower water
+@export var plane_speed := 0.0     # speed at which the hull climbs onto its bow wave and drag drops
+                                   # away; 0 = displacement hull, held to `top` by wavemaking drag
+@export var drift := 0.0           # 0 = velocity is always along the heading (every land class);
+                                   # 1 = the hull skates, carrying its old course through a turn
+
 @export var susp_travel := 0.34    # spring travel, extension limit to bump stop
 @export var susp_stiff := 34.0
 @export var susp_damp := 6.0

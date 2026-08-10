@@ -6,7 +6,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (600 ms)
+ring_vibes: far band rebuilt around arc 0 km (638 ms)
 ring_vibes: texture compression — s3tc true, bptc true, etc2 false
 ring_vibes: grass pack loaded (1 surfaces)
 ring_vibes: 13674 road centrelines loaded (home + none)
@@ -22,41 +22,57 @@ ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring 
 ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
 ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
 ring_vibes: 143141 OSM buildings loaded (2 styles)
-ring_vibes: tree species -> palm
-ring_vibes: 27710 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: buildings in range at arc -262000 lat -14000 -> style0=0, style1=14000
-ring_vibes: warped to java_majapahit (settlement) (91.3% arc)
-ring_vibes: 26905 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: far band rebuilt around arc -262 km (717 ms)
-ring_vibes: 34789 road centrelines loaded (home + java_majapahit)
-ring_vibes: 33866 junction cells, 2545953 road cells from 34789 centrelines
-ring_vibes: 26905 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: buildings in range at arc -262000 lat -14000 -> style0=0, style1=14000
-ring_vibes: streamed java_majapahit @ 1536^2 — re-placed objects onto the new tier
-SHOT java_majapahit: NO ROAD DATA within 5km — framing the settlement instead
-ring_vibes: 26905 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: buildings in range at arc -261940 lat -14000 -> style0=0, style1=14000
-      TRIS  trees 108642, buildings 392000, hedges 0, grass 14584, terrain ~4096 (8 nodes), far band 96000   accounted 615322
-SHOT java_majapahit     ground  tris=619696 fps=18  res://../logs/shots/20260810_0051_palm-billboards/java_majapahit_ground.png
-ring_vibes: 26905 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: buildings in range at arc -261940 lat -14000 -> style0=0, style1=14000
-      TRIS  trees 108642, buildings 392000, hedges 0, grass 14584, terrain ~4096 (8 nodes), far band 96000   accounted 615322
-SHOT java_majapahit     road    tris=619696 fps=1  res://../logs/shots/20260810_0051_palm-billboards/java_majapahit_road.png
-ring_vibes: 26905 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
-ring_vibes: buildings in range at arc -261940 lat -14000 -> style0=0, style1=14000
-      TRIS  trees 107620, buildings 392000, hedges 0, grass 14584, terrain ~4096 (8 nodes), far band 96000   accounted 614300
-SHOT java_majapahit     air     tris=604068 fps=2  res://../logs/shots/20260810_0051_palm-billboards/java_majapahit_air.png
+ring_vibes: tree species -> scrub
+ring_vibes: 4631 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1236000 lat 0 -> style0=0, style1=0
+ring_vibes: warped to slea_head (58.8% arc)
+ring_vibes: 4496 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1245 km (747 ms)
+SHOT slea_head: NO ROAD DATA within 5km — framing the settlement instead
+SHOT slea_head: sea framing 1500m out, depth 3.6m
+      swell here: +0.00m, +0.00m 20m on, +0.00m 40m on
+ring_vibes: 4496 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1235940 lat 0 -> style0=0, style1=0
+      TRIS  trees 18108, buildings 0, hedges 0, grass 7336, terrain ~4096 (8 nodes), far band 96000   accounted 125540
+SHOT slea_head          ground  tris=119952   8.3ms (120 fps)  res://../logs/shots/20260810_1151_swell/slea_head_ground.png
+ring_vibes: 4496 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1235940 lat 0 -> style0=0, style1=0
+      TRIS  trees 18108, buildings 0, hedges 0, grass 7336, terrain ~4096 (8 nodes), far band 96000   accounted 125540
+SHOT slea_head          road    tris=119952   9.1ms (110 fps)  res://../logs/shots/20260810_1151_swell/slea_head_road.png
+ring_vibes: 4496 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1235940 lat 0 -> style0=0, style1=0
+      TRIS  trees 17984, buildings 0, hedges 0, grass 7336, terrain ~4096 (8 nodes), far band 96000   accounted 125416
+SHOT slea_head          air     tris=119872  10.1ms (99 fps)  res://../logs/shots/20260810_1151_swell/slea_head_air.png
+ring_vibes: 4496 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1237440 lat 0 -> style0=0, style1=0
+ring_vibes: 2067 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+      TRIS  trees 8268, buildings 0, hedges 0, grass 0, terrain ~4096 (8 nodes), far band 96000   accounted 108364
+ring_vibes: 13674 road centrelines loaded (home + slea_head)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 588 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1237440 lat 0 -> style0=0, style1=0
+ring_vibes: streamed slea_head @ 1536^2 — re-placed objects onto the new tier
+SHOT slea_head          sea     tris=110260  11.6ms (86 fps)  res://../logs/shots/20260810_1151_swell/slea_head_sea.png
 ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
 ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
 ring_vibes: warped to home (0.0% arc)
 ring_vibes: warthog model loaded (5.2m long, scale 0.967)
-ring_vibes: far band rebuilt around arc -66 km (549 ms)
-SHOT vehicle box      res://../logs/shots/20260810_0051_palm-billboards/vehicle_box.png
-SHOT vehicle warthog  res://../logs/shots/20260810_0051_palm-billboards/vehicle_warthog.png
-SHOT vehicle sportscar res://../logs/shots/20260810_0051_palm-billboards/vehicle_sportscar.png
-SHOT vehicle sixby    res://../logs/shots/20260810_0051_palm-billboards/vehicle_sixby.png
-SHOT vehicle bike     res://../logs/shots/20260810_0051_palm-billboards/vehicle_bike.png
-SHOT vehicle tractor  res://../logs/shots/20260810_0051_palm-billboards/vehicle_tractor.png
-SHOT vehicle hauler   res://../logs/shots/20260810_0051_palm-billboards/vehicle_hauler.png
-SHOT vehicle crawler  res://../logs/shots/20260810_0051_palm-billboards/vehicle_crawler.png
+ring_vibes: far band rebuilt around arc -66 km (587 ms)
+SHOT vehicle box      res://../logs/shots/20260810_1151_swell/vehicle_box.png
+SHOT vehicle warthog  res://../logs/shots/20260810_1151_swell/vehicle_warthog.png
+SHOT vehicle sportscar res://../logs/shots/20260810_1151_swell/vehicle_sportscar.png
+SHOT vehicle sixby    res://../logs/shots/20260810_1151_swell/vehicle_sixby.png
+SHOT vehicle bike     res://../logs/shots/20260810_1151_swell/vehicle_bike.png
+SHOT vehicle tractor  res://../logs/shots/20260810_1151_swell/vehicle_tractor.png
+SHOT vehicle hauler   res://../logs/shots/20260810_1151_swell/vehicle_hauler.png
+SHOT vehicle crawler  res://../logs/shots/20260810_1151_swell/vehicle_crawler.png
+SHOT vehicle skiff    res://../logs/shots/20260810_1151_swell/vehicle_skiff.png
+SHOT vehicle launch   res://../logs/shots/20260810_1151_swell/vehicle_launch.png
+SHOT vehicle barge    res://../logs/shots/20260810_1151_swell/vehicle_barge.png
+SHOT vehicle strider  res://../logs/shots/20260810_1151_swell/vehicle_strider.png
+SHOT vehicle horse    res://../logs/shots/20260810_1151_swell/vehicle_horse.png
+SHOT vehicle elephant res://../logs/shots/20260810_1151_swell/vehicle_elephant.png
+SHOT vehicle mech_biped res://../logs/shots/20260810_1151_swell/vehicle_mech_biped.png
+SHOT vehicle mech_quad res://../logs/shots/20260810_1151_swell/vehicle_mech_quad.png
+SHOT vehicle suit     res://../logs/shots/20260810_1151_swell/vehicle_suit.png
 SHOTS done

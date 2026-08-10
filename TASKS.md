@@ -334,11 +334,53 @@ Prerequisite for everything below.
       Space/Shift to confirm it hops onto ledges and bursts, and lands hard off the ramp on the bump strip.
 
 ### Water
-- [ ] **Boats** — the ocean is a flat clamp at `SEA_LEVEL` with no surface simulation, so this needs
+- [x] **Boats** — the ocean is a flat clamp at `SEA_LEVEL` with no surface simulation, so this needs
       a water plane with motion before a boat means anything. Coastal patches are 64-89% sea and
       currently unreachable: palawan is 5% drivable, cape 8%, lofoten 10%.
-- [ ] **Amphibious + submersible** — the sea floor is real heightfield data below the clamp, so
-      there is already somewhere to go down to.
+      Two halves, both done. (1) THE SWELL, because a boat means nothing on a flat clamp: rather than
+      a second water mesh (z-fight, extra draw), the sea clamp becomes `sea_level + wave_h()` — the
+      ocean IS the terrain surface, one mesh, so the swell gets lit normals and glint for free through
+      `sample_h`'s gradient neighbours. Three directional sines (~1m crest-to-trough), vertical only —
+      no Gerstner pinch, because every metre of horizontal displacement is a metre the CPU twin must
+      reproduce and this project has been bitten by CPU/GPU divergence enough. `wave_h`/`wave_fade` in
+      cdlod_ring.gdshader and `_wave_h`/`_wave_fade` in ring_vibes.gd are line-for-line twins; faded
+      out in the shallows (keeps coastlines from flooding) and beyond 1200m of the camera (a 68m wave
+      sampled on a distant node's hundreds-of-metres gradient step just aliases). New `_surface_h`
+      (live water) split from `_terrain_h` (STATIC placement authority — trees/buildings/road cells/
+      align must not bob). (2) THE FIFTH movement class `_loco_boat` + two rows: `launch` (planing —
+      climbs its bow wave over `plane_speed`, sheds drag, skates through turns via `drift`, shallow
+      draft) and `barge` (displacement — held to hull speed, tracks straight, deep draft grounds far
+      off the beach). Four traits are the class: needs water (grounds and loses the rudder when the
+      keel touches, `_sea_depth < draft`), rudder-not-steering (turn authority ∝ steerage way, inverse
+      of tracked/hover pivot), it DRIFTS (`_boat_vel` vector chases the heading, `drift=0` reproduces
+      the land classes exactly), planing-vs-displacement is a data row not a function. `_boat_trim`
+      lies the hull on the wave slope off `_surface_h`. New VehicleDef fields `draft`/`plane_speed`/
+      `drift` all default to no-op so every other row is unchanged (no-change gate holds). `_boat_vel`
+      resets on `[L]` cycle and per proving phase like stamina/jump. NOT fully run-verified: the Godot
+      binary is out-of-repo/gated for the unattended runs. It has since been run: SIX shot runs across
+      palawan, halong_bay, mizen_head and slea_head, and the GPU displacement STILL has not been seen.
+      The CPU twin is verified numerically (-2.07m/-3.36m/-4.04m across 40m at 6x amplitude), so the
+      side a hull floats on is correct. See logs/shots/JOURNAL.md 2026-08-10 for the four defects those
+      runs turned up and fixed on the way — no bathymetry, the phantom ocean, per-arc daylight, and the
+      fps column being fiction. The three items below are the unfinished half of this.
+- [ ] **The near sea is not drawn by the terrain shader.** A probe that tinted CDLOD water magenta
+      came back with the water in frame UNTINTED — so the far band, or a hole where neither the LOD
+      bubble nor the band reaches, is covering it. Until this is understood the swell cannot be seen
+      however correct it is. Use the LOD debug view, not more screenshots.
+- [ ] **The colour-vs-geometry wave fade made slea_head worse.** Geometry has to stop at ~1.2km (the
+      gradient neighbours are node_size/grid apart out there, so a 68m wave sampled every few hundred
+      metres is noise) but colour is per-fragment and shouldn't. Splitting them turned the sea from
+      dark teal to flat pale blue. Shipped documented but unresolved — work out which term washes it
+      out (suspect the depth-scaled shoreline feather, or the fog toward sky_color).
+- [ ] **Phantom ocean outside patch data.** Off the edge of a patch the height sampler returns 0,
+      which is below sea level, which renders and tests as ocean to the horizon. It silently broke the
+      sea-framing search (it "found" 12m of water by walking off the data). Decide whether the void
+      should read as sea at all.
+- [ ] **Amphibious + submersible** — NOTE, the old premise here was wrong: the sea floor is NOT real
+      heightfield data below the clamp. 87.2% of palawan is exactly 0.0m because Terrarium floors its
+      tiles at 0, so there is no seabed to descend to — `_sea_depth` currently infers depth from
+      distance to the nearest shore, which is honest but is not bathymetry: no trenches, no shelf,
+      nowhere to go down. Source GEBCO or commit to synthesising one before building this.
 
 ### Air
 - [ ] **Rotary and fixed-wing** — FLY mode exists as a noclip camera; this needs actual flight with

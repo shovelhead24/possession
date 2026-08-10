@@ -89,6 +89,70 @@ uniform bool ocean_enabled = true;
 uniform float sea_level = 0.5;
 uniform vec3 shallow_col : source_color = vec3(0.18, 0.42, 0.45);
 uniform vec3 deep_col : source_color = vec3(0.04, 0.10, 0.20);
+// SWELL. The clamp above made the sea exactly flat, which is why a boat meant nothing: there was no
+// surface to ride. Rather than add a second water mesh (z-fighting against the seabed, a whole extra
+// draw), the clamp becomes sea_level + wave_h() -- the ocean IS the terrain surface, still one mesh,
+// and because sample_h's four gradient neighbours run through the same function the swell gets lit
+// normals and sun glint for free.
+//
+// Three directional sines, wavelengths ~178m / ~140m / ~68m, summing to just over a metre of crest-
+// to-trough. Vertical displacement only: no Gerstner horizontal pinch, because every metre of
+// horizontal displacement is a metre the CPU twin has to reproduce exactly to keep a hull on the
+// drawn surface, and this project has been bitten by CPU/GPU divergence enough times to not spend
+// that risk on a subtlety you cannot see from a boat deck. _wave_h in ring_vibes.gd is the twin and
+// MUST match this function line for line.
+uniform float wave_time = 0.0;
+uniform float wave_amp = 1.0;      // 0 kills the swell without touching the clamp (calm-sea toggle)
+// Ring-space (arc, lat) centre of the swell bubble. Deliberately NOT cam_pos: _ring_pos rebases the
+// world so theta=0 sits under the camera, so cam_pos.x is an offset from the LOD centre while wxz.x
+// is an absolute arc. Comparing them is only valid near arc 0. (The existing morph term does exactly
+// that -- logged in TASKS.md, not fixed here.) The CPU twin needs to agree with this to the metre,
+// so it gets a coordinate that is unambiguous in both.
+uniform vec2 wave_center = vec2(0.0);
+// Waves are drawn near the camera only. The gradient neighbours are node_size/grid apart -- hundreds
+// of metres on a distant node -- so evaluating a 68m wave out there samples noise and the ocean
+// boils with aliased specular. Beyond FAR it fades to the old flat clamp, which is what a distant
+// sea should look like anyway.
+const float WAVE_NEAR = 400.0;
+const float WAVE_FAR = 1200.0;
+
+float wave_h(vec2 wxz, float t) {
+	float w = sin(dot(wxz, vec2(0.031, 0.017)) + t * 0.90) * 0.55;
+	w += sin(dot(wxz, vec2(-0.013, 0.043)) + t * 1.31) * 0.34;
+	w += sin(dot(wxz, vec2(0.071, -0.059)) + t * 1.87) * 0.15;
+	// short chop, ~22m. The three swells above are 68-178m, which from a 3m eye height is a surface
+	// that heaves without ever looking like it has a texture. This is the term you actually see.
+	w += sin(dot(wxz, vec2(0.21, 0.16)) + t * 3.10) * 0.09;
+	return w;
+}
+
+// How much swell survives at this point: none right at the waterline, none far from the camera. The
+// shoal term is what keeps coastlines intact -- a 1m wave against a 0.5m sea level would flood and
+// drain the beach every few seconds and leave the shoreline crawling.
+//
+// SHOAL_D is 0.35m, not the 8m a real shoaling curve wants, because THERE IS NO BATHYMETRY. Terrarium
+// floors its tiles at 0m, so 87% of a coastal patch is exactly 0.0 and the deepest water anywhere on
+// the ring is the 0.5m between the seabed plate and sea_level. Fading over 8m of depth meant
+// smoothstep(0,8,0.5) = 0.02, i.e. a 2cm swell nobody could see -- the waves were being drawn and
+// were invisible. Over 0.35m the same term still feathers the last half-metre into the beach, which
+// is the job it was actually there to do. If real bathymetry ever lands, this goes back to metres.
+const float SHOAL_D = 0.35;
+
+float wave_fade(vec2 wxz, float depth) {
+	return smoothstep(0.0, SHOAL_D, depth)
+		* (1.0 - smoothstep(WAVE_NEAR, WAVE_FAR, distance(wave_center, wxz)));
+}
+
+// The COLOUR fade is a separate, much longer one, and the difference matters. Geometry has to stop at
+// WAVE_FAR because the gradient neighbours are node_size/grid apart out there and a 68m wave sampled
+// every few hundred metres is noise. Colour has no such problem -- it is evaluated per fragment at
+// screen resolution. Sharing the geometry fade meant the swell died 1.2km out, and from a 3m eye
+// height the horizon is ~6km away, so 95% of the visible ocean was beyond it and rendered flat. This
+// still falls off eventually, to keep the crest pattern from moireing at grazing angles.
+float wave_tint_fade(vec2 wxz, float depth) {
+	return smoothstep(0.0, SHOAL_D, depth)
+		* (1.0 - smoothstep(3000.0, 9000.0, distance(wave_center, wxz)));
+}
 // CLOSE-RANGE DETAIL. The satellite drape is 4096^2 over a ~97km patch, i.e. 23.7 m per texel, and
 // Sentinel-2 is only 10m natively -- so no fetch resolution we can afford puts real texture under
 // your feet. Standing on it, one texel covers more ground than the car. The drape's job is the
@@ -226,7 +290,10 @@ float proving_surface(vec2 wxz) {
 
 float sample_h(vec2 wxz) {
 	float h = sample_h_raw(wxz);
-	h = (ocean_enabled && h < sea_level) ? sea_level : h;
+	if (ocean_enabled && h < sea_level) {
+		// the swell only costs its three sines where there is actually sea under the vertex
+		h = sea_level + wave_h(wxz, wave_time) * wave_amp * wave_fade(wxz, sea_level - h);
+	}
 	return h + proving_surface(wxz);   // strip sits on top of clamped ground, matching the CPU path
 }
 
@@ -343,8 +410,19 @@ void fragment() {
 	// first couple of metres so coasts don't end on a hard line.
 	bool is_water = ocean_enabled && v_depth > 0.0;
 	if (is_water) {
-		vec3 water = mix(shallow_col, deep_col, clamp(v_depth / 60.0, 0.0, 1.0));
-		base = mix(base, water, smoothstep(0.0, 2.0, v_depth));
+		// Both of these terms used to be scaled in METRES OF DEPTH -- mix(shallow, deep, depth/60)
+		// and a shoreline feather over smoothstep(0, 2, depth). There is no bathymetry (see wave_fade):
+		// v_depth is 0.5 everywhere there is sea, so the feather evaluated to 0.156 and the ocean was
+		// drawn as 84% raw satellite drape. That is why halong_bay's bay photographed as a white
+		// salt flat rather than as water.
+		//
+		// Colour now comes from the SWELL instead of from depth: crests take shallow_col, troughs
+		// deep_col. It uses data that exists, and it is what makes the waves legible at all -- a 1m
+		// swell on a 68m wavelength is nearly invisible as silhouette from a 3m eye height, but it
+		// reads immediately as moving light and dark across the surface.
+		float wv = wave_h(v_ring, wave_time) * wave_amp * wave_tint_fade(v_ring, v_depth);
+		vec3 water = mix(deep_col, shallow_col, clamp(wv * 0.6 + 0.5, 0.0, 1.0));
+		base = mix(base, water, smoothstep(0.0, SHOAL_D, v_depth));
 	}
 	if (show_lod) {
 		vec3 lod_col = mix(vec3(0.1, 0.9, 0.2), vec3(0.95, 0.2, 0.1), lod_tint);
