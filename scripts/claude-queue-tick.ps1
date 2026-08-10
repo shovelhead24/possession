@@ -109,7 +109,13 @@ visual, and check whether a feature already exists before building it. If the to
 note why in TASKS.md and take the next one. Keep output short.
 '@
 
-$out = & claude -p $prompt --permission-mode acceptEdits 2>&1 | Out-String
+# --allowedTools for git: acceptEdits auto-approves FILE EDITS but not Bash, and passing
+# --permission-mode here overrides the repo's own bypassPermissions in .claude/settings.local.json.
+# So every tick could edit freely and then could not commit -- "git add/commit return 'This command
+# requires approval' in every form I tried" is in this very log, from a tick that did the work and
+# had to abandon it in the working tree. Least privilege: grant git, not the world.
+$out = & claude -p $prompt --permission-mode acceptEdits `
+    --allowedTools 'Bash(git add:*)' 'Bash(git commit:*)' 'Bash(git status:*)' 'Bash(git diff:*)' 2>&1 | Out-String
 Add-Content -Path $log -Value $out -Encoding utf8
 
 Remove-Item $lock -Force -ErrorAction SilentlyContinue
@@ -117,11 +123,30 @@ Remove-Item $lock -Force -ErrorAction SilentlyContinue
 # --- did we run out of quota? ---------------------------------------------------------------
 # Matched loosely on purpose: the exact wording changes, and a false positive only costs one
 # skipped cycle whereas a false negative means hammering a limit we have already hit.
-if ($out -match '(?i)(usage limit|rate limit|quota|too many requests|limit reached|resets? (at|in))') {
-    $resume = (Get-Date).AddHours(5)                       # session limits reset on ~5h windows
+# "session limit" was NOT in this list, and the live wording is
+#     You've hit your session limit . resets 8:40pm (Europe/Dublin)
+# which also fails 'resets? (at|in)' because there is no preposition. So on 2026-08-10 the tick hit
+# the wall every 30 minutes from ~17:00 to 21:00, matched nothing, recorded no cooldown, and logged
+# "tick done" nine times in a row while doing absolutely nothing. Match the clock time it actually
+# prints, and only fall back to the 5h guess when there is no time to read.
+if ($out -match '(?i)(session limit|usage limit|rate limit|quota|too many requests|limit reached|resets?[ :])') {
+    $resume = (Get-Date).AddHours(5)                       # last resort: session windows are ~5h
     # NOTE: PowerShell needs elseif on the SAME line as the closing brace. On its own line it
     # parses as a separate statement and silently swallows the rest of the file.
-    if ($out -match '(?i)resets? in\s+(\d+)\s*hr') {
+    if ($out -match '(?i)resets?\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)') {
+        $hh = [int]$Matches[1]
+        $mm = 0
+        if ($Matches[2]) { $mm = [int]$Matches[2] }
+        if ($Matches[3] -match '(?i)pm' -and $hh -lt 12) { $hh += 12 }
+        if ($Matches[3] -match '(?i)am' -and $hh -eq 12) { $hh = 0 }
+        $resume = (Get-Date).Date.AddHours($hh).AddMinutes($mm + 2)
+        # A reset time already in the past means the window has ALREADY rolled over -- we are
+        # reading the message moments after it was printed. Do not add a day: that would stand the
+        # queue down for 24 hours over a limit that has just expired. Wait a token 15 minutes, which
+        # also covers the midnight-wrap case ("resets 12:10am" seen at 23:50) at the cost of one
+        # extra cycle rather than a lost day.
+        if ($resume -lt (Get-Date)) { $resume = (Get-Date).AddMinutes(15) }
+    } elseif ($out -match '(?i)resets? in\s+(\d+)\s*hr') {
         $resume = (Get-Date).AddHours([int]$Matches[1] + 1)
     } elseif ($out -match '(?i)resets? in\s+(\d+)\s*min') {
         $resume = (Get-Date).AddMinutes([int]$Matches[1] + 5)
@@ -146,5 +171,14 @@ if ($after.Count -gt 0) {
     exit 0
 }
 
+# --- did it actually DO anything? -----------------------------------------------------------
+# "tick done" used to be printed unconditionally, so a run that achieved nothing was indistinguishable
+# in the log from one that shipped a feature. Nine consecutive no-ops on 2026-08-10 all read as
+# success. If the open count did not move, say so plainly -- it is the difference between "the queue
+# is progressing" and "the queue has been spinning for four hours".
 $left = (Select-String -Path "$repo\TASKS.md" -Pattern '^- \[ \]' -ErrorAction SilentlyContinue).Count
+if ($left -ge $open) {
+    Say "=== tick did NOT complete an item (${open} -> ${left} open) -- see the output above ==="
+    exit 0
+}
 Say "=== tick done (${left} items left) ==="

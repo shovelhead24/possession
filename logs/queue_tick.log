@@ -1937,3 +1937,5 @@ git commit -F - .decisions/terrain.md TASKS.md game/mocks/ring_vibes.gd game/moc
 2026-08-10 21:20:19  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
 2026-08-10 21:20:19           M scripts/claude-queue-tick.ps1
 2026-08-10 21:20:59  skip: queue PAUSED. testing the kill switch
+2026-08-10 21:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-10 21:29:36           M scripts/claude-queue-tick.ps1
