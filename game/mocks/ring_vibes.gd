@@ -4388,11 +4388,13 @@ func _loco_sub(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
 	_car_arc += cos(_car_heading) * _car_speed * delta
 	_car_lat += sin(_car_heading) * _car_speed * delta
 
-# Air-flight class constants (TASKS.md "Air"), like the hover/boat/sub terms. A naive but honest model: lift
-# vs weight decides whether it holds altitude, thinning air sets the ceiling, ground effect floats it near the
-# deck. The ring-frame ballistics subtlety (free fall while the ring spins under you) is the WEAPONS programme's
-# job -- a flyer under power feels a plain down-pull, so AIR_GRAVITY is a class constant like SUIT_GRAVITY.
-const AIR_GRAVITY := 9.0          # steady pull toward the surface, m/s^2
+# Air-flight class constants (TASKS.md "Air" / "Ring-specific flight"), like the hover/boat/sub terms. A naive but
+# honest model: lift vs weight decides whether it holds altitude, thinning air sets the ceiling, ground effect
+# floats it near the deck. RING-SPECIFIC: gravity here is SPIN gravity (omega^2 * r), so its magnitude falls off
+# with altitude toward the axis and reverses past it -- see _loco_air. AIR_GRAVITY is therefore the value at the
+# SURFACE (r = _radius()). The sideways Coriolis drift of an UNPOWERED projectile (free fall while the ring spins
+# under it) is a separate effect and stays the WEAPONS programme's job -- a wing under power does not feel it.
+const AIR_GRAVITY := 9.0          # SURFACE spin gravity (omega^2 * R), m/s^2; scaled by (1 - alt/R) in _loco_air
 const AIR_LIFT := 11.0            # lift authority scale, tuned so a fixed-wing near stall / a rotor at neutral holds level
 const AIR_VDRAG := 0.8            # vertical-speed damping, so climb and sink settle rather than run away
 const AIR_GROUND_EFFECT := 0.6    # extra lift fraction riding the cushion at zero height, faded out over a wingspan
@@ -4440,8 +4442,15 @@ func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator
 	var ge := 1.0 + AIR_GROUND_EFFECT * clampf(1.0 - _altitude / span, 0.0, 1.0)
 	# THINNING AIR: lift falls off with the same curve the sky thins by, so the air runs out overhead
 	var lift := AIR_LIFT * maxf(d.lift, 0.0) * _air_density(_altitude) * lift_src * ge
-	# vertical: lift up, gravity down, plus the pilot's elevator, all damped so it settles
-	_vspeed += (lift - AIR_GRAVITY + elevator * AIR_ELEVATOR) * delta
+	# vertical: lift up, SPIN gravity down, plus the pilot's elevator, all damped so it settles. RING-SPECIFIC
+	# (TASKS.md "Ring-specific flight"): "up" is toward the axis, and spin gravity is omega^2*r, so its pull
+	# weakens as you climb toward the axis (r = R - alt): g = AIR_GRAVITY*(1 - alt/R). It reaches zero at the
+	# axis (alt = R -> weightless) and goes NEGATIVE past it, so the term flips sign and pulls you on across to
+	# the far surface -- "a long enough climb crosses to the far side". Within the atmosphere the air (and thus
+	# lift) runs out at ~48km, far below the ~477km axis, so a WING can't actually reach it -- that crossing is
+	# the orbital items' job -- but the flight frame is now correct all the way up, not a flat planet down-pull.
+	var g := AIR_GRAVITY * (1.0 - _altitude / _radius())
+	_vspeed += (lift - g + elevator * AIR_ELEVATOR) * delta
 	_vspeed *= 1.0 - AIR_VDRAG * delta
 	# ENERGY EXCHANGE (fixed-wing): a climb is paid for in airspeed, a dive buys it back -- the coupling that
 	# makes stall a live threat rather than a number. A rotor has no wing to trade, so it is exempt.

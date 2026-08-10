@@ -445,9 +445,26 @@ Prerequisite for everything below.
       flight handling can't be judged from a screenshot anyway (the reason the proving ground exists). Cycle
       to `rotor`/`airplane` ([L]) on the laptop: the rotor should lift on the spot with Space, the airplane
       should need a run-up to unstick and stall (nose-drop) if you climb too steep and bleed airspeed.
-- [ ] **Ring-specific flight.** Lift falls off as the atmosphere thins with altitude, and "up" is
+- [x] **Ring-specific flight.** Lift falls off as the atmosphere thins with altitude, and "up" is
       toward the axis everywhere — a long enough climb crosses to the far side. Worth doing properly
       because no other setting has this.
+      Two of the three parts already existed and were confirmed, not rebuilt: thinning-air lift is
+      `_air_density` (`SPACE_LO..SPACE_HI`, the same smoothstep the sky thins by), and "up toward the
+      axis" is the `_ring_up(base)` offset the flyer already rides. The MISSING ring-specific piece was
+      gravity: `AIR_GRAVITY` was a flat 9.0 "plain down-pull" (its old comment deferred all ring-frame
+      physics to the weapons programme). Now it is SPIN gravity — `g = AIR_GRAVITY*(1 - _altitude/R)`
+      in `_loco_air` — so the pull weakens as you climb toward the axis (r = R−alt), hits zero at the
+      axis (alt = R, weightless), and goes NEGATIVE past it, flipping the term so it pulls you on across
+      to the FAR surface. That is "a long enough climb crosses to the far side", now true in the model
+      rather than aspirational. `AIR_GRAVITY` is redocumented as the value at the surface. Scoped to
+      `_loco_air` only (no other class reads air gravity, so the no-change gate holds); the sideways
+      Coriolis drift of an UNPOWERED projectile stays the weapons programme's job — a wing under power
+      doesn't feel it. Honest limit: within atmosphere lift dies at ~48km, far below the ~477km axis, so
+      a wing physically can't reach the crossing — that handoff is the two orbital items below. NOT
+      run-verified: the Godot binary is out-of-repo/gated here, so no live flight — and flight handling
+      can't be judged from a screenshot anyway (the reason the proving ground exists), and the effect
+      only bites near the axis, far past any shot. Fly the `rotor`/`airplane` ([L]) high on the laptop
+      to feel climb get easier as gravity thins with the air.
 
 ### Orbital and beyond
 - [ ] **Leaving the atmosphere.** Already have the visual transition at 14-48km. Needs the flight
