@@ -1,4 +1,10 @@
 extends Node3D
+
+# VehicleDef is preloaded, not referenced by class_name. A `class_name` only resolves once the
+# Godot EDITOR has registered it in the global class cache, and this project runs headless --
+# so the type was unresolvable and the whole script failed to parse. Exactly the failure the
+# hedge texture had: a new file that silently needs the editor to have opened it once.
+const VehicleDef = preload("res://mocks/vehicle_def.gd")
 # Ring scale vibe mock — issue #9. Standalone: open this scene, F6.
 # Honest geometry: camera stands on the interior of a cylinder of radius R.
 # Config keys: 1/2/3 circumference, Q/W/E width, Up/Down haze, T sun speed, P pause sun, F flip sun, R rebuild.
@@ -392,6 +398,13 @@ const VEHICLE_LEN := 5.2          # metres nose-to-tail; the box car is 4.2, the
 # END is the nose. Eyeball logs/shots/vehicle_warthog.png; if it drives tail-first, set this to PI.
 const WARTHOG_YAW := 0.0
 var _wheel_spin := 0.0
+var _gait_phase := 0.0            # legged stride cycle, advances with distance travelled (see _loco_legged)
+var _stamina := 1.0               # 1 = fresh, 0 = spent; a mount that tires (horse) drains this galloping
+var _spooked := 0.0               # 0 = calm, 1 = bolting; ramps up while a threat closes (see _loco_legged)
+var _jump_h := 0.0                # metres above the ground point; >0 = airborne (powered suit only, see _drive_tick)
+var _jump_v := 0.0                # vertical velocity along ring-up, m/s
+var _land_dip := 0.0              # hard-landing body crouch, scaled by impact speed, decays back to 0
+var _sprinting := false           # sprint input held this tick (suit); _loco_legged reads it for the burst
 var _dust: GPUParticles3D = null
 var _offroad := 0.0               # 0 = on tarmac, 1 = fully off it
 var _car_arc := 0.0
@@ -422,6 +435,17 @@ var _foliage_shader: Shader = null
 var _tree_ground := PackedVector3Array()
 var _tree_basis: Array[Basis] = []
 var _tree_variant := PackedInt32Array()
+# Trample state (TASKS.md "Elephants"). _tree_down is a set of flattened tree indices (into the arrays
+# above), skipped by _update_tree_lod when it rebuilds the MultiMesh buckets; _hedge_down is a list of
+# ring (arc,lat) crush points the ribbon rebuild leaves gaps around. Both are only ever written by a
+# vehicle with trample > 0 (the elephant) -- see _do_trample. _tree_down clears on rescatter (the indices
+# no longer point at the same trees); _hedge_down is capped so old crushes regrow.
+var _tree_down := {}
+var _hedge_down: Array[Vector2] = []
+var _trample_prev := Vector3.ZERO
+const TRAMPLE_TREE_MAX_H := 9.6      # trees taller than this stand (fir pack's proxy for "too big to push over")
+const TRAMPLE_HEDGE_MAX := 48        # cap on remembered hedge crush points; oldest regrows
+const TRAMPLE_HEDGE_R2 := 49.0       # (7m)^2 -- a crush point clears hedge spans within 7m, covering the verge offset
 var _tree_lod_dist := [20.0, 35.0, 55.0, 220.0]
 var _tree_lod_scale := 1.0        # [G]/[B] tune all bands live
 var _tree_fly_mult := 14.0        # FLY mode reaches this much further on the billboard tier
@@ -802,6 +826,26 @@ func _build_dem_texture() -> void:
 
 const ALIGN_N := 11               # grid resolution per patch for --align
 
+# What a frame actually costs, in milliseconds, with nothing else happening.
+#
+# This used to be Engine.get_frames_per_second(), which is a rolling average over the last SECOND --
+# and the second before every shot contains a synchronous _scatter_trees, _refill_buildings,
+# _build_hedge_ribbon and the previous shot's PNG encode. It was reporting the rebuild stall as if it
+# were the render cost, which is why the same 619,696 triangles scored 18 fps from one camera and 1
+# fps from the next. Every fps figure in JOURNAL.md before 2026-08-10 came from that and means
+# nothing.
+#
+# Render a fixed number of frames back to back and time them. Discard the first: it pays for whatever
+# shader variants this camera angle just touched, and that cost is real but it is a one-off, not the
+# steady state we are budgeting against.
+func _measure_frame_ms(frames: int = 24) -> String:
+	await RenderingServer.frame_post_draw
+	var t0 := Time.get_ticks_usec()
+	for i in frames:
+		await RenderingServer.frame_post_draw
+	var ms := float(Time.get_ticks_usec() - t0) / 1000.0 / float(frames)
+	return "%5.1fms (%d fps)" % [ms, int(round(1000.0 / maxf(ms, 0.001)))]
+
 func _tri_breakdown() -> String:
 	# Where the triangles actually go. Every cut so far has been aimed by guesswork at whatever was
 	# most visible in the last screenshot; this counts instances against their mesh so the biggest
@@ -868,6 +912,7 @@ const PROVE_PHASES := [
 
 var _prove_throttle := 0.0        # scripted input; _drive_tick reads these when _proving is set
 var _prove_steer := 0.0
+var _prove_offroad := -1.0        # -1 = derive from position; >=0 = pin (proving pins per phase)
 var _proving := false
 var _susp_travel := 0.0           # max compression seen this phase
 var _susp_airborne := 0
@@ -1016,6 +1061,7 @@ func _prove_run() -> void:
 	_proving = false
 	_prove_throttle = 0.0
 	_prove_steer = 0.0
+	_prove_offroad = -1.0
 	print("\nPROVING done")
 	get_tree().quit()
 
@@ -1047,12 +1093,18 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_car_arc = start_arc
 	_car_lat = start_lat
 	_car_speed = 0.0
+	_stamina = 1.0        # each phase measures a fresh mount, so the table isn't skewed by the prior phase
+	_spooked = 0.0
 	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false))
 	_car_heading = road_heading if pure_road else 0.0
-	# Seed the drag term from the ground we ACTUALLY start on. It was carried over from the previous
-	# phase and ramped over 1/3s, letting "rough" overshoot to 17.5 (an on-road transient) before it
-	# settled -- the reading that looked backwards next to accel's off-road 9.8.
-	_offroad = 0.0 if _road_cells.has(Vector2i(int(floor(_car_arc / 8.0)), int(floor(_car_lat / 8.0)))) else 1.0
+	# PIN the drag term to the phase's intended surface, don't derive it from live position. Deriving
+	# it meant a 14s full-throttle run drove off the 8m ribbon within a car length (a straight tangent
+	# can't follow a curving polyline), so "accel" settled at the OFF-road terminal (9.8) and the
+	# on-road figure was never measured. Pinning makes the course identical and the table comparable,
+	# which is the whole point of the harness. On-road for accel/brake/circle and the synthetic bump
+	# strip (so it carries enough speed to cross every obstacle); off-road for rough and climb.
+	_prove_offroad = 1.0 if (bool(phase.get("offroad", false)) or bool(phase.get("uphill", false))) else 0.0
+	_offroad = _prove_offroad
 	if bool(phase.get("uphill", false)):
 		# aim at the steepest uphill within a short sweep, so "grade" means something
 		var best := -1.0
@@ -1069,7 +1121,10 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	var t := 0.0
 	var top := 0.0
 	var start := Vector2(_car_arc, _car_lat)
-	var h_start := _terrain_h(_car_arc, _car_lat)
+	# jolt is the ground the WHEELS ride, which on the strip is base terrain PLUS the bump profile.
+	# Measuring _terrain_h alone meant the calibrated strip (its whole purpose) never showed in the
+	# jolt column -- it read the flat base under the strip and reported ~0.
+	var h_start := _terrain_h(_car_arc, _car_lat) + _proving_surface(_car_arc, _car_lat)
 	var jolt := 0.0
 	_susp_travel = 0.0
 	var air := 0
@@ -1083,7 +1138,7 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 		var dt: float = get_process_delta_time()
 		t += dt
 		top = maxf(top, absf(_car_speed))
-		var h := _terrain_h(_car_arc, _car_lat)
+		var h := _terrain_h(_car_arc, _car_lat) + _proving_surface(_car_arc, _car_lat)
 		jolt = maxf(jolt, absf(h - prev_h))
 		air = maxi(air, _susp_airborne)
 		prev_h = h
@@ -1198,10 +1253,10 @@ func _shot_run() -> void:
 			var path := "%s/%s_%s.png" % [dir, pname, shot["n"]]
 			img.save_png(path)
 			print("      " + _tri_breakdown())
-			print("SHOT %-18s %-7s tris=%d fps=%d  %s" % [
+			print("SHOT %-18s %-7s tris=%d %s  %s" % [
 				pname, shot["n"],
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
-				int(Engine.get_frames_per_second()), path])
+				await _measure_frame_ms(), path])
 	# VEHICLES. The patch loop above never enters DRIVE, so an imported car model could be sideways,
 	# giant or underground and no frame would catch it. Enter DRIVE at home, let the chase cam settle,
 	# and shoot each vehicle from behind -- the framing that shows orientation, scale and grounding.
@@ -2653,6 +2708,9 @@ func _build_hedge_ribbon() -> void:
 						# same gate is in the same place every rebuild rather than flickering as you drive.
 						if _hash2(floor(pa.x / 37.0), floor(pa.y / 37.0)) < float(kind["gap"]):
 							continue
+						# trampled flat by an elephant (TASKS.md "Elephants") -- leave a gap in the ribbon
+						if _hedge_trampled(pa):
+							continue
 						st.set_color(kind["col"])
 						_hedge_span(st, pa, pb, rng)
 						quads += 4
@@ -2674,6 +2732,14 @@ func _build_hedge_ribbon() -> void:
 
 func _hash2(a: float, b: float) -> float:
 	return fposmod(sin(a * 127.1 + b * 311.7) * 43758.5453, 1.0)
+
+func _hedge_trampled(p: Vector2) -> bool:
+	# has an elephant crushed the hedge here? _hedge_down is small (capped at TRAMPLE_HEDGE_MAX), so a
+	# linear scan per span is cheap and only runs at all once a trample point exists.
+	for q in _hedge_down:
+		if p.distance_squared_to(q) < TRAMPLE_HEDGE_R2:
+			return true
+	return false
 
 func _hedge_kind(arc: float, lat: float) -> Dictionary:
 	# what bounds a road here. Deserts get a low stone wall or nothing, dry country gets gappy
@@ -2782,6 +2848,51 @@ func _sp_blob(st: SurfaceTool, centre: Vector3, rx: float, ry: float, col: Color
 			st.set_color(col)
 			st.add_vertex(v)
 
+func _species_billboard_tex(kind: String) -> ImageTexture:
+	# An alpha silhouette for the far-LOD quad. Without one the impostor is a SOLID GREEN RECTANGLE:
+	# the imported fir pack gets away with a flat quad because its material carries a cutout that
+	# carves a tree shape out of it, and the generated species inherited the quad without the cutout.
+	# Drawn rather than imported, same as everything else here.
+	var res := 64
+	var img := Image.create(res, res, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	var leaf := Color(0.22, 0.36, 0.17)
+	for y in res:
+		for x in res:
+			var u := (float(x) / float(res)) * 2.0 - 1.0     # -1..1 across
+			var v := 1.0 - float(y) / float(res)             # 0 at base, 1 at top
+			var on := false
+			var c := leaf
+			match kind:
+				"palm":
+					# bare trunk most of the way up, then fronds arcing out and down from the crown
+					if absf(u) < 0.045 and v < 0.78:
+						on = true
+						c = Color(0.30, 0.22, 0.15)
+					elif v > 0.60:
+						var t := (v - 0.78) / 0.30
+						if absf(u) < 0.62 - absf(t) * 0.9 and absf(u) > 0.02:
+							# thin out toward the tips so it does not read as a fan
+							on = absf(sin(u * 11.0)) > 0.18 * (absf(u) / 0.62)
+				"broadleaf":
+					if absf(u) < 0.06 and v < 0.42:
+						on = true
+						c = Color(0.30, 0.22, 0.15)
+					else:
+						var dy := (v - 0.68) / 0.34
+						var dx := u / 0.62
+						on = dx * dx + dy * dy < 1.0
+				_:
+					var dy2 := (v - 0.30) / 0.32
+					var dx2 := u / 0.78
+					on = dx2 * dx2 + dy2 * dy2 < 1.0
+			if on:
+				# a little vertical shading so the silhouette is not a flat cut-out
+				var sh: float = 0.72 + 0.34 * v
+				img.set_pixel(x, y, Color(c.r * sh, c.g * sh, c.b * sh, 1.0))
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
 func _species_mesh(kind: String, variant: int, lod: int) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -2798,9 +2909,13 @@ func _species_mesh(kind: String, variant: int, lod: int) -> ArrayMesh:
 		for pair in [[Vector3(-bw, 0, 0), Vector3(bw, 0, 0)], [Vector3(0, 0, -bw), Vector3(0, 0, bw)]]:
 			var a: Vector3 = pair[0]
 			var b: Vector3 = pair[1]
-			for v in [a, a + Vector3(0, bh, 0), b, b, a + Vector3(0, bh, 0), b + Vector3(0, bh, 0)]:
-				st.set_color(bc)
-				st.add_vertex(v)
+			var quad := [a, a + Vector3(0, bh, 0), b, b, a + Vector3(0, bh, 0), b + Vector3(0, bh, 0)]
+			var uvs := [Vector2(0, 1), Vector2(0, 0), Vector2(1, 1),
+				Vector2(1, 1), Vector2(0, 0), Vector2(1, 0)]
+			for qi in quad.size():
+				st.set_color(Color(1, 1, 1))
+				st.set_uv(uvs[qi])
+				st.add_vertex(quad[qi])
 		st.generate_normals()
 		return st.commit()
 	# nearer tiers thin the segment count
@@ -2858,12 +2973,21 @@ func _apply_species(kind: String) -> void:
 	mat.vertex_color_use_as_albedo = true
 	mat.roughness = 1.0
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	# separate material for the far tier: it needs the alpha silhouette and a cutout, or the
+	# impostor is a solid rectangle standing where a tree should be
+	var bill := StandardMaterial3D.new()
+	bill.albedo_texture = _species_billboard_tex(kind)
+	bill.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	bill.alpha_scissor_threshold = 0.5
+	bill.vertex_color_use_as_albedo = true
+	bill.roughness = 1.0
+	bill.cull_mode = BaseMaterial3D.CULL_DISABLED
 	for vi in _tree_mm.size():
 		for l in TREE_LODS:
 			if _tree_mm[vi][l] == null:
 				continue
 			var m := _species_mesh(kind, vi, l)
-			m.surface_set_material(0, mat)
+			m.surface_set_material(0, bill if l >= TREE_LODS - 1 else mat)
 			_tree_mm[vi][l].multimesh.mesh = m
 	print("ring_vibes: tree species -> %s" % kind)
 
@@ -2876,6 +3000,7 @@ func _scatter_trees() -> void:
 	_tree_ground = PackedVector3Array()
 	_tree_basis = []
 	_tree_variant = PackedInt32Array()
+	_tree_down = {}   # a fresh scatter is a different patch of woodland; trampled indices no longer apply
 	# scatter around wherever the camera IS, not around spawn -- on a 3000km ring the forest has to
 	# travel with you. Density and treeline come from the local biome, so the salt flat and the
 	# dunes are genuinely bare rather than sprouting Irish conifers.
@@ -3280,6 +3405,8 @@ func _update_tree_lod(force := false) -> void:
 			per.append([])
 		buckets.append(per)
 	for i in _tree_ground.size():
+		if _tree_down.has(i):
+			continue   # flattened by an elephant (TASKS.md "Elephants") -- omitted from every bucket
 		var dist2 := cam.distance_squared_to(_tree_ground[i])
 		var lod := -1
 		for k in TREE_LODS:
@@ -3373,15 +3500,22 @@ func _make_dust() -> void:
 	_dust.emitting = false
 	add_child(_dust)
 
-func _make_car() -> Node3D:
+func _make_car(d: VehicleDef = null) -> Node3D:
+	# The box is both the default car AND the placeholder for any def without a bespoke mesh, so it
+	# takes its length and tint from the def -- a 4.2m green box for `box`, a longer khaki one for the
+	# warthog when its GLTF is absent. Wheelbase scales off the length (was hardcoded 1.4 = 4.2/3) so
+	# the wheels stay under the corners at any size. Pass no def and it reproduces the original box.
+	var length: float = d.length if d else 4.2
+	var tint: Color = d.tint if d else Color(0.33, 0.36, 0.30)
+	var wz: float = length / 3.0
 	_wheels = []
 	var root := Node3D.new()
 	var body := MeshInstance3D.new()
 	var bm := BoxMesh.new()
-	bm.size = Vector3(2.0, 1.0, 4.2)
+	bm.size = Vector3(2.0, 1.0, length)
 	body.mesh = bm
 	var bmat := StandardMaterial3D.new()
-	bmat.albedo_color = Color(0.33, 0.36, 0.30)
+	bmat.albedo_color = tint
 	body.material_override = bmat
 	body.position.y = 0.9
 	root.add_child(body)
@@ -3391,12 +3525,12 @@ func _make_car() -> Node3D:
 	glass.mesh = gm
 	var gmat := StandardMaterial3D.new()
 	gmat.albedo_color = Color(0.45, 0.75, 0.80)  # frutiger windscreen, obviously
+	glass.position = Vector3(0, 1.55, -0.12 * length)
 	glass.material_override = gmat
-	glass.position = Vector3(0, 1.55, -0.5)
 	root.add_child(glass)
 	var wmat := StandardMaterial3D.new()
 	wmat.albedo_color = Color(0.10, 0.10, 0.10)
-	for wp in [Vector3(-1.05, 0.45, 1.4), Vector3(1.05, 0.45, 1.4), Vector3(-1.05, 0.45, -1.4), Vector3(1.05, 0.45, -1.4)]:
+	for wp in [Vector3(-1.05, 0.45, wz), Vector3(1.05, 0.45, wz), Vector3(-1.05, 0.45, -wz), Vector3(1.05, 0.45, -wz)]:
 		var wheel := MeshInstance3D.new()
 		var cm := CylinderMesh.new()
 		cm.height = 0.35
@@ -3420,19 +3554,29 @@ func _make_car() -> Node3D:
 	return root
 
 func _build_vehicles() -> void:
-	# One box car was the whole fleet; the halo_warthog model sat unused in assets/. Build both once
-	# and let [L] swap between them in DRIVE. The box keeps its rolling/steering wheels; the warthog
-	# is a proper silhouette. The asset is gitignored (local only), so a machine without it just gets
-	# the box -- hence the box stays index 0 and the fallback.
+	# The DEFINITION TABLE is the roster: build one entry per VEHICLE_ROW so [L] cycles every vehicle
+	# that exists as data, not just the ones that happen to have art. A row with a bespoke mesh (the
+	# warthog GLTF) gets it; every other row -- and the warthog on a machine without the gitignored
+	# pack -- gets a placeholder box sized and tinted from its def, still fully drivable on its own
+	# handling. That is the framing for the whole 40-vehicle programme: a data row plus a mesh, and the
+	# mesh is optional to start. The box is index 0, so it stays the fallback current() returns to.
 	if not _vehicles.is_empty():
 		return
-	var box := _make_car()          # sets _wheels as a side effect
-	box.visible = false
-	_vehicles.append({"root": box, "wheels": _wheels, "name": "box"})
-	var hog := _make_warthog()
-	if hog:
-		hog.visible = false
-		_vehicles.append({"root": hog, "wheels": _collect_wheels(hog), "name": "warthog"})
+	if _vehicle_defs.is_empty():
+		_build_vehicle_defs()
+	for name in VEHICLE_ROWS:
+		var d: VehicleDef = _vehicle_defs[name]
+		var root: Node3D = null
+		var wheels: Array = []
+		if name == "warthog" and ResourceLoader.exists(WARTHOG_PACK):
+			root = _make_warthog()               # may still be null if the load fails
+			if root != null:
+				wheels = _collect_wheels(root)
+		if root == null:
+			root = _make_car(d)                  # placeholder box, sized+tinted per def; sets _wheels
+			wheels = _wheels
+		root.visible = false
+		_vehicles.append({"root": root, "wheels": wheels, "name": name})
 
 func _select_vehicle(i: int) -> void:
 	if _vehicles.is_empty():
@@ -3443,6 +3587,11 @@ func _select_vehicle(i: int) -> void:
 	var e: Dictionary = _vehicles[_veh_idx]
 	_car = e["root"]
 	_wheels = e["wheels"]
+	_stamina = 1.0        # a mount you climb onto is fresh; only the horse row reads this
+	_spooked = 0.0
+	_jump_h = 0.0         # never leave the suit airborne when cycling off it; only the suit row jumps
+	_jump_v = 0.0
+	_land_dip = 0.0
 	_update_hud()
 
 func _model_aabb(root_node: Node) -> AABB:
@@ -3562,18 +3711,215 @@ func _ring_up(pos: Vector3) -> Vector3:
 # ---------------------------------------------------------------------------
 const VEHICLE_ROWS := {
 	"box": {
+		# FOR: the runabout you always have. Light and quick to turn on the tarmac, but the first
+		# vehicle you own and the one you WANT to trade up from once the road runs out -- it washes
+		# out badly off the carriageway, which is the whole reason the warthog exists.
+		"purpose": "the runabout you start with — nimble on-road, washes out in the rough",
 		"loco": "wheeled", "mass": 1200.0, "power": 9.0, "brake": 12.0, "top": 22.0, "reverse": -6.0,
 		"drag": 0.35, "offroad_drag": 0.55, "turn": 1.5, "offroad_turn": 0.45,
-		"grip_speed": 12.0, "ride": 0.40, "wheel_r": 0.45,
+		"grip_speed": 12.0, "ride": 0.40, "wheel_r": 0.45, "length": 4.2, "tint": Color(0.33, 0.36, 0.30),
 		"susp_travel": 0.34, "susp_stiff": 34.0, "susp_damp": 6.0, "susp_sag": 0.55,
 	},
 	"warthog": {
-		# heavier and more powerful, softer springs, better off the tarmac -- which is the whole
-		# point of having more than one: they should not measure the same on the proving course.
+		# FOR: the off-roader. Heavier and more powerful, softer springs, keeps its grip where the
+		# box lets go -- so it measures worse on the road and far better off it, which is the whole
+		# point of having more than one: they must not read the same on the proving course.
+		"purpose": "the off-roader — heavy and sure-footed where the box lets go",
 		"loco": "wheeled", "mass": 2400.0, "power": 12.0, "brake": 14.0, "top": 27.0, "reverse": -7.0,
 		"drag": 0.30, "offroad_drag": 0.34, "turn": 1.3, "offroad_turn": 0.20,
-		"grip_speed": 14.0, "ride": 0.55, "wheel_r": 0.52,
+		"grip_speed": 14.0, "ride": 0.55, "wheel_r": 0.52, "length": 5.2, "tint": Color(0.40, 0.44, 0.28),
 		"susp_travel": 0.46, "susp_stiff": 26.0, "susp_damp": 5.0, "susp_sag": 0.55,
+	},
+	# --- Wheeled variants (TASKS.md "Ground"). Same _loco_wheeled model, pure data. They earn their
+	# place by spreading the two axes the class actually has: on-road speed vs how hard they wash out
+	# once the carriageway ends (offroad_drag/offroad_turn, driven by the _road_cells test). The box
+	# and warthog sit in the middle; these push to the corners.
+	"sportscar": {
+		# FOR: eating the tarmac between towns. Fastest thing on a road and the most punished off it --
+		# low, stiff, wide slicks that need speed to bite and find nothing in the dirt. The reason you
+		# stay on the carriageway; the opposite end of the axis from the tractor.
+		"purpose": "the road car — devours tarmac, helpless the moment the road ends",
+		"loco": "wheeled", "mass": 1050.0, "power": 16.0, "brake": 18.0, "top": 42.0, "reverse": -6.0,
+		"drag": 0.22, "offroad_drag": 0.95, "turn": 1.8, "offroad_turn": 0.75,
+		"grip_speed": 18.0, "ride": 0.26, "wheel_r": 0.34, "length": 4.4, "tint": Color(0.55, 0.18, 0.16),
+		"susp_travel": 0.18, "susp_stiff": 48.0, "susp_damp": 8.0, "susp_sag": 0.50,
+	},
+	"sixby": {
+		# FOR: going where the warthog hesitates. Six wheels, tall and slow, barely registers the road
+		# ending -- keeps almost all its grip and speed off the tarmac. Ponderous to turn; you point it
+		# and it goes. (Placeholder box shows four wheels for now; the geometry is a mesh job.)
+		"purpose": "the heavy 6x6 — slow and unstoppable, hardly notices the road ending",
+		"loco": "wheeled", "mass": 4200.0, "power": 14.0, "brake": 16.0, "top": 24.0, "reverse": -6.0,
+		"drag": 0.34, "offroad_drag": 0.22, "turn": 1.0, "offroad_turn": 0.12,
+		"grip_speed": 12.0, "ride": 0.70, "wheel_r": 0.62, "length": 7.0, "tint": Color(0.52, 0.44, 0.30),
+		"susp_travel": 0.55, "susp_stiff": 30.0, "susp_damp": 6.0, "susp_sag": 0.55,
+	},
+	"bike": {
+		# FOR: the scout. Lightest, sharpest-turning, bites at low speed so it flicks between obstacles;
+		# quick off the line but nervous everywhere -- decent in the rough only because it is small, not
+		# because it is planted. The vehicle you take to look, not to fight.
+		"purpose": "the scout bike — nimblest and quickest to turn, twitchy and fragile",
+		"loco": "wheeled", "mass": 220.0, "power": 14.0, "brake": 13.0, "top": 34.0, "reverse": -4.0,
+		"drag": 0.28, "offroad_drag": 0.60, "turn": 2.4, "offroad_turn": 0.55,
+		"grip_speed": 8.0, "ride": 0.35, "wheel_r": 0.33, "length": 2.1, "tint": Color(0.18, 0.18, 0.22),
+		"susp_travel": 0.30, "susp_stiff": 30.0, "susp_damp": 5.0, "susp_sag": 0.50,
+	},
+	"tractor": {
+		# FOR: the workhorse. Slowest top speed of the lot and it does not care -- huge lugged tyres
+		# give it the best grip off the tarmac of anything wheeled, so it plods across ploughed ground
+		# the sportscar would bog in. Torque over speed; the honest opposite of the road car.
+		"purpose": "the tractor — crawls, but crosses soft ground nothing else will",
+		"loco": "wheeled", "mass": 3200.0, "power": 10.0, "brake": 12.0, "top": 12.0, "reverse": -4.0,
+		"drag": 0.40, "offroad_drag": 0.18, "turn": 1.2, "offroad_turn": 0.10,
+		"grip_speed": 6.0, "ride": 0.75, "wheel_r": 0.80, "length": 4.0, "tint": Color(0.30, 0.45, 0.20),
+		"susp_travel": 0.40, "susp_stiff": 24.0, "susp_damp": 5.0, "susp_sag": 0.60,
+	},
+	"hauler": {
+		# FOR: moving mass down a road. Longest and heaviest, a wide turning arc and weak brakes for its
+		# weight, and it washes out almost as badly as the sportscar the instant it leaves the tarmac --
+		# a load has no traction in dirt. The reason roads matter; needs room and hates the rough.
+		"purpose": "the articulated hauler — road-bound freight, ponderous and wide-turning",
+		"loco": "wheeled", "mass": 14000.0, "power": 11.0, "brake": 10.0, "top": 26.0, "reverse": -4.0,
+		"drag": 0.30, "offroad_drag": 0.85, "turn": 0.7, "offroad_turn": 0.55,
+		"grip_speed": 16.0, "ride": 0.60, "wheel_r": 0.55, "length": 14.0, "tint": Color(0.30, 0.36, 0.46),
+		"susp_travel": 0.35, "susp_stiff": 40.0, "susp_damp": 7.0, "susp_sag": 0.60,
+	},
+	# --- Tracked (TASKS.md "Ground"). The FIRST class that is not _loco_wheeled -- a sibling movement
+	# model, not a data row. Its whole reason to exist is to be the vehicle roads and gradients do not
+	# constrain: it ignores the on/off-road split every wheeled vehicle obeys (one drag, on tarmac and
+	# ploughed field alike) and steers at any speed, so it claws up broken ground the sportscar bogs in.
+	# offroad_drag/offroad_turn/grip_speed are left 0 to SAY the model does not read them.
+	"crawler": {
+		# FOR: the ground everything else refuses. Slow, heavy, and utterly indifferent to whether it
+		# is on a road -- it plods up the steep, broken patches (where --align says the slope actually
+		# bites) that stop wheels dead. You take it not to travel but to go somewhere untravellable.
+		"purpose": "the tracked crawler — slow and road-blind, climbs the broken ground wheels can't",
+		"loco": "tracked", "mass": 9000.0, "power": 9.0, "brake": 12.0, "top": 9.0, "reverse": -4.0,
+		"drag": 0.35, "offroad_drag": 0.0, "turn": 1.4, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 0.55, "wheel_r": 0.50, "length": 6.5, "tint": Color(0.34, 0.36, 0.32),
+		"susp_travel": 0.30, "susp_stiff": 40.0, "susp_damp": 7.0, "susp_sag": 0.55,
+	},
+	# --- Hover / ground-effect (TASKS.md "Ground"). A THIRD movement class, _loco_hover -- no wheel, no
+	# track, no ground grip. Like tracked it ignores the road/offroad split; unlike ANYTHING else it
+	# crosses water, which is the whole point: it is the class that turns a coastal patch from 5%
+	# drivable into all of it. Its price is gradients -- it cannot climb and slides down cross-slopes,
+	# the exact inverse of the crawler. offroad_drag/offroad_turn/grip_speed/susp_* are 0: unread.
+	"skiff": {
+		# FOR: the water and the flats. Fast and frictionless over the sea, the salt pans and the
+		# carriageway alike -- the one vehicle that makes the coastal patches (palawan 5% drivable,
+		# cape 8%, lofoten 10%) reachable. Helpless on a hill: point it up a grade and it wallows,
+		# point it across one and it slides. You take it to the coast, never to the mountains.
+		"purpose": "the hover skiff — crosses water and flats at speed, wallows and slides on any slope",
+		"loco": "hover", "mass": 800.0, "power": 11.0, "brake": 10.0, "top": 30.0, "reverse": -6.0,
+		"drag": 0.30, "offroad_drag": 0.0, "turn": 1.3, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 1.40, "wheel_r": 0.45, "length": 4.6, "tint": Color(0.24, 0.40, 0.46),
+		"lift": 1.0, "buoyancy": 0.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	# --- Legged (TASKS.md "Mounts and legged"). The FOURTH movement class, _loco_legged, and the one
+	# genuinely new movement model: gait, not roll. Shared by mounts and mechs -- this row is the class
+	# exemplar; the horse, elephant, mech and powered-suit rows are the FOLLOWING items, each pure data
+	# on this model (a mech is this with a longer stride and a taller step). Like tracked it ignores the
+	# road/offroad split (one drag term); unlike anything it CLIMBS -- holds speed up a grade and steps
+	# over roughness up to step_height that stops a wheel dead. offroad_*/grip_speed/susp_* are 0: unread.
+	"strider": {
+		# FOR: the ground even the crawler refuses -- steep, stepped, broken terrain where tracks lose
+		# purchase. Legs place feet: it climbs onto a kerb, strides over a washboard, and holds its pace
+		# up a slope that washes out anything wheeled. Slow and exposed, but nothing is unreachable to it.
+		# The chassis the mounts and mechs are built on.
+		"purpose": "the legged strider — climbs and steps over ground no wheel or track will cross",
+		"loco": "legged", "mass": 1600.0, "power": 10.0, "brake": 12.0, "top": 11.0, "reverse": -4.0,
+		"drag": 0.35, "offroad_drag": 0.0, "turn": 1.6, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 1.20, "wheel_r": 0.45, "length": 3.4, "tint": Color(0.42, 0.34, 0.40),
+		"step_height": 0.9, "gait": 2.4,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	# --- Horse (TASKS.md "Mounts and legged"). The first MOUNT: pure data on _loco_legged EXCEPT for the
+	# two traits that make it a horse and not a strider, and both are data too -- `stamina`/`winded_top`
+	# switch on the tire mechanic, `spooks` on the bolt. A living animal, so it is fast but cannot hold the
+	# gallop, and a closing wolf (the [J] pack, which already sets _threat_active) makes it run itself. The
+	# creature system exists (deer/wolves), so the mount and the herd meet here rather than being two builds.
+	"horse": {
+		# FOR: covering open ground FAST when there is no road -- the legged answer to the sportscar, but
+		# alive. It out-runs every wheeled vehicle cross-country in a sprint, then blows: hold the gallop and
+		# it winds itself down to a walk until it recovers, so distance is paced, not floored. And it is not
+		# fully yours -- a wolf pack closing (press [J] in DRIVE) spooks it into bolting where you didn't ask.
+		"purpose": "the horse — fastest thing off-road in a sprint, but it tires and it spooks",
+		"loco": "legged", "mass": 600.0, "power": 15.0, "brake": 11.0, "top": 18.0, "reverse": -3.0,
+		"drag": 0.40, "offroad_drag": 0.0, "turn": 1.9, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 1.50, "wheel_r": 0.45, "length": 2.4, "tint": Color(0.36, 0.24, 0.16),
+		"step_height": 0.5, "gait": 2.8,
+		"stamina": 14.0, "winded_top": 6.0, "spooks": true,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	# --- Elephant (TASKS.md "Elephants"). Pure data on _loco_legged like the strider/horse EXCEPT for one
+	# new switch: `trample`. It is the mount that makes the hedge and tree systems DESTRUCTIBLE -- slow and
+	# unstoppable, it flattens small trees and hedgerows it walks through (see _do_trample). Tireless
+	# (stamina 0) and fearless (spooks false), the opposite of the horse: it does not run and it does not
+	# panic, it just keeps going. Legged, so it climbs and steps like the strider; the trample is the only
+	# thing genuinely its own, and it is switched on by data, so every other row stays untouched.
+	"elephant": {
+		# FOR: going through, not around. Where the horse flees and the wheeled rows detour, the elephant
+		# holds a straight line and the obstacle gives way -- hedgerows and saplings go down under it. Slow,
+		# heavy, unhurried; you take it to make a path, not to make time.
+		"purpose": "the elephant — slow and unstoppable, flattens hedgerows and small trees in its path",
+		"loco": "legged", "mass": 5200.0, "power": 8.0, "brake": 9.0, "top": 7.5, "reverse": -2.5,
+		"drag": 0.45, "offroad_drag": 0.0, "turn": 0.9, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 2.6, "wheel_r": 0.45, "length": 6.0, "tint": Color(0.44, 0.42, 0.40),
+		"step_height": 1.2, "gait": 4.6, "trample": 4.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	# --- Mechs (TASKS.md "Mounts and legged"). Pure data on _loco_legged like the strider/horse/elephant --
+	# no movement code, exactly the abstraction's payoff. The item names the two axes and only those: form
+	# (bipedal vs quadrupedal) and scale (3m to 15m), and both resolve to the two fields the class already
+	# reads -- mass and step_height. The biped is the small, agile end; the quad the 15m walking-fortress
+	# end. Tireless and fearless machines: stamina 0 / spooks false / trample 0 (the item asks only for a
+	# different mass and step height, so the elephant keeps destructibility to itself). offroad_*/grip_speed/
+	# susp_* stay 0: the legged model reads none of them. Placeholder box still shows wheels -- a mesh job,
+	# same caveat as the strider and sixby.
+	"mech_biped": {
+		# FOR: the war-walker at soldier scale -- roughly a tall man, so it goes where infantry goes but
+		# armoured and stepping. Tall legs give it the highest step of anything but the quad: it climbs onto
+		# a wall or a roof a strider only steps over. Quicker and lighter than the giant; the skirmisher of
+		# the legged rows, sitting between the strider's civilian chassis and the quad's fortress.
+		"purpose": "the biped mech — man-scale war walker, climbs onto walls and roofs, agile for its armour",
+		"loco": "legged", "mass": 3600.0, "power": 12.0, "brake": 13.0, "top": 13.0, "reverse": -4.0,
+		"drag": 0.35, "offroad_drag": 0.0, "turn": 1.5, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 2.0, "wheel_r": 0.45, "length": 3.0, "tint": Color(0.30, 0.32, 0.34),
+		"step_height": 1.5, "gait": 3.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	"mech_quad": {
+		# FOR: the 15m end of the scale -- a four-legged walking fortress. Vast mass makes it ponderous and
+		# slow to turn, but its stride steps clean over walls, hedgerows and small buildings that stop every
+		# other vehicle, and it never washes out or slides. The heaviest thing in the roster (past the
+		# hauler); you take it not to travel but to be the terrain other things route around.
+		"purpose": "the quad mech — a 15m walking fortress, strides over walls and buildings, slow and unstoppable",
+		"loco": "legged", "mass": 42000.0, "power": 9.0, "brake": 9.0, "top": 6.0, "reverse": -2.0,
+		"drag": 0.45, "offroad_drag": 0.0, "turn": 0.6, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 6.5, "wheel_r": 0.45, "length": 15.0, "tint": Color(0.26, 0.27, 0.29),
+		"step_height": 3.2, "gait": 7.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	# --- Powered suit (TASKS.md "Powered suits"). The LAST legged row and the one that blurs the DRIVE/WALK
+	# line: the player IS the vehicle, not something you climb into. Pure data on _loco_legged like the
+	# strider/mech EXCEPT for the two traits this item names that nothing else in the roster has -- it JUMPS
+	# and it SPRINTS -- and BOTH are switched on by data (jump/sprint), so every other row and class stays
+	# untouched (the no-change gate holds). Man-scale: light, quick to turn, a large man's step and stride.
+	# A machine, so tireless/fearless (stamina 0 / spooks false / trample 0). Jump/sprint are player-triggered
+	# (Space/Shift in DRIVE, the FLY-rise and WALK-run keys, so it feels like on-foot), which means --proving
+	# does not exercise them -- exactly as the horse's spook needs [J] rather than showing on the course.
+	"suit": {
+		# FOR: the bridge between driving and walking -- the capability you keep when the vehicles run out.
+		# Slow flat-out but it JUMPS onto ledges and over gaps nothing else clears, and SPRINTS in bursts;
+		# lands hard, so a big drop costs speed. You wear it to go on foot where a vehicle cannot follow.
+		"purpose": "the powered suit — you ARE the vehicle: jump onto ledges, sprint in bursts, land hard",
+		"loco": "legged", "mass": 320.0, "power": 16.0, "brake": 16.0, "top": 12.0, "reverse": -5.0,
+		"drag": 0.35, "offroad_drag": 0.0, "turn": 2.6, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 1.1, "wheel_r": 0.45, "length": 1.2, "tint": Color(0.36, 0.38, 0.42),
+		"step_height": 0.6, "gait": 1.8,
+		"jump": 3.2, "sprint": 2.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
 	},
 }
 
@@ -3602,9 +3948,171 @@ func _loco_wheeled(d: VehicleDef, delta: float, accel: float, steer: float) -> v
 	_car_arc += cos(_car_heading) * _car_speed * delta
 	_car_lat += sin(_car_heading) * _car_speed * delta
 
+func _loco_tracked(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
+	# Tracks, not wheels. Two deliberate departures from _loco_wheeled, and they ARE the class:
+	# (1) it ignores the road/offroad split everything else obeys -- ONE drag term, no offroad_drag,
+	#     so tarmac and a ploughed field damp the same. A tank does not care about the carriageway.
+	# (2) skid-steer: full turn authority at any speed (no grip_speed ramp), so it pivots on the spot
+	#     and keeps steering while crawling. That, plus keeping all its speed off-road, is why it owns
+	#     the steep broken patches -- the climb phase pins _offroad=1 and this model simply doesn't read
+	#     it, where the wheeled model washes out. Slow is data (low `top`); unstoppable is geometry.
+	# _offroad is still computed by _drive_tick for the dust plume; the handling just never consults it.
+	_car_speed = clampf(_car_speed + accel * delta, d.reverse, d.top)
+	_car_speed *= 1.0 - d.drag * delta
+	_car_heading += steer * d.turn * delta
+	_car_arc += cos(_car_heading) * _car_speed * delta
+	_car_lat += sin(_car_heading) * _car_speed * delta
+
+# Gradient response is the hover class trait (every cushion craft hates a slope for the same reason),
+# so it lives as constants here rather than per-vehicle data -- a skiff's numbers can move to VehicleDef
+# the day a second hover vehicle needs to differ. PULL: uphill deceleration per unit of along-track
+# slope. SLIDE: sideways drift speed per unit of cross-track slope.
+const HOVER_SLOPE_PULL := 18.0
+const HOVER_SLOPE_SLIDE := 12.0
+
+func _loco_hover(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
+	# Ground-effect, not wheels or tracks. Three departures, and together they ARE the class:
+	# (1) no ground grip and no road/offroad split -- ONE drag term (d.drag), so sea, salt pan and
+	#     tarmac all glide the same. That is what "crosses water" means here: the ocean is a flat clamp
+	#     at SEA_LEVEL and _car_pos already floats the body ON it (via _terrain_h's clamp), so the skiff
+	#     runs over water exactly as over a road -- the one class that makes a 90%-ocean coastal patch
+	#     drivable rather than a 5% sliver of beach.
+	# (2) full turn authority at any speed (no grip_speed ramp), like tracked -- it yaws freely.
+	# (3) it HATES gradients, the exact inverse of the crawler. A cushion has nothing to grip a slope
+	#     with, so gravity along the surface is its master: it bleeds speed climbing, gains it
+	#     descending (cannot climb a real grade), and slides bodily down any cross-slope regardless of
+	#     where it is pointed. Over open water the surface is flat, so none of this bites -- which is
+	#     why it owns the coast and wallows in the mountains.
+	_car_speed = clampf(_car_speed + accel * delta, d.reverse, d.top)
+	_car_speed *= 1.0 - d.drag * delta
+	_car_heading += steer * d.turn * delta
+	# surface gradient in ring space (metres of rise per metre travelled), central-differenced. Reads
+	# the clamped _terrain_h, so the sea is flat (zero gradient) and shorelines are a wall it slides along.
+	var e := 3.0
+	var dh_arc := (_terrain_h(_car_arc + e, _car_lat) - _terrain_h(_car_arc - e, _car_lat)) / (2.0 * e)
+	var dh_lat := (_terrain_h(_car_arc, _car_lat + e) - _terrain_h(_car_arc, _car_lat - e)) / (2.0 * e)
+	# split the slope into along-heading and cross-heading components. left unit in (arc,lat) = (-sin,cos)
+	var ch := cos(_car_heading)
+	var sh := sin(_car_heading)
+	var g_fwd := dh_arc * ch + dh_lat * sh          # +uphill ahead: bleed momentum, cannot climb
+	var g_side := -dh_arc * sh + dh_lat * ch        # slope across the beam: drift down it, not carve it
+	_car_speed -= HOVER_SLOPE_PULL * g_fwd * delta
+	# forward motion plus a bodily downhill slide along the beam (downhill on the left axis = -g_side)
+	var slide := -g_side * HOVER_SLOPE_SLIDE
+	_car_arc += (ch * _car_speed + (-sh) * slide) * delta
+	_car_lat += (sh * _car_speed + (ch) * slide) * delta
+
+# Gait signature: amplitude of the vertical bob and the fore-aft rock, per stride. Kept as constants
+# like the hover slope terms -- move to VehicleDef the day a mech's lumbering stride must differ from a
+# horse's (the next items). BOB is metres, ROCK is radians.
+const LEGGED_BOB := 0.10
+const LEGGED_ROCK := 0.05
+
+# Powered-suit jump gravity (TASKS.md "Powered suits"). A class constant like the hover slope terms: a
+# few metres of hop, sub-second, so plain gravity is the right naive model -- the ring-frame ballistics
+# subtlety (a projectile in free fall while the ring spins under it) is the WEAPONS programme's job, not a
+# 3m jump. Snappier than 9.81 so a game jump doesn't hang; peak height still lands on d.jump because the
+# launch velocity is derived from it (sqrt(2 g h)).
+const SUIT_GRAVITY := 18.0
+
+func _loco_legged(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
+	# Legs, not wheels/tracks/cushion -- the FOURTH movement class and the one genuinely new model, the
+	# chassis the mounts and mechs (the next items) are built on. Three traits, each earning the class:
+	# (1) it CLIMBS. Like tracked it ignores the road/offroad split -- ONE drag term, no offroad_drag, so
+	#     tarmac and ploughed field damp the same; and it never consults _offroad, so on the climb phase
+	#     (pinned _offroad=1) it holds its speed uphill where every wheeled vehicle washes out. Legs place
+	#     feet: that is "climbs what wheels cannot" made measurable in the grade column.
+	# (2) full turn authority at any speed, like tracked/hover -- a walker pivots in place, no grip_speed ramp.
+	# (3) GAIT, not roll. It advances in a stride cadence rather than a continuous wheel: _gait_phase
+	#     accumulates with DISTANCE (so a halted walker's legs are still), and _drive_tick poses the body's
+	#     bob and fore-aft rock from it -- the visible tell of the class, and why its ground point comes
+	#     from the gait plus a stepped-over strip, not springs or a contact plane.
+	# offroad_drag/offroad_turn/grip_speed/susp_* are left 0 in the row to SAY the model reads none of them.
+	# A MOUNT (the horse row) layers two living traits over this same walker, both switched on by data so
+	# the strider/mech rows are untouched -- see TASKS.md "Horses". They alter the effective top and the
+	# input, then the identical clamp/drag/heading integration below runs; the gait code is shared as-is.
+	var top := d.top
+	if d.stamina > 0.0:
+		# TIRES. Holding a gallop (above the trot line) spends stamina at 1/`stamina` per second, so it is
+		# fully blown after `stamina` seconds of hard running; walking or resting restores it, slower than it
+		# drains so a blown mount stays winded a while. Effective top lerps down to `winded_top` as it empties
+		# -- the horse smoothly loses its legs rather than hitting a wall, which is what tiring should feel like.
+		var galloping := absf(_car_speed) > d.top * 0.45
+		_stamina = clampf(_stamina + (-1.0 if galloping else 0.35) / d.stamina * delta, 0.0, 1.0)
+		top = lerpf(d.winded_top, d.top, _stamina)
+	if d.spooks:
+		# SPOOKS. A closing threat (the [J] wolf pack in APPROACH sets _threat_active, the existing hook) ramps
+		# _spooked up; it decays when calm. While spooked the mount throws in its OWN throttle (it bolts, so a
+		# standing horse breaks into a run you didn't ask for) and shies its heading -- an oscillation tied to
+		# the stride so it reads as panic, not noise. Bolting drives speed up, which drains stamina: flee and tire.
+		_spooked = clampf(_spooked + (2.0 if _threat_active else -1.0) * delta, 0.0, 1.0)
+		accel += d.power * _spooked
+		steer += sin(_gait_phase * 3.0) * _spooked
+	if d.sprint > 1.0 and _sprinting:
+		# SPRINT (the powered suit). Holding the sprint input lifts the effective top by d.sprint -- a
+		# powered burst on demand, the machine's answer to the horse's gallop. It is switched on by data
+		# (sprint > 1), so the strider/mech/mount rows, which leave sprint at 1, are untouched.
+		top *= d.sprint
+	_car_speed = clampf(_car_speed + accel * delta, d.reverse, top)
+	_car_speed *= 1.0 - d.drag * delta
+	_car_heading += steer * d.turn * delta
+	_car_arc += cos(_car_heading) * _car_speed * delta
+	_car_lat += sin(_car_heading) * _car_speed * delta
+	# stride cadence tied to the ground: one full bob per `gait` metres travelled, so footfalls sync to
+	# distance rather than a wall-clock timer that would slide as speed changes.
+	if d.gait > 0.0:
+		_gait_phase += absf(_car_speed) * delta * TAU / d.gait
+
+func _do_trample(d: VehicleDef, pos: Vector3) -> void:
+	# The elephant's reason to exist: it FLATTENS what it walks over, which is the only thing that makes the
+	# hedge and tree systems destructible at all (TASKS.md "Elephants"). Two targets, each crushed in its
+	# own system's terms:
+	#   trees  -- mark the index down; _update_tree_lod rebuilds the MultiMesh buckets from these arrays
+	#             every few metres anyway and simply skips it, so no parallel geometry is needed.
+	#   hedges -- the ribbon is one committed mesh, so record the crush POINT and rebuild the ribbon with
+	#             that span left out. Rebuild only when a new point lands near a road, not every frame.
+	# Only SMALL trees go down: taller than TRAMPLE_TREE_MAX_H and it stands (the fir pack has no true
+	# canopy giants, so height is the proxy for "too big to push over"). "Unstoppable" is in the handling
+	# table (heavy, tireless, one drag term); this is the visible consequence of it.
+	if absf(_car_speed) < 1.0:
+		return
+	# throttle the O(trees) scan to when the body has moved about a crush-width since the last one
+	if pos.distance_to(_trample_prev) < d.trample * 0.5:
+		return
+	_trample_prev = pos
+	var r2 := d.trample * d.trample
+	var downed := false
+	for i in _tree_ground.size():
+		if _tree_down.has(i):
+			continue
+		if _tree_basis[i].get_scale().y > TRAMPLE_TREE_MAX_H:
+			continue
+		if pos.distance_squared_to(_tree_ground[i]) < r2:
+			_tree_down[i] = true
+			downed = true
+	if downed:
+		_update_tree_lod(true)
+	# hedges only exist beside roads, so only bother recording/rebuilding when on or next to one
+	var cell := Vector2i(int(floor(_car_arc / 8.0)), int(floor(_car_lat / 8.0)))
+	var near_road := false
+	for o in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		if _road_cells.has(cell + o):
+			near_road = true
+			break
+	if not near_road:
+		return
+	var here := Vector2(_car_arc, _car_lat)
+	if _hedge_down.is_empty() or here.distance_to(_hedge_down[_hedge_down.size() - 1]) > 3.0:
+		_hedge_down.append(here)
+		if _hedge_down.size() > TRAMPLE_HEDGE_MAX:
+			_hedge_down.remove_at(0)   # oldest crush regrows -- bounds the list and the per-span test
+		_build_hedge_ribbon()
+
 func _drive_tick(delta: float) -> void:
 	var accel := 0.0
 	var steer := 0.0
+	var want_jump := false
+	_sprinting = false
 	var d := _vdef()
 	if _proving:
 		# scripted course input, so every vehicle is driven identically and the table compares
@@ -3615,16 +4123,68 @@ func _drive_tick(delta: float) -> void:
 		if Input.is_key_pressed(KEY_S): accel -= d.brake
 		if Input.is_key_pressed(KEY_A): steer -= 1.0
 		if Input.is_key_pressed(KEY_D): steer += 1.0
+		# POWERED SUIT controls, deliberately the WALK/FLY keys so the suit blurs into on-foot rather than
+		# being a separate thing to get into: Shift sprints (WALK's run key), Space jumps (FLY's rise key).
+		want_jump = Input.is_key_pressed(KEY_SPACE)
+		_sprinting = Input.is_key_pressed(KEY_SHIFT)
 	# LOCOMOTION DISPATCH -- one call per class, selected by the def's `loco`. Add a case here and a
 	# sibling _loco_<class> to make a whole vehicle class drivable. Off-roading is a mode, not a
 	# penalty: drag and steering bite both worsen off the tarmac, but the vehicle stays usable.
 	match d.loco:
+		"hover": _loco_hover(d, delta, accel, steer)
+		"tracked": _loco_tracked(d, delta, accel, steer)
+		"legged": _loco_legged(d, delta, accel, steer)
 		"wheeled", _: _loco_wheeled(d, delta, accel, steer)
-	var pos := _car_pos(_car_arc, _car_lat) + _ring_up(_car_pos(_car_arc, _car_lat)) * _proving_surface(_car_arc, _car_lat)
+	var hover := d.loco == "hover"
+	var legged := d.loco == "legged"
+	# A hover craft floats level at a fixed clearance: the calibrated bump strip never reaches it (that
+	# is what "ignores ground roughness" MEANS), so it is left out of its ground point. A walker STEPS
+	# over roughness up to its step_height -- feet absorb small features, so the body feels only the part
+	# of the strip that exceeds step_height (a kerb it climbs onto, not a washboard it strides across).
+	# Everything else rides the whole strip through its springs.
+	var strip: float = _proving_surface(_car_arc, _car_lat)
+	if hover:
+		strip = 0.0
+	elif legged:
+		strip -= clampf(strip, -d.step_height, d.step_height)
+	var base := _car_pos(_car_arc, _car_lat)
+	# gait bob rises the body on each stride, added along ring-up -- legs, not springs.
+	var bob: float = absf(sin(_gait_phase)) * LEGGED_BOB if legged else 0.0
+	# POWERED SUIT: the one vehicle that leaves the ground under power (TASKS.md "Powered suits"). A jump is a
+	# ballistic hop along ring-up -- launch at sqrt(2 g h) for a peak of d.jump metres, plain gravity pulls it
+	# back -- and the return is a HARD landing: a body crouch that decays plus a bite out of forward speed,
+	# both scaled by impact speed. Gated on d.jump > 0, so every other row (jump 0) never touches _jump_* and
+	# is unchanged; jump is the trait that makes the suit move like a person, not a machine on wheels.
+	if d.jump > 0.0:
+		if _jump_h <= 0.0 and _jump_v <= 0.0 and want_jump:
+			_jump_v = sqrt(2.0 * SUIT_GRAVITY * d.jump)    # launch: peak height lands on d.jump
+		if _jump_h > 0.0 or _jump_v > 0.0:
+			_jump_v -= SUIT_GRAVITY * delta
+			_jump_h += _jump_v * delta
+			if _jump_h <= 0.0 and _jump_v < 0.0:
+				var impact: float = -_jump_v                # hard landing: crouch and stagger by how fast it hit
+				_land_dip = clampf(impact * 0.06, 0.0, 0.6)
+				_car_speed *= clampf(1.0 - impact * 0.02, 0.4, 1.0)
+				_jump_h = 0.0
+				_jump_v = 0.0
+		_land_dip = lerpf(_land_dip, 0.0, delta * 6.0)
+	var pos := base + _ring_up(base) * (strip + bob + _jump_h - _land_dip)
+	if d.trample > 0.0:
+		_do_trample(d, pos)
 	var ahead := _car_pos(_car_arc + cos(_car_heading) * 5.0, _car_lat + sin(_car_heading) * 5.0)
 	var up := _ring_up(pos)
 	var fwd := (ahead - pos).normalized() if not pos.is_equal_approx(ahead) else up.cross(Vector3.FORWARD).normalized()
-	_susp_update(delta, pos, up, fwd)
+	if hover:
+		# no wheels, no springs -- level the body toward flat rather than tilting it to a contact plane
+		_body_pitch = lerpf(_body_pitch, 0.0, delta * 8.0)
+		_body_roll = lerpf(_body_roll, 0.0, delta * 8.0)
+	elif legged:
+		# gait posture: a fore-aft rock driven by the stride phase, not a contact plane or springs -- the
+		# body walks. Roll settles to level; there are no wheels to lean it into a hollow.
+		_body_pitch = sin(_gait_phase) * LEGGED_ROCK
+		_body_roll = lerpf(_body_roll, 0.0, delta * 8.0)
+	else:
+		_susp_update(delta, pos, up, fwd)
 	_car.global_position = pos + up * d.ride
 	if not pos.is_equal_approx(ahead):
 		_car.look_at(ahead + up * d.ride, up)
@@ -3647,8 +4207,13 @@ func _drive_tick(delta: float) -> void:
 		piv.rotation.y = (steer * -0.42) if bool(w["front"]) else 0.0
 	# OFFROAD. The road mask is 44m per cell, which cannot say "am I on this lane" -- but the
 	# 8m road cells built from the centrelines can, and already exist for the grass.
-	var on_road := _road_cells.has(Vector2i(int(floor(_car_arc / 8.0)), int(floor(_car_lat / 8.0))))
-	_offroad = move_toward(_offroad, 0.0 if on_road else 1.0, delta * 3.0)
+	if _proving and _prove_offroad >= 0.0:
+		# the proving course pins the surface per phase; live position must not override it, or the
+		# on-road terminal is never measured (the car leaves the ribbon and reads the off-road one)
+		_offroad = _prove_offroad
+	else:
+		var on_road := _road_cells.has(Vector2i(int(floor(_car_arc / 8.0)), int(floor(_car_lat / 8.0))))
+		_offroad = move_toward(_offroad, 0.0 if on_road else 1.0, delta * 3.0)
 	if _dust:
 		_dust.global_position = pos
 		_dust.emitting = _offroad > 0.35 and absf(_car_speed) > 3.0
@@ -3958,7 +4523,24 @@ func _update_hud() -> void:
 	var mode := "FLY %s (WASD + Space/Ctrl, [Shift] cycle speed, ESC to release, [V] cycle mode)" % fly_speed_name if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] cycle drive/walk)"
 	if _mode == Mode.DRIVE:
 		var vn: String = _vehicles[_veh_idx]["name"] if _veh_idx < _vehicles.size() else "box"
-		mode = "DRIVE  %d km/h  [%s]  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn]
+		# show what this vehicle is FOR, not just its name -- the census discipline made visible, so
+		# cycling with [L] tells you why you'd pick it, not merely which box you're in
+		var purpose: String = _vdef().purpose
+		# a living mount shows its condition: stamina bleeds as it gallops, and it flags when it bolts, so
+		# the tire/spook behaviour is legible while riding rather than only felt (matches the census discipline)
+		var vd := _vdef()
+		var mount := ""
+		if vd.stamina > 0.0:
+			mount += "  stamina %d%%%s" % [int(_stamina * 100.0), " WINDED" if _stamina < 0.15 else ""]
+		if vd.spooks and _spooked > 0.05:
+			mount += "  SPOOKED"
+		# a powered suit reads its own state, so the jump/sprint traits are legible while worn: it flags
+		# airborne (Space) and sprinting (Shift), and shows the keys so you know it plays like on-foot
+		var suit := ""
+		if vd.jump > 0.0:
+			suit = "  (Space jump, Shift sprint)%s%s" % [
+				"  AIRBORNE" if _jump_h > 0.05 else "", "  SPRINT" if _sprinting else ""]
+		mode = "DRIVE  %d km/h  [%s] — %s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit]
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	if not _hud_full:

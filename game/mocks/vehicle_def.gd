@@ -8,6 +8,17 @@ extends Resource
 
 @export var loco := "wheeled"      # which movement model: wheeled | tracked | hover | legged | boat | air ...
 
+# Census discipline (see TASKS.md): a row states what the vehicle is FOR, not just what it is. Two
+# wheeled cars with different numbers is not variety unless each earns its place -- this line is where
+# that argument gets made, and it is what the HUD shows when you cycle onto the vehicle.
+@export_multiline var purpose := ""
+
+# Placeholder body, used when no bespoke mesh is present (the warthog GLTF is gitignored, and every
+# class below the wheeled ones has no art yet). Mechanics first: a distinctly sized and tinted box is
+# enough to drive and compare the handling. A real mesh, when it lands, overrides this entirely.
+@export var length := 4.2          # nose-to-tail metres -- sizes the placeholder box and its wheelbase
+@export var tint := Color(0.33, 0.36, 0.30)  # placeholder body colour, so cycling reads as a change
+
 # mass / buoyancy / lift are carried for the classes below (hover, boat, air) that will read them.
 # The wheeled model does not touch them yet -- the handling physics is under a no-change gate, so
 # they are a data contract here, not a behaviour change.
@@ -26,6 +37,30 @@ extends Resource
 @export var grip_speed := 12.0     # speed at which steering reaches full authority
 @export var ride := 0.40           # body height above the contact point, m
 @export var wheel_r := 0.45        # wheel radius -- roll rate is circumference-correct off this
+
+# legged only (the _loco_legged class): a walker steps over roughness and climbs onto features that
+# stop a wheel dead. Non-legged classes never read these, so they sit at their defaults.
+@export var step_height := 0.0     # roughness/obstacle height the gait absorbs; the body feels only above it
+@export var gait := 2.4            # stride length in metres -- shorter strides bob quicker per metre travelled
+
+# Mount behaviours (TASKS.md "Horses"): a living mount tires and spooks where a mech or elephant does
+# not. Both default off (stamina 0, spooks false), so every existing row and every non-legged class is
+# unchanged -- a data contract, like buoyancy/lift, that only the horse row switches on.
+@export var stamina := 0.0         # seconds of hard gallop before winded; 0 = tireless (never read)
+@export var winded_top := 0.0      # top speed once stamina is spent; effective top lerps down to this
+@export var spooks := false        # bolts and shies when a threat closes (_threat_active); mechs don't
+
+# Trample (TASKS.md "Elephants"): crush radius in metres. >0 flattens small trees and hedgerows the body
+# walks over -- the reason those systems are destructible at all. 0 = leaves everything standing (default;
+# every other row and class). A data contract like stamina/lift: only the elephant switches it on.
+@export var trample := 0.0
+
+# Powered suit (TASKS.md "Powered suits"): the player IS the vehicle, so it does two things nothing else in
+# the roster does -- it JUMPS and it SPRINTS. Both default off (jump 0 can't leave the ground; sprint 1 = no
+# burst), unread by every other row and class, so this is a data contract like stamina/trample/lift and only
+# the suit row switches it on.
+@export var jump := 0.0            # peak jump height in metres; 0 = grounded (launch v = sqrt(2 g jump))
+@export var sprint := 1.0          # top-speed multiplier while the sprint input is held; 1 = no sprint
 
 @export var susp_travel := 0.34    # spring travel, extension limit to bump stop
 @export var susp_stiff := 34.0

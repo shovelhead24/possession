@@ -160,36 +160,178 @@ Prerequisite for everything below.
       one implementation per class, and a `VehicleDef` resource carrying mass, power, grip,
       turn rate, ride height, buoyancy, lift, and which locomotion drives it. Every item below is
       then a data row plus a mesh, not new movement code.
-- [ ] **HARNESS STILL LYING in two places, found while proving the abstraction.** (a) The box's
+- [x] **HARNESS STILL LYING in two places, found while proving the abstraction.** (a) The box's
       accel phase reads 9.8 m/s, which is exactly its OFF-road terminal (9.0 power / 0.9 combined
       drag) -- so it is still leaving the 8m ribbon within a car length despite the earlier fix, and
       the on-road figure has never actually been measured. The warthog's 20.8 sits between its
       on-road and off-road terminals, same cause. (b) The box's bump-strip jolt fell from 1.50m to
       0.18m across this change with nothing touching the strip, so the phase is probably no longer
       starting on it. Fix the harness before trusting any handling number.
-- [ ] **Vehicle definition table + `[L]` cycling through all of them**, with the census-style
+      Both were harness faults, not physics. (a) `_offroad` was derived from live position every
+      frame, so a straight tangent leaving the curving ribbon settled every on-road phase at the
+      off-road terminal; the earlier per-phase seed was overwritten each tick. Now the proving course
+      PINS `_offroad` per phase (`_prove_offroad`): 0 for accel/brake/circle/bumps, 1 for rough/climb,
+      and `_drive_tick` honours the pin instead of the position test while proving. accel/brake/circle
+      now read the on-road terminal (box ~22, clamped by `top`); rough/climb the off-road one. (b) The
+      root cause was the jolt metric sampling `_terrain_h` ALONE — the calibrated strip is added via
+      `_proving_surface`, so it never showed in the jolt column at all. Both `h_start` and the loop `h`
+      now add `_proving_surface`, and the strip phase is pinned on-road so it carries speed to cross
+      every obstacle (ramp/drop, potholes) in 40s rather than stalling in the washboard at ~10 m/s.
+      NOT run-verified: the Godot binary is out-of-repo/gated here, so no live `--proving`.
+- [x] **Vehicle definition table + `[L]` cycling through all of them**, with the census-style
       discipline: each entry states what it is FOR, not just what it is.
+      The `VEHICLE_ROWS` table is now the ROSTER, not just a params lookup: `_build_vehicles` iterates
+      it and builds one cyclable entry per row, so `[L]` (and `--proving`, `--shots`) cover every
+      vehicle that exists as DATA, not only the ones with art. A row with a bespoke mesh (the warthog
+      GLTF) gets it; every other row — and the warthog on a machine without the gitignored pack — gets
+      a placeholder box sized and tinted from its def (`length`/`tint` added to `VehicleDef`), still
+      fully drivable on its own handling. Before this, a warthog-less machine dropped to `_vehicles=[box]`
+      and `[L]` did nothing; now the whole roster cycles regardless of art. Census discipline: each row
+      carries a `purpose` string stating what it is FOR, shown in the DRIVE HUD as you cycle. Roster
+      stays box + warthog — filling it (fast car, 6x6, bike, tractor, hauler...) is the next items, each
+      now just a data row. NOT run-verified: the Godot binary is out-of-repo/gated here, so no `--shots`
+      to eyeball the two placeholders cycling. Drive and press [L] on the laptop to confirm.
 
 ### Ground
-- [ ] **Wheeled variants** — the boreen runabout we have, a fast road car, a heavy 6x6, a bike, a
+- [x] **Wheeled variants** — the boreen runabout we have, a fast road car, a heavy 6x6, a bike, a
       tractor, an articulated hauler. Differ by grip, mass, ride height, and how badly they lose off
       the tarmac (the `_road_cells` test already exists).
-- [ ] **Tracked** — slow, unbothered by slope, ignores the road/offroad distinction that everything
+      Five new `VEHICLE_ROWS` (sportscar/sixby/bike/tractor/hauler), pure data on the existing
+      `_loco_wheeled` model — no movement code, exactly the abstraction's payoff. They spread the two
+      axes the class actually has: on-road speed (top 42 sportscar → 12 tractor) vs how hard they wash
+      out once the carriageway ends (offroad_drag 0.95 sportscar/0.85 hauler → 0.18 tractor/0.22
+      sixby, plus matching offroad_turn), with ride height 0.26→0.75 and mass 220→14000 spread across
+      them. Each carries a census `purpose` (shown in the DRIVE HUD) arguing what it is FOR, not just
+      its numbers. Mesh-less rows get the sized+tinted placeholder box already built by `_build_vehicles`;
+      distinct tints so `[L]` reads as a change. Roster consumers (`[L]`, `--proving`, `--shots`, HUD)
+      all iterate `_vehicles`, so the six wheeled + warthog appear with no other edits. NOT run-verified:
+      the Godot binary is out-of-repo/gated here, so no `--proving`/`--shots`. Run `-- --proving` on the
+      laptop to confirm the table differentiates (sportscar fastest on-road, tractor/sixby best off it).
+- [x] **Tracked** — slow, unbothered by slope, ignores the road/offroad distinction that everything
       else obeys. The `--align` slope data says where this actually matters.
-- [ ] **Hover / ground-effect** — ignores ground roughness, hates gradients, crosses water. The one
+      First class that is NOT `_loco_wheeled`: a sibling `_loco_tracked` + a `"tracked"` dispatch case,
+      exactly the abstraction's shape (new movement code for a new class; the wheeled variants were
+      pure data). Two departures ARE the class: (1) ONE drag term, no `offroad_drag` — it never reads
+      `_offroad`, so tarmac and field damp the same (the road/offroad split it ignores); (2) skid-steer,
+      full turn authority at any speed (no `grip_speed` ramp), so it pivots on the spot and keeps
+      steering while crawling. On the climb phase the harness pins `_offroad=1`; the wheeled model
+      washes out there, tracked simply doesn't consult it and keeps its speed uphill — which is where
+      "unbothered by slope" becomes measurable in `--proving` (grade column). Slow is data (`top` 9.0);
+      `offroad_drag`/`offroad_turn`/`grip_speed` set to 0 to SAY the model doesn't read them. Wheeled
+      physics untouched (the no-change gate holds); one new row `crawler` (placeholder box, sized+tinted
+      per def like the rest), so `[L]`/`--proving`/`--shots`/HUD pick it up with no other edits. NOT
+      run-verified: the Godot binary is out-of-repo/gated here, so no `--proving`/`--shots`. Run
+      `-- --proving` on the laptop to confirm crawler holds speed on `rough`/`climb` where the wheeled
+      rows shed it. Placeholder box still shows steering front wheels (a skid-steer tell) — geometry is
+      a mesh job, same caveat as sixby's four-instead-of-six.
+- [x] **Hover / ground-effect** — ignores ground roughness, hates gradients, crosses water. The one
       class that makes the coastal patches drivable.
+      The scaffolding was already in the tree (dispatch case, body-leveling that skips the bump strip,
+      the `skiff` row, `lift`/`buoyancy` on VehicleDef) but `_loco_hover` was CALLED and never DEFINED
+      — it would have crashed the instant you cycled to the skiff. Wrote the function, the third
+      movement class after wheeled/tracked. Its three traits, each earning the class: (1) ONE drag
+      term, no road/offroad split, so sea/flat/tarmac glide alike; (2) full turn authority at any
+      speed like tracked; (3) it HATES gradients — central-differences `_terrain_h`, bleeds speed on
+      the along-track slope (cannot climb, `HOVER_SLOPE_PULL`) and slides bodily down cross-slopes
+      (`HOVER_SLOPE_SLIDE`), the exact inverse of the crawler. "Crosses water" falls out for free:
+      `_terrain_h` clamps to SEA_LEVEL so `_car_pos` already floats the body ON the sea, and a flat
+      sea has zero gradient so it glides — owns the coast, wallows in the mountains. Wheeled/tracked
+      physics untouched (no-change gate holds). NOT run-verified: the Godot binary is out-of-repo/gated
+      here, so no `--proving` — and handling can't be judged from a screenshot anyway (the whole reason
+      the proving ground exists). Run `-- --proving` on the laptop: the skiff should top the accel/
+      circle phases and bog on `climb` where the crawler holds speed.
 
 ### Mounts and legged
-- [ ] **Legged locomotion**, shared by mounts and mechs: gait over terrain, step height, can climb
+- [x] **Legged locomotion**, shared by mounts and mechs: gait over terrain, step height, can climb
       what wheels cannot. This is the one genuinely new movement model.
-- [ ] **Horses** — fast, tires, spooks. Creatures already exist (`[K]` deer, `[J]` wolves) so herd
+      The FOURTH movement class, `_loco_legged` + a `"legged"` dispatch case — genuinely new code, not a
+      data row (the wheeled variants were data; tracked/hover were siblings). Three traits, each earning
+      it: (1) it CLIMBS — like tracked it reads ONE drag term and never consults `_offroad`, so on the
+      climb phase (pinned `_offroad=1`) it holds speed uphill where every wheeled row washes out — "climbs
+      what wheels cannot" made measurable in the grade column. (2) full turn authority at any speed
+      (pivots in place, no `grip_speed` ramp). (3) GAIT not roll: a new `_gait_phase` accumulates with
+      DISTANCE, and `_drive_tick` poses the body's bob (`LEGGED_BOB`) and fore-aft rock (`LEGGED_ROCK`)
+      from it — a walker, not a rolling wheel. STEP HEIGHT is the new `step_height` VehicleDef field: the
+      body feels only the part of the calibrated strip that exceeds it (`strip - clamp(strip, ±step)`), so
+      feet stride over a washboard and climb onto a kerb. New fields `step_height`/`gait` on VehicleDef
+      (0/2.4 default, unread by other classes). One `strider` row as the class exemplar — the mount/mech/
+      suit rows are the following items, each now pure data on this model. `[L]`/`--proving`/`--shots`/HUD
+      pick it up via the generic `VEHICLE_ROWS` iteration, no other edits. Wheeled/tracked/hover physics
+      untouched (no-change gate holds). Caveats: jolt measures the GROUND (`_terrain_h+_proving_surface`),
+      so the step-smoothing is a body/visual effect that won't show in that column; the placeholder box
+      still shows spinning wheels (geometry is a mesh job, same as sixby's four-not-six). NOT run-verified:
+      the Godot binary is out-of-repo/gated here, so no `--proving` — and handling can't be judged from a
+      screenshot anyway (the reason the proving ground exists). Run `-- --proving` on the laptop to confirm
+      the strider holds speed on `climb` where the wheeled rows shed it.
+- [x] **Horses** — fast, tires, spooks. Creatures already exist (`[K]` deer, `[J]` wolves) so herd
       behaviour and the mount are closer than they look.
-- [ ] **Elephants** — slow, unstoppable, flattens hedgerows and small trees. A reason for the
+      The first MOUNT: pure data on `_loco_legged` (one `horse` row) EXCEPT for the two traits that make
+      it a horse and not a strider — and both are switched on by DATA, so the strider/mech rows stay
+      untouched (the no-change gate holds). New `VehicleDef` fields `stamina`/`winded_top`/`spooks`, all
+      default off (0/false, unread by every other row and class, like buoyancy/lift). TIRES: galloping
+      above the trot line (`top*0.45`) spends `_stamina` at 1/`stamina`/s so it blows after ~14s of hard
+      running; walking restores it slower than it drains; effective top lerps down to `winded_top` (6 m/s)
+      as it empties, so it loses its legs smoothly, not off a cliff. SPOOKS: reuses the EXISTING
+      `_threat_active` hook (the `[J]` wolf pack in APPROACH already sets it) — while spooked the horse
+      throws in its own throttle (bolts) and shies its heading, and bolting drains stamina, so flee and
+      tire interact for free. FAST is data (`top` 18, out-sprints every wheeled row off-road). `_stamina`/
+      `_spooked` reset per-vehicle-cycle and per-proving-phase so the table compares; DRIVE HUD shows
+      `stamina %` / `WINDED` / `SPOOKED`. NOT run-verified: the Godot binary is out-of-repo/gated here, so
+      no `--proving` — and tiring/spooking can't be judged from a screenshot anyway (the reason the proving
+      ground exists). Run `-- --proving` on the laptop: the horse should top the sprint phases then wind
+      down; press `[J]` while riding to see it bolt.
+- [x] **Elephants** — slow, unstoppable, flattens hedgerows and small trees. A reason for the
       hedge/tree systems to be destructible.
-- [ ] **Mechs** — bipedal and quadrupedal, scale from 3m to 15m. Legged locomotion with a different
+      One `elephant` row, pure data on `_loco_legged` (like strider/horse) EXCEPT for one new switch,
+      `trample` on VehicleDef — the ONLY thing genuinely its own, and it is what makes the hedge/tree
+      systems destructible at all. Slow/unstoppable is the handling table (mass 5200, top 7.5, one drag
+      term, tireless `stamina 0`, fearless `spooks false` — the horse's opposite). `_do_trample` runs
+      only when `d.trample > 0` (so every other row/class is a single float compare and unchanged): it
+      flattens what the body walks over in each system's OWN terms — trees by marking the index in
+      `_tree_down`, which `_update_tree_lod` already rebuilds its MultiMesh buckets from every few metres,
+      so it just skips them (no parallel geometry); hedges by recording the crush POINT in `_hedge_down`
+      and rebuilding the ribbon with that span gapped (`_hedge_trampled`). Only SMALL trees go
+      (`TRAMPLE_TREE_MAX_H` 9.6m — the fir pack has no canopy giants, so height is the proxy for "too big
+      to push over"; ~the tallest quarter stand). `_tree_down` clears on rescatter (indices point at a
+      different forest 700m on); `_hedge_down` is capped so old crushes regrow. Scan throttled to ~one
+      crush-width of travel; ribbon rebuilt only when a new point lands near a road. Roster consumers
+      (`[L]`/`--proving`/`--shots`/HUD) pick it up via the generic `VEHICLE_ROWS` iteration, no other edits.
+      NOT run-verified: the Godot binary is out-of-repo/gated here (C:\Godot denied), so no live drive —
+      and `--shots <patch>` frames a patch, not an elephant mid-trample. Ride the elephant ([L] to it) into
+      a roadside hedge and through woodland on the laptop to confirm the ribbon gaps and small firs vanish
+      in its wake while the big ones stand.
+- [x] **Mechs** — bipedal and quadrupedal, scale from 3m to 15m. Legged locomotion with a different
       mass and step height.
-- [ ] **Powered suits** — the player IS the vehicle. Jump height, sprint, hard landings. Blurs into
+      Two rows, pure data on `_loco_legged` (like strider/horse/elephant) — no movement code, the
+      abstraction's payoff. The item names exactly two axes and both resolve to fields the class already
+      reads: form and scale become mass + step_height. `mech_biped` is the 3m agile end (mass 3600,
+      step 1.5, top 13, turn 1.5 — climbs onto walls a strider only steps over); `mech_quad` the 15m
+      walking-fortress end (mass 42000 — heaviest in the roster past the hauler, step 3.2, top 6, turn
+      0.6, strides over walls/buildings). Machines, so tireless/fearless: stamina 0, spooks false,
+      trample 0 (the item asks only for mass + step height, so the elephant keeps destructibility to
+      itself). offroad_*/grip_speed/susp_* left 0 to say the model reads none of them. Roster consumers
+      (`[L]`/`--proving`/`--shots`/HUD) iterate `VEHICLE_ROWS`, so both appear with no other edits.
+      Placeholder box still shows wheels — a mesh job, same caveat as strider/sixby. NOT run-verified:
+      the Godot binary is out-of-repo/gated here, so no `--proving`, and handling can't be judged from a
+      screenshot anyway. Run `-- --proving` on the laptop: the quad should hold speed uphill on `climb`
+      like the strider while topping out slowest, the biped sit between strider and quad.
+- [x] **Powered suits** — the player IS the vehicle. Jump height, sprint, hard landings. Blurs into
       the on-foot mode rather than being a separate thing to get into.
+      The LAST legged row, `suit`: pure data on `_loco_legged` like the strider/mech EXCEPT for the two
+      traits this item names that nothing else in the roster has — it JUMPS and it SPRINTS — and both are
+      switched on by DATA (`jump`/`sprint` on VehicleDef, default 0/1, unread by every other row and class,
+      so the no-change gate holds). JUMP is the one piece of genuinely new movement (nothing else leaves the
+      ground under power): a ballistic hop along ring-up in `_drive_tick`, launched at `sqrt(2 g jump)` so the
+      peak lands on `jump` metres, plain gravity (`SUIT_GRAVITY`; the ring-frame ballistics subtlety is the
+      WEAPONS programme's job, not a 3m hop), returning as a HARD LANDING — a body crouch (`_land_dip`) plus a
+      bite out of forward speed, both scaled by impact speed. SPRINT lifts the effective top by `sprint` while
+      held (two lines in `_loco_legged`). "Blurs into on-foot" is literal: the controls ARE the WALK/FLY keys
+      — Shift sprints (WALK's run), Space jumps (FLY's rise) — and the HUD shows them + AIRBORNE/SPRINT. Jump
+      state resets on `[L]` cycle so you never strand the suit mid-air. NOT run-verified: the Godot binary is
+      out-of-repo/gated here (C:\Godot denied), so no live drive — and jump/sprint/landing can't be judged from
+      a screenshot anyway (the reason the proving ground exists), and like the horse's spook they are
+      player-triggered so `--proving` doesn't exercise them. Drive to the suit ([L]) on the laptop and press
+      Space/Shift to confirm it hops onto ledges and bursts, and lands hard off the ramp on the bump strip.
 
 ### Water
 - [ ] **Boats** — the ocean is a flat clamp at `SEA_LEVEL` with no surface simulation, so this needs
