@@ -411,6 +411,7 @@ var _cam_ring := Vector3.ZERO     # camera in RING space (arc, height, lat) -- s
 var _wave_time := 0.0             # sea-swell clock; drives the shader's wave_time AND the CPU twin _wave_h
 var _aground := false             # a hull run into water shallower than its draft; kills way and rudder
 var _boat_vel := Vector2.ZERO     # hull velocity in ring (arc,lat) -- a boat's course is not its heading
+var _dive := 0.0                  # metres a submersible sits BELOW the water surface; 0 = surfaced (see _loco_sub)
 var _car_arc := 0.0
 var _car_lat := 0.0
 var _car_heading := 0.0
@@ -1098,6 +1099,7 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_car_lat = start_lat
 	_car_speed = 0.0
 	_boat_vel = Vector2.ZERO   # a hull starts each phase dead in the water, not carrying the last phase's course
+	_dive = 0.0           # each phase starts surfaced, so a sub's dive can't carry over between phases
 	_stamina = 1.0        # each phase measures a fresh mount, so the table isn't skewed by the prior phase
 	_spooked = 0.0
 	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false))
@@ -1893,6 +1895,12 @@ func _surface_h(arc: float, lat: float) -> float:
 # real data. Replace it the day a bathymetric source lands.
 const SEA_SHELF := 400.0     # metres offshore at which the synthetic shelf reaches full depth
 const SEA_MAX_DEPTH := 12.0
+# SYNTHESISED SEABED (see .decisions/terrain.md#synthetic-seabed). There is no real bathymetry -- Terrarium
+# floors its tiles at 0 -- so rather than block the submersible on a GEBCO download the deep floor is
+# generated the way this project generates everything else: past the shelf edge it keeps falling toward
+# SEA_ABYSS, and noise lays banks and trenches (SEA_RELIEF) over it so there is varied ground to descend to.
+const SEA_ABYSS := 60.0      # deepest the offshore floor reaches, m below SEA_LEVEL -- the dive target
+const SEA_RELIEF := 9.0      # +/- amplitude of the generated banks and trenches on that floor, m
 
 # Is there a coastline within a few km? Distinguishes real sea from the PHANTOM OCEAN that surrounds
 # every patch: outside a patch's data the height sampler returns 0, which is below SEA_LEVEL, which
@@ -1905,15 +1913,49 @@ func _land_in_sight(arc: float, lat: float, radius: float = 2500.0) -> bool:
 				return true
 	return false
 
+# Is this sample backed by real data (home DEM or a splice patch), or is it the procedural
+# fallback? The distinction is the whole of the phantom-ocean decision: outside all data the height
+# is `maxf(noise,0)*DISP`, whose low half sits below SEA_LEVEL and is indistinguishable from real
+# coastal sea by value alone -- but nothing is there. See .decisions/terrain.md#void-is-not-sea.
+func _has_terrain_data(arc: float, lat: float) -> bool:
+	if _dem_hf_w > 0:
+		var fx := _dem_hf_cam.x + arc / _dem_hf_mpp
+		var fy := _dem_hf_cam.y - lat / _dem_hf_mpp
+		if fx >= 0.0 and fy >= 0.0 and fx < float(_dem_hf_w - 1) and fy < float(_dem_hf_h - 1):
+			return true
+	return _patch_at(arc, lat) >= 0
+
 func _sea_depth(arc: float, lat: float) -> float:
 	if _terrain_h_raw(arc, lat) > SEA_LEVEL:
 		return -1.0
+	# The VOID is not sea. Off every patch the height sampler floors to a procedural value that dips
+	# below SEA_LEVEL, so the old code walked out to SEA_SHELF, found no shore (there is none), and
+	# returned SEA_MAX_DEPTH -- the "12 m of ocean by walking off the data" that broke the framing
+	# search and would float a boat on nothing. No data backing => dry, before any shore probe.
+	if not _has_terrain_data(arc, lat):
+		return -1.0
+	# SHELF: the nearest-land distance sets the shallow->deep trend, derived from the real coastline. `off`
+	# is 0 at the beach and 1 past SEA_SHELF; the shelf depth grades with it exactly as before, so the
+	# near-shore water where boats ground is UNCHANGED. (Same nearest-radius probe, just kept as a fraction.)
+	var off := 1.0
 	for rad in [25.0, 60.0, 120.0, 250.0, SEA_SHELF]:
+		var found := false
 		for k in 8:
 			var a := TAU * float(k) / 8.0
 			if _terrain_h_raw(arc + cos(a) * rad, lat + sin(a) * rad) > SEA_LEVEL:
-				return SEA_MAX_DEPTH * (rad / SEA_SHELF)
-	return SEA_MAX_DEPTH
+				found = true
+				break
+		if found:
+			off = rad / SEA_SHELF
+			break
+	var shelf := SEA_MAX_DEPTH * off
+	# ABYSS + RELIEF: past the shelf edge the floor keeps falling toward SEA_ABYSS, and noise lays banks and
+	# trenches over it -- the SYNTHESISED bathymetry the submersible descends through. Both fade in with `off`
+	# (off^2 for the abyss, so the slope steepens offshore), so only open water gets the deep, varied floor
+	# and the shelf that boat grounding reads stays as it was.
+	var abyss := (SEA_ABYSS - SEA_MAX_DEPTH) * off * off
+	var relief := _noise.get_noise_2d(arc * 0.02, lat * 0.02) * SEA_RELIEF * off
+	return maxf(0.3, shelf + abyss + relief)
 
 func _terrain_h_raw(arc: float, lat: float) -> float:
 	# EXACT match to what the CDLOD shader draws (same half-res field + UV mapping) — render-
@@ -3742,6 +3784,7 @@ func _select_vehicle(i: int) -> void:
 	_stamina = 1.0        # a mount you climb onto is fresh; only the horse row reads this
 	_spooked = 0.0
 	_boat_vel = Vector2.ZERO   # never inherit a stale hull course; a boat you board is dead in the water
+	_dive = 0.0           # never cycle onto a vehicle already submerged; a sub you board is on the surface
 	_jump_h = 0.0         # never leave the suit airborne when cycling off it; only the suit row jumps
 	_jump_v = 0.0
 	_land_dip = 0.0
@@ -4104,6 +4147,36 @@ const VEHICLE_ROWS := {
 		"jump": 3.2, "sprint": 2.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
 	},
+	# --- Amphibious + submersible (TASKS.md "Water"). The SIXTH movement class, _loco_sub, and the first to
+	# treat DEPTH as a driven axis. It exists because the seabed now does: Terrarium floors its tiles at 0, so
+	# there was nowhere to descend -- rather than block on a GEBCO download the floor is SYNTHESISED from the
+	# coastline plus noise (see _sea_depth / .decisions/terrain.md#synthetic-seabed), exactly as this project
+	# generates its houses, hedges and palms. The class is amphibious by construction (it crawls ashore where a
+	# hull grounds); `dive_max` is the data switch that also makes a row go under. Two rows split the pairing:
+	# a surface amphibian that stitches the shoreline, and a deep submersible that uses the new seabed.
+	"duck": {
+		# FOR: never swapping vehicle at the waterline. It drives down a beach, floats off, motors across the
+		# shallows and climbs out the far side -- the one craft that makes a coastal patch one continuous drive
+		# rather than a car for the dry half and a boat for the wet. Ducks just under the surface, no deeper.
+		"purpose": "the amphibian — drives straight across the waterline, land to sea to land, ducks just under",
+		"loco": "sub", "mass": 1600.0, "power": 9.0, "brake": 10.0, "top": 14.0, "reverse": -5.0,
+		"drag": 0.45, "offroad_drag": 0.0, "turn": 1.4, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 0.55, "wheel_r": 0.45, "length": 5.4, "tint": Color(0.30, 0.42, 0.38),
+		"buoyancy": 1.0, "draft": 0.6, "dive_max": 2.5,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
+	"sub": {
+		# FOR: going DOWN. Slow and heavy on the surface and reluctant on land (it can crawl out but hates it),
+		# it earns its place submerged -- the only vehicle that descends to the synthesised seabed and moves
+		# along it, so the deep water every other class treats as a flat lid becomes somewhere to go. The reason
+		# the seabed had to be synthesised at all; without a floor it would be a boat that can sink.
+		"purpose": "the submersible — slow on top, but the only thing that dives to the seabed and runs along it",
+		"loco": "sub", "mass": 12000.0, "power": 5.0, "brake": 6.0, "top": 9.0, "reverse": -3.0,
+		"drag": 0.40, "offroad_drag": 0.0, "turn": 1.0, "offroad_turn": 0.0,
+		"grip_speed": 0.0, "ride": 0.50, "wheel_r": 0.45, "length": 11.0, "tint": Color(0.20, 0.28, 0.34),
+		"buoyancy": 1.0, "draft": 2.0, "dive_max": 55.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
 }
 
 func _build_vehicle_defs() -> void:
@@ -4253,6 +4326,37 @@ func _boat_trim(d: VehicleDef, delta: float) -> void:
 	_body_pitch = lerpf(_body_pitch, clampf((stern - bow) / (2.0 * half) * BOAT_PITCH, -0.4, 0.4), delta * 5.0)
 	_body_roll = lerpf(_body_roll, clampf((port - stbd) / (2.0 * half) * BOAT_ROLL, -0.4, 0.4), delta * 5.0)
 
+# Submersible class constants (see .decisions/terrain.md#synthetic-seabed), like the hover/boat terms.
+# SUB_DIVE is how fast it changes depth (m/s); SUB_KEEL keeps the hull that far off the synthesised seabed
+# so it never clips through; SUB_LAND_FRAC is the share of its water top speed it keeps while crawling ashore.
+const SUB_DIVE := 3.5
+const SUB_KEEL := 1.2
+const SUB_LAND_FRAC := 0.4
+
+func _loco_sub(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
+	# AMPHIBIOUS + SUBMERSIBLE -- the SIXTH movement class and the first to treat DEPTH as a driven axis.
+	# It exists because the seabed now does: there was nowhere to descend until _sea_depth synthesised a
+	# floor (Terrarium floors its tiles at 0, so no real bathymetry). This function is the HORIZONTAL half;
+	# the dive is integrated in _drive_tick where the vertical keys live, exactly as the suit's jump is.
+	# Two traits make it the class:
+	# (1) AMPHIBIOUS. Unlike the boat it does NOT ground helplessly. Where there is water to float in it
+	#     propels at `top`; on land or in shallows too thin to float it CRAWLS at SUB_LAND_FRAC of that --
+	#     one drag term either way -- so it drives down a beach, off into the water and out the far side,
+	#     stitching a coastal patch's land and sea into one drive instead of a car for the dry half and a
+	#     boat for the wet. That is the inverse of _loco_boat, which loses way and rudder the moment it grounds.
+	# (2) full turn authority at any speed, submerged or crawling (no grip_speed ramp), like tracked/hover.
+	# The SUBMERSIBLE half -- descending to the synthesised seabed -- is _drive_tick's dive integration,
+	# gated on d.dive_max; a row with dive_max 0 is a pure amphibian that never leaves the surface.
+	var depth := _sea_depth(_car_arc, _car_lat)
+	var afloat := depth > d.draft
+	_aground = false   # amphibious: never stuck -- it crawls where a hull would be beached
+	var top := d.top if afloat else d.top * SUB_LAND_FRAC
+	_car_speed = clampf(_car_speed + accel * delta, d.reverse, top)
+	_car_speed *= 1.0 - d.drag * delta
+	_car_heading += steer * d.turn * delta
+	_car_arc += cos(_car_heading) * _car_speed * delta
+	_car_lat += sin(_car_heading) * _car_speed * delta
+
 # Gait signature: amplitude of the vertical bob and the fore-aft rock, per stride. Kept as constants
 # like the hover slope terms -- move to VehicleDef the day a mech's lumbering stride must differ from a
 # horse's (the next items). BOB is metres, ROCK is radians.
@@ -4386,10 +4490,28 @@ func _drive_tick(delta: float) -> void:
 		"tracked": _loco_tracked(d, delta, accel, steer)
 		"legged": _loco_legged(d, delta, accel, steer)
 		"boat": _loco_boat(d, delta, accel, steer)
+		"sub": _loco_sub(d, delta, accel, steer)
 		"wheeled", _: _loco_wheeled(d, delta, accel, steer)
 	var hover := d.loco == "hover"
 	var legged := d.loco == "legged"
 	var boat := d.loco == "boat"
+	var sub := d.loco == "sub"
+	# SUBMERSIBLE dive, integrated here where the vertical keys already live (like the suit's jump). _dive is
+	# metres below the surface: Shift descends, Space rises -- the WALK-run / FLY-rise keys, so it plays like
+	# on-foot and the boat's helpless grounding is inverted into an amphibian that simply goes under. It can
+	# only dive where the water is deep enough to float and only as far as the synthesised seabed (staying
+	# SUB_KEEL above it); with no water under it, it is pushed back to the surface onto land. dive_max 0
+	# (every non-sub row, and a pure surface amphibian) never enters this, so nothing else is touched.
+	if sub and d.dive_max > 0.0:
+		var sdepth := _sea_depth(_car_arc, _car_lat)
+		if sdepth > d.draft:
+			var dv := 0.0
+			if _sprinting: dv += SUB_DIVE * delta      # Shift: descend
+			if want_jump: dv -= SUB_DIVE * delta       # Space: surface
+			var floor_d: float = maxf(0.0, minf(d.dive_max, sdepth - SUB_KEEL))
+			_dive = clampf(_dive + dv, 0.0, floor_d)
+		else:
+			_dive = move_toward(_dive, 0.0, SUB_DIVE * 2.0 * delta)   # no water to dive in -- surface onto land
 	# A hover craft floats level at a fixed clearance: the calibrated bump strip never reaches it (that
 	# is what "ignores ground roughness" MEANS), so it is left out of its ground point. A walker STEPS
 	# over roughness up to its step_height -- feet absorb small features, so the body feels only the part
@@ -4406,6 +4528,12 @@ func _drive_tick(delta: float) -> void:
 		# lifts the boat onto the drawn wave using the same ring-up offset the bump strip uses --
 		# no second position path, and it stays exactly consistent with what the shader displaced.
 		strip = _surface_h(_car_arc, _car_lat) - _terrain_h(_car_arc, _car_lat)
+	elif sub:
+		# rides the drawn water surface like a hull (swell = _surface_h - _terrain_h), then sits _dive
+		# metres UNDER it -- the same ring-up offset path, so the submerged body stays consistent with the
+		# shader's water and descends toward the synthesised seabed. On land (_dive forced to 0 above) this
+		# is just the bump strip, so it sits on the ground like any wheeled vehicle while crawling ashore.
+		strip = (_surface_h(_car_arc, _car_lat) - _terrain_h(_car_arc, _car_lat)) - _dive
 	var base := _car_pos(_car_arc, _car_lat)
 	# gait bob rises the body on each stride, added along ring-up -- legs, not springs.
 	var bob: float = absf(sin(_gait_phase)) * LEGGED_BOB if legged else 0.0
@@ -4445,6 +4573,13 @@ func _drive_tick(delta: float) -> void:
 	elif boat:
 		# attitude from the wave slope under the hull, not from a contact plane or a stride
 		_boat_trim(d, delta)
+	elif sub:
+		# at the surface it lies on the swell like a hull; submerged there is no wave over it, so it levels
+		if _dive > 1.0:
+			_body_pitch = lerpf(_body_pitch, 0.0, delta * 6.0)
+			_body_roll = lerpf(_body_roll, 0.0, delta * 6.0)
+		else:
+			_boat_trim(d, delta)
 	else:
 		_susp_update(delta, pos, up, fwd)
 	_car.global_position = pos + up * d.ride
@@ -4484,7 +4619,9 @@ func _drive_tick(delta: float) -> void:
 	# can never sink through a slope behind the car (the under-floor cause found in the LOD mock).
 	var cam_ground := _car_pos(_car_arc - cos(_car_heading) * 12.0, _car_lat - sin(_car_heading) * 12.0)
 	var cam_up := _ring_up(cam_ground)
-	var cam_target: Vector3 = cam_ground + cam_up * 5.0
+	# drop the chase cam with a diving submersible so it follows underwater, keeping the same relative
+	# framing it had on the surface. _dive is 0 for every other class, so this is a no-op for them.
+	var cam_target: Vector3 = cam_ground + cam_up * (5.0 - _dive)
 	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-6.0 * delta))
 	_cam.look_at(pos + up * 2.0, up)
 	_hud_timer += delta
@@ -4802,7 +4939,17 @@ func _update_hud() -> void:
 		if vd.jump > 0.0:
 			suit = "  (Space jump, Shift sprint)%s%s" % [
 				"  AIRBORNE" if _jump_h > 0.05 else "", "  SPRINT" if _sprinting else ""]
-		mode = "DRIVE  %d km/h  [%s] — %s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit]
+		# a submersible reads its own depth: DIVE metres while under, ASHORE when crawling on land, and the
+		# dive keys otherwise -- so the amphibious/submersible traits are legible while driving, not just felt
+		var subm := ""
+		if vd.loco == "sub":
+			if _dive > 0.5:
+				subm = "  DIVE %.0fm" % _dive
+			elif _sea_depth(_car_arc, _car_lat) <= vd.draft:
+				subm = "  ASHORE"
+			elif vd.dive_max > 0.0:
+				subm = "  (Shift dive, Space surface)"
+		mode = "DRIVE  %d km/h  [%s] — %s%s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit, subm]
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	if not _hud_full:

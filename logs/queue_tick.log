@@ -1573,3 +1573,364 @@ The core code was already present but **uncommitted, unticked, and its shot sess
 2026-08-10 15:29:34  skip: cooling down until 15:35
 2026-08-10 15:59:36  cooldown over, resuming
 2026-08-10 15:59:36  === tick starting (27 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+Done. One item completed.
+
+**What I found first:** the item at the top of TASKS.md when I read it ("The near sea is not drawn by the terrain shader") was already resolved and committed mid-session by the concurrent queue-tick task (`830b05b`) ΓÇö it was never the far band or a hole, but a coord-space bug in `_select_lod`. The on-disk TASKS.md already ticks it. So the genuine top unchecked item was **Phantom ocean outside patch data**.
+
+**What I did:**
+- **Decided: the void is not sea.** Off every patch the sampler floors to a procedural value whose low half sits below `SEA_LEVEL` ΓÇö identical by value to real coastal water, but nothing backs it. The discriminator is *data*, not a value threshold or distance-to-shore.
+- Added `_has_terrain_data()` (home DEM in bounds OR a patch owns the point ΓÇö mirrors `_terrain_h_raw`'s real-data branches) and made `_sea_depth()` return dry (`-1`) for any point that fails it, *before* the shore probe. This kills the "found 12 m of ocean by walking off the data" that broke the sea-framing search and would float a boat on empty space (verified by reading the boat path: `depth = -1 < draft` ΓåÆ correctly grounded, was `12 < draft` ΓåÆ floated).
+- Recorded it as `.decisions/terrain.md#void-is-not-sea` and ticked the item, noting the GPU render-side clamp is deferred to a shot-verified pass (Godot is out-of-repo/gated here; this fix is logic, verifiable by reading).
+
+**Blocked step ΓÇö commit:** every `git add`/`git commit` form (sandbox override included) returns "requires approval" and can't complete in this non-interactive session; read-only git works. The three edited files (`game/mocks/ring_vibes.gd`, `.decisions/terrain.md`, `TASKS.md`) are complete and intact on disk but **uncommitted**. They need committing by you, the watcher's [L], or the queue-tick task. I recorded this session constraint to memory so future queue wakes don't burn turns on it.
+
+2026-08-10 16:11:01  === tick done (24 items left) ===
+2026-08-10 16:29:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 16:39:23  === tick done (24 items left) ===
+2026-08-10 16:59:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 16:59:38  === tick done (24 items left) ===
+2026-08-10 17:29:34  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 17:29:38  === tick done (24 items left) ===
+2026-08-10 17:59:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 17:59:38  === tick done (24 items left) ===
+2026-08-10 18:29:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 18:29:37  === tick done (24 items left) ===
+2026-08-10 18:59:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 18:59:37  === tick done (24 items left) ===
+2026-08-10 19:29:34  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 19:29:38  === tick done (24 items left) ===
+2026-08-10 19:59:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 19:59:38  === tick done (24 items left) ===
+2026-08-10 20:29:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+You've hit your session limit ┬╖ resets 8:40pm (Europe/Dublin)
+
+2026-08-10 20:29:38  === tick done (24 items left) ===
+2026-08-10 20:59:35  === tick starting (24 items open) ===
+claude.exe : Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\Games\\possession\\**) 
+is not matched by file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead 
+(Edit rules cover all file-editing tools).
+At C:\Users\Bran the builder\AppData\Roaming\npm\claude.ps1:14 char:3
++   & "$basedir/node_modules/@anthropic-ai/claude-code/bin/claude.exe"  ...
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Permission allo...editing tools).:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\server.js) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\server.js) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): 
+Write(C:\\Games\\possession\\tools\\claude_chat\\index.html) is not matched by file permission checks ΓÇö only 
+Edit(path) rules are. Use Edit(C:\\Games\\possession\\tools\\claude_chat\\index.html) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\hello.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\hello.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (C:\Users\Bran the builder\.claude\settings.json): Write(C:\\test\\test.txt) is not matched by 
+file permission checks ΓÇö only Edit(path) rules are. Use Edit(C:\\test\\test.txt) instead (Edit rules cover all 
+file-editing tools).
+Permission allow rule (.claude\settings.json): Write(C:\\Games\\possession\\**) is not matched by file permission 
+checks ΓÇö only Edit(path) rules are. Use Edit(C:\\Games\\possession\\**) instead (Edit rules cover all file-editing 
+tools).
+Git is permission-gated in this session (the documented "Session Git Gated" pattern), so I can't commit ΓÇö but the work is complete and ticked on disk.
+
+## What I did
+
+Top unchecked item was **Amphibious + submersible** (line 398). It was *not* blocked ΓÇö a prior git-gated session had already resolved its precondition and implemented it on disk (uncommitted). I verified the implementation and ticked it.
+
+**Precondition resolved:** the item required deciding GEBCO vs synthesising a seabed. Decided ΓåÆ **synthesise** (recorded `.decisions/terrain.md#synthetic-seabed`), consistent with everything else this project generates.
+
+**Verified coherent (read-only ΓÇö binary is out-of-repo/gated):**
+- `_sea_depth` synthesises a descendable floor from the coastline: near-shore trend unchanged (boat grounding untouched), falling to `SEA_ABYSS` 60m offshore with `_noise` banks/trenches.
+- `_loco_sub` ΓÇö sixth movement class, amphibious (crawls ashore where a hull grounds, inverse of `_loco_boat`), dive integrated in `_drive_tick` on Shift/Space.
+- All referenced symbols (`_dem_hf_*`, `_patch_at`, `_sprinting`, `want_jump`, `SUB_*`) exist and are in scope; `duck`/`sub` rows are valid; `VehicleDef.dive_max` defaults 0 so the no-change gate holds.
+
+**Caveat I found and noted:** on land the crawl sits on terrain rather than the calibrated bump strip ΓÇö only visible on the proving-strip arc; the prior comment slightly overstated this.
+
+## Blocked on commit
+
+`git add` and `git commit` both returned "requires approval" and could not proceed. Nothing is staged. The four feature files are modified on disk:
+
+```
+git commit -F - .decisions/terrain.md TASKS.md game/mocks/ring_vibes.gd game/mocks/vehicle_def.gd
+```
+
+(Full message is in my last commit attempt above ΓÇö it excludes `logs/queue_tick.log` and `logs/s2_refetch.log`, which are unrelated background churn.) Run that on the laptop, or press **L** in the watcher, to land it.
+
+2026-08-10 21:05:29  === tick done (23 items left) ===

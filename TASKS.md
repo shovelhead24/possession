@@ -380,15 +380,44 @@ Prerequisite for everything below.
       with legible crest/trough banding. Keeping the split: geometry must still stop at ~1.2km (the
       gradient neighbours are node_size/grid apart out there) while colour is per-fragment and
       shouldn't. Left here as the record that the suspected cause was wrong.
-- [ ] **Phantom ocean outside patch data.** Off the edge of a patch the height sampler returns 0,
-      which is below sea level, which renders and tests as ocean to the horizon. It silently broke the
-      sea-framing search (it "found" 12m of water by walking off the data). Decide whether the void
-      should read as sea at all.
-- [ ] **Amphibious + submersible** — NOTE, the old premise here was wrong: the sea floor is NOT real
-      heightfield data below the clamp. 87.2% of palawan is exactly 0.0m because Terrarium floors its
-      tiles at 0, so there is no seabed to descend to — `_sea_depth` currently infers depth from
-      distance to the nearest shore, which is honest but is not bathymetry: no trenches, no shelf,
-      nowhere to go down. Source GEBCO or commit to synthesising one before building this.
+- [x] **Phantom ocean outside patch data.** Decided: the void is NOT sea (recorded as
+      .decisions/terrain.md#void-is-not-sea). Off every patch the sampler floors to a procedural
+      value whose low half sits below SEA_LEVEL — identical by value to real coastal water, but
+      nothing backs it. The discriminator is DATA, not a value or a distance-to-shore heuristic:
+      new `_has_terrain_data` (home DEM in bounds OR a patch owns the point) mirrors `_terrain_h_raw`'s
+      real-data branches, and `_sea_depth` now returns dry (-1) for any point that fails it, BEFORE
+      the shore probe. That kills the "12 m of ocean by walking off the data" that broke the framing
+      search and would float a boat on empty space; the framing search's existing `_land_in_sight`
+      guard now has a void-proof depth test under it too. Scope: fixed on the authoritative CPU test
+      side (`_sea_depth` → framing + boat grounding). The far band shader draws NO water, so "ocean to
+      the horizon" is bounded to the CDLOD bubble's inter-patch gaps; aligning the GPU
+      `sample_h`/`is_water` clamp and `_terrain_h`'s placement clamp to the same predicate is left for
+      a shot-verified pass — the Godot binary is out-of-repo/gated here, so a render change can't be
+      eyeballed (and this fix is logic, verifiable by reading, not a picture). Retire the whole
+      void/synthetic-shelf distinction when a bathymetric source lands.
+- [x] **Amphibious + submersible** — the precondition (GEBCO vs synthesise) is DECIDED: synthesise,
+      consistent with everything else this project generates (recorded .decisions/terrain.md#synthetic-seabed).
+      `_sea_depth` now builds a descendable floor from the ONE real datum it has, the coastline: the
+      shore-distance probe keeps the shallow-near-beach trend UNCHANGED (so boat grounding is untouched),
+      then past the shelf edge the floor keeps falling toward SEA_ABYSS (60m) with `_noise` laying banks
+      and trenches (SEA_RELIEF ±9m) over it — varied ground, not a smooth bowl, faded in with offshore
+      distance (off² for the abyss so the slope steepens). The SIXTH movement class `_loco_sub` +
+      dispatch case is amphibious by construction (crawls ashore at SUB_LAND_FRAC of its water speed
+      where a hull grounds — the inverse of `_loco_boat`, which loses way the moment it beaches) with
+      full turn authority at any speed like tracked/hover. DEPTH is the first driven vertical axis: `_dive`
+      is integrated in `_drive_tick` where the suit's jump lives, Shift descends / Space surfaces (the
+      WALK-run/FLY-rise keys), gated on `dive_max` and floored SUB_KEEL above the synthesised seabed, and
+      forced back to 0 with no water under it (surfaces onto land). Two rows split the pairing: `duck`
+      (surface amphibian, dive_max 2.5) and `sub` (deep, dive_max 55). Body levels when submerged (no wave
+      over it) / trims on the swell at the surface; chase cam drops with `_dive`; HUD reads DIVE/ASHORE/keys.
+      New VehicleDef field `dive_max` defaults 0 (a data contract like draft/lift — every other row and
+      class unchanged, no-change gate holds). Caveats: on land the crawl sits on terrain, not the calibrated
+      bump strip (matters only on the proving-strip arc); the synthesised floor is not real bathymetry (no
+      named trenches, no true shelf break) — a GEBCO source would refine it, not replace the approach. NOT
+      run-verified: the Godot binary is out-of-repo/gated here, so no `--proving`/`--shots`, and diving is
+      player-triggered (Shift/Space) so `--proving` wouldn't exercise it and a screenshot can't judge
+      handling anyway. Cycle to `duck`/`sub` ([L]) on the laptop, drive off a beach and press Shift to
+      confirm it floats off, descends the synthesised floor, and crawls out the far side.
 
 ### Air
 - [ ] **Rotary and fixed-wing** — FLY mode exists as a noclip camera; this needs actual flight with

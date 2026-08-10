@@ -71,6 +71,12 @@ extends Resource
 @export var drift := 0.0           # 0 = velocity is always along the heading (every land class);
                                    # 1 = the hull skates, carrying its old course through a turn
 
+# Submersible (TASKS.md "Water"), read only by _loco_sub / the dive integration. The _loco_sub class is
+# amphibious by construction (crawls ashore where a hull grounds); dive_max is the switch that also lets a
+# row go UNDER -- metres it can submerge, capped in play by the synthesised seabed. Default 0 = a pure
+# surface amphibian (and unread by every other class), so this is a data contract like draft/lift.
+@export var dive_max := 0.0        # max depth below the surface it can dive, m; 0 = stays on the surface
+
 @export var susp_travel := 0.34    # spring travel, extension limit to bump stop
 @export var susp_stiff := 34.0
 @export var susp_damp := 6.0
