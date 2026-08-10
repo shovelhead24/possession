@@ -1940,3 +1940,19 @@ git commit -F - .decisions/terrain.md TASKS.md game/mocks/ring_vibes.gd game/moc
 2026-08-10 21:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
 2026-08-10 21:29:36           M scripts/claude-queue-tick.ps1
 2026-08-10 21:40:57  === tick starting (23 items open) ===
+2026-08-10 21:59:02  === tick starting (22 items open) ===
+2026-08-10 21:59:35  skip: a run started 1 min ago
+2026-08-10 22:02:21  skip: a run started 3 min ago
+Done. One item: **Ring-specific flight**.
+
+Two of its three parts already existed (thinning-air lift via `_air_density`; up-toward-axis via `_ring_up`) ΓÇö confirmed, not rebuilt. The missing ring-specific piece was gravity, which was a flat `AIR_GRAVITY := 9.0` "plain down-pull." Changed it in `_loco_air` to spin gravity:
+
+```gdscript
+var g := AIR_GRAVITY * (1.0 - _altitude / _radius())
+```
+
+So the pull weakens toward the axis, hits zero at the axis (weightless), and reverses past it ΓÇö the term flips and pulls you across to the far surface, making "a long enough climb crosses to the far side" true in the model. Scoped to `_loco_air` only (no other class reads air gravity); Coriolis drift stays deferred to weapons. Honest limit noted: lift dies at ~48km, far below the ~477km axis, so a wing can't actually reach the crossing ΓÇö that's the orbital items.
+
+Not run-verified (Godot binary is gated here; flight handling isn't judgeable from a screenshot). Ticked and committed as `ea1f461`.
+
+2026-08-10 22:02:28  === tick done (21 items left) ===
