@@ -517,10 +517,37 @@ Prerequisite for everything below.
       outside the sandbox), so no `--shots` -- and the shimmer is the thing being LOOKED at, so a
       screenshot I can't take is the whole point. Run `-- --shots` on the laptop and read the new
       `*_rim.png` / `*_rimtop.png`; log the session in logs/shots/JOURNAL.md.
-- [ ] **Ring-relative orbital mechanics.** You cannot orbit a ringworld the way you orbit a planet —
+- [x] **Ring-relative orbital mechanics.** You cannot orbit a ringworld the way you orbit a planet —
       the mass distribution is wrong and the ring is spinning under you at ~2.1 km/s. Match the
       spin and you hover over one spot; do not and the ring moves beneath you. That is a genuinely
       novel traversal mechanic and probably the most interesting item on this list.
+      Done in `_loco_air`, and it needed almost no new state because `_car_arc` already lives in the
+      ring's ROTATING frame — so `_air_vel.x` is literally your velocity relative to the ground, and
+      "the ring moves beneath you" was already true by construction; what was missing was the physics
+      that made it MATTER. The previous item's spin gravity was a placeholder constant `omega^2*r`.
+      Replaced it with the full spinning-frame reaction derived the honest way — ask what a free body
+      does in the INERTIAL frame and read it back out: a body with inertial tangential speed
+      `v_i = v_arc + omega*r` needs centripetal `v_i^2/r` to hold its radius and nothing real provides
+      it (a ring has no gravity well), so the net floor-ward pull IS `v_i^2/r`. That one term is spin
+      gravity + Coriolis + centripetal at once, and the item's cases fall straight out: hover matched
+      to spin (`v_arc=0`) reduces to `omega^2*r` (so low flight is byte-identical to before); fly
+      PROGRADE and the floor pulls harder; fly RETROGRADE at `v_arc=-omega*r` and `v_i=0` — you're
+      inertially still, pull is zero, you hold altitude with no thrust while the ring streams past at
+      `omega*R` (~2.1 km/s), which is the orbit. The companion angular-momentum term (`r*v_i`
+      conserved) couples vertical into arc: a climb throws you spinward, a descent retrograde, so you
+      can't change altitude without the ground sliding under you. `_spin_omega()` derives omega (and
+      the ~2.1 km/s spin speed) from AIR_GRAVITY, one source. HUD reads `GROUND ±N m/s` (the rate the
+      ring slides beneath you) and flags `ORBIT` when `v_arc≈-omega*r`. Preserves the far-side crossing
+      (r<0 flips the pull) for the right reason now. Scoped to `_loco_air` only; no other class reads
+      it, no-change gate holds. Caveats: the `v_arc/r` term is exact only for small radial excursions
+      (fine for a wing, which can't reach the axis anyway — the item's own note); `g_eff` is clamped
+      ±200 m/s^2 and `r` floored at 1km to keep the integrator sane at the unreachable axis singularity;
+      the UNPOWERED projectile ballistics (rifle rounds) stays the weapons programme's `Ballistics on a
+      ring` item. NOT run-verified: the Godot binary is out-of-repo/gated here (C:\Godot), so no
+      `--proving`, and orbital handling can't be judged from a screenshot anyway (the reason the proving
+      ground exists). Cycle to the `lifter`/`airplane` ([L]) on the laptop, climb to vacuum and burn
+      RETROGRADE — the ALT should hold with the throttle off while GROUND climbs toward -2000 m/s and
+      the HUD flags ORBIT; fly PROGRADE and it should sink.
 - [ ] **Docking / boarding** at axis structures, which `docs/terrain/substrate.md` already places
       for the leave-ending.
 

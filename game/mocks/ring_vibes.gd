@@ -4496,11 +4496,12 @@ func _loco_sub(d: VehicleDef, delta: float, accel: float, steer: float) -> void:
 
 # Air-flight class constants (TASKS.md "Air" / "Ring-specific flight"), like the hover/boat/sub terms. A naive but
 # honest model: lift vs weight decides whether it holds altitude, thinning air sets the ceiling, ground effect
-# floats it near the deck. RING-SPECIFIC: gravity here is SPIN gravity (omega^2 * r), so its magnitude falls off
-# with altitude toward the axis and reverses past it -- see _loco_air. AIR_GRAVITY is therefore the value at the
-# SURFACE (r = _radius()). The sideways Coriolis drift of an UNPOWERED projectile (free fall while the ring spins
-# under it) is a separate effect and stays the WEAPONS programme's job -- a wing under power does not feel it.
-const AIR_GRAVITY := 9.0          # SURFACE spin gravity (omega^2 * R), m/s^2; scaled by (1 - alt/R) in _loco_air
+# floats it near the deck. RING-SPECIFIC: "gravity" is the full spinning-frame reaction -- centrifugal spin
+# gravity (omega^2 * r) plus the Coriolis and centripetal coupling of the ring-relative orbital model -- see
+# _loco_air. AIR_GRAVITY is the SURFACE spin gravity (r = _radius()); omega and the ~2.1 km/s spin speed derive
+# from it (_spin_omega). Only the UNPOWERED free-flight projectile (a rifle round in ballistic fall while the
+# ring spins under it) stays the WEAPONS programme's job; a powered craft flies the coupling here.
+const AIR_GRAVITY := 9.0          # SURFACE spin gravity (omega^2 * R), m/s^2; the orbital model in _loco_air builds on it
 const AIR_LIFT := 11.0            # lift authority scale, tuned so a fixed-wing near stall / a rotor at neutral holds level
 const AIR_VDRAG := 0.8            # vertical-speed damping, so climb and sink settle rather than run away
 const AIR_GROUND_EFFECT := 0.6    # extra lift fraction riding the cushion at zero height, faded out over a wingspan
@@ -4515,6 +4516,12 @@ func _air_density(alt: float) -> float:
 	# item's payoff -- "the atmosphere-exit work already models thinning air" -- so a long enough climb runs the
 	# wing out of air and gives a natural ceiling, not a hard clamp.
 	return 1.0 - smoothstep(_space_lo(), _space_hi(), alt)
+
+func _spin_omega() -> float:
+	# Ring spin rate. AIR_GRAVITY is the SURFACE spin gravity omega^2*R, so omega = sqrt(g/R), and the surface
+	# speed omega*R = sqrt(g*R) ~ 2.1 km/s at the ~477 km radius -- the number "Ring-relative orbital mechanics"
+	# quotes. One source for every ring-frame term (orbital gravity in _loco_air, the HUD ground-track readout).
+	return sqrt(AIR_GRAVITY / _radius())
 
 func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator: float) -> void:
 	# ACTUAL FLIGHT -- the SEVENTH movement class, and the first to leave the surface and STAY off it (the suit's
@@ -4565,21 +4572,33 @@ func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator
 	var ge := 1.0 + AIR_GROUND_EFFECT * clampf(1.0 - _altitude / span, 0.0, 1.0)
 	# THINNING AIR: lift falls off with the same curve the sky thins by, so the air runs out overhead
 	var lift := AIR_LIFT * maxf(d.lift, 0.0) * q * lift_src * ge
-	# vertical: lift up, SPIN gravity down, plus the pilot's elevator, all damped so it settles. RING-SPECIFIC
-	# (TASKS.md "Ring-specific flight"): "up" is toward the axis, and spin gravity is omega^2*r, so its pull
-	# weakens as you climb toward the axis (r = R - alt): g = AIR_GRAVITY*(1 - alt/R). It reaches zero at the
-	# axis (alt = R -> weightless) and goes NEGATIVE past it, so the term flips sign and pulls you on across to
-	# the far surface -- "a long enough climb crosses to the far side". Within the atmosphere the air (and thus
-	# lift) runs out just above the rim wall (~5km at the 4km default), far below the ~477km axis, so a WING cannot
-	# reach it -- that crossing is
-	# the orbital items' job -- but the flight frame is now correct all the way up, not a flat planet down-pull.
-	var g := AIR_GRAVITY * (1.0 - _altitude / _radius())
+	# vertical: lift up, the ring's spin-frame pull down, plus the pilot's elevator, all damped so it settles.
+	# RING-RELATIVE ORBITAL MECHANICS (TASKS.md). "Up" is toward the axis and _car_arc is the ground-fixed
+	# (rotating) frame, so _air_vel.x is your velocity RELATIVE TO THE GROUND. The honest way to get orbits on a
+	# spinning ring is to ask what a free body does in the INERTIAL frame and read it back out here: a body with
+	# inertial tangential speed v_i at radius r needs centripetal v_i^2/r to hold that radius, and nothing real
+	# provides it (a ringworld has no gravity well), so the net pull toward the floor is exactly v_i^2/r.
+	#   v_i = (ground-relative arc speed) + (co-rotation speed omega*r)
+	# That ONE term is spin gravity, Coriolis and centripetal at once, and every case the item names falls out:
+	#   - hover, matched to the spin (v_arc = 0): pull = (omega*r)^2/r = omega^2*r = the surface gravity you
+	#     hold with thrust -- identical to the old constant model, so low flight is unchanged.
+	#   - fly PROGRADE (v_arc > 0): v_i rises, the floor pulls harder -- the ring throws you down.
+	#   - fly RETROGRADE at v_arc = -omega*r: v_i = 0, you are inertially still, pull = 0, you hold altitude with
+	#     no thrust while the ring streams past beneath you at omega*R (~2.1 km/s). That IS the orbit.
+	# It still weakens toward the axis (r -> 0) and flips past it (r < 0 pulls to the far surface), so the
+	# previous item's "a long enough climb crosses to the far side" is preserved, now for the right reason.
+	var omega := _spin_omega()
+	var rr := _radius() - _altitude                                             # radius from the spin axis; up shrinks it
+	var rr_safe: float = maxf(rr, 1000.0) if rr >= 0.0 else minf(rr, -1000.0)   # guard the axis singularity (unreachable by wing)
+	var v_arc := _air_vel.x                                                     # ground-relative arc speed (rotating frame)
+	var v_i := v_arc + omega * rr                                               # INERTIAL tangential speed
+	var g_eff: float = clampf((v_i * v_i) / rr_safe, -200.0, 200.0)             # net floor-ward pull; clamp keeps the integrator sane near the axis
 	# The elevator is a control SURFACE -- it needs air over it. In vacuum the same stick input feeds the
 	# vertical thrusters instead, which is the whole "reaction control instead of aerodynamics" swap. Note the
 	# thruster is NOT scaled by airspeed: an RCS jet works standing still, which is exactly why it is the only
 	# thing that can point you when the wing has nothing to bite on.
 	var vctl: float = elevator * (AIR_ELEVATOR * q + d.rcs * vac)
-	_vspeed += (lift - g + vctl) * delta
+	_vspeed += (lift - g_eff + vctl) * delta
 	# vertical damping is air resistance too -- without it a ballistic arc would be damped by nothing at all,
 	# which is the point: above the atmosphere you coast, and only gravity and the thrusters change that.
 	_vspeed *= 1.0 - AIR_VDRAG * q * delta
@@ -4616,6 +4635,13 @@ func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator
 		_air_vel = _air_vel.lerp(want, 1.0 - exp(-delta * 4.0 * q))
 	else:
 		_air_vel = want
+	# TANGENTIAL COUPLING (the other half of the orbital model). The same inertial bookkeeping conserves angular
+	# momentum r*v_i, so as r changes the ground-relative arc speed must change with it -- a climb (r shrinks)
+	# throws you spinward, a descent retrograde. You cannot change altitude without the ground sliding under you.
+	# To leading order this is the Coriolis 2*omega*_vspeed; the v_arc/r part is the exact companion to g_eff.
+	# Applied AFTER the nose-follow lerp: in air the wing re-aligns you next frame (small trim); in vacuum there
+	# is nothing to re-align, so it accumulates as real ballistic drift.
+	_air_vel.x += _vspeed * (v_arc / rr_safe + 2.0 * omega) * delta
 	_car_arc += _air_vel.x * delta
 	_car_lat += _air_vel.y * delta
 
@@ -5258,6 +5284,15 @@ func _update_hud() -> void:
 				var drift_deg: float = rad_to_deg(absf(angle_difference(_car_heading, _air_vel.angle())))
 				if drift_deg > 5.0:
 					airinfo += "  DRIFT %.0f deg" % drift_deg
+			# RING-RELATIVE ORBITAL STATE (TASKS.md). _car_arc is the ground-fixed frame, so _air_vel.x is the
+			# rate the ring slides beneath you: 0 = matched the spin (hover over one spot); -omega*r = inertially
+			# still, ground streaming past at spin speed = orbit. Invisible without a readout.
+			if q_hud < 0.5:
+				var omega_h := _spin_omega()
+				var rr_h: float = maxf(_radius() - _altitude, 1.0)
+				airinfo += "  GROUND %+.0f m/s" % _air_vel.x
+				if _altitude > 100.0 and absf(_air_vel.x + omega_h * rr_h) < omega_h * rr_h * 0.12:
+					airinfo += "  ORBIT"
 			airinfo += "  (Space climb, Shift descend)"
 		mode = "DRIVE  %d km/h  [%s] — %s%s%s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit, subm, airinfo]
 	elif _mode == Mode.WALK:
