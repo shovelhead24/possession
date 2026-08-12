@@ -1300,10 +1300,20 @@ func _shot_run() -> void:
 			print("SHOT %s: framed on a road, %.0fm from the settlement" % [pname, sqrt(best_d)])
 		else:
 			print("SHOT %s: NO ROAD DATA within 5km — framing the settlement instead" % pname)
+		# RIM WALL + CONTAINMENT FIELD. None of the three framings below ever turns to face the rim, so
+		# the wall height, the atmosphere ceiling and the field shimmer spanning between them have never
+		# been in a shot -- the wall/ceiling judgement was being made blind, and the field shimmer has
+		# never been seen. Aim across the strip at the NEARER rim (yaw +/-90deg toward it): one framing
+		# from inside at eye level (does the wall dominate the horizon from where you play?), one from
+		# above the wall top looking back (how tall the masonry is, how far the field carries it up).
+		var rim_yaw: float = (PI * 0.5) if lat >= 0.0 else (-PI * 0.5)
+		var field_mid: float = wall_top_h + maxf(atmo_top_h - wall_top_h, 500.0) * 0.5
 		var frames := [
 				{"n": "ground", "h": 2.2, "pitch": -0.04, "fov": 70.0},
 				{"n": "road", "h": 6.0, "pitch": -0.18, "fov": 60.0},
 				{"n": "air", "h": 400.0, "pitch": -0.55, "fov": 70.0},
+				{"n": "rim", "h": 3.0, "pitch": 0.06, "fov": 45.0, "yaw": rim_yaw},
+				{"n": "rimtop", "abs_h": field_mid, "pitch": -0.05, "fov": 62.0, "yaw": rim_yaw},
 			]
 		# ON THE WATER. None of the three framings above ever looks at sea -- they walk to a road or a
 		# settlement, both of which are on land by definition -- so a coastal patch photographed three
@@ -1341,12 +1351,19 @@ func _shot_run() -> void:
 				% [_surface_h(sea_p.x, sea_p.y) - SEA_LEVEL,
 				_surface_h(sea_p.x + 20.0, sea_p.y) - SEA_LEVEL,
 				_surface_h(sea_p.x + 40.0, sea_p.y) - SEA_LEVEL])
+		# capture the road-tangent yaw set above so a rim framing can override it (`yaw` key) without
+		# leaking its across-strip heading into the next patch's ground/road/air frames.
+		var base_yaw := _look.x
 		for shot in frames:
 			# most framings share the patch's walk-to point; the sea framing carries its own
 			var sa: float = float(shot.get("arc", arc))
 			var sl: float = float(shot.get("lat", lat))
-			_cam.position = _ring_pos(sa / r, sl, _terrain_h(sa, sl) + float(shot["h"]))
+			# abs_h places the camera at an ABSOLUTE ring height (rimtop, which sits above the wall top
+			# where terrain height is meaningless); every other framing is terrain-relative.
+			var cam_h: float = float(shot["abs_h"]) if shot.has("abs_h") else _terrain_h(sa, sl) + float(shot["h"])
+			_cam.position = _ring_pos(sa / r, sl, cam_h)
 			_cam.fov = float(shot["fov"])
+			_look.x = float(shot.get("yaw", base_yaw))
 			_look.y = float(shot["pitch"])
 			_apply_look()
 			# roadside furniture follows the streamed patch too, or hedges, verge and the grass

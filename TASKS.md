@@ -491,9 +491,32 @@ Prerequisite for everything below.
       even when you are not near it" -- and 1500 with a 4000 ceiling reads much cleaner from the air.
       Comparison shots: logs/shots/20260812_2234_wall4000, _2239_wall2500, _2311_field (wall 1500).
       Fly to the ceiling before fixing it; the number is a judgement, not a calculation.
-- [ ] **The field shimmer is unverified.** Implemented and it renders without error, but none of the
+      BLOCKED (2026-08-12): this is a look-at-it judgement I can't make here. The Godot binary is
+      out-of-repo (C:\Godot, outside the session sandbox), so I can't fly to the ceiling; and the
+      number is explicitly "not a calculation" -- the meat model has to arbitrate. Worse, the three
+      comparison air shots are pixel-identical because the `air` framing looks DOWN at the plain from
+      400m and never turns to the rim, so the wall isn't even in them -- there was nothing to judge
+      from. The framing that item below asks for is the prerequisite, and I built it in that item, so
+      the next laptop `-- --shots --wall N --atmo M` run produces the `rim`/`rimtop` frames to settle
+      this against.
+- [x] **The field shimmer is unverified.** Implemented and it renders without error, but none of the
       three shot framings looks AT the rim, so nobody has seen it. Needs a framing that puts the rim
       wall in frame, from inside and from above the wall top.
+      Added the two framings the item names to `_shot_run`, aimed across the strip at the NEARER rim
+      (yaw +/-90deg, chosen by the framing point's lat): `rim` -- inside at eye level, 45deg FOV, a
+      touch of up-pitch, "does the wall dominate the horizon from where you play"; and `rimtop` --
+      camera at an ABSOLUTE ring height halfway up the field (`wall_top + max(atmo-wall,500)/2`),
+      looking back at the rim, so the masonry, the shimmer strip above it and the ceiling are all in
+      one frame. Needed two small harness generalisations, both scoped to the shot loop: an optional
+      per-frame `yaw` override (captured/restored via `base_yaw` so it can't leak into the next
+      patch's ground/road/air frames -- which also closes a latent cross-patch yaw bleed on road-less
+      patches) and an `abs_h` key that places the camera at an absolute height instead of terrain+h
+      (terrain height is meaningless above the wall top). These run per patch alongside the existing
+      frames and honour `--wall`/`--atmo`, so they are also the missing prerequisite for the wall/
+      ceiling item above. NOT run-verified: the Godot binary is out-of-repo/gated here (C:\Godot
+      outside the sandbox), so no `--shots` -- and the shimmer is the thing being LOOKED at, so a
+      screenshot I can't take is the whole point. Run `-- --shots` on the laptop and read the new
+      `*_rim.png` / `*_rimtop.png`; log the session in logs/shots/JOURNAL.md.
 - [ ] **Ring-relative orbital mechanics.** You cannot orbit a ringworld the way you orbit a planet —
       the mass distribution is wrong and the ring is spinning under you at ~2.1 km/s. Match the
       spin and you hover over one spot; do not and the ring moves beneath you. That is a genuinely
