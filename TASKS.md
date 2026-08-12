@@ -467,8 +467,33 @@ Prerequisite for everything below.
       to feel climb get easier as gravity thins with the air.
 
 ### Orbital and beyond
-- [ ] **Leaving the atmosphere.** Already have the visual transition at 14-48km. Needs the flight
+- [x] **Leaving the atmosphere.** Already have the visual transition at 14-48km. Needs the flight
       model to hand over to ballistic, and reaction control instead of aerodynamics.
+      Done as ONE CONTINUOUS BLEND, not a mode switch: `q = _air_density(alt)` is how much air there
+      is, so it is also exactly how much of the aerodynamic class still applies. Lift, stall, ground
+      effect, the energy trade, the bank and the rudder's steerage requirement all scale by q; drag
+      goes with them, which IS the ballistic handover (no drag, no terminal velocity -- speed
+      persists and becomes a momentum problem). Reaction control scales by (1-q): the same throttle
+      and stick drive thrusters instead of propeller and elevator, with no airspeed requirement, so
+      you can point anywhere including retrograde to brake. `_air_vel` decouples course from heading
+      as the air thins -- in atmosphere the wing forces velocity to follow the nose, and that
+      alignment is itself an aerodynamic effect. New `rcs` field on VehicleDef (default 0, so both
+      existing air rows and every other class are unchanged) and a `lifter` row that carries them.
+      HUD reads AIR %/VACUUM/RCS and the ballistic DRIFT angle.
+      **The 14-48km numbers were wrong** -- Earth's, on a world whose rim wall is 4km. Corrected, but
+      NOT by deriving the ceiling from the wall (tried, and it makes one number answer two questions:
+      wall height is how the horizon looks, the ceiling is where a wing quits). Instead a CONTAINMENT
+      FIELD spans wall-top to `atmo_top_h`, drawn as a faint fresnel shimmer -- a ringworld has no
+      gravity well, so something at the rim has to hold the air in, and now you can see it.
+- [ ] **Settle the wall height and the atmosphere ceiling.** Both are placeholders and they are now
+      independent knobs with live sliders ("wall height" / "atmosphere top") and shot-harness
+      overrides (`--wall`, `--atmo`). 4000 was judged too high -- "the walls dominate the landscape
+      even when you are not near it" -- and 1500 with a 4000 ceiling reads much cleaner from the air.
+      Comparison shots: logs/shots/20260812_2234_wall4000, _2239_wall2500, _2311_field (wall 1500).
+      Fly to the ceiling before fixing it; the number is a judgement, not a calculation.
+- [ ] **The field shimmer is unverified.** Implemented and it renders without error, but none of the
+      three shot framings looks AT the rim, so nobody has seen it. Needs a framing that puts the rim
+      wall in frame, from inside and from above the wall top.
 - [ ] **Ring-relative orbital mechanics.** You cannot orbit a ringworld the way you orbit a planet —
       the mass distribution is wrong and the ring is spinning under you at ~2.1 km/s. Match the
       spin and you hover over one spot; do not and the ring moves beneath you. That is a genuinely

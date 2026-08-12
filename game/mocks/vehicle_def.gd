@@ -83,6 +83,13 @@ extends Resource
 # row grounded (lift 0), so this is a data contract like draft/dive_max -- only the air rows switch it on.
 @export var stall_speed := 0.0     # min airspeed a fixed-wing needs for lift; 0 = rotary (hovers, no stall)
 
+# Reaction control (TASKS.md "Leaving the atmosphere"), read only by _loco_air. A wing, a rudder and a
+# propeller all push against air; above ~48km there is none, so a craft that only has aerodynamics is
+# a brick up there. rcs is thruster acceleration in m/s^2, blended in as the air blends out, and it is
+# what makes the vacuum half of the flight envelope flyable. 0 = no thrusters (both existing air rows,
+# and every other class), so this is a data contract like draft/dive_max/jump.
+@export var rcs := 0.0             # reaction-control thrust, m/s^2; authority in vacuum, useless in air
+
 @export var susp_travel := 0.34    # spring travel, extension limit to bump stop
 @export var susp_stiff := 34.0
 @export var susp_damp := 6.0

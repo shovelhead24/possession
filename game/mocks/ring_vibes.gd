@@ -54,9 +54,28 @@ var haze_density := 0.00001       # 1/m — ~100km extinction (Up/Dn tunes). Str
 # ATMOSPHERE EXIT. Climb out and the daylight sky effects have to go, or space reads as "very high
 # up on a blue day" instead of space. Drives haze, sky tint, star visibility and ambient fill off
 # one altitude factor. No shader change needed -- the sky already takes its colours as uniforms.
-const SPACE_LO := 14_000.0        # m above the ring surface where thinning starts
-const SPACE_HI := 48_000.0        # m by which it reads as vacuum
+# These were 14km and 48km -- Earth's numbers, and wrong for this place. A ringworld has no gravity
+# well to hold an atmosphere; spin presses it to the floor, but nothing stops it spilling over the
+# rim. Something at the edge has to contain it, and that container is what sets the ceiling.
+#
+# Briefly this was derived from wall_top_h, which was wrong in a different way: it made ONE number
+# answer two unrelated questions. Wall height is an AESTHETIC call -- at 4km the rim dominates the
+# horizon from anywhere on the ring -- while the ceiling is a GAMEPLAY call, the altitude where a
+# wing gives up and thrusters take over. Tying them means you cannot lower the skyline without also
+# lowering the flight envelope.
+#
+# So: the wall is the visible masonry, and a CONTAINMENT FIELD carries the rest of the way up. The
+# air tops out at atmo_top_h whatever the wall does, and the field is simply the span the wall does
+# not cover -- drawn as a faint shimmer, so the ceiling is something you can see rather than a number
+# you discover by stalling.
+const SPACE_LO_FRAC := 0.5        # fraction of the ceiling where thinning starts
 var _space := 0.0                 # 0 = in atmosphere, 1 = space
+
+func _space_lo() -> float:
+	return atmo_top_h * SPACE_LO_FRAC
+
+func _space_hi() -> float:
+	return atmo_top_h
 var _haze_off := false            # [N] disables haze entirely regardless of haze_density, for A/B testing
 var _hud_full := true              # [TAB] collapses the control/debug text down to one line, for clean "vibe check" screenshots
 var _clouds: Node3D = null          # [Z] cycle type, [X] toggle -- see mocks/ring_clouds.gd
@@ -411,6 +430,7 @@ var _cam_ring := Vector3.ZERO     # camera in RING space (arc, height, lat) -- s
 var _wave_time := 0.0             # sea-swell clock; drives the shader's wave_time AND the CPU twin _wave_h
 var _aground := false             # a hull run into water shallower than its draft; kills way and rudder
 var _boat_vel := Vector2.ZERO     # hull velocity in ring (arc,lat) -- a boat's course is not its heading
+var _air_vel := Vector2.ZERO      # ballistic course in ring (arc,lat) -- above the air it stops following the nose
 var _dive := 0.0                  # metres a submersible sits BELOW the water surface; 0 = surfaced (see _loco_sub)
 var _altitude := 0.0              # metres a flyer sits ABOVE the surface along ring-up; 0 = on the ground (see _loco_air)
 var _vspeed := 0.0                # a flyer's vertical speed, m/s along ring-up (climb +, sink -)
@@ -425,6 +445,7 @@ const CreatureScript := preload("res://mocks/creature.gd")
 var _creatures: Array = []
 var _threat_active := false
 var _walls: Array[MeshInstance3D] = []
+var _field_mat: ShaderMaterial = null   # containment-field shimmer above the rim walls
 var _wall_mat: ShaderMaterial = null
 
 # Object-LOD trees (ported from object-lod branch, see mocks/LOD-STRESS-FINDINGS.md "Object LOD: trees")
@@ -759,6 +780,12 @@ func _build_tuning_panel(layer: CanvasLayer) -> void:
 		if _clouds:
 			_clouds.wall_top = v
 			_clouds.retune())
+	# Deliberately its own slider and not derived from the wall: the wall is how the horizon looks, this
+	# is where a wing stops working. Moving it rebuilds the field curtain, so you can see the ceiling
+	# you are setting rather than infer it.
+	_add_slider(vb, "atmosphere top (m)", 800.0, 12000.0, atmo_top_h, func(v):
+		atmo_top_h = v
+		_build_walls())
 	_add_slider(vb, "shadow softness (m)", 20.0, 2000.0, _wall_shadow_soft, func(v): _wall_shadow_soft = v)
 	layer.add_child(_panel)
 
@@ -1101,6 +1128,7 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_car_lat = start_lat
 	_car_speed = 0.0
 	_boat_vel = Vector2.ZERO   # a hull starts each phase dead in the water, not carrying the last phase's course
+	_air_vel = Vector2.ZERO    # and a ballistic course does not survive a phase change either
 	_dive = 0.0           # each phase starts surfaced, so a sub's dive can't carry over between phases
 	_altitude = 0.0       # each phase starts on the ground, so a flyer's altitude can't carry over between phases
 	_vspeed = 0.0
@@ -1190,6 +1218,23 @@ func _shot_run() -> void:
 	if want.is_empty():
 		want = ["millstreet", "dordogne", "java_majapahit", "halong_bay"]
 
+	# WALL HEIGHT OVERRIDE (`--wall 2500`). The rim height has never actually been settled -- 4000 is a
+	# placeholder that "dominates the landscape even when you are not near it" -- and it is now the one
+	# number the atmosphere depth is derived from too, so it decides both how the horizon reads AND
+	# where a wing's ceiling is. That is a judgement to make by looking at the same framing at several
+	# heights, which needs it settable from the command line rather than off a runtime slider.
+	var wi := args.find("--wall")
+	if wi >= 0 and wi + 1 < args.size():
+		wall_top_h = float(args[wi + 1])
+		_build_walls()
+	var ai := args.find("--atmo")
+	if ai >= 0 and ai + 1 < args.size():
+		atmo_top_h = float(args[ai + 1])
+		_build_walls()
+	if wi >= 0 or ai >= 0:
+		print("SHOT wall %.0fm, ceiling %.0fm (air thins %.0f-%.0fm, field spans %.0fm)"
+			% [wall_top_h, atmo_top_h, _space_lo(), _space_hi(),
+			maxf(atmo_top_h - wall_top_h, 0.0)])
 	# STOP THE CLOCK. It keeps running while the harness streams patches, so whether a shot came out
 	# lit depended on how long the fetch took -- the first palawan swell run came back black. The
 	# ANGLE is then set per patch inside the loop, not here: see the note at the warp.
@@ -2217,6 +2262,10 @@ func _build_band(center_arc: float) -> void:
 
 const WALL_BASE_H := -200.0   # absolute height (below lowest terrain), from ring centre — not terrain-relative
 var wall_top_h := 4000.0       # rim height toward the axis; live-tunable ([O]) since it sets shadow reach
+# The ceiling the AIR reaches, independent of how tall the masonry is (see the SPACE_LO_FRAC note).
+# NOT SETTLED -- 4000 sits in the 2-5km range the ceiling was described as wanting, but the number is
+# a judgement to make by flying to it, not by reasoning about it.
+var atmo_top_h := 4000.0
 
 func _build_walls() -> void:
 	# rim walls: continuous around the WHOLE ring (like the band), at ABSOLUTE heights from
@@ -2241,6 +2290,32 @@ func _build_walls() -> void:
 			st.add_index(a); st.add_index(a + 2); st.add_index(a + 1)
 			st.add_index(a + 1); st.add_index(a + 2); st.add_index(a + 3)
 		st.generate_normals()
+		# CONTAINMENT FIELD: the span the masonry does not reach, carried up to the atmosphere ceiling.
+		# Same rim, same segment count, just the strip above the wall -- and skipped entirely when the
+		# wall is already tall enough to contain the air on its own.
+		if atmo_top_h > wall_top_h + 1.0:
+			var fst := SurfaceTool.new()
+			fst.begin(Mesh.PRIMITIVE_TRIANGLES)
+			for i in segs + 1:
+				var ft: float = TAU * float(i) / float(segs)
+				fst.set_uv(Vector2(float(i) / float(segs) * 40.0, 0.0))
+				fst.add_vertex(_ring_pos(ft, lat, wall_top_h))
+				fst.set_uv(Vector2(float(i) / float(segs) * 40.0, 1.0))
+				fst.add_vertex(_ring_pos(ft, lat, atmo_top_h))
+			for i in segs:
+				var fa := i * 2
+				fst.add_index(fa); fst.add_index(fa + 2); fst.add_index(fa + 1)
+				fst.add_index(fa + 1); fst.add_index(fa + 2); fst.add_index(fa + 3)
+			fst.generate_normals()
+			var fmi := MeshInstance3D.new()
+			fmi.mesh = fst.commit()
+			if not _field_mat:
+				_field_mat = ShaderMaterial.new()
+				_field_mat.shader = load("res://mocks/ring_vibes_field.gdshader") as Shader
+			fmi.material_override = _field_mat
+			fmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			add_child(fmi)
+			_walls.append(fmi)   # tracked with the walls so a rebuild frees it too
 		var mi := MeshInstance3D.new()
 		mi.mesh = st.commit()
 		if not _wall_mat:
@@ -2304,7 +2379,7 @@ func _process(delta: float) -> void:
 			_clouds.transition_to(_biome_at(cam_theta * r_now, _cam.global_position.z)["weather"])
 	# altitude above the ring surface, toward the axis
 	var cam_alt: float = r_now - Vector2(_cam.position.x, r_now - _cam.position.y).length()
-	_space = smoothstep(SPACE_LO, SPACE_HI, cam_alt)
+	_space = smoothstep(_space_lo(), _space_hi(), cam_alt)
 	var eff_haze: float = (0.0 if _haze_off else haze_density) * (1.0 - _space)
 	_mat.set_shader_parameter("to_sun", to_sun)
 	_mat.set_shader_parameter("haze_density", eff_haze)
@@ -3788,6 +3863,7 @@ func _select_vehicle(i: int) -> void:
 	_stamina = 1.0        # a mount you climb onto is fresh; only the horse row reads this
 	_spooked = 0.0
 	_boat_vel = Vector2.ZERO   # never inherit a stale hull course; a boat you board is dead in the water
+	_air_vel = Vector2.ZERO    # nor a stale ballistic course when you cycle onto an aircraft
 	_dive = 0.0           # never cycle onto a vehicle already submerged; a sub you board is on the surface
 	_jump_h = 0.0         # never leave the suit airborne when cycling off it; only the suit row jumps
 	_jump_v = 0.0
@@ -4208,6 +4284,19 @@ const VEHICLE_ROWS := {
 		"lift": 1.0, "stall_speed": 30.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
 	},
+	"lifter": {
+		# FOR: getting OUT. Neither row above can -- their lift dies with the air just over the rim wall, which is the
+		# ceiling working as designed, not a bug. This one carries thrusters (rcs), so as the wing gives up the
+		# reaction control takes over and the same stick keeps flying it. The trade is that it is a poor
+		# aircraft: heavy, draggy, a high stall speed and a wide turn, all of which stop mattering the moment
+		# the air does. Down low the airplane beats it everywhere; over the wall it is the only thing still flying.
+		"purpose": "the lifter — a mediocre aeroplane and the only craft that keeps flying once the air runs out",
+		"loco": "air", "mass": 9000.0, "power": 16.0, "brake": 6.0, "top": 120.0, "reverse": 0.0,
+		"drag": 0.22, "offroad_drag": 0.0, "turn": 0.7, "offroad_turn": 0.0,
+		"grip_speed": 60.0, "ride": 0.7, "wheel_r": 0.6, "length": 16.0, "tint": Color(0.52, 0.50, 0.46),
+		"lift": 0.85, "stall_speed": 45.0, "rcs": 7.0,
+		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
+	},
 }
 
 func _build_vehicle_defs() -> void:
@@ -4404,11 +4493,11 @@ const AIR_TRADE := 0.10           # airspeed a fixed-wing trades per m/s climbed
 const AIR_BANK := 0.7             # radians a fixed-wing visibly rolls into a full-authority turn
 
 func _air_density(alt: float) -> float:
-	# Reuse the atmosphere-exit falloff (SPACE_LO..SPACE_HI, the SAME smoothstep that fades haze/sky to vacuum
-	# in _process) so lift and the sky agree on where the air is: 1 at the surface, 0 above SPACE_HI. This is the
+	# Reuse the atmosphere-exit falloff (_space_lo().._space_hi(), the SAME smoothstep that fades haze/sky to vacuum
+	# in _process) so lift and the sky agree on where the air is: 1 at the surface, 0 above the wall top. This is the
 	# item's payoff -- "the atmosphere-exit work already models thinning air" -- so a long enough climb runs the
 	# wing out of air and gives a natural ceiling, not a hard clamp.
-	return 1.0 - smoothstep(SPACE_LO, SPACE_HI, alt)
+	return 1.0 - smoothstep(_space_lo(), _space_hi(), alt)
 
 func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator: float) -> void:
 	# ACTUAL FLIGHT -- the SEVENTH movement class, and the first to leave the surface and STAY off it (the suit's
@@ -4424,9 +4513,26 @@ func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator
 	# (4) THINNING AIR. Lift scales with _air_density, the same atmosphere-exit falloff the sky thins by, so the
 	#     ceiling is where the air runs out -- the setting's own physics, for free.
 	var rotary := d.stall_speed <= 0.0
-	# airspeed on the existing longitudinal axis (W/S throttle), damped by drag like every other class
-	_car_speed = clampf(_car_speed + accel * delta, d.reverse, d.top)
-	_car_speed *= 1.0 - d.drag * delta
+	# (5) LEAVING THE ATMOSPHERE (TASKS.md). Everything above is a force against AIR. `q` is how much air
+	# there is -- the same _space_lo().._space_hi() curve the sky fades to vacuum by -- so it is also exactly how
+	# much of this class still applies. Every aerodynamic term is scaled by q and every reaction-control term
+	# by (1 - q), and the handover falls out as one continuous blend rather than a mode switch with a seam:
+	# lift, stall, ground effect, the energy trade, the bank and the rudder all fade out together, drag goes
+	# with them, and the thrusters fade in. No `if in_space` anywhere.
+	var q := _air_density(_altitude)
+	var vac := 1.0 - q
+	# airspeed on the existing longitudinal axis (W/S throttle). DRAG SCALES WITH THE AIR: in vacuum there is
+	# nothing to damp against, so speed persists and this stops being a top-speed problem and starts being a
+	# momentum one -- the ballistic handover the item asks for. `top` is an aerodynamic limit, so it lifts as
+	# the air thins; thrust above the atmosphere comes from rcs, not the propeller.
+	# the same throttle input drives the propeller in air and the thrusters in vacuum
+	var thrust: float = accel * q + (accel / maxf(d.power, 0.1)) * d.rcs * vac
+	# `top` is an AERODYNAMIC limit (thrust against drag). With no drag there is no terminal velocity, so the
+	# ceiling opens out to 10x in vacuum -- still bounded, because an unbounded float here would eventually
+	# tunnel the integrator through the ring in one frame, but high enough that the limit is fuel and patience.
+	var vmax: float = d.top * (1.0 + 9.0 * vac)
+	_car_speed = clampf(_car_speed + thrust * delta, -vmax if d.rcs > 0.0 else d.reverse, vmax)
+	_car_speed *= 1.0 - d.drag * q * delta
 	# LIFT SOURCE: fixed-wing from airspeed^2 (collapsing below stall); rotor from throttle so it can hover
 	var lift_src: float
 	if rotary:
@@ -4441,21 +4547,30 @@ func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator
 	var span := maxf(d.length, 4.0)
 	var ge := 1.0 + AIR_GROUND_EFFECT * clampf(1.0 - _altitude / span, 0.0, 1.0)
 	# THINNING AIR: lift falls off with the same curve the sky thins by, so the air runs out overhead
-	var lift := AIR_LIFT * maxf(d.lift, 0.0) * _air_density(_altitude) * lift_src * ge
+	var lift := AIR_LIFT * maxf(d.lift, 0.0) * q * lift_src * ge
 	# vertical: lift up, SPIN gravity down, plus the pilot's elevator, all damped so it settles. RING-SPECIFIC
 	# (TASKS.md "Ring-specific flight"): "up" is toward the axis, and spin gravity is omega^2*r, so its pull
 	# weakens as you climb toward the axis (r = R - alt): g = AIR_GRAVITY*(1 - alt/R). It reaches zero at the
 	# axis (alt = R -> weightless) and goes NEGATIVE past it, so the term flips sign and pulls you on across to
 	# the far surface -- "a long enough climb crosses to the far side". Within the atmosphere the air (and thus
-	# lift) runs out at ~48km, far below the ~477km axis, so a WING can't actually reach it -- that crossing is
+	# lift) runs out just above the rim wall (~5km at the 4km default), far below the ~477km axis, so a WING cannot
+	# reach it -- that crossing is
 	# the orbital items' job -- but the flight frame is now correct all the way up, not a flat planet down-pull.
 	var g := AIR_GRAVITY * (1.0 - _altitude / _radius())
-	_vspeed += (lift - g + elevator * AIR_ELEVATOR) * delta
-	_vspeed *= 1.0 - AIR_VDRAG * delta
+	# The elevator is a control SURFACE -- it needs air over it. In vacuum the same stick input feeds the
+	# vertical thrusters instead, which is the whole "reaction control instead of aerodynamics" swap. Note the
+	# thruster is NOT scaled by airspeed: an RCS jet works standing still, which is exactly why it is the only
+	# thing that can point you when the wing has nothing to bite on.
+	var vctl: float = elevator * (AIR_ELEVATOR * q + d.rcs * vac)
+	_vspeed += (lift - g + vctl) * delta
+	# vertical damping is air resistance too -- without it a ballistic arc would be damped by nothing at all,
+	# which is the point: above the atmosphere you coast, and only gravity and the thrusters change that.
+	_vspeed *= 1.0 - AIR_VDRAG * q * delta
 	# ENERGY EXCHANGE (fixed-wing): a climb is paid for in airspeed, a dive buys it back -- the coupling that
-	# makes stall a live threat rather than a number. A rotor has no wing to trade, so it is exempt.
+	# makes stall a live threat rather than a number. A rotor has no wing to trade, so it is exempt, and so is
+	# anything in vacuum: there is no wing to trade WITH, so a ballistic climb costs you nothing but fuel.
 	if not rotary:
-		_car_speed = clampf(_car_speed - _vspeed * AIR_TRADE * delta, d.reverse, d.top)
+		_car_speed = clampf(_car_speed - _vspeed * AIR_TRADE * q * delta, -vmax if d.rcs > 0.0 else d.reverse, vmax)
 	_altitude += _vspeed * delta
 	if _altitude <= 0.0:
 		# touchdown: a hard arrival costs speed (naive undercarriage), and it cannot sink through the ground
@@ -4465,13 +4580,27 @@ func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator
 		_vspeed = maxf(_vspeed, 0.0)
 	# TURN: a rotor yaws freely (pivots like tracked/hover); a fixed-wing banks and needs airflow over the
 	# rudder, so its authority scales with airspeed (steerage) -- the same rule the boat's rudder obeys.
+	# A rudder needs airflow; a thruster couple does not. In vacuum the fixed-wing's steerage requirement
+	# lifts and yaw becomes free -- so a spaceplane can point anywhere at any speed, INCLUDING backwards along
+	# its own velocity to brake, which is the only way to slow down once the drag term is gone.
 	if rotary:
 		_car_heading += steer * d.turn * delta
 	else:
 		var steerage := clampf(absf(_car_speed) / maxf(d.grip_speed, 0.1), 0.0, 1.0)
-		_car_heading += steer * d.turn * delta * steerage
-	_car_arc += cos(_car_heading) * _car_speed * delta
-	_car_lat += sin(_car_heading) * _car_speed * delta
+		_car_heading += steer * d.turn * delta * maxf(steerage * q, vac)
+	# BALLISTIC. In air, the wing and fin force velocity to follow the nose -- that alignment IS an aerodynamic
+	# effect, and every land class gets it for free by writing `arc += cos(heading) * speed`. Take the air away
+	# and nothing turns the velocity: you keep going the way you were going while the nose points elsewhere.
+	# So the course vector chases the heading at a rate proportional to q, and in vacuum stops chasing at all.
+	# Same mechanism as the boat's `drift`, at the opposite end of the scale -- and it is what makes pointing
+	# retrograde and burning the actual way to change course up there.
+	var want := Vector2(cos(_car_heading), sin(_car_heading)) * _car_speed
+	if vac > 0.001:
+		_air_vel = _air_vel.lerp(want, 1.0 - exp(-delta * 4.0 * q))
+	else:
+		_air_vel = want
+	_car_arc += _air_vel.x * delta
+	_car_lat += _air_vel.y * delta
 
 # Gait signature: amplitude of the vertical bob and the fore-aft rock, per stride. Kept as constants
 # like the hover slope terms -- move to VehicleDef the day a mech's lumbering stride must differ from a
@@ -4703,7 +4832,10 @@ func _drive_tick(delta: float) -> void:
 		# attitude from the controls, not a contact plane it isn't touching: a fixed-wing banks into its turn
 		# and both pitch to the climb rate. Signs are cosmetic (a placeholder box) and NOT eyeballed here --
 		# confirm the lean/pitch read right on the laptop, same caveat as the box showing wheels.
-		var bank: float = 0.0 if d.stall_speed <= 0.0 else -steer * AIR_BANK
+		# banking is the wing rolling into the turn -- an aerodynamic effect, so it fades with the air. Above
+		# the atmosphere a craft yaws flat on its thrusters instead of leaning on a wing that has nothing to
+		# lean on.
+		var bank: float = 0.0 if d.stall_speed <= 0.0 else -steer * AIR_BANK * _air_density(_altitude)
 		_body_roll = lerpf(_body_roll, clampf(bank, -0.7, 0.7), delta * 4.0)
 		_body_pitch = lerpf(_body_pitch, clampf(_vspeed * 0.03, -0.5, 0.5), delta * 4.0)
 	elif boat:
@@ -5092,8 +5224,23 @@ func _update_hud() -> void:
 		var airinfo := ""
 		if vd.loco == "air":
 			airinfo = "  ALT %.0fm" % _altitude
-			if vd.stall_speed > 0.0 and absf(_car_speed) < vd.stall_speed:
+			# WHICH REGIME. The handover is a continuous blend, so the one number that actually tells you what
+			# is flying the craft is how much air is left. STALL only means anything while there IS air.
+			var q_hud := _air_density(_altitude)
+			if q_hud < 0.02:
+				airinfo += "  VACUUM  RCS" if vd.rcs > 0.0 else "  VACUUM  NO CONTROL"
+			elif q_hud < 0.98:
+				airinfo += "  AIR %.0f%%" % (q_hud * 100.0)
+				if vd.rcs > 0.0:
+					airinfo += "+RCS"
+			if q_hud > 0.02 and vd.stall_speed > 0.0 and absf(_car_speed) < vd.stall_speed:
 				airinfo += "  STALL"
+			# ballistic drift: once the course stops following the nose, the angle between them is the thing
+			# you have to fly, and it is invisible without a readout
+			if q_hud < 0.5 and _air_vel.length() > 1.0:
+				var drift_deg: float = rad_to_deg(absf(angle_difference(_car_heading, _air_vel.angle())))
+				if drift_deg > 5.0:
+					airinfo += "  DRIFT %.0f deg" % drift_deg
 			airinfo += "  (Space climb, Shift descend)"
 		mode = "DRIVE  %d km/h  [%s] — %s%s%s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit, subm, airinfo]
 	elif _mode == Mode.WALK:
