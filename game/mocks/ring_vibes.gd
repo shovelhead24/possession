@@ -1204,6 +1204,30 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 		jolt, grade if str(phase["name"]) == "climb" else 0.0,
 		_susp_travel, air])
 
+# Triangles belonging to ONE node's subtree. The frame total is useless for comparing vehicles: the
+# first roster run reported 338,444 for all twenty-one of them, because that is the terrain, the trees
+# and the hedges, against which a placeholder car is a rounding error. The item asks for the set to be
+# COMPARABLE, and that means the vehicle's own cost, not the cost of standing next to it.
+func _node_tris(n: Node) -> int:
+	var total := 0
+	var stack: Array = [n]
+	while not stack.is_empty():
+		var c = stack.pop_front()
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh != null:
+			var m: Mesh = (c as MeshInstance3D).mesh
+			for si in m.get_surface_count():
+				var arr := m.surface_get_arrays(si)
+				var idx = arr[Mesh.ARRAY_INDEX]
+				if idx != null and idx.size() > 0:
+					total += idx.size() / 3
+				else:
+					var vtx = arr[Mesh.ARRAY_VERTEX]
+					if vtx != null:
+						total += vtx.size() / 3
+		for k in (c as Node).get_children():
+			stack.append(k)
+	return total
+
 func _shot_run() -> void:
 	# `-- --shots [patch,patch,...]` warps to each patch, waits for its stream, and writes a set of
 	# framings to logs/shots/. Exists so I can LOOK at my own work instead of shipping it and
@@ -1448,7 +1472,14 @@ func _shot_run() -> void:
 		var vname: String = _vehicles[vi]["name"]
 		var vpath := "%s/vehicle_%s.png" % [dir, vname]
 		get_viewport().get_texture().get_image().save_png(vpath)
-		print("SHOT vehicle %-8s %s" % [vname, vpath])
+		# COST PER VEHICLE (TASKS.md "Test harness for all of them"). The parade proved orientation and
+		# scale but reported nothing measurable, so a model that costs ten times its neighbour looked
+		# identical in the log. tris and frame time make the roster comparable instead of a set of
+		# separate impressions -- the same argument the proving course makes for handling.
+		print("SHOT vehicle %-10s tris=%-6d scene=%-7d %s  %s" % [vname,
+			_node_tris(_car) if _car != null else 0,
+			RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
+			await _measure_frame_ms(12), vpath])
 	if _hud: _hud.visible = true
 	if _perf: _perf.visible = true
 	print("SHOTS done")

@@ -582,9 +582,25 @@ Prerequisite for everything below.
       otherwise the handling table quietly becomes a fuel-capacity table with handling headings.
 - [ ] **Where vehicles COME from.** Found, salvaged, stolen, traded. Ties into the draws work:
       a vehicle two valleys away is a reason to go there.
-- [ ] **Test harness for all of them** — extend `--shots` to spawn each vehicle, drive a fixed
+      BLOCKED (2026-08-13): `docs/draws.md` exists as design but there is no draws or settlement
+      system in the engine at all, so this would mean inventing salvage/trade/ownership from scratch
+      rather than wiring up something that exists. Needs the draws work first.
+- [x] **Test harness for all of them** — extend `--shots` to spawn each vehicle, drive a fixed
       course over road / offroad / slope / water, and report speed, tris and fps per vehicle so the
       set can be compared rather than eyeballed one at a time.
+      Speed was already there (`--proving`: accel/brake/circle/rough/climb/bumps covers road, offroad
+      and slope). The missing half was COST, and the first attempt measured the wrong thing: reporting
+      the frame total gave 338,444 for all twenty-one vehicles, because that is the terrain and the
+      trees, against which a placeholder car is a rounding error. Now counts the vehicle's own
+      subtree: placeholder 3,096 tris, warthog GLTF 19,600 -- comparable at last.
+- [ ] **Water phase for the proving course.** The harness item above asked for road/offroad/slope/
+      WATER and only the first three exist. A boat driven at millstreet is aground for the whole run,
+      so this needs the course to warp to a coastal patch for one phase (mizen_head or slea_head --
+      0% nodata, real coastline) rather than a synthetic strip like the bump section.
+- [ ] **The placeholder car is 3,096 triangles.** A box with four wheels, on a potato-hardware target
+      -- Godot's CylinderMesh defaults to 64 radial segments, so the wheels are ~700 each. Only one
+      vehicle is spawned at a time so it is not urgent, but it is a silly baseline to measure the
+      roster against.
 
 ## Weapons, HUD and on-foot — the tech-tree programme
 

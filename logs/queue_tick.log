@@ -2084,3 +2084,5 @@ You've hit your session limit ┬╖ resets 3:20am (Europe/Dublin)
 2026-08-13 16:59:37  skip: working tree is dirty (2 files) -- someone is mid-edit, or a previous tick did not commit
 2026-08-13 16:59:37           M TASKS.md
 2026-08-13 16:59:37           M game/mocks/ring_vibes.gd
+2026-08-13 17:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 17:29:37           M game/mocks/ring_vibes.gd
