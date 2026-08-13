@@ -446,7 +446,7 @@ var _hud_timer := 0.0
 const CreatureScript := preload("res://mocks/creature.gd")
 var _creatures: Array = []
 var _threat_active := false
-var _walls: Array[MeshInstance3D] = []
+var _walls: Array[Node3D] = []   # rim walls, field curtains and the dock port: freed together on rebuild
 var _field_mat: ShaderMaterial = null   # containment-field shimmer above the rim walls
 var _wall_mat: ShaderMaterial = null
 
@@ -1331,6 +1331,10 @@ func _shot_run() -> void:
 				# (mid-strip, ~25km out), so "above the wall top looking back" was actually a distant grey
 				# band and the field it exists to show was a couple of pixels of haze. 2.5km inboard puts
 				# the masonry and the shimmer above it at a size you can actually judge.
+				# The docking port sits 8km up at arc 0 -- nothing on the ground can see it, so the beacon
+				# was built and never once looked at. Stand off it at station-keeping range.
+				{"n": "dock", "abs_h": DOCK_ALT, "pitch": 0.0, "fov": 60.0,
+					"arc": DOCK_ARC - 260.0, "lat": DOCK_LAT, "yaw": 0.0},
 				{"n": "rimtop", "abs_h": field_mid, "pitch": -0.05, "fov": 62.0, "yaw": rim_yaw,
 					"lat": signf(rim_yaw) * (WIDTHS[w_idx] * 0.5 - 2500.0)},
 			]
@@ -2382,18 +2386,61 @@ func _build_walls() -> void:
 	# mispositioned marker can only make the target harder to see, never break docking. A cube so orientation
 	# can't be wrong. Tracked with the walls so a rebuild (which changes _radius()) frees and re-places it.
 	# Rendering NOT eyeballed here (Godot binary is out-of-repo/gated), same caveat as the wall/field.
-	var port := MeshInstance3D.new()
-	var pbm := BoxMesh.new()
-	pbm.size = Vector3(60.0, 60.0, 60.0)
-	port.mesh = pbm
-	var pmat := StandardMaterial3D.new()
-	pmat.emission_enabled = true
-	pmat.emission = Color(0.5, 0.9, 1.0)
-	pmat.albedo_color = Color(0.25, 0.55, 0.8)
-	port.material_override = pmat
-	port.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# A 60m emissive CUBE was the first pass, and from the approach it read as exactly that: a flat
+	# cyan rectangle pasted on the sky, the same failure as the tree billboards. A docking port is the
+	# one piece of builders' architecture the player ever gets close to, so it has to read as built:
+	# a spine along the approach axis, a docking collar you aim INTO, and radial struts that give the
+	# eye something to judge range and roll against. Still placeholder geometry, but dimensional --
+	# roughly 300 triangles, authored directly per substrate.md gate 5.
+	var port := Node3D.new()
 	add_child(port)
-	port.global_position = _ring_pos(DOCK_ARC / _radius(), DOCK_LAT, DOCK_ALT)
+	var hull := StandardMaterial3D.new()
+	hull.albedo_color = Color(0.30, 0.33, 0.38)
+	hull.metallic = 0.6
+	hull.roughness = 0.45
+	var lamp := StandardMaterial3D.new()
+	lamp.albedo_color = Color(0.20, 0.55, 0.75)
+	lamp.emission_enabled = true
+	lamp.emission = Color(0.5, 0.9, 1.0)
+	lamp.emission_energy_multiplier = 1.1   # 3.0 blew the panels to flat white against black sky
+	# spine: the structure continues toward the axis, so it reads as the bottom of something much larger
+	var spine := MeshInstance3D.new()
+	var sbm := BoxMesh.new()
+	sbm.size = Vector3(26.0, 320.0, 26.0)
+	spine.mesh = sbm
+	spine.material_override = hull
+	# the collar is the capture point, so the spine runs UP from it toward the axis rather than
+	# straddling it -- otherwise you soft-capture into the middle of a girder
+	spine.position = Vector3(0.0, 172.0, 0.0)
+	port.add_child(spine)
+	# collar: eight segments around the approach axis -- the ring you fly into, and the thing that
+	# makes roll and range legible at a glance
+	for i in 8:
+		var a := TAU * float(i) / 8.0
+		var seg := MeshInstance3D.new()
+		var cbm := BoxMesh.new()
+		cbm.size = Vector3(34.0, 12.0, 12.0)
+		seg.mesh = cbm
+		seg.material_override = hull if i % 2 == 0 else lamp
+		seg.position = Vector3(sin(a) * 62.0, 0.0, cos(a) * 62.0)
+		seg.rotation.y = -a
+		port.add_child(seg)
+		# strut back to the spine
+		var strut := MeshInstance3D.new()
+		var tbm := BoxMesh.new()
+		tbm.size = Vector3(52.0, 5.0, 5.0)
+		strut.mesh = tbm
+		strut.material_override = hull
+		strut.position = Vector3(sin(a) * 34.0, 0.0, cos(a) * 34.0)
+		strut.rotation.y = -a
+		port.add_child(strut)
+	# Orient the spine along RING UP (toward the axis), not world up. They coincide at DOCK_ARC 0 and
+	# nowhere else, so building the basis properly means moving the port later is a constant change
+	# rather than a bug. Basis() takes COLUMNS.
+	var ppos := _ring_pos(DOCK_ARC / _radius(), DOCK_LAT, DOCK_ALT)
+	var pup := _ring_up(ppos)
+	var pright := pup.cross(Vector3(0.0, 0.0, 1.0)).normalized()
+	port.global_transform = Transform3D(Basis(pright, pup, pright.cross(pup)), ppos)
 	_walls.append(port)
 
 func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:

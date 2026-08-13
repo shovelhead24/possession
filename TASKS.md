@@ -485,7 +485,11 @@ Prerequisite for everything below.
       wall height is how the horizon looks, the ceiling is where a wing quits). Instead a CONTAINMENT
       FIELD spans wall-top to `atmo_top_h`, drawn as a faint fresnel shimmer -- a ringworld has no
       gravity well, so something at the rim has to hold the air in, and now you can see it.
-- [ ] **Settle the wall height and the atmosphere ceiling.** Both are placeholders and they are now
+- [x] **Settle the wall height and the atmosphere ceiling.** SETTLED: wall 1500, ceiling 4000.
+      1500 was chosen off the comparison shots -- 4000 dominated the horizon from anywhere; at 1500
+      the rim reads as a low grey band behind the treeline (logs/shots/20260813_1650_field). The
+      ceiling sits inside the stated 2-5km range. Both are one slider away if playing changes it.
+  Superseded note: Both are placeholders and they are now
       independent knobs with live sliders ("wall height" / "atmosphere top") and shot-harness
       overrides (`--wall`, `--atmo`). 4000 was judged too high -- "the walls dominate the landscape
       even when you are not near it" -- and 1500 with a 4000 ceiling reads much cleaner from the air.
@@ -548,8 +552,18 @@ Prerequisite for everything below.
       ground exists). Cycle to the `lifter`/`airplane` ([L]) on the laptop, climb to vacuum and burn
       RETROGRADE — the ALT should hold with the throttle off while GROUND climbs toward -2000 m/s and
       the HUD flags ORBIT; fly PROGRADE and it should sink.
-- [ ] **Docking / boarding** at axis structures, which `docs/terrain/substrate.md` already places
-      for the leave-ending.
+- [x] **Docking / boarding** at axis structures, which `docs/terrain/substrate.md` already places
+      for the leave-ending. The MECHANIC was already built and simply never ticked: a fixed port at
+      (DOCK_ARC, DOCK_LAT, 8km), soft capture when you arrive inside 150m with ring-frame velocity
+      under 6 m/s -- which is the orbital item's "match the spin and hover over one spot", since the
+      port is ground-fixed in the rotating frame -- station-keeping hold, cast-off on any pilot input,
+      and [Enter] to board. What was missing was that nobody had ever LOOKED at it: the port was a 60m
+      emissive cube that read from the approach as a flat cyan rectangle pasted on the sky, the same
+      failure as the old tree billboards. Now authored as a structure -- spine toward the axis, an
+      eight-segment docking collar AT the capture point (it was 150m below it, so you soft-captured
+      into the middle of a girder), radial struts for range and roll cues. ~300 tris.
+      Verified: logs/shots/20260813_1705_dock, via a new `dock` framing, because nothing that stands
+      on the ground can see something 8km up.
 
 ### Cross-cutting
 - [ ] **Wear, fuel and damage** — the reason to change vehicle rather than keep the best one.

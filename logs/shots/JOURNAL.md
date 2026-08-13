@@ -216,3 +216,40 @@ identical fault, logged in the previous entry and now closed by the same change.
 others, so the sign or offset in `sun_angle = -arc/r + 0.45` is not right for every arc. Minor, not
 chased.
 
+---
+
+## 2026-08-13 — the rim, the field and the dock port (`--only`, five short runs)
+
+**Looking for:** three things nobody had ever seen, each invisible from every framing the harness had.
+How tall the rim wall should be. Whether the containment field renders at all. What the docking port
+looks like on approach.
+
+**Saw:**
+- **Wall settled at 1500.** At 4000 it "dominates the landscape even when you are not near it"; at
+  1500 it is a low grey band behind the treeline from where you actually play. It was also rendering
+  as a flat BLACK slab — ambient floor of 0.15, so with the sun behind it the inner face went to
+  nothing. That face looks out across the entire lit ring floor, an enormous area light, so the fill
+  is physical rather than a cheat. Raised, plus faint strata so it has scale.
+- **The field was rendering the whole time and could not be seen**, for two independent reasons. A
+  pure fresnel film is invisible head-on (facing -> 1, fresnel -> 0) which is precisely how you look
+  at a rim from inside the ring. And `blend_add` over a bright daytime sky is close to a no-op. Mix
+  blend plus a visibility floor, and it appears — first pass far too strong, reading as milky fog.
+- **The dock port was a flat cyan rectangle** pasted on the sky, the same failure as the old tree
+  billboards. Now a spine, an eight-segment collar and struts. The collar was 150m below the capture
+  point, so a successful soft-capture put you inside a girder.
+- Incidentally: at 8km the sky is black and starry with the ring stretching away, which is the
+  atmosphere-exit work reading correctly at a glance.
+
+**Fell out:**
+- `--only ground,rim` selects framings and `--vehicles` makes the roster parade opt-in. It had been
+  firing twenty-odd frames and a full vehicle parade to answer one question about wall height, with
+  the answer not among them.
+- `rimtop` claimed to be "above the wall top looking back" while standing at the patch's mid-strip
+  lat, 25km away. Moved to 2.5km off the rim so it does what its name says.
+- **I appended a second `rim` framing without noticing one already existed** — the log printed
+  `["rim", "rim"]` and wrote the same file twice. Exactly the mistake of extending a script without
+  reading it, in miniature, an hour after being told off for it.
+- The warthog's wheels were 90 degrees out: the spin loop hardcoded a Z rotation onto every wheel
+  each frame, right for procedural cylinders and wrong for imported ones, and for imported wheels the
+  steer write then wiped the roll. The axle is now derived from geometry (shortest local AABB axis).
+
