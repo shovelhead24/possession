@@ -1130,6 +1130,12 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_car_lat = start_lat
 	_car_speed = 0.0
 	_boat_vel = Vector2.ZERO   # a hull starts each phase dead in the water, not carrying the last phase's course
+	# FULL TANK, NO WEAR, every phase. The proving course measures HANDLING, and the first run after
+	# fuel landed had the sportscar reading 0.0 through rough and climb -- it had simply run dry during
+	# accel/brake/circle, because burn scales with power and it has the most. Left alone the table
+	# would quietly have become a fuel-capacity table wearing a handling table's column headings,
+	# which is the exact failure this harness exists to prevent.
+	_service_vehicle()
 	_air_vel = Vector2.ZERO    # and a ballistic course does not survive a phase change either
 	_dive = 0.0           # each phase starts surfaced, so a sub's dive can't carry over between phases
 	_altitude = 0.0       # each phase starts on the ground, so a flyer's altitude can't carry over between phases
@@ -4698,6 +4704,7 @@ func _dock_update(accel: float, elevator: float) -> bool:
 	var closing := Vector3(_air_vel.x, _air_vel.y, _vspeed).length()
 	if _dock_range() < DOCK_CAPTURE_R and closing < DOCK_MATCH_V:
 		_docked = true
+		_service_vehicle()   # the port refuels and repairs -- see _service_vehicle for why only here
 		return true
 	return false
 
@@ -4929,6 +4936,72 @@ func _do_trample(d: VehicleDef, pos: Vector3) -> void:
 			_hedge_down.remove_at(0)   # oldest crush regrows -- bounds the list and the per-span test
 		_build_hedge_ribbon()
 
+# ---------------------------------------------------------------------------
+# WEAR, FUEL AND DAMAGE (TASKS.md). The item states its own purpose: "the reason to change vehicle
+# rather than keep the best one." A roster where the best machine is simply always the best is a
+# roster with one vehicle in it, so the job here is to make holding onto a favourite cost something.
+#
+# DERIVED, not authored. Capacity comes from mass and burn from power, so every row in the table gets
+# the mechanic without twenty hand-tuned numbers -- and the coupling is the design: the powerful thing
+# is the thirsty thing. A row overrides only where it should be unusual.
+#
+# Condition is PER VEHICLE and PERSISTS across [L] cycling. That is the whole point: the machine you
+# have been thrashing is still worn when you come back to it, and the fresh one in the shed is not.
+# ---------------------------------------------------------------------------
+const FUEL_PER_KG := 0.06         # litres of capacity per kg -- a 1200kg car carries ~72
+const BURN_PER_POWER := 0.010     # litres per (unit of thrust * second)
+const WEAR_BITE := 0.55           # fraction of thrust lost at fully worn; never total, so you limp home
+const WEAR_SUSP := 0.020          # wear per second of bottomed-out suspension
+const WEAR_LAND := 0.06           # wear per hard landing (scaled by how hard)
+const WEAR_AGROUND := 0.05        # wear per second of dragging a hull over the bottom
+const WEAR_OFFROAD := 0.0022      # wear per second of full off-road abrasion
+var _veh_cond := {}               # vehicle name -> {"fuel": litres, "wear": 0..1}
+
+func _cond_cap(d: VehicleDef) -> float:
+	# A living mount has no tank; it runs on stamina, which is already modelled. Returning 0 opts the
+	# horse and the elephant out of the fuel system entirely rather than giving them a fictional one.
+	if d.stamina > 0.0:
+		return 0.0
+	return d.fuel_cap if d.fuel_cap > 0.0 else d.mass * FUEL_PER_KG
+
+func _cond() -> Dictionary:
+	var n := str(_vehicles[_veh_idx]["name"]) if _veh_idx < _vehicles.size() else "box"
+	if not _veh_cond.has(n):
+		_veh_cond[n] = {"fuel": _cond_cap(_vdef()), "wear": 0.0}
+	return _veh_cond[n]
+
+func _condition_tick(d: VehicleDef, delta: float, accel: float) -> float:
+	# Returns the multiplier to apply to thrust. Burns fuel for the work actually demanded and accrues
+	# wear from the things that genuinely punish a machine -- all of which are already measured
+	# elsewhere, so this reads existing signals rather than inventing new ones.
+	var c := _cond()
+	var cap := _cond_cap(d)
+	if d.toughness > 0.0:
+		var w := 0.0
+		# bottoming the suspension is the classic way to destroy a vehicle over rough ground
+		if d.susp_travel > 0.0 and _susp_travel >= d.susp_travel * 0.98:
+			w += WEAR_SUSP
+		w += _land_dip * WEAR_LAND            # hard landings (suit/air), scaled by impact
+		if _aground:
+			w += WEAR_AGROUND                 # a hull grinding over the bottom
+		w += _offroad * WEAR_OFFROAD          # abrasion, the slow background cost of off-roading
+		c["wear"] = clampf(float(c["wear"]) + w * delta / maxf(d.toughness, 0.05), 0.0, 1.0)
+	if cap <= 0.0:
+		return 1.0 - float(c["wear"]) * WEAR_BITE
+	var rate: float = d.burn if d.burn > 0.0 else d.power * BURN_PER_POWER
+	c["fuel"] = maxf(float(c["fuel"]) - absf(accel) * rate * delta, 0.0)
+	if float(c["fuel"]) <= 0.0:
+		return 0.0                            # dry: no thrust at all. You are where you stopped.
+	return 1.0 - float(c["wear"]) * WEAR_BITE
+
+func _service_vehicle() -> void:
+	# Docking at the axis port services the craft. This is deliberately the ONLY place that does, for
+	# now: it gives the port a reason to exist beyond being a destination, and it keeps fuel scarce
+	# enough on the surface that the roster gets used. Ground refuelling is its own queued item.
+	var c := _cond()
+	c["fuel"] = _cond_cap(_vdef())
+	c["wear"] = 0.0
+
 func _drive_tick(delta: float) -> void:
 	var accel := 0.0
 	var steer := 0.0
@@ -4951,6 +5024,10 @@ func _drive_tick(delta: float) -> void:
 	# elevator command for the air class: Space climbs, Shift descends -- the FLY-mode up/down keys, so flight
 	# plays like the noclip camera it replaces. 0 during proving and unread by every non-air class.
 	var elevator := (1.0 if want_jump else 0.0) - (1.0 if _sprinting else 0.0)
+	# CONDITION gates the thrust before anything else sees it: a dry tank is zero power regardless of
+	# class, and a worn machine simply has less to give. Applied here, once, rather than inside seven
+	# locomotion functions that would each have to remember.
+	accel *= _condition_tick(d, delta, accel)
 	# LOCOMOTION DISPATCH -- one call per class, selected by the def's `loco`. Add a case here and a
 	# sibling _loco_<class> to make a whole vehicle class drivable. Off-roading is a mode, not a
 	# penalty: drag and steering bite both worsen off the tarmac, but the vehicle stays usable.
@@ -5497,6 +5574,17 @@ func _update_hud() -> void:
 				if dr < DOCK_CAPTURE_R:
 					airinfo += "  (null velocity to dock)"
 			airinfo += "  (Space climb, Shift descend)"
+		# CONDITION. Fuel and wear are invisible until they bite, and "the engine just stopped" with no
+		# warning is a bug report rather than a decision. Shown for anything that carries a tank.
+		var cc := _cond()
+		var ccap := _cond_cap(vd)
+		if ccap > 0.0:
+			var pct: float = float(cc["fuel"]) / ccap * 100.0
+			airinfo += "  FUEL %.0f%%" % pct
+			if pct <= 0.0:
+				airinfo += " DRY"
+		if float(cc["wear"]) > 0.02:
+			airinfo += "  WEAR %.0f%%" % (float(cc["wear"]) * 100.0)
 		mode = "DRIVE  %d km/h  [%s] — %s%s%s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit, subm, airinfo]
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"

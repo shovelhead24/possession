@@ -566,7 +566,20 @@ Prerequisite for everything below.
       on the ground can see something 8km up.
 
 ### Cross-cutting
-- [ ] **Wear, fuel and damage** — the reason to change vehicle rather than keep the best one.
+- [x] **Wear, fuel and damage** — the reason to change vehicle rather than keep the best one.
+      DERIVED, not authored: capacity from mass, burn from power, so the whole roster gets the
+      mechanic without twenty hand-tuned numbers and the coupling IS the design -- the powerful thing
+      is the thirsty thing. Condition is per-vehicle and persists across [L], which is the point: the
+      machine you thrashed is still worn when you come back to it. Wear accrues from things already
+      measured (bottomed suspension, hard landings, a hull aground, off-road abrasion) and costs up to
+      55% of thrust -- never all of it, so you can always limp home. Dry means zero thrust. Living
+      mounts opt out entirely: they run on stamina, which is already modelled. Docking at the axis
+      port services the craft, which finally gives the port a reason to exist beyond being a
+      destination; ground refuelling is its own item below.
+      Applied in ONE place (thrust, before the dispatch) rather than inside seven locomotion classes.
+      Caught by running `--proving`: the sportscar read 0.0 through rough and climb on the first run
+      because it burned its tank during accel/brake/circle, so the course now services each phase --
+      otherwise the handling table quietly becomes a fuel-capacity table with handling headings.
 - [ ] **Where vehicles COME from.** Found, salvaged, stolen, traded. Ties into the draws work:
       a vehicle two valleys away is a reason to go there.
 - [ ] **Test harness for all of them** — extend `--shots` to spawn each vehicle, drive a fixed

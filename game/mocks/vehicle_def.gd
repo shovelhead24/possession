@@ -90,6 +90,14 @@ extends Resource
 # and every other class), so this is a data contract like draft/dive_max/jump.
 @export var rcs := 0.0             # reaction-control thrust, m/s^2; authority in vacuum, useless in air
 
+# Wear and fuel (TASKS.md "Wear, fuel and damage"). Both are DERIVED by default rather than authored
+# per row -- capacity from mass, burn from power -- so the mechanic applies to the whole roster
+# without twenty hand-tuned numbers, and a row overrides only where it should be unusual. A thirsty
+# machine is the point: the fastest thing available should not also be the thing you keep forever.
+@export var fuel_cap := 0.0        # litres; 0 = derive from mass (living mounts run on stamina instead)
+@export var burn := 0.0            # litres per unit of thrust-second; 0 = derive from power
+@export var toughness := 1.0       # wear resistance; higher lasts longer, 0 = never wears
+
 @export var susp_travel := 0.34    # spring travel, extension limit to bump stop
 @export var susp_stiff := 34.0
 @export var susp_damp := 6.0
