@@ -628,10 +628,21 @@ behaviour, not art.
       needs more centripetal force than the floor provides and falls toward it FASTER, while
       antispinward drops far less. Carbine at 400m: 2.02m spinward, 0.27m antispinward. Same shot,
       opposite facing, nearly 2m apart.
-- [ ] **Ballistics on a ring.** Spin gravity is not gravity: a projectile in flight is in free fall
+- [x] **Ballistics on a ring.** Spin gravity is not gravity: a projectile in flight is in free fall
       while the ring rotates under it, so long shots drift sideways and the drop is not symmetric.
       At 2.1 km/s surface speed this is a real, measurable, novel effect. Worth getting right rather
       than approximating with a gravity constant -- it is the kind of thing this setting can own.
+      Right on both counts except one: **there is no sideways drift.** Coriolis is -2*omega x v and
+      omega points along the SPIN AXIS, so for anyone standing on the floor the deflection lies
+      entirely in the arc-radial plane and never across the ring's width. There is no windage on a
+      ringworld. Modelled as a straight line in the inertial frame (no self-gravity to curve it),
+      which is both correct and less code than the gravity constant it replaces.
+      What you get instead, all measured by `--range`:
+      - Drop is ASYMMETRIC. Spinward adds tangential speed, so the round needs more centripetal force
+        than the floor provides and falls toward it faster. Carbine at 400m: 2.02m spinward, 0.27m
+        antispinward.
+      - **Fire straight up and it lands 18.2km away, 180 seconds later.** Not on your head. That one
+        line is probably worth more to the setting than the whole drop table.
 
 ### Mechanics classes (each is a parameter set, not a weapon)
 - [ ] **Melee** — reach, wind-up, commitment. Spear, blade, club, improvised.

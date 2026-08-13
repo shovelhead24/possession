@@ -1329,6 +1329,31 @@ func _shot_flight(dist: float, elev_mrad: float, spinward: bool, muzzle: float, 
 			return {"t": t, "drop_m": RANGE_EYE - (R - r)}
 	return {"t": t, "drop_m": 0.0}
 
+func _shot_vertical(muzzle: float, drag_k: float) -> Dictionary:
+	# Fire straight "up" (toward the axis) and see where it comes back to eye height. On a planet it
+	# lands on your head. Here it does not, and WHERE it lands is the ring effect stated plainly.
+	var R := _radius()
+	var w := _omega()
+	var r0 := R - RANGE_EYE
+	var pos := Vector2(0.0, r0)
+	var vel := Vector2(w * r0, -muzzle)     # carried along by the floor, plus straight up
+	var t := 0.0
+	var step := 0.002
+	var guard := 0
+	while guard < 400000:
+		guard += 1
+		var speed := vel.length()
+		var rel := speed - w * r0
+		if drag_k > 0.0 and rel > 0.0:
+			vel -= vel.normalized() * (rel * rel * drag_k * step)
+		pos += vel * step
+		t += step
+		var r := pos.length()
+		if R - r <= RANGE_EYE and t > 0.5:
+			var theta := atan2(pos.x, pos.y) - w * t
+			return {"t": t, "arc": theta * R}
+	return {"t": t, "arc": 0.0}
+
 func _range_run() -> void:
 	await get_tree().process_frame
 	var args := OS.get_cmdline_user_args()
@@ -1388,6 +1413,19 @@ func _range_run() -> void:
 			print("%-10s %7.0fm %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s" % [
 				wname, dist, hit_frac * 100.0, worst, drop_s, float(fs.get("t", 0.0)),
 				drop_a - drop_s, ttk_s])
+	# THE VERTICAL SHOT. The item says long shots "drift sideways"; they do not, and this is the test
+	# that shows why. Coriolis is -2*omega x v, and omega points along the SPIN AXIS -- so for anyone
+	# standing on the floor, the deflection is always in the ARC-radial plane and never across the
+	# ring's width. There is no windage on a ringworld. What there is instead: fire straight up and
+	# the round does not come back to you, it lands a long way spinward or antispinward of you.
+	for wname in want:
+		if not WEAPON_ROWS.has(wname):
+			continue
+		var vd2: WeaponDef = _weapon_def(str(wname))
+		var vv := _shot_vertical(vd2.muzzle, vd2.drag_k)
+		print("RANGE %s: straight up -> back down %.0fs later, %.0fm along the arc (never sideways: "
+			% [wname, float(vv["t"]), float(vv["arc"])]
+			+ "omega is along the spin axis, so there is no width-wise deflection at all)")
 	print("RANGE done")
 	get_tree().quit()
 
