@@ -37,6 +37,15 @@ extends Resource
 @export var recoil := 3.0          # mrad of muzzle rise per shot
 @export var recover_s := 0.30      # seconds for the muzzle to come back down
 
+# --- melee (the `melee` class only) ---------------------------------------------------------------
+# Reach, wind-up and COMMITMENT are the whole class. A melee weapon is not a gun with range 2: the
+# decision you make is whether to start a swing you cannot take back, so the interesting parameter is
+# the window during which you are helpless, not the damage.
+@export var reach := 0.0           # metres the swing covers; 0 = not a melee weapon
+@export var windup_s := 0.0        # from input to the hit landing -- telegraph the opponent can read
+@export var commit_s := 0.0        # helpless window AFTER the swing, whether or not it connected
+@export var arc_deg := 60.0        # sweep width; a club catches several, a spear catches one
+
 # --- terminal -----------------------------------------------------------------------------------
 @export var damage := 34.0         # per hit against the standard target
 @export var pellets := 1           # >1 = a spread of projectiles per shot (shot, flechette)

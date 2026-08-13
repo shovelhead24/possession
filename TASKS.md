@@ -645,7 +645,18 @@ behaviour, not art.
         line is probably worth more to the setting than the whole drop table.
 
 ### Mechanics classes (each is a parameter set, not a weapon)
-- [ ] **Melee** — reach, wind-up, commitment. Spear, blade, club, improvised.
+- [x] **Melee** — reach, wind-up, commitment. Spear, blade, club, improvised. Four rows, one
+      parameter set, and the class trait is COMMITMENT: a melee weapon is not a gun with range 2, the
+      decision is whether to start a swing you cannot take back. `--range` gives melee its own table
+      (group size at 400m for a club is not a number worth printing) reporting reach, arc, wind-up,
+      the helpless window, dps and ttk.
+      spear 2.6m/1.12s committed/50.0dps, blade 1.3m/0.50s/69.1, club 1.5m 120deg/1.43s/45.9,
+      improvised 1.0m/0.75s/25.7.
+- [ ] **Melee balance needs an opponent, not a table.** The rows above show the blade beating the
+      spear on BOTH dps and ttk, which is correct arithmetic and the wrong conclusion: reach and
+      commitment only pay off against something that hits back, and the range harness fires at a
+      target that never does. Needs a sparring dummy that closes, swings on its own timer and
+      punishes the committed window — otherwise every melee row will tune toward "fast and short".
 - [ ] **Thrown** — arc, weight, fuse. Rock, spear, grenade, molotov, sticky charge.
 - [ ] **Tensioned** — draw time, hold penalty, drop. Sling, bow, crossbow, speargun.
 - [ ] **Chemical projectile** — the big family. Rate, recoil, magazine, reload, heat, spread growth.

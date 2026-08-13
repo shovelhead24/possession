@@ -1236,6 +1236,34 @@ func _node_tris(n: Node) -> int:
 # says build the harness BEFORE any weapon, and a harness with nothing to fire cannot be trusted, so
 # this is the reference round the range was calibrated against rather than the start of the tree.
 const WEAPON_ROWS := {
+	# --- MELEE (TASKS.md "Melee: reach, wind-up, commitment"). Four rows, one parameter set. What
+	# separates them is not damage, it is what you are risking to land it: the spear keeps you out of
+	# reach but is helpless if you miss, the club is slow and catches a crowd, the blade is quick and
+	# forgiving, and the improvised thing is what you have when you have nothing.
+	"spear": {
+		"purpose": "the spear — hits first from outside their reach; miss and you are wide open",
+		"cls": "melee", "muzzle": 0.0, "damage": 55.0,
+		"reach": 2.6, "windup_s": 0.42, "commit_s": 0.70, "arc_deg": 25.0,
+		"rpm": 0.0, "cycle_s": 1.10, "mag": 0, "reload_s": 0.0, "spread_mrad": 0.0,
+	},
+	"blade": {
+		"purpose": "the blade — quick and forgiving, but you have to be close enough to be hit back",
+		"cls": "melee", "muzzle": 0.0, "damage": 38.0,
+		"reach": 1.3, "windup_s": 0.22, "commit_s": 0.28, "arc_deg": 70.0,
+		"rpm": 0.0, "cycle_s": 0.55, "mag": 0, "reload_s": 0.0, "spread_mrad": 0.0,
+	},
+	"club": {
+		"purpose": "the club — slow, heavy, sweeps a crowd; the swing owns you once it starts",
+		"cls": "melee", "muzzle": 0.0, "damage": 62.0,
+		"reach": 1.5, "windup_s": 0.58, "commit_s": 0.85, "arc_deg": 120.0,
+		"rpm": 0.0, "cycle_s": 1.35, "mag": 0, "reload_s": 0.0, "spread_mrad": 0.0,
+	},
+	"improvised": {
+		"purpose": "whatever was to hand — short, weak, and better than open palms",
+		"cls": "melee", "muzzle": 0.0, "damage": 18.0,
+		"reach": 1.0, "windup_s": 0.30, "commit_s": 0.45, "arc_deg": 50.0,
+		"rpm": 0.0, "cycle_s": 0.70, "mag": 0, "reload_s": 0.0, "spread_mrad": 0.0,
+	},
 	"carbine": {
 		# FOR: the baseline everything else is measured against. It already exists as a model with FP
 		# arms, so it is the one weapon where "does the table match how it feels" can actually be asked.
@@ -1370,6 +1398,17 @@ func _range_run() -> void:
 			print("RANGE skip %s (no such weapon)" % wname)
 			continue
 		var wd: WeaponDef = _weapon_def(str(wname))
+		# MELEE has no projectile, so every ranged column above is meaningless for it -- group size at
+		# 400m for a club is not a number worth printing. Its own row instead, reporting what the class
+		# actually trades: how far it reaches, how long it telegraphs, and how long it owns you after.
+		if wd.cls == "melee":
+			var swing: float = wd.windup_s + wd.commit_s
+			var dps: float = wd.damage / maxf(wd.cycle_s, 0.01)
+			var kill: float = ceil(RANGE_TARGET_HP / maxf(wd.damage, 0.001)) * wd.cycle_s + wd.windup_s
+			print("%-10s  melee   reach %.1fm  arc %3.0fdeg  windup %.2fs  committed %.2fs  "
+				% [wname, wd.reach, wd.arc_deg, wd.windup_s, swing]
+				+ "dps %5.1f  ttk %.2fs" % [dps, kill])
+			continue
 		var rng := RandomNumberGenerator.new()
 		for dist in RANGE_TARGETS:
 			rng.seed = hash(str(wname) + str(dist))     # identical course per weapon, per range

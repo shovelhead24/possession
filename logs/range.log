@@ -5,7 +5,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (452 ms)
+ring_vibes: far band rebuilt around arc 0 km (453 ms)
 ring_vibes: containment field 1500-4000m on lat -25000
 ring_vibes: containment field 1500-4000m on lat 25000
 ring_vibes: texture compression — s3tc true, bptc true, etc2 true
@@ -25,6 +25,10 @@ ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
 ring_vibes: 143141 OSM buildings loaded (2 styles)
 RANGE  ring R=477465m  omega=0.004342 rad/s  surface 2073 m/s
 weapon     range       hit%   group    drop   flight spin-dif     ttk
+spear       melee   reach 2.6m  arc  25deg  windup 0.42s  committed 1.12s  dps  50.0  ttk 2.62s
+blade       melee   reach 1.3m  arc  70deg  windup 0.22s  committed 0.50s  dps  69.1  ttk 1.87s
+club        melee   reach 1.5m  arc 120deg  windup 0.58s  committed 1.43s  dps  45.9  ttk 3.28s
+improvised  melee   reach 1.0m  arc  50deg  windup 0.30s  committed 0.75s  dps  25.7  ttk 4.50s
 carbine          5m   100%   0.07m  -0.01m   0.006s    0.00m   0.26s
 carbine         10m   100%   0.10m  -0.01m   0.011s    0.00m   0.27s
 carbine         25m   100%   0.32m  -0.01m   0.028s    0.00m   0.29s
@@ -32,5 +36,9 @@ carbine         50m    92%   0.46m   0.02m   0.056s   -0.03m   0.34s
 carbine        100m    67%   0.45m   0.11m   0.113s   -0.13m   0.50s
 carbine        200m    17%   1.48m   0.46m   0.231s   -0.41m   1.77s
 carbine        400m     0%   2.84m   2.02m   0.478s   -1.75m    --  
+RANGE spear: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE blade: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE club: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE improvised: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE carbine: straight up -> back down 180s later, 18167m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE done
