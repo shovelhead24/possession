@@ -6,7 +6,9 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (835 ms)
+ring_vibes: far band rebuilt around arc 0 km (449 ms)
+ring_vibes: containment field 1500-4000m on lat -25000
+ring_vibes: containment field 1500-4000m on lat 25000
 ring_vibes: texture compression — s3tc true, bptc true, etc2 false
 ring_vibes: grass pack loaded (1 surfaces)
 ring_vibes: 13674 road centrelines loaded (home + none)
@@ -22,48 +24,14 @@ ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring 
 ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
 ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
 ring_vibes: 143141 OSM buildings loaded (2 styles)
-SHOT wall 1500m, ceiling 4000m (air thins 2000-4000m, field spans 2500m)
 ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
 ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
 ring_vibes: warped to home (0.0% arc)
 SHOT millstreet: framed on a road, 37m from the settlement
-ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11652 hedge quads
-ring_vibes: buildings in range at arc 56 lat 36 -> style0=852, style1=0
-      TRIS  trees 237478, buildings 18744, hedges 23304, grass 11656, terrain ~55296 (108 nodes), far band 96000   accounted 442478
-SHOT millstreet         ground  tris=445084  31.5ms (32 fps)  res://../logs/shots/20260812_2311_field/millstreet_ground.png
-ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11652 hedge quads
-ring_vibes: buildings in range at arc 56 lat 36 -> style0=852, style1=0
-      TRIS  trees 232649, buildings 18744, hedges 23304, grass 11656, terrain ~55296 (108 nodes), far band 96000   accounted 437649
-SHOT millstreet         road    tris=445974  28.4ms (35 fps)  res://../logs/shots/20260812_2311_field/millstreet_road.png
-ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11652 hedge quads
-ring_vibes: buildings in range at arc 56 lat 36 -> style0=852, style1=0
-      TRIS  trees 108436, buildings 18744, hedges 23304, grass 11656, terrain ~43008 (84 nodes), far band 96000   accounted 301148
-SHOT millstreet         air     tris=296012  14.7ms (68 fps)  res://../logs/shots/20260812_2311_field/millstreet_air.png
-ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
-ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
-ring_vibes: warped to home (0.0% arc)
-ring_vibes: warthog model loaded (5.2m long, scale 0.967)
-ring_vibes: far band rebuilt around arc -66 km (791 ms)
-SHOT vehicle box      res://../logs/shots/20260812_2311_field/vehicle_box.png
-SHOT vehicle warthog  res://../logs/shots/20260812_2311_field/vehicle_warthog.png
-SHOT vehicle sportscar res://../logs/shots/20260812_2311_field/vehicle_sportscar.png
-SHOT vehicle sixby    res://../logs/shots/20260812_2311_field/vehicle_sixby.png
-SHOT vehicle bike     res://../logs/shots/20260812_2311_field/vehicle_bike.png
-SHOT vehicle tractor  res://../logs/shots/20260812_2311_field/vehicle_tractor.png
-SHOT vehicle hauler   res://../logs/shots/20260812_2311_field/vehicle_hauler.png
-SHOT vehicle crawler  res://../logs/shots/20260812_2311_field/vehicle_crawler.png
-SHOT vehicle skiff    res://../logs/shots/20260812_2311_field/vehicle_skiff.png
-SHOT vehicle launch   res://../logs/shots/20260812_2311_field/vehicle_launch.png
-SHOT vehicle barge    res://../logs/shots/20260812_2311_field/vehicle_barge.png
-SHOT vehicle strider  res://../logs/shots/20260812_2311_field/vehicle_strider.png
-SHOT vehicle horse    res://../logs/shots/20260812_2311_field/vehicle_horse.png
-SHOT vehicle elephant res://../logs/shots/20260812_2311_field/vehicle_elephant.png
-SHOT vehicle mech_biped res://../logs/shots/20260812_2311_field/vehicle_mech_biped.png
-SHOT vehicle mech_quad res://../logs/shots/20260812_2311_field/vehicle_mech_quad.png
-SHOT vehicle suit     res://../logs/shots/20260812_2311_field/vehicle_suit.png
-SHOT vehicle duck     res://../logs/shots/20260812_2311_field/vehicle_duck.png
-SHOT vehicle sub      res://../logs/shots/20260812_2311_field/vehicle_sub.png
-SHOT vehicle rotor    res://../logs/shots/20260812_2311_field/vehicle_rotor.png
-SHOT vehicle airplane res://../logs/shots/20260812_2311_field/vehicle_airplane.png
-SHOT vehicle lifter   res://../logs/shots/20260812_2311_field/vehicle_lifter.png
-SHOTS done
+SHOT millstreet: 1 framings ["rimtop"]
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 8436 hedge quads
+ring_vibes: buildings in range at arc 56 lat 22500 -> style0=359, style1=0
+      TRIS  trees 0, buildings 7898, hedges 16872, grass 14864, terrain ~25600 (50 nodes), far band 96000   accounted 161234
+ring_vibes: 27380 trees placed (3 variants x 4 LODs) — 136 standards, 456 off-road, 8436 hedge quads
+SHOT millstreet         rimtop  tris=18688  24.9ms (40 fps)  res://../logs/shots/20260813_1654_field/millstreet_rimtop.png
+SHOT vehicles skipped (pass --vehicles for the roster parade)

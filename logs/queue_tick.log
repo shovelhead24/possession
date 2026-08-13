@@ -1986,3 +1986,98 @@ Resume with:  Remove-Item C:\Games\possession\logs\.queue_paused
 2026-08-12 22:59:50  skip: working tree is dirty (2 files) -- someone is mid-edit, or a previous tick did not commit
 2026-08-12 22:59:50           M game/mocks/ring_vibes.gd
 2026-08-12 22:59:50           M game/mocks/vehicle_def.gd
+2026-08-12 23:29:38  === tick starting (22 items open) ===
+Done. One item completed.
+
+**Top item ΓÇö "Settle the wall height and atmosphere ceiling"** ΓÇö left unchecked, noted BLOCKED: it's a "fly to the ceiling... judgement, not a calculation," which needs both the out-of-sandbox `C:\Godot` binary and a rim/ceiling framing that didn't exist. The three existing air comparison shots are pixel-identical because the `air` framing looks *down* at the plain ΓÇö the wall was never in them, so there was nothing to judge from.
+
+**Did the next item ΓÇö "The field shimmer is unverified"** ΓÇö which asks for exactly that missing framing. Added two shot framings to `_shot_run` in `ring_vibes.gd`:
+- `rim` ΓÇö inside, eye level, 45┬░ FOV, aimed across the strip at the nearer rim: does the wall dominate the horizon.
+- `rimtop` ΓÇö camera at an absolute height halfway up the containment field, looking back at the rim: masonry + shimmer strip + ceiling in one frame.
+
+Both needed two small, shot-loop-scoped harness generalisations ΓÇö an optional per-frame `yaw` override (captured/restored via `base_yaw`, which also closes a latent cross-patch yaw bleed) and an `abs_h` key for absolute camera height above the wall top. They honour `--wall`/`--atmo`, so they're also the prerequisite that unblocks the item above.
+
+Not run-verified (Godot gated here), and the shimmer is the thing being *looked at*, so verification is a laptop `-- --shots` run reading the new `*_rim.png` / `*_rimtop.png`. Committed as `beadada`.
+
+2026-08-12 23:36:10  === tick done (21 items left) ===
+2026-08-12 23:59:39  === tick starting (21 items open) ===
+Done. Committed `cf069e9`.
+
+**Item:** Ring-relative orbital mechanics (the top unchecked item's predecessor was already BLOCKED with a reason today, so I took the next one).
+
+**What I did** ΓÇö replaced the placeholder constant spin gravity in `_loco_air` with the full spinning-frame reaction. Since `_car_arc` already lives in the ring's rotating frame, `_air_vel.x` *is* your ground-relative speed; the missing piece was the physics. Derived it the honest way from the inertial frame: net floor-ward pull = `v_i┬▓/r` where `v_i = v_arc + ╧ë┬╖r`. That single term is spin gravity + Coriolis + centripetal at once:
+
+- hover matched to spin ΓåÆ reduces to `╧ë┬▓r` (low flight byte-identical to before)
+- prograde ΓåÆ floor pulls harder
+- retrograde at `v_arc = -╧ër` ΓåÆ inertially still, zero pull, altitude holds with no thrust while the ring streams past at ~2.1 km/s ΓÇö the orbit
+- plus the angular-momentum companion so climbing drifts you spinward
+
+Added `_spin_omega()` (one source for ╧ë, derived from `AIR_GRAVITY`) and a HUD `GROUND ┬▒N m/s` / `ORBIT` readout.
+
+**Not verified:** Godot binary is out-of-repo/gated here, so no `--proving`, and orbital handling isn't screenshot-judgeable. Laptop check noted in TASKS.md: cycle to `lifter`/`airplane`, climb to vacuum, burn retrograde ΓÇö ALT should hold throttle-off and the HUD flag ORBIT.
+
+2026-08-13 00:11:05  === tick done (20 items left) ===
+2026-08-13 00:29:37  === tick starting (20 items open) ===
+You've hit your session limit ┬╖ resets 3:20am (Europe/Dublin)
+
+2026-08-13 00:39:45  hit a usage limit -- standing down until 03:22
+2026-08-13 00:59:37  skip: cooling down until 03:22
+2026-08-13 01:29:37  skip: cooling down until 03:22
+2026-08-13 01:59:41  skip: cooling down until 03:22
+2026-08-13 02:29:37  skip: cooling down until 03:22
+2026-08-13 02:59:37  skip: cooling down until 03:22
+2026-08-13 03:29:36  cooldown over, resuming
+2026-08-13 03:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 03:29:37           M game/mocks/ring_vibes.gd
+2026-08-13 03:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 03:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 04:29:41  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 04:29:41           M game/mocks/ring_vibes.gd
+2026-08-13 04:59:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 04:59:37           M game/mocks/ring_vibes.gd
+2026-08-13 05:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 05:29:37           M game/mocks/ring_vibes.gd
+2026-08-13 05:59:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 05:59:37           M game/mocks/ring_vibes.gd
+2026-08-13 06:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 06:29:37           M game/mocks/ring_vibes.gd
+2026-08-13 06:59:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 06:59:37           M game/mocks/ring_vibes.gd
+2026-08-13 07:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 07:29:37           M game/mocks/ring_vibes.gd
+2026-08-13 07:59:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 07:59:37           M game/mocks/ring_vibes.gd
+2026-08-13 08:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 08:29:37           M game/mocks/ring_vibes.gd
+2026-08-13 08:59:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 08:59:37           M game/mocks/ring_vibes.gd
+2026-08-13 09:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 09:29:36           M game/mocks/ring_vibes.gd
+2026-08-13 09:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 09:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 10:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 10:29:36           M game/mocks/ring_vibes.gd
+2026-08-13 10:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 10:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 11:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 11:29:36           M game/mocks/ring_vibes.gd
+2026-08-13 11:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 11:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 12:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 12:29:37           M game/mocks/ring_vibes.gd
+2026-08-13 12:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 12:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 13:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 13:29:36           M game/mocks/ring_vibes.gd
+2026-08-13 13:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 13:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 14:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 14:29:36           M game/mocks/ring_vibes.gd
+2026-08-13 14:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 14:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 15:29:37  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 15:29:37           M game/mocks/ring_vibes.gd
+2026-08-13 15:59:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 15:59:36           M game/mocks/ring_vibes.gd
+2026-08-13 16:29:36  skip: working tree is dirty (1 files) -- someone is mid-edit, or a previous tick did not commit
+2026-08-13 16:29:36           M game/mocks/ring_vibes.gd

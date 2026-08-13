@@ -20,7 +20,15 @@ void fragment() {
 	vec3 n = normalize(v_world_normal);
 	if (!FRONT_FACING) { n = -n; }
 	float diffuse = max(dot(n, normalize(to_sun)), 0.0);
-	vec3 lit = wall_color * (0.15 + 0.85 * diffuse);
+	// BOUNCE, not just sun. The inner face of the rim looks out across the entire lit ring floor,
+	// which is an enormous area light -- so when the sun is behind the wall it is not black, it is
+	// filled by the world in front of it. At a 0.15 ambient floor it rendered as a featureless black
+	// slab cutting the horizon in half, which reads far heavier than the wall actually is.
+	vec3 lit = wall_color * (0.42 + 0.58 * diffuse);
+	// Faint strata so the surface has SCALE. A flat tone gives the eye nothing to judge distance or
+	// size against, which is part of why the rim felt so dominating: it read as a void, not a cliff.
+	float band = sin(v_world_pos.y * 0.0055) * 0.5 + 0.5;
+	lit *= 0.94 + 0.06 * band;
 	float dist = length(v_world_pos - CAMERA_POSITION_WORLD);
 	float fog = 1.0 - exp(-haze_density * dist);
 	ALBEDO = mix(lit, sky_color, fog);

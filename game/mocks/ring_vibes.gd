@@ -434,6 +434,8 @@ var _air_vel := Vector2.ZERO      # ballistic course in ring (arc,lat) -- above 
 var _dive := 0.0                  # metres a submersible sits BELOW the water surface; 0 = surfaced (see _loco_sub)
 var _altitude := 0.0              # metres a flyer sits ABOVE the surface along ring-up; 0 = on the ground (see _loco_air)
 var _vspeed := 0.0                # a flyer's vertical speed, m/s along ring-up (climb +, sink -)
+var _docked := false              # latched onto the axis-structure port; motion frozen, station held (see _dock_update)
+var _boarded := false             # left the pilot seat for the structure while docked ([Enter]); interior authored later
 var _car_arc := 0.0
 var _car_lat := 0.0
 var _car_heading := 0.0
@@ -1132,6 +1134,8 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_dive = 0.0           # each phase starts surfaced, so a sub's dive can't carry over between phases
 	_altitude = 0.0       # each phase starts on the ground, so a flyer's altitude can't carry over between phases
 	_vspeed = 0.0
+	_docked = false       # each phase starts free-flying, not latched to the port
+	_boarded = false
 	_stamina = 1.0        # each phase measures a fresh mount, so the table isn't skewed by the prior phase
 	_spooked = 0.0
 	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false))
@@ -1223,6 +1227,16 @@ func _shot_run() -> void:
 	# number the atmosphere depth is derived from too, so it decides both how the horizon reads AND
 	# where a wing's ceiling is. That is a judgement to make by looking at the same framing at several
 	# heights, which needs it settable from the command line rather than off a runtime slider.
+	# WHAT ARE WE ACTUALLY TRYING TO SEE? Every run used to fire all three landscape framings AND a
+	# parade of every vehicle in the roster -- twenty-odd frames and a Godot launch to answer one
+	# question, with the answer usually not among them (the wall-height runs never once put the rim in
+	# frame). `--only ground,rim` shoots just those; the vehicle parade is now opt-in via `--vehicles`
+	# rather than the tax on every single run.
+	var only: Array = []
+	var oi := args.find("--only")
+	if oi >= 0 and oi + 1 < args.size() and not args[oi + 1].begins_with("--"):
+		only = Array(args[oi + 1].split(","))
+	var want_vehicles := args.has("--vehicles")
 	var wi := args.find("--wall")
 	if wi >= 0 and wi + 1 < args.size():
 		wall_top_h = float(args[wi + 1])
@@ -1313,7 +1327,12 @@ func _shot_run() -> void:
 				{"n": "road", "h": 6.0, "pitch": -0.18, "fov": 60.0},
 				{"n": "air", "h": 400.0, "pitch": -0.55, "fov": 70.0},
 				{"n": "rim", "h": 3.0, "pitch": 0.06, "fov": 45.0, "yaw": rim_yaw},
-				{"n": "rimtop", "abs_h": field_mid, "pitch": -0.05, "fov": 62.0, "yaw": rim_yaw},
+				# rimtop stands NEAR the rim, not across the strip. It was taking its lat from the patch
+				# (mid-strip, ~25km out), so "above the wall top looking back" was actually a distant grey
+				# band and the field it exists to show was a couple of pixels of haze. 2.5km inboard puts
+				# the masonry and the shimmer above it at a size you can actually judge.
+				{"n": "rimtop", "abs_h": field_mid, "pitch": -0.05, "fov": 62.0, "yaw": rim_yaw,
+					"lat": signf(rim_yaw) * (WIDTHS[w_idx] * 0.5 - 2500.0)},
 			]
 		# ON THE WATER. None of the three framings above ever looks at sea -- they walk to a road or a
 		# settlement, both of which are on land by definition -- so a coastal patch photographed three
@@ -1354,10 +1373,16 @@ func _shot_run() -> void:
 		# capture the road-tangent yaw set above so a rim framing can override it (`yaw` key) without
 		# leaking its across-strip heading into the next patch's ground/road/air frames.
 		var base_yaw := _look.x
+		if not only.is_empty():
+			frames = frames.filter(func(f): return only.has(str(f["n"])))
+		print("SHOT %s: %d framings %s" % [pname, frames.size(),
+			str(frames.map(func(f): return f["n"]))])
 		for shot in frames:
 			# most framings share the patch's walk-to point; the sea framing carries its own
 			var sa: float = float(shot.get("arc", arc))
 			var sl: float = float(shot.get("lat", lat))
+			if shot.has("yaw"):
+				_look.x = float(shot["yaw"])
 			# abs_h places the camera at an ABSOLUTE ring height (rimtop, which sits above the wall top
 			# where terrain height is meaningless); every other framing is terrain-relative.
 			var cam_h: float = float(shot["abs_h"]) if shot.has("abs_h") else _terrain_h(sa, sl) + float(shot["h"])
@@ -1388,6 +1413,14 @@ func _shot_run() -> void:
 	# VEHICLES. The patch loop above never enters DRIVE, so an imported car model could be sideways,
 	# giant or underground and no frame would catch it. Enter DRIVE at home, let the chase cam settle,
 	# and shoot each vehicle from behind -- the framing that shows orientation, scale and grounding.
+	# OPT-IN (`--vehicles`): this is a whole-roster parade, and it was running on every landscape
+	# question anybody asked.
+	if not want_vehicles:
+		print("SHOT vehicles skipped (pass --vehicles for the roster parade)")
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		get_tree().quit()
+		return
 	_warp_to(-1)
 	_set_mode(Mode.DRIVE)
 	# start the chase cam near the car, else it eases down from the last aerial framing (400 m up) and
@@ -2278,7 +2311,7 @@ func _build_band(center_arc: float) -> void:
 		% [center_arc / 1000.0, Time.get_ticks_msec() - t0])
 
 const WALL_BASE_H := -200.0   # absolute height (below lowest terrain), from ring centre — not terrain-relative
-var wall_top_h := 4000.0       # rim height toward the axis; live-tunable ([O]) since it sets shadow reach
+var wall_top_h := 1500.0       # rim height toward the axis; live-tunable ([O]) since it sets shadow reach
 # The ceiling the AIR reaches, independent of how tall the masonry is (see the SPACE_LO_FRAC note).
 # NOT SETTLED -- 4000 sits in the 2-5km range the ceiling was described as wanting, but the number is
 # a judgement to make by flying to it, not by reasoning about it.
@@ -2333,6 +2366,7 @@ func _build_walls() -> void:
 			fmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			add_child(fmi)
 			_walls.append(fmi)   # tracked with the walls so a rebuild frees it too
+			print("ring_vibes: containment field %.0f-%.0fm on lat %.0f" % [wall_top_h, atmo_top_h, lat])
 		var mi := MeshInstance3D.new()
 		mi.mesh = st.commit()
 		if not _wall_mat:
@@ -2342,6 +2376,25 @@ func _build_walls() -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 		_walls.append(mi)
+	# Axis-structure docking port (TASKS.md "Docking / boarding"). A fixed beacon at (DOCK_ARC, DOCK_LAT)
+	# reaching toward the axis -- authored directly, NOT derived from ring-surface tiling (substrate.md gate 5).
+	# Something to aim for; the dock MECHANIC keys off ring coordinates (_dock_update), NOT this mesh, so a
+	# mispositioned marker can only make the target harder to see, never break docking. A cube so orientation
+	# can't be wrong. Tracked with the walls so a rebuild (which changes _radius()) frees and re-places it.
+	# Rendering NOT eyeballed here (Godot binary is out-of-repo/gated), same caveat as the wall/field.
+	var port := MeshInstance3D.new()
+	var pbm := BoxMesh.new()
+	pbm.size = Vector3(60.0, 60.0, 60.0)
+	port.mesh = pbm
+	var pmat := StandardMaterial3D.new()
+	pmat.emission_enabled = true
+	pmat.emission = Color(0.5, 0.9, 1.0)
+	pmat.albedo_color = Color(0.25, 0.55, 0.8)
+	port.material_override = pmat
+	port.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(port)
+	port.global_position = _ring_pos(DOCK_ARC / _radius(), DOCK_LAT, DOCK_ALT)
+	_walls.append(port)
 
 func _grid_indices(st: SurfaceTool, segs: int, rows: int) -> void:
 	# 2026-07-23: attempted a winding flip + cull_back here, got the direction wrong (rendered
@@ -3839,9 +3892,37 @@ func _make_car(d: VehicleDef = null) -> Node3D:
 		wheel.position = Vector3.ZERO
 		pivot.add_child(wheel)
 		root.add_child(pivot)
-		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0, "offset": wp})
+		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0, "offset": wp,
+			"rest": wheel.transform.basis, "axle": _wheel_axle(wheel)})
 	add_child(root)
 	return root
+
+# THE AXLE IS THE SHORTEST AXIS OF THE WHEEL. Derived, not assumed: the procedural cylinder spins
+# about its own Y, an imported GLTF wheel about whatever axis the artist modelled it on, and the code
+# that spins them cannot know which without looking. A wheel is wide in two dimensions and narrow in
+# the third, so its local AABB says so unambiguously. This replaces a hardcoded 90-degree Z rotation
+# that was applied to EVERY wheel every frame -- right for the box car's cylinders, and exactly the
+# reason the warthog's wheels sat rotated 90 degrees out.
+func _wheel_axle(n: Node3D) -> Vector3:
+	var box := AABB()
+	var got := false
+	var stack: Array = [n]
+	while not stack.is_empty():
+		var c = stack.pop_front()
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh != null:
+			var a: AABB = (c as MeshInstance3D).mesh.get_aabb()
+			box = a if not got else box.merge(a)
+			got = true
+		for k in (c as Node).get_children():
+			stack.append(k)
+	if not got:
+		return Vector3.UP
+	var sz := box.size
+	if sz.x <= sz.y and sz.x <= sz.z:
+		return Vector3.RIGHT
+	if sz.y <= sz.z:
+		return Vector3.UP
+	return Vector3.BACK
 
 func _build_vehicles() -> void:
 	# The DEFINITION TABLE is the roster: build one entry per VEHICLE_ROW so [L] cycles every vehicle
@@ -3887,6 +3968,8 @@ func _select_vehicle(i: int) -> void:
 	_land_dip = 0.0
 	_altitude = 0.0       # never cycle onto a flyer already airborne; a vehicle you board starts on the ground
 	_vspeed = 0.0
+	_docked = false       # nor latched to the port; a vehicle you cycle onto is free-flying, not station-kept
+	_boarded = false
 	_update_hud()
 
 func _model_aabb(root_node: Node) -> AABB:
@@ -3962,7 +4045,10 @@ func _collect_wheels(root: Node) -> Array:
 			if not seen.has(key):
 				seen[key] = true
 				out.append({"pivot": n, "mesh": n, "front": (n as Node3D).position.z > 0.0,
-					"offset": (n as Node3D).position})
+					"offset": (n as Node3D).position,
+					# rest = however the artist oriented it. Never overwrite it, only spin RELATIVE
+					# to it -- the imported wheel is already pointing the right way.
+					"rest": (n as Node3D).transform.basis, "axle": _wheel_axle(n as Node3D)})
 				matched = true
 		if not matched:
 			for c in n.get_children():
@@ -4523,6 +4609,51 @@ func _spin_omega() -> float:
 	# quotes. One source for every ring-frame term (orbital gravity in _loco_air, the HUD ground-track readout).
 	return sqrt(AIR_GRAVITY / _radius())
 
+# Docking at an axis structure (TASKS.md "Docking / boarding"; substrate.md places the leave-ending hub at
+# a fixed (lon,lat) reaching toward the axis). The port is PART OF THE RING, so it is ground-fixed in the
+# rotating frame -- docking is therefore the "match the spin and hover over one spot" case the orbital item
+# named: arrive within the capture envelope with your ring-frame velocity nulled (GROUND ~ 0). Only the air
+# class can reach it, so nothing else reads these. DOCK_ALT is a placeholder height -- a spire reaching TOWARD
+# the axis, not at it (the true axis is r=R ~477km, an authored-geometry + look-at-it call like the wall/atmo
+# knobs); 8km sits clear above the 4km default ceiling, so the approach is in vacuum, flown on the RCS.
+const DOCK_ARC := 0.0            # fixed ring arc of the port -- climb straight up over the spawn origin (arc 0)
+const DOCK_LAT := 0.0            # on the centreline
+const DOCK_ALT := 8000.0         # metres toward the axis (placeholder; above the atmosphere = an RCS approach)
+const DOCK_CAPTURE_R := 150.0    # metres: within this range of the port, a matched craft soft-captures
+const DOCK_MATCH_V := 6.0        # m/s: ring-frame closing speed under this counts as matched (else you sail past)
+
+func _dock_range() -> float:
+	# straight-line ring-space distance (m) from the flyer to the fixed axis-structure port
+	var circ: float = CIRCUMFERENCES[c_idx]
+	var da: float = wrapf(_car_arc - DOCK_ARC, -circ * 0.5, circ * 0.5)
+	return Vector3(da, _car_lat - DOCK_LAT, _altitude - DOCK_ALT).length()
+
+func _dock_update(accel: float, elevator: float) -> bool:
+	# DOCKING (TASKS.md). Called only from the air dispatch arm, so no other class touches it. Returns true when
+	# the craft is HELD at the port, telling the caller to skip flight integration this frame. The port is
+	# ground-fixed in the rotating frame, so "matched" means the ring-frame velocity is nulled -- exactly the
+	# orbital item's "match the spin and hover over one spot", reusing _air_vel/_vspeed as the closing velocity.
+	if _docked:
+		# any pilot command (throttle or elevator/RCS) casts off and hands control back; boarding blocks that
+		if not _boarded and (absf(accel) > 0.01 or absf(elevator) > 0.01):
+			_docked = false
+			_boarded = false
+			return false
+		# HELD: snap onto the port and freeze every driven axis, so it station-keeps exactly
+		_car_arc = DOCK_ARC
+		_car_lat = DOCK_LAT
+		_altitude = DOCK_ALT
+		_air_vel = Vector2.ZERO
+		_vspeed = 0.0
+		_car_speed = 0.0
+		return true
+	# SOFT CAPTURE: close enough to the port AND slow enough relative to it (the port is stationary in this frame)
+	var closing := Vector3(_air_vel.x, _air_vel.y, _vspeed).length()
+	if _dock_range() < DOCK_CAPTURE_R and closing < DOCK_MATCH_V:
+		_docked = true
+		return true
+	return false
+
 func _loco_air(d: VehicleDef, delta: float, accel: float, steer: float, elevator: float) -> void:
 	# ACTUAL FLIGHT -- the SEVENTH movement class, and the first to leave the surface and STAY off it (the suit's
 	# jump is a sub-second hop; this holds altitude). FLY mode is a noclip camera; this is a vehicle that obeys
@@ -4782,7 +4913,10 @@ func _drive_tick(delta: float) -> void:
 		"legged": _loco_legged(d, delta, accel, steer)
 		"boat": _loco_boat(d, delta, accel, steer)
 		"sub": _loco_sub(d, delta, accel, steer)
-		"air": _loco_air(d, delta, accel, steer, elevator)
+		"air":
+			# check the axis-structure port first: if we soft-capture or are held there, skip flight integration
+			if not _dock_update(accel, elevator):
+				_loco_air(d, delta, accel, steer, elevator)
 		"wheeled", _: _loco_wheeled(d, delta, accel, steer)
 	var hover := d.loco == "hover"
 	var legged := d.loco == "legged"
@@ -4909,10 +5043,18 @@ func _drive_tick(delta: float) -> void:
 		# transform nodes with meshes beneath. The stricter type threw every frame on the
 		# warthog and the proving run surfaced it in seconds.
 		var mesh: Node3D = w["mesh"]
-		mesh.rotation = Vector3(0.0, 0.0, PI * 0.5)
-		mesh.rotate_object_local(Vector3(0, 1, 0), -_wheel_spin)
 		var piv: Node3D = w["pivot"]
-		piv.rotation.y = (steer * -0.42) if bool(w["front"]) else 0.0
+		var rest: Basis = w.get("rest", Basis())
+		var axle: Vector3 = w.get("axle", Vector3.UP)
+		var roll := Basis(axle, -_wheel_spin)
+		var steer_y: float = (steer * -0.42) if bool(w["front"]) else 0.0
+		if piv == mesh:
+			# imported wheels are their own pivot, so steer and roll have to compose into one basis --
+			# writing rotation.y afterwards used to wipe the roll straight back out again
+			mesh.transform.basis = Basis(Vector3.UP, steer_y) * rest * roll
+		else:
+			mesh.transform.basis = rest * roll
+			piv.rotation.y = steer_y
 	# OFFROAD. The road mask is 44m per cell, which cannot say "am I on this lane" -- but the
 	# 8m road cells built from the centrelines can, and already exist for the grass.
 	if _proving and _prove_offroad >= 0.0:
@@ -5073,6 +5215,11 @@ func _unhandled_input(event: InputEvent) -> void:
 				# swap vehicle -- only meaningful while driving, and only if the warthog asset loaded
 				if _mode == Mode.DRIVE and _vehicles.size() > 1:
 					_select_vehicle(_veh_idx + 1)
+			KEY_ENTER, KEY_KP_ENTER:
+				# board / leave the axis structure -- only meaningful once docked (see _dock_update)
+				if _mode == Mode.DRIVE and _docked:
+					_boarded = not _boarded
+					_update_hud()
 			KEY_O:
 				# sliders need a visible cursor, so opening the panel releases mouse capture
 				_panel_open = not _panel_open
@@ -5293,6 +5440,15 @@ func _update_hud() -> void:
 				airinfo += "  GROUND %+.0f m/s" % _air_vel.x
 				if _altitude > 100.0 and absf(_air_vel.x + omega_h * rr_h) < omega_h * rr_h * 0.12:
 					airinfo += "  ORBIT"
+			# DOCKING (TASKS.md). The axis-structure port is invisible from range without a readout, same as
+			# ORBIT: show the closing range as you approach, prompt in the envelope, and the latched/boarded state.
+			if _docked:
+				airinfo += "  BOARDED (axis structure) — [Enter] pilot" if _boarded else "  DOCKED — [Enter] board"
+			elif _altitude > 100.0:
+				var dr := _dock_range()
+				airinfo += "  PORT %.1fkm" % (dr / 1000.0)
+				if dr < DOCK_CAPTURE_R:
+					airinfo += "  (null velocity to dock)"
 			airinfo += "  (Space climb, Shift descend)"
 		mode = "DRIVE  %d km/h  [%s] — %s%s%s%s%s  (WASD steer, [L] vehicle, [V] cycle mode)" % [int(abs(_car_speed) * 3.6), vn, purpose, mount, suit, subm, airinfo]
 	elif _mode == Mode.WALK:
