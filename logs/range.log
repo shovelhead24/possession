@@ -1,0 +1,35 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x3840  sat_tex: yes
+ring_vibes: DEM texture 1920x1920, mpp=46.9
+ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
+ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
+ring_vibes: tree pack — 3 variants x 4 LODs loaded
+ring_vibes: far band rebuilt around arc 0 km (470 ms)
+ring_vibes: containment field 1500-4000m on lat -25000
+ring_vibes: containment field 1500-4000m on lat 25000
+ring_vibes: texture compression — s3tc true, bptc true, etc2 true
+ring_vibes: grass pack loaded (1 surfaces)
+ring_vibes: 13674 road centrelines loaded (home + none)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: hedge texture 1024x1024 loaded
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: millstreet — 39008 of 59992 buildings kept (16545 outside the 50km ring width, 4439 on cliffs)
+ring_vibes: big_sur — 10899 of 11348 buildings kept (0 outside the 50km ring width, 449 on cliffs)
+ring_vibes: cape_peninsula — 8019 of 8118 buildings kept (8 outside the 50km ring width, 91 on cliffs)
+ring_vibes: palawan — 6128 of 6215 buildings kept (3 outside the 50km ring width, 84 on cliffs)
+ring_vibes: java_majapahit — 59076 of 59996 buildings kept (38 outside the 50km ring width, 882 on cliffs)
+ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring width, 65 on cliffs)
+ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
+ring_vibes: 143141 OSM buildings loaded (2 styles)
+RANGE  ring R=477465m  omega=0.004342 rad/s  surface 2073 m/s
+weapon     range       hit%   group    drop   flight spin-dif     ttk
+carbine          5m   100%   0.07m  -0.01m   0.006s    0.00m   0.26s
+carbine         10m   100%   0.10m  -0.01m   0.011s    0.00m   0.27s
+carbine         25m   100%   0.32m  -0.01m   0.028s    0.00m   0.29s
+carbine         50m    92%   0.46m   0.02m   0.056s   -0.03m   0.34s
+carbine        100m    67%   0.45m   0.11m   0.113s   -0.13m   0.50s
+carbine        200m    17%   1.48m   0.46m   0.231s   -0.41m   1.77s
+carbine        400m     0%   2.84m   2.02m   0.478s   -1.75m    --  
+RANGE done

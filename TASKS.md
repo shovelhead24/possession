@@ -613,10 +613,21 @@ The carbine already exists as a model with FP arms (`.decisions/` and `assets/`)
 behaviour, not art.
 
 ### Test harness first — same lesson as the proving ground
-- [ ] **Firing range** (`-- --range [weapon,...]`). Targets at 5/10/25/50/100/200/400m, scripted
+- [x] **Firing range** (`-- --range [weapon,...]`). Targets at 5/10/25/50/100/200/400m, scripted
       fire, reporting: time-to-first-hit, group size at each range, sustained rate, recoil recovery
       time, projectile drop, and time-to-kill against a standard target. Identical course per weapon
       so the table compares, exactly like `--proving`. **Build this before any weapon.**
+      Built, seeded per weapon+range so re-running means something. `weapon_def.gd` is the parameter
+      set (no `class_name` -- preloaded, remembering how VehicleDef took the script down headless),
+      and the carbine is the single reference row rather than the start of the tree, because a
+      harness with nothing to fire cannot be trusted.
+      **The ballistics came out correct-by-construction and much SIMPLER than faking gravity.** A
+      ringworld has no meaningful self-gravity, so a round in flight travels in a perfectly straight
+      line in the inertial frame; all "drop" is the floor curving up to meet it. Consequence, and the
+      first run corrected my own comment about it: firing SPINWARD adds tangential speed so the round
+      needs more centripetal force than the floor provides and falls toward it FASTER, while
+      antispinward drops far less. Carbine at 400m: 2.02m spinward, 0.27m antispinward. Same shot,
+      opposite facing, nearly 2m apart.
 - [ ] **Ballistics on a ring.** Spin gravity is not gravity: a projectile in flight is in free fall
       while the ring rotates under it, so long shots drift sideways and the drop is not symmetric.
       At 2.1 km/s surface speed this is a real, measurable, novel effect. Worth getting right rather

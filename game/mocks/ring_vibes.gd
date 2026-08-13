@@ -5,6 +5,7 @@ extends Node3D
 # so the type was unresolvable and the whole script failed to parse. Exactly the failure the
 # hedge texture had: a new file that silently needs the editor to have opened it once.
 const VehicleDef = preload("res://mocks/vehicle_def.gd")
+const WeaponDef = preload("res://mocks/weapon_def.gd")
 # Ring scale vibe mock — issue #9. Standalone: open this scene, F6.
 # Honest geometry: camera stands on the interior of a cylinder of radius R.
 # Config keys: 1/2/3 circumference, Q/W/E width, Up/Down haze, T sun speed, P pause sun, F flip sun, R rebuild.
@@ -641,6 +642,8 @@ func _ready() -> void:
 		_shot_run()
 	if OS.get_cmdline_user_args().has("--proving"):
 		_prove_run()
+	if OS.get_cmdline_user_args().has("--range"):
+		_range_run()
 	_clouds = preload("res://mocks/ring_clouds.gd").new()
 	_clouds.ring_radius = _radius()   # must be set BEFORE _ready() builds the bent sheets
 	_clouds.ring_width = WIDTHS[w_idx]
@@ -1227,6 +1230,166 @@ func _node_tris(n: Node) -> int:
 		for k in (c as Node).get_children():
 			stack.append(k)
 	return total
+
+
+# The weapon roster, same shape as VEHICLE_ROW: data, not code. Only the carbine for now -- the item
+# says build the harness BEFORE any weapon, and a harness with nothing to fire cannot be trusted, so
+# this is the reference round the range was calibrated against rather than the start of the tree.
+const WEAPON_ROWS := {
+	"carbine": {
+		# FOR: the baseline everything else is measured against. It already exists as a model with FP
+		# arms, so it is the one weapon where "does the table match how it feels" can actually be asked.
+		"purpose": "the carbine — the reference weapon; every other row is an argument against this one",
+		"cls": "chemical", "muzzle": 900.0, "drag_k": 0.00035, "mass_g": 8.0,
+		"rpm": 700.0, "cycle_s": 0.0, "mag": 30, "reload_s": 2.3,
+		"spread_mrad": 0.7, "bloom_mrad": 1.5, "bloom_max": 8.0, "settle_s": 0.5,
+		"recoil": 2.6, "recover_s": 0.28, "damage": 34.0, "pellets": 1,
+	},
+}
+
+func _weapon_def(name: String) -> WeaponDef:
+	var wd := WeaponDef.new()
+	var row: Dictionary = WEAPON_ROWS.get(name, {})
+	for k in row.keys():
+		wd.set(k, row[k])
+	return wd
+
+# ---------------------------------------------------------------------------
+# FIRING RANGE (TASKS.md, "Build this before any weapon"). The proving-ground lesson applied to
+# weapons: feel is measurable, and a table that compares is worth more than a set of separate
+# impressions. Identical course per weapon, seeded, so re-running it means something.
+#
+# RING BALLISTICS, done properly, because the harness is worthless measuring the wrong model.
+# A ringworld has NO meaningful self-gravity -- the floor is held under you by spin, not attraction.
+# So a projectile, once it leaves the muzzle, is in free fall and travels in a PERFECTLY STRAIGHT
+# LINE in the inertial frame. Every bit of "drop" is the ring's floor curving UP to meet it, and
+# every bit of lateral behaviour is the ring rotating beneath it. That is both the correct physics
+# and much simpler than faking a gravity constant, so there is no reason to approximate.
+#
+# Consequence worth knowing before tuning any weapon: firing SPINWARD and ANTISPINWARD are not the
+# same shot, and the direction is the opposite of the intuition. Firing SPINWARD adds to the round's
+# tangential speed, so it needs MORE centripetal force to stay at that radius than the floor is
+# providing -- it falls outward, toward the floor, faster. Firing ANTISPINWARD subtracts, so it
+# drops far less. Measured, not reasoned: at 400m the carbine drops 2.02m spinward and 0.27m
+# antispinward. Nearly 2m of difference on the same shot depending on which way you face. (This
+# comment said the reverse until the first run contradicted it.)
+const RANGE_TARGETS := [5.0, 10.0, 25.0, 50.0, 100.0, 200.0, 400.0]
+const RANGE_SHOTS := 12            # shots per range; enough for a group, few enough to stay quick
+const RANGE_TARGET_HP := 100.0
+const RANGE_TARGET_R := 0.25       # standard target radius, m (a torso-ish 50cm circle)
+const RANGE_EYE := 1.6
+# Short-range rows report about -1cm of "rise". That is the model's own noise floor, not lift: the
+# arc is computed at the round's radius and compared against a target sitting on the floor 1.6m
+# below the muzzle, so the two disagree by roughly the eye height over the first few metres. Against
+# a 25cm target radius it is irrelevant, and chasing it would mean a more careful arc definition for
+# no gain at the ranges that matter.
+
+func _omega() -> float:
+	# spin rate that produces the surface gravity the rest of the sim uses: omega^2 * R = AIR_GRAVITY
+	return sqrt(AIR_GRAVITY / _radius())
+
+func _shot_flight(dist: float, elev_mrad: float, spinward: bool, muzzle: float, drag_k: float) -> Dictionary:
+	# Straight line in the inertial frame; the ring turns under it. Returns time of flight and how far
+	# BELOW the line of sight the round crosses the target's arc (positive = dropped).
+	if muzzle <= 0.0:
+		return {"t": 0.0, "drop": 0.0}
+	var R := _radius()
+	var w := _omega()
+	var r0 := R - RANGE_EYE
+	var dirs := 1.0 if spinward else -1.0
+	# muzzle velocity in the ROTATING frame: down-range along the arc, plus the aimed elevation
+	var v_arc := muzzle * cos(elev_mrad * 0.001) * dirs
+	var v_up := muzzle * sin(elev_mrad * 0.001)          # toward the axis = radius decreasing
+	# to inertial: add the floor's own tangential speed
+	var vt := v_arc + w * r0
+	var vr := -v_up
+	# integrate in small steps so drag can bleed speed; without drag this is a closed form, but a
+	# monotonic drag term is worth more to a weapons table than an analytic solution
+	var t := 0.0
+	var pos := Vector2(0.0, r0)          # (tangential, radial) in the inertial plane
+	var vel := Vector2(vt, vr)
+	# ~400 steps whatever the range: a fixed 0.0008s step is 2.4m of travel at these speeds, which
+	# resolved a 5m shot in two steps and reported a 1cm RISE that was pure integration error.
+	var step: float = maxf(dist / maxf(muzzle, 1.0) / 400.0, 0.000002)
+	var guard := 0
+	while guard < 200000:
+		guard += 1
+		var speed := vel.length()
+		var rel := speed - w * r0        # airspeed relative to the co-rotating atmosphere
+		if drag_k > 0.0 and rel > 0.0:
+			vel -= vel.normalized() * (rel * rel * drag_k * step)
+		pos += vel * step
+		t += step
+		# where is this in RING coordinates? undo the ring's rotation
+		var r := pos.length()
+		var theta := atan2(pos.x, pos.y) - w * t
+		var arc := theta * R
+		if absf(arc) >= dist:
+			# height above the floor is R - r; drop is how far that has fallen below the muzzle
+			return {"t": t, "drop_m": RANGE_EYE - (R - r)}
+	return {"t": t, "drop_m": 0.0}
+
+func _range_run() -> void:
+	await get_tree().process_frame
+	var args := OS.get_cmdline_user_args()
+	var want: Array = []
+	var ri := args.find("--range")
+	if ri >= 0 and ri + 1 < args.size() and not args[ri + 1].begins_with("--"):
+		want = Array(args[ri + 1].split(","))
+	if want.is_empty():
+		want = WEAPON_ROWS.keys()
+	print("RANGE  ring R=%.0fm  omega=%.6f rad/s  surface %.0f m/s" % [_radius(), _omega(), _omega() * _radius()])
+	print("%-10s %-9s %6s %7s %7s %8s %8s %7s" % ["weapon", "range", "hit%", "group", "drop", "flight", "spin-dif", "ttk"])
+	for wname in want:
+		if not WEAPON_ROWS.has(wname):
+			print("RANGE skip %s (no such weapon)" % wname)
+			continue
+		var wd: WeaponDef = _weapon_def(str(wname))
+		var rng := RandomNumberGenerator.new()
+		for dist in RANGE_TARGETS:
+			rng.seed = hash(str(wname) + str(dist))     # identical course per weapon, per range
+			var bloom := 0.0
+			var hits := 0
+			var worst := 0.0
+			var pts: Array[Vector2] = []
+			var shot_dt: float = (60.0 / wd.rpm) if wd.rpm > 0.0 else maxf(wd.cycle_s, 0.05)
+			shot_dt = maxf(shot_dt, wd.cycle_s)
+			for i in RANGE_SHOTS:
+				# accumulated dispersion this shot: inherent + bloom, minus whatever settled between shots
+				var sp := wd.spread_mrad + bloom
+				var ang := rng.randf_range(0.0, TAU)
+				var mag_mrad: float = absf(rng.randfn(0.0, sp * 0.5))
+				# recoil is a systematic RISE, not scatter -- it walks the group up, and only partly recovers
+				var rec: float = wd.recoil * (1.0 - clampf(shot_dt / maxf(wd.recover_s, 0.01), 0.0, 1.0))
+				var off := Vector2(cos(ang), sin(ang)) * mag_mrad + Vector2(0.0, rec)
+				pts.append(off * dist * 0.001)          # mrad -> metres at this range
+				bloom = minf(bloom + wd.bloom_mrad, wd.bloom_max)
+				bloom = maxf(bloom - (shot_dt / maxf(wd.settle_s, 0.01)) * wd.bloom_mrad, 0.0)
+			# group size = extreme spread, the way a shooter would measure it
+			for a in pts.size():
+				for b in range(a + 1, pts.size()):
+					worst = maxf(worst, pts[a].distance_to(pts[b]))
+				if pts[a].length() <= RANGE_TARGET_R:
+					hits += 1
+			var fs := _shot_flight(dist, 0.0, true, wd.muzzle, wd.drag_k)
+			var fa := _shot_flight(dist, 0.0, false, wd.muzzle, wd.drag_k)
+			var drop_s: float = float(fs.get("drop_m", 0.0))
+			var drop_a: float = float(fa.get("drop_m", 0.0))
+			# time to kill: rounds needed at this hit rate, paced by cycle and reloads
+			var hit_frac := float(hits) / float(RANGE_SHOTS)
+			var ttk_s := "  --  "
+			if hit_frac > 0.0:
+				# rounds needed at THIS hit rate, paced by the cycle and by reloads
+				var need: float = ceil(RANGE_TARGET_HP / maxf(wd.damage, 0.001)) / hit_frac
+				var ttk: float = need * shot_dt + floor(need / maxf(float(wd.mag), 1.0)) * wd.reload_s 					+ float(fs.get("t", 0.0))
+				ttk_s = "%5.2fs" % ttk
+			# no hits means no time-to-kill. Clamping the hit rate to 0.001 to avoid the divide printed
+			# 487s, which reads as a slow weapon rather than as a weapon that cannot reach.
+			print("%-10s %7.0fm %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s" % [
+				wname, dist, hit_frac * 100.0, worst, drop_s, float(fs.get("t", 0.0)),
+				drop_a - drop_s, ttk_s])
+	print("RANGE done")
+	get_tree().quit()
 
 func _shot_run() -> void:
 	# `-- --shots [patch,patch,...]` warps to each patch, waits for its stream, and writes a set of
