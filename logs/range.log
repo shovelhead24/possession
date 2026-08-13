@@ -5,7 +5,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (453 ms)
+ring_vibes: far band rebuilt around arc 0 km (457 ms)
 ring_vibes: containment field 1500-4000m on lat -25000
 ring_vibes: containment field 1500-4000m on lat 25000
 ring_vibes: texture compression — s3tc true, bptc true, etc2 true
@@ -29,6 +29,11 @@ spear       melee   reach 2.6m  arc  25deg  windup 0.42s  committed 1.12s  dps  
 blade       melee   reach 1.3m  arc  70deg  windup 0.22s  committed 0.50s  dps  69.1  ttk 1.87s
 club        melee   reach 1.5m  arc 120deg  windup 0.58s  committed 1.43s  dps  45.9  ttk 3.28s
 improvised  melee   reach 1.0m  arc  50deg  windup 0.30s  committed 0.75s  dps  25.7  ttk 4.50s
+rock       thrown   spinward    54m (3.52s)  antispin    56m (3.63s)  diff +2m  blast 0.0m  impact
+javelin    thrown   spinward    85m (3.50s)  antispin    90m (3.66s)  diff +5m  blast 0.0m  impact
+grenade    thrown   spinward    49m (3.53s)  antispin    51m (3.62s)  diff +2m  blast 6.0m  4.0s fuse
+molotov    thrown   spinward    42m (3.54s)  antispin    43m (3.62s)  diff +2m  blast 4.5m  impact
+sticky     thrown   spinward    23m (1.90s)  antispin    24m (1.95s)  diff +1m  blast 3.5m  2.5s fuse
 carbine          5m   100%   0.07m  -0.01m   0.006s    0.00m   0.26s
 carbine         10m   100%   0.10m  -0.01m   0.011s    0.00m   0.27s
 carbine         25m   100%   0.32m  -0.01m   0.028s    0.00m   0.29s
@@ -40,5 +45,10 @@ RANGE spear: straight up -> back down 1s later, 0m along the arc (never sideways
 RANGE blade: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE club: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE improvised: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE rock: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE javelin: straight up -> back down 7s later, 2m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE grenade: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE molotov: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE sticky: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE carbine: straight up -> back down 180s later, 18167m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE done

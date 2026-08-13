@@ -46,6 +46,14 @@ extends Resource
 @export var commit_s := 0.0        # helpless window AFTER the swing, whether or not it connected
 @export var arc_deg := 60.0        # sweep width; a club catches several, a spear catches one
 
+# --- thrown (the `thrown` class only) --------------------------------------------------------------
+# Arc, weight and fuse. Weight is already `muzzle` (how fast you can get it moving) and `mass_g`; the
+# fuse is what makes the class interesting, because a timed charge is a decision about WHEN as well
+# as where, and a ringworld's long flight times make that decision much sharper than on a planet.
+@export var fuse_s := 0.0          # seconds from release to detonation; 0 = detonates on impact
+@export var blast_r := 0.0         # effective blast radius, m; 0 = point impact only
+@export var lob_mrad := 785.0      # preferred throw elevation (785 mrad = 45 deg)
+
 # --- terminal -----------------------------------------------------------------------------------
 @export var damage := 34.0         # per hit against the standard target
 @export var pellets := 1           # >1 = a spread of projectiles per shot (shot, flechette)

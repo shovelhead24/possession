@@ -1264,6 +1264,40 @@ const WEAPON_ROWS := {
 		"reach": 1.0, "windup_s": 0.30, "commit_s": 0.45, "arc_deg": 50.0,
 		"rpm": 0.0, "cycle_s": 0.70, "mag": 0, "reload_s": 0.0, "spread_mrad": 0.0,
 	},
+	# --- THROWN (TASKS.md "Thrown: arc, weight, fuse"). Same free-fall model as a bullet; what changes
+	# is the TIME OF FLIGHT, which is seconds instead of milliseconds -- long enough for the ring to
+	# rotate meaningfully underneath. A thrown charge is the first weapon where which way you are
+	# facing changes the range by a useful fraction.
+	"rock": {
+		"purpose": "a rock — free, silent, always available, and barely a weapon",
+		"cls": "thrown", "muzzle": 22.0, "drag_k": 0.0009, "mass_g": 400.0, "damage": 12.0,
+		"blast_r": 0.0, "fuse_s": 0.0, "lob_mrad": 785.0, "spread_mrad": 12.0,
+		"rpm": 0.0, "cycle_s": 1.4, "mag": 0, "reload_s": 0.0,
+	},
+	"javelin": {
+		"purpose": "the thrown spear — flat, fast and heavy; one you have to go and pick up again",
+		"cls": "thrown", "muzzle": 28.0, "drag_k": 0.0004, "mass_g": 800.0, "damage": 48.0,
+		"blast_r": 0.0, "fuse_s": 0.0, "lob_mrad": 500.0, "spread_mrad": 8.0,
+		"rpm": 0.0, "cycle_s": 2.0, "mag": 0, "reload_s": 0.0,
+	},
+	"grenade": {
+		"purpose": "the fragmentation charge — a timed decision, not an aimed one",
+		"cls": "thrown", "muzzle": 20.0, "drag_k": 0.0011, "mass_g": 450.0, "damage": 90.0,
+		"blast_r": 6.0, "fuse_s": 4.0, "lob_mrad": 785.0, "spread_mrad": 15.0,
+		"rpm": 0.0, "cycle_s": 1.6, "mag": 0, "reload_s": 0.0,
+	},
+	"molotov": {
+		"purpose": "burning fuel — denies the ground rather than killing what is standing on it",
+		"cls": "thrown", "muzzle": 17.0, "drag_k": 0.0014, "mass_g": 700.0, "damage": 25.0,
+		"blast_r": 4.5, "fuse_s": 0.0, "lob_mrad": 785.0, "spread_mrad": 18.0,
+		"rpm": 0.0, "cycle_s": 1.8, "mag": 0, "reload_s": 0.0,
+	},
+	"sticky": {
+		"purpose": "the sticky charge — short, heavy, and meant for something that is not moving",
+		"cls": "thrown", "muzzle": 15.0, "drag_k": 0.0012, "mass_g": 1200.0, "damage": 160.0,
+		"blast_r": 3.5, "fuse_s": 2.5, "lob_mrad": 600.0, "spread_mrad": 20.0,
+		"rpm": 0.0, "cycle_s": 2.4, "mag": 0, "reload_s": 0.0,
+	},
 	"carbine": {
 		# FOR: the baseline everything else is measured against. It already exists as a model with FP
 		# arms, so it is the one weapon where "does the table match how it feels" can actually be asked.
@@ -1382,6 +1416,35 @@ func _shot_vertical(muzzle: float, drag_k: float) -> Dictionary:
 			return {"t": t, "arc": theta * R}
 	return {"t": t, "arc": 0.0}
 
+func _throw_flight(muzzle: float, drag_k: float, elev_mrad: float, spinward: bool) -> Dictionary:
+	# Lobbed, and released from eye height, so it ends when it comes back down to the floor. Same
+	# straight-line-in-the-inertial-frame model as a bullet -- a thrown rock is in free fall too. The
+	# difference is time: seconds rather than milliseconds, so the ring's rotation has time to matter.
+	var R := _radius()
+	var w := _omega()
+	var r0 := R - RANGE_EYE
+	var dirs := 1.0 if spinward else -1.0
+	var v_arc := muzzle * cos(elev_mrad * 0.001) * dirs
+	var v_up := muzzle * sin(elev_mrad * 0.001)
+	var pos := Vector2(0.0, r0)
+	var vel := Vector2(v_arc + w * r0, -v_up)
+	var t := 0.0
+	var step := 0.004
+	var guard := 0
+	while guard < 200000:
+		guard += 1
+		var speed := vel.length()
+		var rel := speed - w * r0
+		if drag_k > 0.0 and rel > 0.0:
+			vel -= vel.normalized() * (rel * rel * drag_k * step)
+		pos += vel * step
+		t += step
+		var r := pos.length()
+		if R - r <= 0.0 and t > 0.05:
+			var theta := atan2(pos.x, pos.y) - w * t
+			return {"t": t, "arc": absf(theta * R)}
+	return {"t": t, "arc": 0.0}
+
 func _range_run() -> void:
 	await get_tree().process_frame
 	var args := OS.get_cmdline_user_args()
@@ -1401,6 +1464,17 @@ func _range_run() -> void:
 		# MELEE has no projectile, so every ranged column above is meaningless for it -- group size at
 		# 400m for a club is not a number worth printing. Its own row instead, reporting what the class
 		# actually trades: how far it reaches, how long it telegraphs, and how long it owns you after.
+		# THROWN reports how FAR, not how tight -- and reports it both ways round, because at these
+		# flight times the ring asymmetry stops being a curiosity and starts being a targeting problem.
+		if wd.cls == "thrown":
+			var ts := _throw_flight(wd.muzzle, wd.drag_k, wd.lob_mrad, true)
+			var ta := _throw_flight(wd.muzzle, wd.drag_k, wd.lob_mrad, false)
+			var fuse_txt := "impact" if wd.fuse_s <= 0.0 else ("%.1fs fuse" % wd.fuse_s)
+			print("%-10s thrown   spinward %5.0fm (%.2fs)  antispin %5.0fm (%.2fs)  diff %+.0fm  "
+				% [wname, float(ts["arc"]), float(ts["t"]), float(ta["arc"]), float(ta["t"]),
+				float(ta["arc"]) - float(ts["arc"])]
+				+ "blast %.1fm  %s" % [wd.blast_r, fuse_txt])
+			continue
 		if wd.cls == "melee":
 			var swing: float = wd.windup_s + wd.commit_s
 			var dps: float = wd.damage / maxf(wd.cycle_s, 0.01)

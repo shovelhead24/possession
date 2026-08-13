@@ -657,7 +657,14 @@ behaviour, not art.
       commitment only pay off against something that hits back, and the range harness fires at a
       target that never does. Needs a sparring dummy that closes, swings on its own timer and
       punishes the committed window — otherwise every melee row will tune toward "fast and short".
-- [ ] **Thrown** — arc, weight, fuse. Rock, spear, grenade, molotov, sticky charge.
+- [x] **Thrown** — arc, weight, fuse. Rock, spear, grenade, molotov, sticky charge (as `javelin`,
+      since `spear` is the melee row). Same free-fall model as a bullet; what changes is the time of
+      flight, seconds instead of milliseconds. `--range` reports distance BOTH WAYS ROUND.
+      rock 54/56m, javelin 85/90m, grenade 49/51m (4s fuse, 6m blast), molotov 42/43m, sticky 23/24m.
+      Useful cross-check on the ballistics work: antispinward throws land FARTHER, the same direction
+      of effect as the bullet dropping less antispinward, at a fortieth of the speed. The asymmetry
+      is only 4-6% at throwing speeds, so it is a curiosity here rather than a targeting problem —
+      it is the 400m rifle shot and the 18km vertical where it bites.
 - [ ] **Tensioned** — draw time, hold penalty, drop. Sling, bow, crossbow, speargun.
 - [ ] **Chemical projectile** — the big family. Rate, recoil, magazine, reload, heat, spread growth.
       Musket, bolt-action, carbine (exists), SMG, LMG, autocannon.
