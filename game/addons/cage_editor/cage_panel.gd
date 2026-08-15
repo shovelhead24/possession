@@ -264,7 +264,7 @@ func _bake() -> void:
 	part.label     = cage.name
 	part.mesh      = mesh
 	part.slot      = _slot_edit.text.strip_edges()
-	part.bone_name = _bone_edit.text.strip_edges()
+	part.socket = _bone_edit.text.strip_edges()
 	part.body_plan = "biped"
 
 	var dir_path := "res://pipeline/parts/baked/"

@@ -1,4 +1,4 @@
-class_name CharacterRecipe
+class_name Recipe
 extends Resource
 
 @export var label: String = ""

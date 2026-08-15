@@ -144,9 +144,16 @@ Write the "what actually happened" notes into the commit message, and keep this 
       execution is permission-denied in the queue-wake session (both the `-s` and the sanctioned
       `-- --selftest` scene forms were gated), same as the damage tick. Run on the attended laptop:
       `godot --headless --path game -s res://tests/bake_test.gd` — expect `BAKE SELFTEST: PASS`.
-- [ ] **Unlock the assembler from Skeleton3D.** Socket becomes a Node3D by name, not a bone; the
+- [x] **Unlock the assembler from Skeleton3D.** Socket becomes a Node3D by name, not a bone; the
       bone path stays as one implementation of it. This is the enabling change and everything below
       is cheap once it lands. `PartDef.bone_name` -> `socket`, `CharacterRecipe` -> `Recipe`.
+      Done: `PartDef.bone_name` -> `socket`; `character_recipe.gd` -> `recipe.gd`, `CharacterRecipe`
+      -> `Recipe`; assembler no longer requires a Skeleton3D — `_resolve_socket` finds a Node3D by
+      name first, falls back to a (reused) BoneAttachment3D when the name is a bone, empty = root.
+      Callers/.tres updated (pipeline_panel, cage_panel, placeholder parts). Self-test at
+      `game/tests/assembler_test.gd`. NOT runtime-tested this session — Godot execution was
+      permission-gated (Bash + PowerShell, every form denied). Run on the laptop:
+      `godot --headless --path game -s res://tests/assembler_test.gd` — expect `ASSEMBLER SELFTEST: PASS`.
 - [ ] **Vehicle recipes.** `_make_car` builds a box with four wheels inline, and every row that has
       no bespoke mesh gets the identical shape -- twenty-one vehicles that photograph the same. A
       chassis with sockets (wheels, cab, bed, turret, tracks) plus a `recipe` field on VehicleDef

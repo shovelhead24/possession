@@ -7,5 +7,5 @@ script = ExtResource("1_partdef")
 label = "Placeholder Hand R"
 body_plan = "biped"
 slot = "right_hand"
-bone_name = "mixamorig_RightHand"
+socket = "mixamorig_RightHand"
 offset_scale = Vector3(1, 1, 1)
