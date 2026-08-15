@@ -70,15 +70,6 @@ Write the "what actually happened" notes into the commit message, and keep this 
 
 ## Now — in the order the tick should take them
 
-- [ ] **FPS controls proper.** WALK mode is a camera with a speed. Needs: acceleration, crouch,
-      sprint with a cost, jump, fall damage, stance affecting spread, and the ring frame handled
-      correctly (up points at the axis, which the camera already does and the movement does not).
-- [ ] **HUD.** Currently a debug wall of text. Needs a real one -- and per
-      `.decisions/design-laws.md#diegetic-tools-not-hud`, **information must be a physical ownable
-      tool, not free overlay**. Ammo count comes from looking at the weapon; bearing comes from a
-      compass you found. That law makes this design work, not just layout work.
-- [ ] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
-      already exists.
 - [ ] **Physics bake-off harness (`-- --physbench`).** Build the measuring device before choosing an
       engine, same as `--proving` and `--range`. Identical scripted scenario per engine, one
       comparable table. Switchable via `physics/3d/physics_engine`, so Godot Physics and Jolt are
@@ -100,6 +91,15 @@ Write the "what actually happened" notes into the commit message, and keep this 
       local props ignore it; fast movers (bullets, aircraft, vehicles at speed) stay analytic.
       Box3D is a paper candidate only until this exists -- no Godot binding, so it needs a GDExtension
       against a v0.1.0 C API, which is worth writing only if the table says Jolt is not good enough.
+- [ ] **FPS controls proper.** WALK mode is a camera with a speed. Needs: acceleration, crouch,
+      sprint with a cost, jump, fall damage, stance affecting spread, and the ring frame handled
+      correctly (up points at the axis, which the camera already does and the movement does not).
+- [ ] **HUD.** Currently a debug wall of text. Needs a real one -- and per
+      `.decisions/design-laws.md#diegetic-tools-not-hud`, **information must be a physical ownable
+      tool, not free overlay**. Ammo count comes from looking at the weapon; bearing comes from a
+      compass you found. That law makes this design work, not just layout work.
+- [ ] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
+      already exists.
 - [ ] **Bake after assembly — the cost of kitbashing is object count.** Prerequisite for the recipe
       items below, and the thing that makes them safe. A building of 12 parts kept as 12
       MeshInstance3D nodes is 12 draw calls; a settlement of 200 is 2,400, on a GL Compatibility
