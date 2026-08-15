@@ -228,7 +228,11 @@ if ($out -match '(?i)(session limit|usage limit|rate limit|quota|too many reques
     $resume = (Get-Date).AddHours(5)                       # last resort: session windows are ~5h
     # NOTE: PowerShell needs elseif on the SAME line as the closing brace. On its own line it
     # parses as a separate statement and silently swallows the rest of the file.
-    if ($out -match '(?i)resets?\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)') {
+    # BOTH CLOCK FORMATS. This matched 12-hour only ('resets 8:40pm'). A 24-hour message
+    # ('resets 17:20') fell through to the five-hour guess, which is worse than useless: guessed
+    # from 15:45 it parks the queue until 20:45 over a limit that actually clears at 17:20, losing
+    # the entire evening. The am/pm group is now optional and absence means 24-hour.
+    if ($out -match '(?i)resets?\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?') {
         $hh = [int]$Matches[1]
         $mm = 0
         if ($Matches[2]) { $mm = [int]$Matches[2] }
@@ -246,6 +250,10 @@ if ($out -match '(?i)(session limit|usage limit|rate limit|quota|too many reques
     } elseif ($out -match '(?i)resets? in\s+(\d+)\s*min') {
         $resume = (Get-Date).AddMinutes([int]$Matches[1] + 5)
     }
+    # Never stand down longer than one session window, whatever was parsed or guessed. A wrong
+    # reset time should cost one wasted cycle, not an evening.
+    $cap = (Get-Date).AddHours(5)
+    if ($resume -gt $cap) { $resume = $cap }
     $resume.ToString('o') | Set-Content $cool -Encoding ascii
     Say "hit a usage limit -- standing down until $($resume.ToString('HH:mm'))"
     exit 0
