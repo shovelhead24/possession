@@ -28,6 +28,9 @@
 # Watch it with:  Get-Content C:\Games\possession\logs\queue_tick.log -Tail 40 -Wait
 
 $ErrorActionPreference = "Continue"
+# Claude emits UTF-8; PowerShell 5.1 otherwise decodes it as the ANSI codepage, which is how a
+# middot became "Â·" and every em-dash turned to mush in the log.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $repo  = "C:\Games\possession"
 $logs  = "$repo\logs"
 $log   = "$logs\queue_tick.log"
@@ -58,8 +61,22 @@ function SetStatus($state, $detail) {
     ) | Set-Content $status -Encoding ascii
 }
 
+# Map the punctuation Claude likes onto ASCII. The log is read in a terminal that may be any
+# codepage, and "--" that always renders beats an em-dash that sometimes does.
+function Clean($t) {
+    if ($null -eq $t) { return "" }
+    $t = $t -replace [char]0x2014, '--' -replace [char]0x2013, '-'
+    $t = $t -replace [char]0x2018, "'" -replace [char]0x2019, "'"
+    $t = $t -replace [char]0x201C, '"' -replace [char]0x201D, '"'
+    $t = $t -replace [char]0x00B7, '.' -replace [char]0x2026, '...'
+    $t = $t -replace [char]0x00A0, ' '
+    return ($t -replace '[^ -~
+
+	]', '')
+}
+
 function Say($m) {
-    $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $m"
+    $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $(Clean $m)"
     Write-Host $line
     Add-Content -Path $log -Value $line -Encoding utf8
 }
@@ -80,13 +97,11 @@ if (Test-Path $cool) {
         # guessed at five hours, and the real window is dynamic on Anthropic's side. On 2026-08-15 a
         # false positive parked the queue until 22:38 while the dashboard showed 25% used with four
         # hours left. A probe costs a few Haiku tokens and turns a lost evening into a lost cycle.
-        # PROBE WITH THE MODEL THAT WILL DO THE WORK. Haiku was the obvious choice on cost, and it
-        # is the wrong question: if limits are enforced per model, Haiku answers while Opus is still
-        # blocked, the cooldown clears, and a full Opus run is spun up only to be rejected -- burning
-        # a real attempt every cycle instead of waiting quietly. The probe has to test the capability
-        # actually needed. It is nearly free either way: rejected costs nothing because the request
-        # never runs, and accepted is a handful of tokens for a one-word answer.
-        $probe = & claude -p 'reply with the single word: ok' 2>&1 | Out-String
+        # Haiku: the cooldown is account-wide, not per model, so the cheapest call answers the same
+        # question as an expensive one. (I had switched this to the working model on the theory that
+        # limits might be per-model; they are not.) Nearly free either way -- rejected costs nothing
+        # because the request never runs, accepted is a one-word answer.
+        $probe = & claude -p 'reply with the single word: ok' --model haiku 2>&1 | Out-String
         if ($probe -match '"api_error_status"\s*:\s*429' -or
             $probe -match '(?i)(session limit|usage limit|rate limit|limit reached)') {
             Say "skip: cooling down until $($u.ToString('HH:mm')) (probe confirms still limited)"
@@ -178,7 +193,8 @@ Do not suggest an approach and do not write anything.
 "@
     SetStatus "running" "prior-art survey (sonnet)"
     $priorart = & claude -p $scoutprompt --model sonnet --permission-mode acceptEdits 2>&1 | Out-String
-    Add-Content -Path $log -Value "--- prior art (sonnet) ---`n$priorart" -Encoding utf8
+    Say "--- prior art (sonnet) ---"
+    foreach ($ln in ($priorart -split "`n")) { if ($ln.Trim()) { Say "  $ln" } }
 }
 
 $prompt = @'
@@ -188,8 +204,28 @@ before changing any biome number, never refetch or re-centre a patch unprompted,
 new docs unless the item asks for one. Verify visually with `-- --shots <patch>` where the item is
 visual, and check whether a feature already exists before building it. If the top item is blocked,
 note why in TASKS.md and take the next one. Keep output short.
+
+Godot is at C:\Godot\Godot_v4.5.1-stable_win64.exe and you ARE allowed to run it. Verify your work
+by running it -- the harnesses are `-- --selftest`, `-- --proving`, `-- --range` and `-- --shots
+<patch>`. Example:
+  & "C:\Godot\Godot_v4.5.1-stable_win64.exe" --headless --path "C:\Games\possession\game" res://mocks/ring_vibes.tscn -- --selftest
+A change that has not been run is not finished; say so plainly in TASKS.md if you could not run it.
 '@
 
+# BROADENED, twice over, both because the narrow version was silently refusing the tick.
+#
+# 1. 'Bash(git add:*)' matches commands STARTING WITH 'git add'. The agent writes
+#    'git -C C:\Games\possession add ...', which starts with 'git -C' and was therefore denied --
+#    so on 2026-08-15 it implemented FPS controls, tried to commit, was refused, and the work sat
+#    uncommitted. I had blamed that entirely on a false rate-limit; the refusal came first.
+#    'Bash(git:*)' covers every form. It also permits destructive git, which is an accepted risk
+#    here: the tick works on its own branch and everything is pushed, so the blast radius is a
+#    force-push to semi-attended rather than lost history.
+#
+# 2. It could not run GODOT ('ls /c/Godot/ ; which godot' -- denied), which is why every completed
+#    item carries a "NOT run-verified" note. A tick that can write code but never execute it cannot
+#    do the one thing this project actually values, which is checking whether the thing works.
+#
 # --allowedTools for git: acceptEdits auto-approves FILE EDITS but not Bash, and passing
 # --permission-mode here overrides the repo's own bypassPermissions in .claude/settings.local.json.
 # So every tick could edit freely and then could not commit -- "git add/commit return 'This command
@@ -208,7 +244,7 @@ SetStatus "running" "opus working"
 $sb = New-Object System.Text.StringBuilder
 $acts = 0
 & claude -p $prompt --permission-mode acceptEdits --output-format stream-json --verbose `
-    --allowedTools 'Bash(git add:*)' 'Bash(git commit:*)' 'Bash(git status:*)' 'Bash(git diff:*)' 2>&1 |
+    --allowedTools 'Bash(git:*)' 'Bash(C:\Godot\Godot_v4.5.1-stable_win64.exe:*)' 2>&1 |
     ForEach-Object {
         $line = $_
         [void]$sb.AppendLine($line)
@@ -227,7 +263,16 @@ $acts = 0
         }
     }
 $out = $sb.ToString()
-Add-Content -Path $log -Value $out -Encoding utf8
+# the raw transcript is for debugging, not for reading -- it does not belong in the human log
+$raw = Join-Path $logs ("tick-raw-" + (Get-Date -Format 'yyyyMMdd') + ".jsonl")
+Add-Content -Path $raw -Value $out -Encoding utf8
+# what the agent finally SAID, which is the part worth having in the log
+if ($out -match '"result"\s*:\s*"(.{0,4000}?)","') {
+    $summary = $Matches[1] -replace '\n', "`n" -replace '\\"', '"' -replace '\\', ''
+    Say "--- what it did ---"
+    foreach ($ln in ($summary -split "`n")) { if ($ln.Trim()) { Say "  $ln" } }
+    Say "--- end ---"
+}
 
 Remove-Item $lock -Force -ErrorAction SilentlyContinue
 

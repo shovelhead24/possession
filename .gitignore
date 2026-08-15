@@ -48,3 +48,5 @@ logs/*.log
 !logs/shots/JOURNAL.md
 # recovery patches dumped when a tick fails to commit -- local forensics, not history
 logs/uncommitted-*.patch
+# raw agent transcripts: debugging material, regenerated every run
+logs/tick-raw-*.jsonl
