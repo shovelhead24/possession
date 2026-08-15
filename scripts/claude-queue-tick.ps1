@@ -238,6 +238,9 @@ if ($out -match '(?i)(session limit|usage limit|rate limit|quota|too many reques
         if ($Matches[2]) { $mm = [int]$Matches[2] }
         if ($Matches[3] -match '(?i)pm' -and $hh -lt 12) { $hh += 12 }
         if ($Matches[3] -match '(?i)am' -and $hh -eq 12) { $hh = 0 }
+        # A bare number is not a clock time, but the guard that enforced that broke the 12-hour case
+        # it was protecting, so it is out. The five-hour cap below bounds the damage from any
+        # misparse to one session window, which is the property that actually matters.
         $resume = (Get-Date).Date.AddHours($hh).AddMinutes($mm + 2)
         # A reset time already in the past means the window has ALREADY rolled over -- we are
         # reading the message moments after it was printed. Do not add a day: that would stand the
