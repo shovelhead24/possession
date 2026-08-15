@@ -30,6 +30,36 @@ Prerequisite for everything below.
       BLOCKED (2026-08-13): `docs/draws.md` exists as design but there is no draws or settlement
       system in the engine at all, so this would mean inventing salvage/trade/ownership from scratch
       rather than wiring up something that exists. Needs the draws work first.
+## Kitbash everything — one part system, not five
+
+The vehicles framing generalises, and most of it is already built. `PartDef` (mesh + slot + offset
+transform) and `CharacterAssembler` are a kitbash system whose ONLY coupling to characters is that
+its socket is a bone. The cage editor already sculpts low-poly parts and bakes them to PartDef, so
+there is an authoring tool feeding a part library that only one consumer can use.
+
+Everything else reinvents it inline in ring_vibes.gd: `_make_car` welds boxes and cylinders,
+`_build_buildings` does houses, the dock port was hand-authored as a spine and a collar and struts.
+Each is "attach parts at offsets", written again.
+
+BOUNDARY, so this does not eat things it should not: kitbash is for objects made of DISCRETE PIECES.
+Trees, hedges and grass are parametric -- continuous variation from a seed -- and belong where they
+are. The test is whether swapping a piece is the interesting axis of variation.
+
+- [ ] **Unlock the assembler from Skeleton3D.** Socket becomes a Node3D by name, not a bone; the
+      bone path stays as one implementation of it. This is the enabling change and everything below
+      is cheap once it lands. `PartDef.bone_name` -> `socket`, `CharacterRecipe` -> `Recipe`.
+- [ ] **Vehicle recipes.** `_make_car` builds a box with four wheels inline, and every row that has
+      no bespoke mesh gets the identical shape -- twenty-one vehicles that photograph the same. A
+      chassis with sockets (wheels, cab, bed, turret, tracks) plus a `recipe` field on VehicleDef
+      turns the roster into visible variety for the cost of a few parts.
+- [ ] **Building recipes.** `_build_buildings` places one box with a roof. Sockets for wall, roof,
+      door, chimney, veranda, plus per-biome part sets, is how java stops looking like cork.
+- [ ] **Weapon recipes.** A receiver with barrel/stock/sight/magazine sockets. Fourteen weapons
+      currently share zero geometry; the tech tree is a shape argument as much as a stats one, and
+      a musket and an SMG should read as related-but-not-the-same at a glance.
+- [ ] **Structure recipes.** The dock port, and whatever else gets hand-built next. It is already
+      spine + collar + struts; that is a recipe written in GDScript instead of data.
+
 ## Weapons, HUD and on-foot — the tech-tree programme
 
 Same framing as the vehicles, for the same reason. **A tech tree from a sharpened stick to a
