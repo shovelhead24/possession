@@ -702,8 +702,15 @@ behaviour, not art.
       At 100m: musket 75%/32.6s ttk, bolt_action 100%/3.1s, smg 92% cold but 50% burst/0.94s,
       lmg 100% cold 50% burst/0.67s, autocannon 100% cold and **0% burst at every range** -- the
       table saying plainly that you cannot walk it onto target from the shoulder.
-- [ ] **Directed energy** — no drop, no lead, but heat and charge. Should feel unlike the others,
-      not just be a rifle with a beam.
+- [x] **Directed energy** — no drop, no lead, but heat and charge. Should feel unlike the others,
+      not just be a rifle with a beam. On THIS world it already does, and that is the argument for the
+      class: every other weapon must be aimed off for a drop that depends on which way you are facing,
+      and a beam ignores drop, lead, flight time and the spinward asymmetry entirely. It pays by being
+      unable to sustain -- charge before, heat after -- so it is a weapon for one considered shot.
+      beam_rifle: pulsed, 0.9s charge, 600m falloff, 8.8s before overheat (64% duty), 26 dps.
+      cutter: continuous, 14m falloff, 8.3s before overheat (70% duty), 140 dps.
+      First run reported the cutter at 2,800 dps -- the contract rates a beam PER SECOND and the
+      arithmetic divided per-second damage by a 0.05s tick anyway.
 - [ ] **Guided / indirect** — mortar, rocket, the backpack MLRS. Fire-and-forget vs steered, minimum
       arming range, and a real reason not to carry it everywhere.
 - [ ] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.

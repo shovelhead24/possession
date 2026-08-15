@@ -1436,6 +1436,24 @@ const WEAPON_ROWS := {
 		"recoil": 14.0, "recover_s": 0.8,
 		"heat_per_shot": 5.0, "heat_max": 100.0, "cool_rate": 10.0, "overheat_lock_s": 6.0,
 	},
+	# --- DIRECTED ENERGY (TASKS.md). No drop and no lead, which on THIS world is worth more than
+	# anywhere else: every other weapon has to be aimed off for a drop that depends on which way you
+	# are facing, and a beam simply does not. It pays for that by being unable to sustain -- charge
+	# before the shot, heat after it -- so it is a weapon for one considered shot, not for a firefight.
+	"beam_rifle": {
+		"purpose": "the beam rifle — point at it and it is hit; the ring stops mattering entirely",
+		"cls": "energy", "muzzle": 0.0, "damage": 60.0, "beam": false, "charge_s": 0.9,
+		"falloff_m": 600.0, "spread_mrad": 0.25, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 1.0,
+		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 1.4, "mag": 0, "reload_s": 0.0,
+		"heat_per_shot": 26.0, "heat_max": 100.0, "cool_rate": 11.0, "overheat_lock_s": 5.0,
+	},
+	"cutter": {
+		"purpose": "the cutting beam — continuous, brutal, and only at arm's length",
+		"cls": "energy", "muzzle": 0.0, "damage": 140.0, "beam": true, "charge_s": 0.0,
+		"falloff_m": 14.0, "spread_mrad": 0.1, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 1.0,
+		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 0.05, "mag": 0, "reload_s": 0.0,
+		"heat_per_shot": 12.0, "heat_max": 100.0, "cool_rate": 18.0, "overheat_lock_s": 3.5,
+	},
 	"carbine": {
 		# FOR: the baseline everything else is measured against. It already exists as a model with FP
 		# arms, so it is the one weapon where "does the table match how it feels" can actually be asked.
@@ -1612,6 +1630,29 @@ func _range_run() -> void:
 				% [wname, float(ts["arc"]), float(ts["t"]), float(ta["arc"]), float(ta["t"]),
 				float(ta["arc"]) - float(ts["arc"])]
 				+ "blast %.1fm  %s" % [wd.blast_r, fuse_txt])
+			continue
+		# ENERGY gets its own line: every ranged column here is about drop, lead and holdover, and this
+		# is the one class for which all three are identically zero. Printing a drop table of nothing
+		# would bury the only fact that matters about it.
+		if wd.cls == "energy":
+			# A BEAM IS RATED PER SECOND, a pulse per shot -- the contract says so, and the first run
+			# ignored it and reported the cutter at 2,800 dps by dividing per-second damage by a 0.05s
+			# tick. For a beam, heat_per_shot is heat PER SECOND and damage is damage per second; for a
+			# pulse, both are per shot and a shot costs cycle + charge.
+			var secs: float
+			var dps: float
+			if wd.beam:
+				secs = wd.heat_max / maxf(wd.heat_per_shot, 0.001)
+				dps = wd.damage
+			else:
+				var shot_t: float = wd.cycle_s + wd.charge_s
+				secs = (wd.heat_max / maxf(wd.heat_per_shot, 0.001)) * shot_t
+				dps = wd.damage / maxf(shot_t, 0.001)
+			var duty: float = secs / maxf(secs + wd.overheat_lock_s, 0.001) * 100.0
+			print("%-10s energy   NO DROP, NO LEAD, no flight time  charge %.1fs  falloff %.0fm  "
+				% [wname, wd.charge_s, wd.falloff_m]
+				+ "%s %.1fs before overheat (%.0f%% duty)  dps %.0f"
+				% ["beam" if wd.beam else "pulsed", secs, duty, dps])
 			continue
 		if wd.cls == "tensioned":
 			# the ranged table below still applies -- it has a projectile -- but draw and hold are the

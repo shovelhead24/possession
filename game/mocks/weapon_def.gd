@@ -72,6 +72,15 @@ extends Resource
 @export var cool_rate := 25.0      # units shed per second when not firing
 @export var overheat_lock_s := 0.0 # forced cooling pause once heat_max is reached
 
+# --- directed energy (the `energy` class only) -------------------------------------------------------
+# The class has to feel unlike the others rather than being a rifle with a beam, and on a ringworld it
+# already does: it is the ONLY weapon with no time of flight, so it is the only one that ignores drop
+# and the spinward/antispinward asymmetry that governs everything else here. What it pays instead is
+# that it cannot be fired in anger for long -- charge before, heat after.
+@export var beam := false          # true = continuous while held (damage is per SECOND, not per shot)
+@export var charge_s := 0.0        # spin-up before the shot leaves; a commitment, like a melee windup
+@export var falloff_m := 0.0       # range beyond which the beam bleeds power; 0 = no falloff
+
 # --- terminal -----------------------------------------------------------------------------------
 @export var damage := 34.0         # per hit against the standard target
 @export var pellets := 1           # >1 = a spread of projectiles per shot (shot, flechette)
