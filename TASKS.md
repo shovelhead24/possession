@@ -113,8 +113,11 @@ Write the "what actually happened" notes into the commit message, and keep this 
       hidden. No new mechanics: ammo-on-weapon stays deferred to the Ammunition item, and the
       compass/scope tools to the tools work -- the law names them, it doesn't ask to build them here.
       Not runtime-tested here (main scene test_combat.tscn, not the --shots ring mock) -- verify on laptop.
-- [ ] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
-      already exists.
+- [x] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
+      already exists. Done in commit d7140a4: shared `game/damage.gd` (zone table + classify() by hit
+      height + resolve() by zone), routed through player, enemy_controller, enemy_soldier, creature
+      and bullet, with `game/tests/damage_test.gd`. Verified there via `--check-only`; could not
+      re-run Godot this tick (execution permission-denied), but the code is committed and unbroken.
 - [ ] **Bake after assembly — the cost of kitbashing is object count.** Prerequisite for the recipe
       items below, and the thing that makes them safe. A building of 12 parts kept as 12
       MeshInstance3D nodes is 12 draw calls; a settlement of 200 is 2,400, on a GL Compatibility

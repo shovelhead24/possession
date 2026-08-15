@@ -229,7 +229,10 @@ by running it -- the harnesses are `-- --selftest`, `-- --proving`, `-- --range`
 A change that has not been run is not finished; say so plainly in TASKS.md if you could not run it.
 '@
 
-# BROADENED, twice over, both because the narrow version was silently refusing the tick.
+# BROADENED THREE TIMES, each because the narrow version was silently refusing the tick. The third:
+# the allowlist named Bash only, and the agent reaches for the POWERSHELL tool on this machine -- so
+# `PowerShell git -C ... add` was refused at 22:51 exactly as `git -C ... add` had been at 18:38.
+# Allowlists are per TOOL, not per command: grant the command on every tool that can run it.
 #
 # 1. 'Bash(git add:*)' matches commands STARTING WITH 'git add'. The agent writes
 #    'git -C C:\Games\possession add ...', which starts with 'git -C' and was therefore denied --
@@ -261,7 +264,8 @@ SetStatus "running" "opus working"
 $sb = New-Object System.Text.StringBuilder
 $acts = 0
 & claude -p $prompt --permission-mode acceptEdits --output-format stream-json --verbose `
-    --allowedTools 'Bash(git:*)' 'Bash(C:\Godot\Godot_v4.5.1-stable_win64.exe:*)' 2>&1 |
+    --allowedTools 'Bash(git:*)' 'PowerShell(git:*)' `
+    'Bash(C:\Godot\Godot_v4.5.1-stable_win64.exe:*)' 'PowerShell(C:\Godot\Godot_v4.5.1-stable_win64.exe:*)' 2>&1 |
     ForEach-Object {
         $line = $_
         [void]$sb.AppendLine($line)
