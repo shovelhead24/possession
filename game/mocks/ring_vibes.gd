@@ -1668,6 +1668,37 @@ func _range_run() -> void:
 		print("RANGE %s: straight up -> back down %.0fs later, %.0fm along the arc (never sideways: "
 			% [wname, float(vv["t"]), float(vv["arc"])]
 			+ "omega is along the spin axis, so there is no width-wise deflection at all)")
+	# DOES PLAY MATCH THE TABLE? The harness integrates in one tight loop; play integrates per frame
+	# with sub-steps. If those two disagree, every number printed above is fiction the moment you pull
+	# a trigger. Re-run the reference at 60Hz-with-substeps and compare.
+	var chk: WeaponDef = _weapon_def("carbine")
+	var ref := _shot_flight(400.0, 0.0, true, chk.muzzle, chk.drag_k)
+	var Rr := _radius()
+	var wr := _omega()
+	var r0c := Rr - RANGE_EYE
+	var pc := Vector2(0.0, r0c)
+	var vc := Vector2(chk.muzzle + wr * r0c, 0.0)
+	var tc := 0.0
+	while tc < 5.0:
+		var frame := 1.0 / 60.0
+		var sub := clampi(int(ceil(vc.length() * frame / 2.0)), 1, 32)
+		var sdt := frame / float(sub)
+		var done := false
+		for _i in sub:
+			var rel := vc.length() - wr * r0c
+			if chk.drag_k > 0.0 and rel > 0.0:
+				vc -= vc.normalized() * (rel * rel * chk.drag_k * sdt)
+			pc += vc * sdt
+			tc += sdt
+			var th2: float = atan2(pc.x, pc.y) - wr * tc
+			if absf(th2 * Rr) >= 400.0:
+				done = true
+				break
+		if done:
+			break
+	print("RANGE selfcheck: reference drop %.3fm at 400m, live integrator %.3fm (delta %.3fm)" % [
+		float(ref.get("drop_m", 0.0)), RANGE_EYE - (Rr - pc.length()),
+		absf(float(ref.get("drop_m", 0.0)) - (RANGE_EYE - (Rr - pc.length())))])
 	print("RANGE done")
 	get_tree().quit()
 
@@ -3032,6 +3063,7 @@ func _process(delta: float) -> void:
 		Mode.DRIVE: _drive_tick(delta)
 		Mode.WALK: _walk_tick(delta)
 		_: _fly(delta)
+	_shots_tick(delta)   # rounds in flight, and the action cycling/reloading
 	_rebuild_lod()
 	_hires_poll()
 	# forest follows the camera around the ring, re-scattering with the local biome when you've
@@ -5476,6 +5508,169 @@ func _service_vehicle() -> void:
 	c["fuel"] = _cond_cap(_vdef())
 	c["wear"] = 0.0
 
+
+# ---------------------------------------------------------------------------
+# CARRYING AND FIRING A WEAPON. Until now the roster existed only as numbers the range harness
+# printed -- fourteen weapons nobody could pick up. This is the play side, and the one hard rule is
+# that it must use THE SAME BALLISTICS AS `--range`: a live round that flies differently from the
+# table would make the table a lie, which is the drawn-vs-simulated mismatch this project keeps
+# getting caught by. Both integrate a straight line in the inertial frame and convert back.
+# ---------------------------------------------------------------------------
+var _wep_idx := 0
+var _wep_names: Array[String] = []
+var _wep_mag := 0                 # rounds left in the current magazine
+var _wep_cool := 0.0              # seconds until the action can cycle again
+var _wep_reload := 0.0            # seconds left in a reload
+var _wep_bloom := 0.0             # accumulated dispersion, same units and decay as the harness
+var _shots: Array = []            # live rounds; inertial (tangential, radial) + lat
+var _shot_root: Node3D = null
+var _tracer_mesh: BoxMesh = null
+var _tracer_mat: StandardMaterial3D = null
+
+func _wep_name() -> String:
+	if _wep_names.is_empty():
+		_wep_names.assign(WEAPON_ROWS.keys())
+	return _wep_names[_wep_idx % _wep_names.size()]
+
+func _wep() -> WeaponDef:
+	return _weapon_def(_wep_name())
+
+func _cycle_weapon(step: int) -> void:
+	if _wep_names.is_empty():
+		_wep_names.assign(WEAPON_ROWS.keys())
+	_wep_idx = posmod(_wep_idx + step, _wep_names.size())
+	var w := _wep()
+	_wep_mag = w.mag
+	_wep_bloom = 0.0
+	_wep_cool = 0.0
+	_wep_reload = 0.0
+	_update_hud()
+
+func _fire_weapon() -> void:
+	var w := _wep()
+	if _wep_cool > 0.0 or _wep_reload > 0.0:
+		return
+	# melee has no projectile: it is a wind-up and a committed window, so it just costs the time
+	if w.muzzle <= 0.0:
+		_wep_cool = w.windup_s + w.commit_s
+		_update_hud()
+		return
+	if w.mag > 0 and _wep_mag <= 0:
+		_wep_reload = w.reload_s
+		_update_hud()
+		return
+	# muzzle direction from where the camera is actually looking, in RING axes: x along the arc,
+	# y toward the axis ("up"), z across the width
+	var R := _radius()
+	var wv := _omega()
+	var cam_b := _cam.global_transform.basis
+	var pos3 := _cam.global_position
+	var up := _ring_up(pos3)
+	var fwd := -cam_b.z
+	var arc_axis := up.cross(Vector3(0.0, 0.0, 1.0)).normalized()
+	var lat_axis := Vector3(0.0, 0.0, 1.0)
+	var d_arc := fwd.dot(arc_axis)
+	var d_up := fwd.dot(up)
+	var d_lat := fwd.dot(lat_axis)
+	# dispersion, using the same inherent+bloom model the harness samples
+	var sp: float = w.spread_mrad + _wep_bloom
+	d_arc += randfn(0.0, sp * 0.0005)
+	d_up += randfn(0.0, sp * 0.0005)
+	d_lat += randfn(0.0, sp * 0.0005)
+	var arc0: float = _cam_ring.x
+	var lat0: float = _cam_ring.z
+	var alt0: float = maxf(_cam_ring.y, _terrain_h(arc0, lat0) + 0.2)
+	var r0 := R - alt0
+	# to the inertial frame: the floor's own tangential speed plus the muzzle
+	var vel := Vector2(d_arc * w.muzzle + wv * r0, -d_up * w.muzzle)
+	_shots.append({
+		"p": Vector2(0.0, r0), "v": vel, "lat": lat0, "vlat": d_lat * w.muzzle,
+		"t": 0.0, "arc0": arc0, "life": 0.0, "k": w.drag_k, "r0": r0, "node": _make_tracer(),
+	})
+	_wep_bloom = minf(_wep_bloom + w.bloom_mrad, w.bloom_max)
+	_wep_cool = (60.0 / w.rpm) if w.rpm > 0.0 else maxf(w.cycle_s, 0.05)
+	_wep_cool = maxf(_wep_cool, w.cycle_s)
+	if w.mag > 0:
+		_wep_mag -= 1
+	_update_hud()
+
+func _make_tracer() -> Node3D:
+	if _shot_root == null:
+		_shot_root = Node3D.new()
+		add_child(_shot_root)
+	if _tracer_mesh == null:
+		_tracer_mesh = BoxMesh.new()
+		_tracer_mesh.size = Vector3(0.09, 0.09, 1.1)
+		_tracer_mat = StandardMaterial3D.new()
+		_tracer_mat.albedo_color = Color(1.0, 0.82, 0.45)
+		_tracer_mat.emission_enabled = true
+		_tracer_mat.emission = Color(1.0, 0.72, 0.30)
+		_tracer_mat.emission_energy_multiplier = 2.0
+	var mi := MeshInstance3D.new()
+	mi.mesh = _tracer_mesh
+	mi.material_override = _tracer_mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_shot_root.add_child(mi)
+	return mi
+
+func _shots_tick(delta: float) -> void:
+	# Same integration as _shot_flight, per frame instead of in a loop: straight line in the inertial
+	# frame, ring rotated out at the end. A round that flew any other way here would make --range
+	# fiction.
+	var w := _wep()
+	_wep_cool = maxf(_wep_cool - delta, 0.0)
+	_wep_bloom = maxf(_wep_bloom - (delta / maxf(w.settle_s, 0.01)) * w.bloom_mrad, 0.0)
+	if _wep_reload > 0.0:
+		_wep_reload -= delta
+		if _wep_reload <= 0.0:
+			_wep_mag = w.mag
+			_update_hud()
+	if _shots.is_empty():
+		return
+	var R := _radius()
+	var wv := _omega()
+	var dead: Array = []
+	for sh in _shots:
+		# SUB-STEP. A 900 m/s round covers 15 metres in one 60Hz frame, so a single step per frame
+		# would sail straight through a hillside and never register -- the projectile equivalent of
+		# the LOD bug, where the thing being tested is smaller than the step used to test it. Cap each
+		# step at ~2m of travel and iterate; a slow thrown rock still costs exactly one step.
+		var vel: Vector2 = sh["v"]
+		var sub := clampi(int(ceil(vel.length() * delta / 2.0)), 1, 32)
+		var sdt := delta / float(sub)
+		var hit := false
+		for _i in sub:
+			var speed := vel.length()
+			var rel: float = speed - wv * float(sh["r0"])
+			var k: float = float(sh["k"])
+			if k > 0.0 and rel > 0.0:
+				vel -= vel.normalized() * (rel * rel * k * sdt)
+			sh["p"] = (sh["p"] as Vector2) + vel * sdt
+			sh["t"] = float(sh["t"]) + sdt
+			sh["lat"] = float(sh["lat"]) + float(sh["vlat"]) * sdt
+			var pp: Vector2 = sh["p"]
+			var rr := pp.length()
+			var th: float = atan2(pp.x, pp.y) - wv * float(sh["t"])
+			var aa: float = float(sh["arc0"]) + th * R
+			if (R - rr) <= _terrain_h(aa, float(sh["lat"])):
+				hit = true
+				break
+		sh["v"] = vel
+		sh["life"] = float(sh["life"]) + delta
+		var p: Vector2 = sh["p"]
+		var r := p.length()
+		var theta: float = atan2(p.x, p.y) - wv * float(sh["t"])
+		var arc: float = float(sh["arc0"]) + theta * R
+		var alt := R - r
+		var lat: float = sh["lat"]
+		var node: Node3D = sh["node"]
+		node.global_position = _ring_pos(arc / R, lat, alt)
+		if hit or float(sh["life"]) > 12.0:
+			dead.append(sh)
+	for sh in dead:
+		(sh["node"] as Node3D).queue_free()
+		_shots.erase(sh)
+
 func _drive_tick(delta: float) -> void:
 	var accel := 0.0
 	var steer := 0.0
@@ -5756,6 +5951,16 @@ func _fly(delta: float) -> void:
 	if dir != Vector3.ZERO:
 		_cam.position += dir.normalized() * speed * delta
 
+func _fire_input(event: InputEvent) -> bool:
+	# Left mouse fires whenever the pointer is captured, in any mode -- on foot, driving, flying. A
+	# weapon you can only use in one mode is a weapon you forget you have.
+	if event is InputEventMouseButton and _captured:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+			_fire_weapon()
+			return true
+	return false
+
 func _input(event: InputEvent) -> void:
 	# ESC lives here, NOT in _unhandled_input: once a slider in the [O] panel takes focus the GUI
 	# consumes the event and _unhandled_input never fires, so ESC silently stopped releasing the
@@ -5770,6 +5975,8 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _fire_input(event):
+		return
 	if event is InputEventMouseButton and event.pressed and not _captured and not _panel_open:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_captured = true
@@ -5809,6 +6016,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_COMMA: _jump_splice(-1)
 			KEY_PERIOD: _jump_splice(1)
 			KEY_TAB: _hud_full = not _hud_full; _update_hud()
+			KEY_K:
+				# swap weapon. [L] is already vehicles, and the two are cycled the same way for the
+				# same reason: the roster is only variety if you can get at all of it.
+				_cycle_weapon(1)
 			KEY_L:
 				# swap vehicle -- only meaningful while driving, and only if the warthog asset loaded
 				if _mode == Mode.DRIVE and _vehicles.size() > 1:
@@ -5978,6 +6189,17 @@ func _update_hud() -> void:
 	var band_deg: float = rad_to_deg(2.0 * atan((w * 0.5) / (2.0 * r)))
 	var fly_speed_name: String = ["normal", "boost", "5x boost", "20x boost"][_fly_speed_idx]
 	var mode := "FLY %s (WASD + Space/Ctrl, [Shift] cycle speed, ESC to release, [V] cycle mode)" % fly_speed_name if _captured else "CONFIG ([1/2/3] circ  [Q/W/E] width — click to fly, [V] cycle drive/walk)"
+	# WHAT AM I HOLDING. Without this the weapon roster is invisible in play: [K] would cycle
+	# fourteen things that all look identical from behind the camera.
+	var wnow := _wep()
+	var wtxt := "  |  %s" % _wep_name()
+	if wnow.muzzle <= 0.0:
+		wtxt += " (melee %.1fm)" % wnow.reach
+	elif wnow.mag > 0:
+		wtxt += "  %d/%d" % [_wep_mag, wnow.mag]
+		if _wep_reload > 0.0:
+			wtxt += " RELOADING"
+	wtxt += "  [K] weapon, LMB fire"
 	if _mode == Mode.DRIVE:
 		var vn: String = _vehicles[_veh_idx]["name"] if _veh_idx < _vehicles.size() else "box"
 		# show what this vehicle is FOR, not just its name -- the census discipline made visible, so
@@ -6063,7 +6285,7 @@ func _update_hud() -> void:
 	elif _mode == Mode.WALK:
 		mode = "WALK  (WASD + mouse-look, Shift run, ESC release, [V] cycle mode)"
 	if not _hud_full:
-		_hud.text = "[ESC] release mouse   [TAB] controls   [O] sliders   [G] warp   %s" % mode
+		_hud.text = "[ESC] release mouse   [TAB] controls   [O] sliders   [G] warp   %s%s" % [mode, wtxt]
 		return
 	var haze_km: float = 1.0 / maxf(haze_density, 1e-9) / 1000.0
 	var lc := _tree_counts if _tree_counts.size() == TREE_LODS else PackedInt32Array([0, 0, 0, 0])
@@ -6072,7 +6294,7 @@ func _update_hud() -> void:
 	var lines := [
 		"[ESC] release mouse    [TAB] hide controls    [O] sliders %s    [G] warp menu %s" % [
 			("(open)" if _panel_open else ""), ("(open)" if _warp_open else "")],
-		"mode: %s" % mode,
+		"mode: %s%s" % [mode, wtxt],
 		"",
 		"RING    C %.0f km   W %.1f km   R %.1f km   rise @20km %.0f m  @50km %.0f m   far-side %.2f deg (moon 0.52)" % [
 			c / 1000.0, w / 1000.0, r / 1000.0, rise20, rise50, band_deg],

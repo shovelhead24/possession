@@ -5,7 +5,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (435 ms)
+ring_vibes: far band rebuilt around arc 0 km (441 ms)
 ring_vibes: containment field 1500-4000m on lat -25000
 ring_vibes: containment field 1500-4000m on lat 25000
 ring_vibes: texture compression — s3tc true, bptc true, etc2 true
@@ -32,23 +32,6 @@ carbine         50m   100%    83%   0.41m   0.02m   0.056s   -0.03m   0.36s
 carbine        100m   100%    67%   0.93m   0.11m   0.113s   -0.13m   0.50s
 carbine        200m   100%     0%   1.80m   0.46m   0.231s   -0.41m    --  
 carbine        400m    58%     0%   3.66m   2.02m   0.478s   -1.75m    --  
-bow        tension  draw 0.9s  steady 1.8s then +4 mrad/s  (drop below is the real cost)
-bow              5m   100%   100%   0.04m   0.02m   0.081s    0.00m   5.18s
-bow             10m   100%   100%   0.09m   0.11m   0.162s   -0.03m   5.26s
-bow             25m   100%   100%   0.32m   0.77m   0.406s   -0.09m   5.51s
-bow             50m    67%    42%   1.24m   3.18m   0.819s   -0.44m  13.06s
-bow            100m     8%     8%   4.26m  13.08m   1.657s   -2.09m  62.86s
-bow            200m     8%     0%  22.80m  55.11m   3.403s  -11.06m    --  
-bow            400m     0%     0%  91.58m 249.93m   7.258s  -76.34m    --  
-crossbow   tension  draw 3.4s  holds indefinitely  (drop below is the real cost)
-crossbow         5m   100%   100%   0.01m  -0.01m   0.054s    0.00m   8.05s
-crossbow        10m   100%   100%   0.03m   0.05m   0.109s    0.00m   8.11s
-crossbow        25m   100%   100%   0.17m   0.33m   0.273s   -0.03m   8.27s
-crossbow        50m    75%    83%   0.53m   1.49m   0.550s   -0.28m  10.15s
-crossbow       100m    17%     0%   2.48m   6.05m   1.111s   -1.22m    --  
-crossbow       200m     8%     0%  10.52m  25.11m   2.266s   -5.72m    --  
-crossbow       400m     0%     0%  43.97m 109.46m   4.739s  -31.78m    --  
 RANGE carbine: straight up -> back down 180s later, 18167m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE bow: straight up -> back down 14s later, 18m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE crossbow: straight up -> back down 21s later, 57m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE selfcheck: reference drop 2.021m at 400m, live integrator 2.021m (delta 0.000m)
 RANGE done
