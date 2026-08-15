@@ -1,4 +1,5 @@
 extends Node3D
+const Damage = preload("res://damage.gd")
 class_name Creature
 # Generic startle/flee proxy — the wildlife.md primitive. One behavior, parameterized:
 # deer (calm, flees far) and wolf (approaches, fast, night) are the same code, different presets.
@@ -18,6 +19,9 @@ var approaches := false       # false = deer (flees), true = wolf (closes in)
 var body_color := Color(0.42, 0.34, 0.24)
 var body_len := 1.6
 var body_height := 1.1
+var max_health := 40.0
+var health := 40.0
+var dead := false
 
 var height_fn: Callable
 var threat_fn: Callable
@@ -34,6 +38,20 @@ var _head: MeshInstance3D
 # GRAZE/ALERT/FLEE emit nothing to any threat channel by design; only a wolf in APPROACH
 # is allowed to write an encounter/intensity signal. The slice's debug overlay asserts this.
 signal became_threat(active: bool)
+signal died
+
+# Shared locational damage (game/damage.gd). Wildlife share the same head/torso/limb model
+# as the player and soldiers; a hit also startles it into FLEE regardless of preset.
+func take_damage(amount: float, zone: String = "") -> void:
+	if dead:
+		return
+	health -= Damage.resolve(amount, zone)
+	if _state != State.FLEE:
+		_state = State.FLEE
+	if health <= 0.0:
+		dead = true
+		died.emit()
+		queue_free()
 
 func configure(preset: String) -> void:
 	match preset:

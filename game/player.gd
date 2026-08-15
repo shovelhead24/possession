@@ -1,4 +1,5 @@
 extends CharacterBody3D
+const Damage = preload("res://damage.gd")
 
 const SPEED = 10.0  # base walk speed (also the bob reference speed)
 const FLY_SPEED = 100.0
@@ -1068,13 +1069,14 @@ func update_nearby_props():
 
 # ============== PLAYER HEALTH SYSTEM ==============
 
-func take_damage(amount: float):
+func take_damage(amount: float, zone: String = ""):
 	if is_dead:
 		return
 
+	amount = Damage.resolve(amount, zone)
 	health -= amount
 	health = max(health, 0)
-	print("Player: Took ", amount, " damage! Health: ", health, "/", max_health)
+	print("Player: Took ", amount, " damage (", Damage.zone_mult(zone), "x ", zone if zone != "" else Damage.DEFAULT_ZONE, ")! Health: ", health, "/", max_health)
 
 	# Flash screen red
 	flash_damage_effect()

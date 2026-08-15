@@ -1,5 +1,6 @@
 extends CharacterBody3D
 class_name EnemySoldier
+const Damage = preload("res://damage.gd")
 
 enum State { PATROL, ALERT, CHASE, ATTACK, SEEK_COVER, HIT, DEAD }
 
@@ -27,6 +28,7 @@ enum State { PATROL, ALERT, CHASE, ATTACK, SEEK_COVER, HIT, DEAD }
 
 # Faction colours — glowing head marker
 const FACTION_COLORS: Array = [Color(1.0, 0.15, 0.15), Color(0.7, 0.1, 1.0)]
+const STAND_HEIGHT := 1.8  # feet-to-crown, for locational hit classification
 
 var state: State = State.PATROL
 var _player: Node3D = null
@@ -445,11 +447,15 @@ func _fire():
 	var hit = _los(from, to)
 	if hit and hit.collider == _target:
 		if _target.has_method("take_damage"):
-			_target.take_damage(attack_damage)
+			# Where the ray struck the target -> body zone.
+			var rel_height: float = hit.position.y - _target.global_position.y
+			var zone := Damage.classify(rel_height, STAND_HEIGHT)
+			_target.take_damage(attack_damage, zone)
 
-func take_damage(amount: float):
+func take_damage(amount: float, zone: String = ""):
 	if state == State.DEAD or demo_cycle:
 		return
+	amount = Damage.resolve(amount, zone)
 	health -= amount
 	if health <= 0.0:
 		_die()

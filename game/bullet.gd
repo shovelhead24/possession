@@ -1,4 +1,5 @@
 extends Area3D
+const Damage = preload("res://damage.gd")
 
 @export var impact_sound: AudioStream
 var velocity = Vector3.ZERO
@@ -29,9 +30,10 @@ func _on_body_entered(body):
 	#dont collide with player
 	if body.name == "Player":
 		return
-	# Deal damage if the body has a take_damage method
+	# Deal damage if the body has a take_damage method; classify the hit by height on the body
 	if body.has_method("take_damage"):
-		body.take_damage(damage)
+		var zone := Damage.classify(global_position.y - body.global_position.y, 1.8)
+		body.take_damage(damage, zone)
 	print("Bullet hit: ", body.name)
 	create_impact_effect()
 	# Delete the bullet
