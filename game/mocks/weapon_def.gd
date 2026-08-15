@@ -81,6 +81,15 @@ extends Resource
 @export var charge_s := 0.0        # spin-up before the shot leaves; a commitment, like a melee windup
 @export var falloff_m := 0.0       # range beyond which the beam bleeds power; 0 = no falloff
 
+# --- guided / indirect (the `guided` class only) ------------------------------------------------------
+# Fire-and-forget against steered, a minimum arming range, and a real reason not to carry it
+# everywhere. The last is a parameter too: `bulk` is what it costs you to have it on your back at all.
+@export var steered := false       # true = you fly it in; false = you aim it and live with the result
+@export var arm_m := 0.0           # metres before the warhead arms -- fire it closer and it just hits
+@export var bulk := 0.0            # 0 = pocketable; high = this is the only thing you are carrying
+@export var salvo := 1             # rockets per trigger pull
+@export var salvo_gap_s := 0.0     # spacing within a salvo
+
 # --- terminal -----------------------------------------------------------------------------------
 @export var damage := 34.0         # per hit against the standard target
 @export var pellets := 1           # >1 = a spread of projectiles per shot (shot, flechette)

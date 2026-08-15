@@ -1454,6 +1454,31 @@ const WEAPON_ROWS := {
 		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 0.05, "mag": 0, "reload_s": 0.0,
 		"heat_per_shot": 12.0, "heat_max": 100.0, "cool_rate": 18.0, "overheat_lock_s": 3.5,
 	},
+	# --- GUIDED / INDIRECT (TASKS.md). Slow, lofted munitions -- which is where the ring stops being
+	# a curiosity and becomes the targeting problem. A mortar bomb hangs for the better part of a
+	# minute, and in that time the floor beneath it has moved kilometres; the arc asymmetry that is
+	# 4-6% for a thrown rock is enormous here. `bulk` is the reason not to carry one everywhere.
+	"mortar": {
+		"purpose": "the mortar — drops rounds behind cover; you will not be carrying much else",
+		"cls": "guided", "muzzle": 150.0, "drag_k": 0.0005, "mass_g": 3200.0, "damage": 130.0,
+		"steered": false, "arm_m": 60.0, "bulk": 9.0, "salvo": 1, "salvo_gap_s": 0.0,
+		"blast_r": 9.0, "lob_mrad": 1240.0, "spread_mrad": 6.0,
+		"rpm": 0.0, "cycle_s": 5.0, "mag": 1, "reload_s": 4.0,
+	},
+	"rocket": {
+		"purpose": "the shoulder rocket — flat, fast, and armed too late to save you up close",
+		"cls": "guided", "muzzle": 190.0, "drag_k": 0.0004, "mass_g": 2600.0, "damage": 210.0,
+		"steered": false, "arm_m": 25.0, "bulk": 6.0, "salvo": 1, "salvo_gap_s": 0.0,
+		"blast_r": 6.5, "lob_mrad": 60.0, "spread_mrad": 4.0,
+		"rpm": 0.0, "cycle_s": 3.0, "mag": 1, "reload_s": 5.5,
+	},
+	"mlrs": {
+		"purpose": "the backpack MLRS — twelve rockets and no way to run while wearing it",
+		"cls": "guided", "muzzle": 170.0, "drag_k": 0.00045, "mass_g": 2200.0, "damage": 95.0,
+		"steered": true, "arm_m": 90.0, "bulk": 14.0, "salvo": 12, "salvo_gap_s": 0.22,
+		"blast_r": 5.0, "lob_mrad": 900.0, "spread_mrad": 11.0,
+		"rpm": 0.0, "cycle_s": 8.0, "mag": 12, "reload_s": 14.0,
+	},
 	"carbine": {
 		# FOR: the baseline everything else is measured against. It already exists as a model with FP
 		# arms, so it is the one weapon where "does the table match how it feels" can actually be asked.
@@ -1630,6 +1655,19 @@ func _range_run() -> void:
 				% [wname, float(ts["arc"]), float(ts["t"]), float(ta["arc"]), float(ta["t"]),
 				float(ta["arc"]) - float(ts["arc"])]
 				+ "blast %.1fm  %s" % [wd.blast_r, fuse_txt])
+			continue
+		# GUIDED reports the two things that decide whether you take it: how long the round is in the
+		# air (and therefore how far the ring turns under it), and what carrying it costs.
+		if wd.cls == "guided":
+			var gs := _throw_flight(wd.muzzle, wd.drag_k, wd.lob_mrad, true)
+			var ga := _throw_flight(wd.muzzle, wd.drag_k, wd.lob_mrad, false)
+			var swing: float = float(ga["arc"]) - float(gs["arc"])
+			var guide := "steered" if wd.steered else "fire-and-forget"
+			print("%-10s guided   %s  arm %.0fm  bulk %.0f  salvo %d  blast %.1fm"
+				% [wname, guide, wd.arm_m, wd.bulk, wd.salvo, wd.blast_r])
+			print("%-10s          spinward %5.0fm (%.1fs)  antispin %5.0fm (%.1fs)  ASYMMETRY %+.0fm (%.0f%%)"
+				% [wname, float(gs["arc"]), float(gs["t"]), float(ga["arc"]), float(ga["t"]),
+				swing, swing / maxf(float(gs["arc"]), 1.0) * 100.0])
 			continue
 		# ENERGY gets its own line: every ranged column here is about drop, lead and holdover, and this
 		# is the one class for which all three are identically zero. Printing a drop table of nothing

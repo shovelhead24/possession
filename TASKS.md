@@ -711,8 +711,15 @@ behaviour, not art.
       cutter: continuous, 14m falloff, 8.3s before overheat (70% duty), 140 dps.
       First run reported the cutter at 2,800 dps -- the contract rates a beam PER SECOND and the
       arithmetic divided per-second damage by a 0.05s tick anyway.
-- [ ] **Guided / indirect** — mortar, rocket, the backpack MLRS. Fire-and-forget vs steered, minimum
-      arming range, and a real reason not to carry it everywhere.
+- [x] **Guided / indirect** — mortar, rocket, the backpack MLRS. Fire-and-forget vs steered, minimum
+      arming range, and a real reason not to carry it everywhere (`bulk` is a parameter, not a note).
+      **This is where the ring ballistics stop being a curiosity and become a tactic.** A mortar bomb
+      hangs for thirty seconds and the floor moves under it the whole time:
+        mortar  1227m spinward / 1373m antispin  (+146m, 12%)
+        rocket   296m / 435m                     (+140m, 47%)
+        mlrs    1955m / 3263m                    (+1308m, **67%**)
+      Two thirds more range for facing the other way. The thrown rock's 4-6% was the same physics too
+      small to matter; at indirect-fire ranges it decides where you set up.
 - [ ] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.
 
 ### The tree itself
