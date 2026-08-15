@@ -16,6 +16,22 @@ $log    = "$logs\queue_tick.log"
 $lock   = "$logs\.queue_tick.lock"
 $pause  = "$logs\.queue_paused"
 
+# The console does not wrap our output usefully -- long log lines and the pause reason both ran off
+# the right edge mid-word. Fold them to the window width instead.
+function Wrap($text, $indent) {
+    $w = [Math]::Max(40, $Host.UI.RawUI.WindowSize.Width - $indent.Length - 1)
+    $out = @()
+    foreach ($para in ($text -split "`n")) {
+        $line = ""
+        foreach ($word in ($para -split ' ')) {
+            if (($line + " " + $word).Trim().Length -gt $w) { $out += ($indent + $line.Trim()); $line = $word }
+            else { $line = ($line + " " + $word) }
+        }
+        if ($line.Trim()) { $out += ($indent + $line.Trim()) }
+    }
+    return $out
+}
+
 function Field($text, $name) {
     foreach ($l in $text) { if ($l -like "$name=*") { return $l.Substring($name.Length + 1) } }
     return ""
@@ -62,14 +78,19 @@ while ($true) {
     Write-Host ""
     if ($paused) {
         Write-Host "  QUEUE PAUSED" -ForegroundColor Yellow
-        Write-Host "  $((Get-Content $pause -Raw).Trim())" -ForegroundColor DarkYellow
+        foreach ($l in (Wrap ((Get-Content $pause -Raw).Trim()) "  ")) { Write-Host $l -ForegroundColor DarkYellow }
     } elseif ($running) {
         Write-Host "  RUNNING  $elapsed$stale" -ForegroundColor Green
     } else {
         Write-Host "  IDLE     next fire $next" -ForegroundColor DarkGray
     }
     Write-Host ""
-    if ($item)   { Write-Host "  item    " -NoNewline -ForegroundColor DarkGray; Write-Host $item }
+    if ($item) {
+        Write-Host "  item    " -NoNewline -ForegroundColor DarkGray
+        $iw = Wrap $item "          "
+        Write-Host ($iw[0].TrimStart())
+        foreach ($l in ($iw | Select-Object -Skip 1)) { Write-Host $l }
+    }
     if ($detail) { Write-Host "  doing   " -NoNewline -ForegroundColor DarkGray; Write-Host $detail }
     if ($branch) { Write-Host "  branch  " -NoNewline -ForegroundColor DarkGray; Write-Host $branch }
 
@@ -84,6 +105,8 @@ while ($true) {
     if (Test-Path $log) {
         Get-Content $log -Tail 12 | ForEach-Object {
             $line = $_
+            $w = [Math]::Max(40, $Host.UI.RawUI.WindowSize.Width - 6)
+            if ($line.Length -gt $w) { $line = $line.Substring(0, $w - 1) + [char]0x2026 }
             if ($line -match 'PROBLEM|FAILED|PAUSED') { Write-Host "    $line" -ForegroundColor Red }
             elseif ($line -match 'tick done|pushed')   { Write-Host "    $line" -ForegroundColor Green }
             elseif ($line -match '^\s+\.')             { Write-Host "    $line" -ForegroundColor DarkCyan }

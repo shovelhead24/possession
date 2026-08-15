@@ -359,7 +359,7 @@ if ($limited) {
         Say "  AND it left $($stranded.Count) files uncommitted -- flagging so the work is not lost"
         if ($topitem) { Say "  it was working on: $($topitem.Trim())" }
         foreach ($d in $stranded | Select-Object -First 8) { Say "        $d" }
-        "AUTO-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): rate-limited mid-item and left work uncommitted while working on:`n$topitem`nClears itself once the tree is clean; or delete this file." |
+        "AUTO-PAUSE (rate limit hit AND work left uncommitted). Set at $(Get-Date -Format 'HH:mm').`nNo wait time -- it releases as soon as the tree is clean.`nIt was working on: $topitem" |
             Set-Content $pause -Encoding ascii
     }
     exit 0
@@ -387,7 +387,7 @@ if ($after.Count -gt 0) {
     $patch = Join-Path $logs ("uncommitted-" + (Get-Date -Format 'yyyyMMdd_HHmm') + ".patch")
     git diff -- . ':(exclude)logs' | Select-Object -First 400 | Set-Content $patch -Encoding utf8
     Say "  saved a recoverable patch: $patch"
-    "AUTO-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): a tick left work uncommitted while working on:`n$topitem`nClears itself once the tree is clean; or delete this file." |
+    "AUTO-PAUSE (not a rate limit). Set at $(Get-Date -Format 'HH:mm') because a run ended with work uncommitted.`nThere is no wait time -- it releases as soon as the tree is clean.`nIt was working on: $topitem" |
         Set-Content $pause -Encoding ascii
     exit 0
 }

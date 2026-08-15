@@ -99,7 +99,9 @@ Write the "what actually happened" notes into the commit message, and keep this 
       jump blocked while crouched, impact-speed fall damage, stance-driven carbine spread. Ring
       frame: explicit up_direction=UP + constant gravity per the physbench decision (radial gravity
       would be wrong in this flat player-centred world). Not runtime-tested here — verify on laptop.
-- [x] **HUD.** Currently a debug wall of text. Needs a real one -- and per
+- [x] **HUD.** (Implemented by a queue tick at 18:37; the code is in commit 4d8cbd1, which is
+      titled as a logging change because I swept it up with a blind `git add -A`. game/hud.tscn and
+      game/player.gd are the actual work.) Currently a debug wall of text. Needs a real one -- and per
       `.decisions/design-laws.md#diegetic-tools-not-hud`, **information must be a physical ownable
       tool, not free overlay**. Ammo count comes from looking at the weapon; bearing comes from a
       compass you found. That law makes this design work, not just layout work.
