@@ -491,6 +491,13 @@ func _ready() -> void:
 	_build_dem_texture()
 	_load_patches()
 
+	# Physics bake-off runs in a clean world -- it must NOT build the ring, whose _process/_input
+	# reference _mat/_clouds we never create here. DEM is already loaded (the terrain scenario needs
+	# _terrain_h), so bail straight into the harness. See _physbench_run.
+	if OS.get_cmdline_user_args().has("--physbench"):
+		_physbench_run()
+		return
+
 	_cam = Camera3D.new()
 	_cam.position = Vector3(0, 120, 0)
 	_cam.near = 0.5
@@ -1496,6 +1503,314 @@ func _weapon_def(name: String) -> WeaponDef:
 	for k in row.keys():
 		wd.set(k, row[k])
 	return wd
+
+# ---------------------------------------------------------------------------
+# PHYSICS BAKE-OFF. `-- --physbench`
+#
+# The measuring device, built BEFORE choosing an engine -- the same discipline as --proving and
+# --range: an identical scripted scenario per engine, one comparable table, believe the numbers over
+# the impression. Nothing here decides Godot Physics vs Jolt; it makes the decision measurable.
+#
+# The engine is switched in Project Settings (physics/3d/physics_engine), not in code -- so you run
+# this once per engine and diff the two tables. The harness only reports which engine is active.
+#
+# Six scenarios (TASKS.md):
+#   rest    50-box stack, 60s, undisturbed          -> drift/jitter of a settled solver
+#   shift   the same stack, origin teleported 500m   -> THE DECIDER: how much an engine flinches when
+#           every body is rebased (invalidating contact caches). Nobody benchmarks this; a
+#           player-centred island MUST rebase, so it is the number that actually matters here.
+#   terrain boxes dropped on the real home DEM        -> is HeightMapShape3D collision even supported,
+#           and how far do bodies penetrate/settle
+#   slope   a box on 5/15/30 deg                      -> do bodies creep (friction solver)
+#   count   ramp non-sleeping boxes until the physics  -> capacity headroom on the Intel UHD target
+#           STEP exceeds 16ms (step time, not frame time -- isolates the engine from the renderer)
+#   repeat  run a drop twice, compare final transforms -> determinism, which every harness here needs
+#
+# WHY STEP TIME NOT FRAME TIME for count: this is a physics bake-off. Performance.TIME_PHYSICS_PROCESS
+# is the engine's own step cost, uncontaminated by rendering -- which is also why physbench runs in a
+# bare world with the ring unbuilt.
+# ---------------------------------------------------------------------------
+const PB_STACK := 50              # rest/shift stack height (TASKS.md: "50-box stack")
+const PB_REST_SECS := 60.0        # TASKS.md: "60s"
+const PB_SHIFT_SECS := 60.0
+const PB_SHIFT_INTERVAL := 2.0    # TASKS.md: "teleported 500m every 2s"
+const PB_SHIFT_DIST := 500.0
+const PB_SETTLE := 3.0            # ignore this opening window when reading residual jitter
+const PB_BOX := 1.0              # cube edge, m
+const PB_COUNT_MS := 16.0        # count scenario stops when the physics step exceeds this
+const PB_COUNT_CAP := 3000       # hard cap so a strong engine still terminates the ramp
+
+func _physbench_run() -> void:
+	# the ring was never built (see _ready); its per-frame callbacks would null-deref on _mat/_clouds
+	set_process(false)
+	set_process_input(false)
+	set_process_unhandled_input(false)
+	# a camera so a windowed run shows the stack -- not needed for the measurement itself
+	_cam = Camera3D.new()
+	_cam.far = 5000.0
+	add_child(_cam)
+	_cam.look_at_from_position(Vector3(38, 32, 38), Vector3(0, 24, 0), Vector3.UP)
+	_cam.make_current()
+	await get_tree().create_timer(0.5).timeout
+
+	var engine := str(ProjectSettings.get_setting("physics/3d/physics_engine", "DEFAULT"))
+	var hz := Engine.physics_ticks_per_second
+	print("\nPHYSICS BAKE-OFF — engine: %s  (%d Hz)  target: Intel UHD" % [engine, hz])
+	print("switch engines in Project Settings > physics/3d/physics_engine, rerun, diff the tables\n")
+	print("%-9s %7s %9s %9s %8s %7s %-4s %s" % [
+		"scenario", "bodies", "drift m", "jitter", "penet m", "ms", "det", "note"])
+
+	await _pb_rest()
+	await _pb_shift()
+	await _pb_terrain()
+	await _pb_slope()
+	await _pb_count()
+	await _pb_repeat()
+
+	print("\nPHYSBENCH done")
+	get_tree().quit()
+
+func _pb_row(scen: String, bodies: String, drift: String, jitter: String, penet: String,
+		ms: String, det: String, note: String) -> void:
+	print("%-9s %7s %9s %9s %8s %7s %-4s %s" % [scen, bodies, drift, jitter, penet, ms, det, note])
+
+func _pb_dt() -> float:
+	return 1.0 / float(Engine.physics_ticks_per_second)
+
+func _pb_make_floor(tilt_deg := 0.0, size := 400.0) -> StaticBody3D:
+	var sb := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(size, 4.0, size)   # top face sits at local y = +2
+	cs.shape = box
+	sb.add_child(cs)
+	sb.rotation = Vector3(0, 0, deg_to_rad(tilt_deg))
+	add_child(sb)
+	return sb
+
+func _pb_make_box(pos: Vector3, sleepable := true) -> RigidBody3D:
+	var rb := RigidBody3D.new()
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(PB_BOX, PB_BOX, PB_BOX)
+	cs.shape = box
+	rb.add_child(cs)
+	rb.can_sleep = sleepable
+	add_child(rb)
+	rb.global_position = pos
+	return rb
+
+func _pb_stack(n: int, base_y: float, sleepable := true) -> Array:
+	# vertically aligned cubes with a hair of gap, resting on a floor whose top is at base_y
+	var boxes := []
+	for i in n:
+		var y := base_y + PB_BOX * 0.5 + float(i) * (PB_BOX + 0.002)
+		boxes.append(_pb_make_box(Vector3(0, y, 0), sleepable))
+	return boxes
+
+func _pb_teleport(body: Node3D, d: Vector3) -> void:
+	# rebase: teleport at the SERVER level so contact caches invalidate (that cost is the whole point
+	# of the shift scenario). Static floor moves by node transform, which is enough for it.
+	if body is RigidBody3D:
+		var rid: RID = (body as RigidBody3D).get_rid()
+		var st: Transform3D = PhysicsServer3D.body_get_state(rid, PhysicsServer3D.BODY_STATE_TRANSFORM)
+		st.origin += d
+		PhysicsServer3D.body_set_state(rid, PhysicsServer3D.BODY_STATE_TRANSFORM, st)
+	else:
+		body.global_position += d
+
+func _pb_clear(nodes: Array) -> void:
+	for n in nodes:
+		if is_instance_valid(n):
+			n.queue_free()
+
+func _pb_run_stack(boxes: Array, secs: float, shift_dist: float, ground: StaticBody3D) -> Dictionary:
+	# drift = worst horizontal wander of the top box from where it started (rebase offset removed);
+	# jitter = worst body speed once settled; ms = mean physics step time over the run.
+	var top: Node3D = boxes[boxes.size() - 1]
+	var offset := Vector3.ZERO
+	var start: Vector3 = top.global_position
+	var drift := 0.0
+	var jitter := 0.0
+	var ms_sum := 0.0
+	var ms_n := 0
+	var t := 0.0
+	var since := 0.0   # first rebase waits one interval, so the stack settles before it is shoved
+	while t < secs:
+		if shift_dist > 0.0 and since >= PB_SHIFT_INTERVAL:
+			since -= PB_SHIFT_INTERVAL
+			var d := Vector3(-shift_dist, 0.0, 0.0)
+			for b in boxes:
+				_pb_teleport(b, d)
+			_pb_teleport(ground, d)
+			offset += d
+		await get_tree().physics_frame   # the teleport above syncs to the node on this step
+		var dt := _pb_dt()
+		t += dt
+		since += dt
+		var horiz: Vector3 = top.global_position - offset - start
+		drift = maxf(drift, Vector2(horiz.x, horiz.z).length())
+		if t > PB_SETTLE:
+			for b in boxes:
+				jitter = maxf(jitter, (b as RigidBody3D).linear_velocity.length())
+		ms_sum += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+		ms_n += 1
+	return {"drift": drift, "jitter": jitter, "ms": ms_sum / maxf(1.0, float(ms_n))}
+
+func _pb_rest() -> void:
+	var ground := _pb_make_floor()
+	var boxes := _pb_stack(PB_STACK, 2.0)
+	var r := await _pb_run_stack(boxes, PB_REST_SECS, 0.0, ground)
+	_pb_row("rest", str(PB_STACK), "%.3f" % r["drift"], "%.4f" % r["jitter"], "-",
+		"%.2f" % r["ms"], "-", "60s undisturbed")
+	_pb_clear(boxes); _pb_clear([ground])
+	await get_tree().physics_frame
+
+func _pb_shift() -> void:
+	var ground := _pb_make_floor()
+	var boxes := _pb_stack(PB_STACK, 2.0)
+	var r := await _pb_run_stack(boxes, PB_SHIFT_SECS, PB_SHIFT_DIST, ground)
+	_pb_row("shift", str(PB_STACK), "%.3f" % r["drift"], "%.4f" % r["jitter"], "-",
+		"%.2f" % r["ms"], "-", "500m rebase /2s — DECIDER")
+	_pb_clear(boxes); _pb_clear([ground])
+	await get_tree().physics_frame
+
+func _pb_hf_sample(data: PackedFloat32Array, N: int, lx: float, lz: float) -> float:
+	# height at local (lx,lz) using the EXACT mapping HeightMapShape3D uses, so penetration is
+	# measured against the collision surface itself rather than a re-derived DEM coordinate
+	var fi := clampf(lx + float(N - 1) * 0.5, 0.0, float(N - 1) - 0.001)
+	var fj := clampf(lz + float(N - 1) * 0.5, 0.0, float(N - 1) - 0.001)
+	var i0 := int(fi); var j0 := int(fj)
+	var tx := fi - float(i0); var tz := fj - float(j0)
+	var h00 := data[j0 * N + i0]
+	var h10 := data[j0 * N + i0 + 1]
+	var h01 := data[(j0 + 1) * N + i0]
+	var h11 := data[(j0 + 1) * N + i0 + 1]
+	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), tz)
+
+func _pb_terrain() -> void:
+	if _dem_hf_w <= 0:
+		_pb_row("terrain", "-", "-", "-", "-", "-", "-", "no DEM loaded — skipped")
+		return
+	# a 64m patch of the real home DEM (arc/lat 0 = Millstreet) as a HeightMapShape3D, 1m grid
+	var N := 64
+	var data := PackedFloat32Array()
+	data.resize(N * N)
+	var c := N / 2
+	for j in N:
+		for i in N:
+			data[j * N + i] = _terrain_h(float(i - c), float(c - j))
+	var hm := HeightMapShape3D.new()
+	hm.map_width = N
+	hm.map_depth = N
+	hm.map_data = data
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	cs.shape = hm
+	body.add_child(cs)
+	add_child(body)   # at origin, so shape heights are absolute world Y
+	var center_h := _pb_hf_sample(data, N, 0.0, 0.0)
+	var boxes := []
+	for gx in range(-2, 3):
+		for gz in range(-2, 3):
+			boxes.append(_pb_make_box(Vector3(float(gx) * 4.0, center_h + 8.0, float(gz) * 4.0)))
+	var t := 0.0
+	while t < 8.0:
+		await get_tree().physics_frame
+		t += _pb_dt()
+	var max_pen := 0.0
+	var fell := false
+	for b in boxes:
+		var p: Vector3 = (b as Node3D).global_position
+		if p.y < center_h - 50.0:
+			fell = true
+		var surf := _pb_hf_sample(data, N, p.x, p.z)
+		max_pen = maxf(max_pen, surf - (p.y - PB_BOX * 0.5))
+	var note := "heightfield collision OK"
+	if fell:
+		note = "BODIES FELL THROUGH — hf unsupported?"
+	_pb_row("terrain", str(boxes.size()), "-", "-", "%.3f" % max_pen, "-", "-", note)
+	_pb_clear(boxes); _pb_clear([body])
+	await get_tree().physics_frame
+
+func _pb_slope() -> void:
+	# a box dropped onto 5/15/30 deg, creep measured AFTER a 1s settle so the drop-in isn't counted
+	for ang in [5.0, 15.0, 30.0]:
+		var ground := _pb_make_floor(ang)
+		# floor rotated +ang about Z maps local up (0,1,0) -> world (-sin, cos, 0); place the box just
+		# above the tilted top face along THAT normal, or it spawns inside the slab and gets ejected
+		var n := Vector3(-sin(deg_to_rad(ang)), cos(deg_to_rad(ang)), 0.0)
+		var box := _pb_make_box(n * (2.0 + PB_BOX * 0.5 + 0.02))
+		var t := 0.0
+		var settled := box.global_position
+		var creep := 0.0
+		while t < 10.0:
+			await get_tree().physics_frame
+			t += _pb_dt()
+			if t < 1.0:
+				settled = box.global_position
+			else:
+				creep = maxf(creep, box.global_position.distance_to(settled))
+		_pb_row("slope", "1", "%.3f" % creep, "-", "-", "-", "-", "%d° creep over 9s" % int(ang))
+		_pb_clear([box]); _pb_clear([ground])
+		await get_tree().physics_frame
+
+func _pb_count() -> void:
+	# ramp non-sleeping boxes (sleeping ones leave the solver and would never reach the ceiling)
+	var ground := _pb_make_floor(0.0, 400.0)
+	var boxes := []
+	var ms := 0.0
+	while boxes.size() < PB_COUNT_CAP:
+		for k in 50:
+			var i := boxes.size()
+			var gx := float((i % 24) - 12) * 1.4
+			var gz := float((i / 24) % 24 - 12) * 1.4
+			var gy := 24.0 + float(i / 576) * 1.4
+			boxes.append(_pb_make_box(Vector3(gx, gy, gz), false))
+		var t := 0.0
+		var acc := 0.0
+		var samples := 0
+		while t < 1.0:
+			await get_tree().physics_frame
+			t += _pb_dt()
+			if t > 0.5:
+				acc += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+				samples += 1
+		ms = acc / maxf(1.0, float(samples))
+		if ms > PB_COUNT_MS:
+			break
+	_pb_row("count", str(boxes.size()), "-", "-", "-", "%.2f" % ms, "-",
+		">%.0fms physics step (cap %d)" % [PB_COUNT_MS, PB_COUNT_CAP])
+	_pb_clear(boxes); _pb_clear([ground])
+	await get_tree().physics_frame
+
+func _pb_repeat() -> void:
+	# same drop twice from identical init; determinism means the final transforms match bitwise
+	var finals := [[], []]
+	for run in 2:
+		var ground := _pb_make_floor()
+		var boxes := _pb_stack(12, 2.0)
+		var t := 0.0
+		while t < 6.0:
+			await get_tree().physics_frame
+			t += _pb_dt()
+		for b in boxes:
+			finals[run].append((b as Node3D).global_transform)
+		_pb_clear(boxes); _pb_clear([ground])
+		# let the freed bodies leave the server before the next run rebuilds, or the second run
+		# starts against stale contacts and the determinism check is meaningless
+		for _f in 3:
+			await get_tree().physics_frame
+	var identical := true
+	var max_delta := 0.0
+	for i in finals[0].size():
+		var a: Transform3D = finals[0][i]
+		var b: Transform3D = finals[1][i]
+		if a != b:
+			identical = false
+		max_delta = maxf(max_delta, a.origin.distance_to(b.origin))
+	_pb_row("repeat", "12", "-", "-", "-", "-", "YES" if identical else "NO",
+		"2 runs, maxΔ=%.4fm" % max_delta)
 
 # ---------------------------------------------------------------------------
 # FIRING RANGE (TASKS.md, "Build this before any weapon"). The proving-ground lesson applied to

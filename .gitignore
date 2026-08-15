@@ -46,3 +46,5 @@ logs/.queue_paused
 # every other harness/debug log: regenerated on demand, never read from history
 logs/*.log
 !logs/shots/JOURNAL.md
+# recovery patches dumped when a tick fails to commit -- local forensics, not history
+logs/uncommitted-*.patch

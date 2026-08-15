@@ -70,7 +70,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
 
 ## Now — in the order the tick should take them
 
-- [ ] **Physics bake-off harness (`-- --physbench`).** Build the measuring device before choosing an
+- [x] **Physics bake-off harness (`-- --physbench`).** Build the measuring device before choosing an
       engine, same as `--proving` and `--range`. Identical scripted scenario per engine, one
       comparable table. Switchable via `physics/3d/physics_engine`, so Godot Physics and Jolt are
       both testable with a project setting and no code.

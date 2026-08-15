@@ -34,11 +34,30 @@ $log   = "$logs\queue_tick.log"
 $lock  = "$logs\.queue_tick.lock"
 $cool  = "$logs\.queue_cooldown"
 $pause = "$logs\.queue_paused"
+$status = "$logs	ick-status.txt"
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
+$script:tickStart = Get-Date
+$topitem = $null
+$branch = ""
 Set-Location $repo
 
 # -Encoding utf8 on every write: Tee-Object and Out-File default to UTF-16 here, which made the
 # log unreadable in anything that assumes text.
+# The status file is what `scripts/tick-watch.ps1` renders. Deliberately a few short fields rather
+# than the reasoning trace: the question a human standing at the machine has is "is it alive, what
+# is it on, and how long has it been", and a wall of thinking answers none of those.
+function SetStatus($state, $detail) {
+    $item = if ($topitem) { $topitem.Trim() } else { "" }
+    @(
+        "STATE=$state"
+        "DETAIL=$detail"
+        "ITEM=$item"
+        "BRANCH=$branch"
+        "STARTED=$($script:tickStart.ToString('yyyy-MM-dd HH:mm:ss'))"
+        "UPDATED=$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    ) | Set-Content $status -Encoding ascii
+}
+
 function Say($m) {
     $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $m"
     Write-Host $line
@@ -119,6 +138,7 @@ New-Item -ItemType File -Path $lock -Force | Out-Null
 # on. One branch, shared with whoever is at the keyboard -- semi-attended, which is what this is.
 $branch = (git rev-parse --abbrev-ref HEAD)
 
+SetStatus "running" "starting"
 Say "=== tick starting (${open} items open) ==="
 
 # --- PRE-FLIGHT: does this already exist? ------------------------------------------------------
@@ -140,6 +160,7 @@ check TASKS-done.md for a completed item covering it. Answer in at most 10 lines
 'NOTHING FOUND' or a list of file:line references with one clause each on what is already there.
 Do not suggest an approach and do not write anything.
 "@
+    SetStatus "running" "prior-art survey (sonnet)"
     $priorart = & claude -p $scoutprompt --model sonnet --permission-mode acceptEdits 2>&1 | Out-String
     Add-Content -Path $log -Value "--- prior art (sonnet) ---`n$priorart" -Encoding utf8
 }
@@ -163,8 +184,33 @@ if ($priorart.Trim()) {
         + " trusting it, but do NOT rebuild something that already exists -- finish, fix or tick it instead:`n" + $priorart
 }
 Say "models: sonnet (prior-art survey) + opus (work)"
-$out = & claude -p $prompt --permission-mode acceptEdits `
-    --allowedTools 'Bash(git add:*)' 'Bash(git commit:*)' 'Bash(git status:*)' 'Bash(git diff:*)' 2>&1 | Out-String
+# STREAMED, so progress is visible while it works rather than one blob at the end. Each tool call
+# becomes a one-line status update -- the tool and what it touched, never the reasoning. The full
+# JSON still goes to the log, and the plain text is accumulated separately because the usage-limit
+# detection below scans prose, not JSON.
+SetStatus "running" "opus working"
+$sb = New-Object System.Text.StringBuilder
+$acts = 0
+& claude -p $prompt --permission-mode acceptEdits --output-format stream-json --verbose `
+    --allowedTools 'Bash(git add:*)' 'Bash(git commit:*)' 'Bash(git status:*)' 'Bash(git diff:*)' 2>&1 |
+    ForEach-Object {
+        $line = $_
+        [void]$sb.AppendLine($line)
+        # compact descriptor by regex rather than ConvertFrom-Json: one malformed line should not
+        # take down the run, and PS 5.1 parsing a JSON object per line is needless work
+        if ($line -match '"type"\s*:\s*"tool_use"') {
+            $tool = ""
+            if ($line -match '"name"\s*:\s*"([A-Za-z_]+)"') { $tool = $Matches[1] }
+            $tgt = ""
+            if ($line -match '"file_path"\s*:\s*"([^"]{1,120})"') { $tgt = Split-Path $Matches[1] -Leaf }
+            elseif ($line -match '"command"\s*:\s*"([^"]{1,70})"') { $tgt = $Matches[1] }
+            elseif ($line -match '"pattern"\s*:\s*"([^"]{1,50})"') { $tgt = $Matches[1] }
+            $acts++
+            SetStatus "running" ("$tool $tgt").Trim()
+            Say "  . $tool $tgt"
+        }
+    }
+$out = $sb.ToString()
 Add-Content -Path $log -Value $out -Encoding utf8
 
 Remove-Item $lock -Force -ErrorAction SilentlyContinue
@@ -213,9 +259,21 @@ if ($out -match '(?i)(session limit|usage limit|rate limit|quota|too many reques
 # Nothing detected it. Now it does, and it stops the queue rather than compounding.
 $after = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" }
 if ($after.Count -gt 0) {
+    # SAY WHAT IT WAS DOING, not just that it failed. When this fired on 2026-08-13 it recorded only
+    # "2 files uncommitted", and those edits were later swept into an unrelated commit by a `git add
+    # -A` two days later. The code survived; the PURPOSE did not, and reconstructing it afterwards
+    # took five minutes of archaeology that a diffstat and one line of item text would have answered.
     Say "PROBLEM: the run left $($after.Count) files uncommitted. Pausing the queue so the next tick does not pile on."
+    if ($topitem) { Say "  it was working on: $($topitem.Trim())" }
     foreach ($d in $after | Select-Object -First 8) { Say "        $d" }
-    "AUTO-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): a tick left work uncommitted. Clears itself once the tree is clean; or delete this file." |
+    Say "  diffstat:"
+    foreach ($l in @(git diff --stat -- . ':(exclude)logs')) { if ($l) { Say "        $l" } }
+    # The diff itself, capped: enough to see the intent and recover the work by hand if the tree gets
+    # clobbered before anyone looks. 400 lines is a couple of screens, not a second copy of the repo.
+    $patch = Join-Path $logs ("uncommitted-" + (Get-Date -Format 'yyyyMMdd_HHmm') + ".patch")
+    git diff -- . ':(exclude)logs' | Select-Object -First 400 | Set-Content $patch -Encoding utf8
+    Say "  saved a recoverable patch: $patch"
+    "AUTO-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): a tick left work uncommitted while working on:`n$topitem`nClears itself once the tree is clean; or delete this file." |
         Set-Content $pause -Encoding ascii
     exit 0
 }
@@ -227,6 +285,7 @@ if ($after.Count -gt 0) {
 # is progressing" and "the queue has been spinning for four hours".
 $left = (Select-String -Path "$repo\TASKS.md" -Pattern '^- \[ \]' -ErrorAction SilentlyContinue).Count
 if ($left -ge $open) {
+    SetStatus "idle" "no item completed"
     Say "=== tick did NOT complete an item (${open} -> ${left} open) -- see the output above ==="
     exit 0
 }
@@ -235,9 +294,11 @@ if ($left -ge $open) {
 # commits accumulated locally over three weeks. Push every time; a no-op push costs nothing.
 git push origin $branch --quiet
 if ($LASTEXITCODE -eq 0) {
+    SetStatus "idle" "pushed"
     Say "pushed $branch"
 } else {
     Say "PUSH FAILED for $branch -- work is committed locally but not backed up"
 }
 
+SetStatus "idle" "done, $left items left"
 Say "=== tick done (${left} items left) ==="
