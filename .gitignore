@@ -50,3 +50,4 @@ logs/*.log
 logs/uncommitted-*.patch
 # raw agent transcripts: debugging material, regenerated every run
 logs/tick-raw-*.jsonl
+logs/archive/

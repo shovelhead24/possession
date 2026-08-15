@@ -61,18 +61,32 @@ function SetStatus($state, $detail) {
     ) | Set-Content $status -Encoding ascii
 }
 
-# Map the punctuation Claude likes onto ASCII. The log is read in a terminal that may be any
-# codepage, and "--" that always renders beats an em-dash that sometimes does.
+# Make a line readable in ANY terminal codepage. Three separate problems, all of them mine:
+#   1. Claude emits UTF-8 and PowerShell 5.1 decoded it as the OEM codepage, so an em-dash arrived
+#      as three junk characters and a degree sign as two. Prevented at source now by setting
+#      [Console]::OutputEncoding, and repaired here for whatever was written before that.
+#   2. Real Unicode punctuation renders inconsistently; "--" always works.
+#   3. JSON escapes arrived as the two literal characters backslash-n and were printed, not rendered.
+#      Written as single-quoted PowerShell strings, which take no escapes at all -- earlier attempts
+#      using double quotes kept collapsing into real newlines before they reached the file.
 function Clean($t) {
     if ($null -eq $t) { return "" }
-    $t = $t -replace [char]0x2014, '--' -replace [char]0x2013, '-'
-    $t = $t -replace [char]0x2018, "'" -replace [char]0x2019, "'"
-    $t = $t -replace [char]0x201C, '"' -replace [char]0x201D, '"'
-    $t = $t -replace [char]0x00B7, '.' -replace [char]0x2026, '...'
-    $t = $t -replace [char]0x00A0, ' '
-    return ($t -replace '[^ -~
-
-	]', '')
+    # already-mangled sequences FIRST, before the ASCII strip deletes them and leaves a hole
+    $t = $t.Replace([string]([char]0x0393 + [char]0x00C7 + [char]0x00F6), '--')
+    $t = $t.Replace([string]([char]0x0393 + [char]0x00C7 + [char]0x00D6), "'")
+    $t = $t.Replace([string]([char]0x00C2 + [char]0x00B7), '.')
+    $t = $t.Replace([string]([char]0x00C2 + [char]0x00B0), ' deg')
+    # then genuine Unicode punctuation
+    $t = $t.Replace([string][char]0x2014, '--').Replace([string][char]0x2013, '-')
+    $t = $t.Replace([string][char]0x2018, "'").Replace([string][char]0x2019, "'")
+    $t = $t.Replace([string][char]0x201C, '"').Replace([string][char]0x201D, '"')
+    $t = $t.Replace([string][char]0x00B7, '.').Replace([string][char]0x2026, '...')
+    $t = $t.Replace([string][char]0x00B0, ' deg').Replace([string][char]0x00A0, ' ')
+    # literal backslash-n / backslash-t as they appear inside JSON text
+    $t = $t.Replace('\n', ' ').Replace('\t', ' ').Replace('\r', '')
+    # anything still unprintable goes; collapse the gaps it leaves
+    $t = [regex]::Replace($t, '[^\u0020-\u007E]', '')
+    return [regex]::Replace($t, ' {3,}', '  ')
 }
 
 function Say($m) {

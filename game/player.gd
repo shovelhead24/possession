@@ -278,6 +278,15 @@ func _input(event):
 		_weapon_light_mode = (_weapon_light_mode + 1) % 4
 		_apply_weapon_light_mode()
 
+	# F3 — toggle the developer telemetry overlay. Off by default: the player HUD stays
+	# diegetic-minimal (crosshair + vitals only). Position/bearing and perf counters are
+	# not free overlay. See .decisions/design-laws.md#diegetic-tools-not-hud.
+	if event is InputEventKey and event.physical_keycode == KEY_F3 and event.pressed and not event.echo:
+		if hud_instance:
+			var dbg = hud_instance.get_node_or_null("DebugPanel")
+			if dbg:
+				dbg.visible = not dbg.visible
+
 	# F4 — toggle LOD debug colours (white=0 blue=1 green=2 red=3 yellow=4)
 	if event is InputEventKey and event.physical_keycode == KEY_F4 and event.pressed and not event.echo:
 		var tm = get_node_or_null("/root/World/TerrainManager")
@@ -609,12 +618,30 @@ func update_hud():
 	if not hud_instance:
 		return
 
-	var coords_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/CoordsLabel")
+	# Vitals are the only always-on overlay. Stamina surfaces only when it isn't full —
+	# you feel exertion, you don't stare at a bar. See design-laws.md#diegetic-tools-not-hud.
+	var stamina_label = hud_instance.get_node_or_null("Vitals/VBoxContainer/StaminaLabel")
+	if stamina_label:
+		if fly_mode or stamina >= STAMINA_MAX - 0.5:
+			stamina_label.visible = false
+		else:
+			stamina_label.visible = true
+			stamina_label.text = "STA %d%%" % int(stamina)
+			stamina_label.add_theme_color_override("font_color",
+				Color(1.0, 0.35, 0.25) if _sprint_exhausted else Color(0.9, 0.9, 0.4))
+
+	# Everything below is developer telemetry, hidden behind F3. Skip the whole gather when
+	# the panel is closed so the counters cost nothing in normal play.
+	var dbg = hud_instance.get_node_or_null("DebugPanel")
+	if not dbg or not dbg.visible:
+		return
+
+	var coords_label = hud_instance.get_node_or_null("DebugPanel/VBoxContainer/CoordsLabel")
 	if coords_label:
 		var pos = global_position
 		coords_label.text = "X: %.0f  Y: %.0f  Z: %.0f" % [pos.x, pos.y, pos.z]
 
-	var speed_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/SpeedLabel")
+	var speed_label = hud_instance.get_node_or_null("DebugPanel/VBoxContainer/SpeedLabel")
 	if speed_label:
 		if fly_mode:
 			var fly_sprint = " [SPRINT]" if Input.is_key_pressed(KEY_CTRL) else ""
@@ -623,7 +650,7 @@ func update_hud():
 			var stance = "CROUCH" if is_crouching else ("SPRINT" if is_sprinting else "WALK")
 			speed_label.text = "%s: %.1f m/s   STA %d%%" % [stance, current_speed, int(stamina)]
 
-	var debug_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/DebugLabel")
+	var debug_label = hud_instance.get_node_or_null("DebugPanel/VBoxContainer/DebugLabel")
 	if debug_label:
 		update_debug_stats(debug_label)
 
@@ -1081,7 +1108,7 @@ func update_health_display():
 	if not hud_instance:
 		return
 
-	var health_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/HealthLabel")
+	var health_label = hud_instance.get_node_or_null("Vitals/VBoxContainer/HealthLabel")
 	if not health_label:
 		return
 
@@ -1093,7 +1120,7 @@ func update_health_display():
 	elif health_percent < 0.6:
 		color = Color.YELLOW
 
-	health_label.text = "HP: %d/%d" % [int(health), int(max_health)]
+	health_label.text = "HP %d" % int(health)
 	health_label.add_theme_color_override("font_color", color)
 
 func die():

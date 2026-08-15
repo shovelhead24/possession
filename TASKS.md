@@ -99,10 +99,18 @@ Write the "what actually happened" notes into the commit message, and keep this 
       jump blocked while crouched, impact-speed fall damage, stance-driven carbine spread. Ring
       frame: explicit up_direction=UP + constant gravity per the physbench decision (radial gravity
       would be wrong in this flat player-centred world). Not runtime-tested here — verify on laptop.
-- [ ] **HUD.** Currently a debug wall of text. Needs a real one -- and per
+- [x] **HUD.** Currently a debug wall of text. Needs a real one -- and per
       `.decisions/design-laws.md#diegetic-tools-not-hud`, **information must be a physical ownable
       tool, not free overlay**. Ammo count comes from looking at the weapon; bearing comes from a
       compass you found. That law makes this design work, not just layout work.
+      Done in hud.tscn + player.gd. Applied the law as a filter on what may appear at all, not a
+      layout pass: the default HUD is now crosshair + vitals only (HP, and stamina which surfaces
+      only when drained). The whole debug wall -- X/Y/Z position (the "bearing" the law hands to a
+      found compass), FPS/memory/node-object-resource counts, chunk/pool stats -- moved into an
+      F3-toggled DebugPanel, off by default, and its telemetry gather is skipped entirely while
+      hidden. No new mechanics: ammo-on-weapon stays deferred to the Ammunition item, and the
+      compass/scope tools to the tools work -- the law names them, it doesn't ask to build them here.
+      Not runtime-tested here (main scene test_combat.tscn, not the --shots ring mock) -- verify on laptop.
 - [ ] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
       already exists.
 - [ ] **Bake after assembly — the cost of kitbashing is object count.** Prerequisite for the recipe
