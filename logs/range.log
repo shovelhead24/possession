@@ -5,7 +5,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (441 ms)
+ring_vibes: far band rebuilt around arc 0 km (445 ms)
 ring_vibes: containment field 1500-4000m on lat -25000
 ring_vibes: containment field 1500-4000m on lat 25000
 ring_vibes: texture compression — s3tc true, bptc true, etc2 true
@@ -25,13 +25,45 @@ ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
 ring_vibes: 143141 OSM buildings loaded (2 styles)
 RANGE  ring R=477465m  omega=0.004342 rad/s  surface 2073 m/s
 weapon     range      cold% burst%   group    drop   flight spin-dif     ttk
-carbine          5m   100%   100%   0.06m  -0.01m   0.006s    0.00m   0.26s
-carbine         10m   100%   100%   0.09m  -0.01m   0.011s    0.00m   0.27s
-carbine         25m   100%   100%   0.31m  -0.01m   0.028s    0.00m   0.29s
-carbine         50m   100%    83%   0.41m   0.02m   0.056s   -0.03m   0.36s
-carbine        100m   100%    67%   0.93m   0.11m   0.113s   -0.13m   0.50s
-carbine        200m   100%     0%   1.80m   0.46m   0.231s   -0.41m    --  
-carbine        400m    58%     0%   3.66m   2.02m   0.478s   -1.75m    --  
-RANGE carbine: straight up -> back down 180s later, 18167m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+musket           5m   100%   100%   0.03m  -0.01m   0.011s    0.00m  31.81s
+musket          10m   100%   100%   0.07m  -0.01m   0.022s    0.00m  31.82s
+musket          25m   100%   100%   0.17m  -0.01m   0.056s    0.00m  31.86s
+musket          50m   100%   100%   0.27m   0.08m   0.114s   -0.06m  31.91s
+musket         100m    75%    75%   0.72m   0.33m   0.233s   -0.22m  32.63s
+musket         200m    17%     0%   1.23m   1.52m   0.488s   -1.00m    --  
+musket         400m     0%     0%   2.77m   7.18m   1.071s   -5.00m    --  
+bolt_action       5m   100%   100%   0.00m  -0.01m   0.006s    0.00m   3.01s
+bolt_action      10m   100%   100%   0.00m  -0.01m   0.012s    0.00m   3.01s
+bolt_action      25m   100%   100%   0.01m  -0.01m   0.031s    0.00m   3.03s
+bolt_action      50m   100%   100%   0.04m   0.02m   0.062s   -0.03m   3.06s
+bolt_action     100m   100%   100%   0.07m   0.11m   0.124s   -0.13m   3.12s
+bolt_action     200m   100%   100%   0.24m   0.52m   0.252s   -0.44m   3.25s
+bolt_action     400m    75%    50%   0.96m   2.27m   0.520s   -1.91m   6.52s
+smg              5m   100%   100%   0.07m  -0.01m   0.013s    0.00m   0.35s
+smg             10m   100%   100%   0.18m  -0.01m   0.026s    0.00m   0.36s
+smg             25m   100%   100%   0.28m   0.02m   0.067s   -0.03m   0.40s
+smg             50m   100%    33%   1.00m   0.11m   0.135s   -0.06m   1.13s
+smg            100m    92%    50%   2.40m   0.46m   0.274s   -0.28m   0.94s
+smg            200m    25%     8%   2.82m   1.99m   0.571s   -1.16m   6.57s
+smg            400m     0%    17%  11.05m   9.24m   1.242s   -5.94m   3.24s
+lmg              5m   100%   100%   0.05m  -0.01m   0.006s    0.00m   0.28s
+lmg             10m   100%   100%   0.11m  -0.01m   0.012s    0.00m   0.29s
+lmg             25m   100%   100%   0.38m  -0.01m   0.030s    0.00m   0.31s
+lmg             50m   100%    83%   0.64m   0.02m   0.060s   -0.03m   0.39s
+lmg            100m   100%    50%   1.19m   0.11m   0.121s   -0.13m   0.67s
+lmg            200m    92%     0%   2.80m   0.52m   0.246s   -0.44m    --  
+lmg            400m    25%     0%   2.53m   2.21m   0.508s   -1.88m    --  
+autocannon       5m   100%   100%   0.04m  -0.01m   0.005s    0.00m   0.28s
+autocannon      10m   100%   100%   0.15m  -0.01m   0.010s    0.00m   0.28s
+autocannon      25m   100%    75%   0.20m  -0.01m   0.025s    0.00m   0.39s
+autocannon      50m   100%     8%   0.77m  -0.01m   0.049s    0.00m   3.32s
+autocannon     100m   100%     0%   1.54m   0.08m   0.099s   -0.09m    --  
+autocannon     200m    92%     0%   2.40m   0.36m   0.200s   -0.31m    --  
+autocannon     400m    83%     0%   7.91m   1.65m   0.411s   -1.50m    --  
+RANGE musket: straight up -> back down 96s later, 3350m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE bolt_action: straight up -> back down 166s later, 15612m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE smg: straight up -> back down 82s later, 2381m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE lmg: straight up -> back down 169s later, 16038m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE autocannon: straight up -> back down 198s later, 25946m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE selfcheck: reference drop 2.021m at 400m, live integrator 2.021m (delta 0.000m)
 RANGE done

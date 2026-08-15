@@ -1394,6 +1394,48 @@ const WEAPON_ROWS := {
 		"spread_mrad": 2.4, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 0.5,
 		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 3.6, "mag": 0, "reload_s": 0.0,
 	},
+	# --- CHEMICAL PROJECTILE (TASKS.md), the big family. Every row is the same parameter set; what
+	# separates them is where each one puts its ceiling. The musket's is the reload, the bolt-action's
+	# is the cycle, the SMG's is spread growth, the LMG's is HEAT, the autocannon's is that it hits
+	# like a vehicle weapon because it is one. Rate/recoil/magazine/reload/heat/spread-growth, as the
+	# item lists -- heat being the brake that is not the magazine.
+	"musket": {
+		"purpose": "the musket — one shot, then you are holding a stick for fifteen seconds",
+		"cls": "chemical", "muzzle": 450.0, "drag_k": 0.0009, "mass_g": 28.0, "damage": 78.0,
+		"rpm": 0.0, "cycle_s": 0.9, "mag": 1, "reload_s": 15.0,
+		"spread_mrad": 4.5, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 1.0,
+		"recoil": 9.0, "recover_s": 1.1,
+	},
+	"bolt_action": {
+		"purpose": "the bolt-action — the most accurate thing anyone on the ring can build by hand",
+		"cls": "chemical", "muzzle": 820.0, "drag_k": 0.00030, "mass_g": 11.0, "damage": 82.0,
+		"rpm": 0.0, "cycle_s": 1.5, "mag": 5, "reload_s": 4.0,
+		"spread_mrad": 0.35, "bloom_mrad": 0.4, "bloom_max": 1.2, "settle_s": 1.2,
+		"recoil": 6.0, "recover_s": 0.9,
+	},
+	"smg": {
+		"purpose": "the SMG — wins every argument inside a room and loses all of them outside it",
+		"cls": "chemical", "muzzle": 380.0, "drag_k": 0.0008, "mass_g": 8.0, "damage": 22.0,
+		"rpm": 900.0, "cycle_s": 0.0, "mag": 32, "reload_s": 2.0,
+		"spread_mrad": 1.8, "bloom_mrad": 2.6, "bloom_max": 14.0, "settle_s": 0.45,
+		"recoil": 2.0, "recover_s": 0.22,
+	},
+	"lmg": {
+		"purpose": "the LMG — fires until the barrel glows, which is sooner than the belt runs out",
+		"cls": "chemical", "muzzle": 840.0, "drag_k": 0.00032, "mass_g": 12.0, "damage": 38.0,
+		"rpm": 650.0, "cycle_s": 0.0, "mag": 100, "reload_s": 6.5,
+		"spread_mrad": 1.2, "bloom_mrad": 1.1, "bloom_max": 7.0, "settle_s": 0.8,
+		"recoil": 3.4, "recover_s": 0.35,
+		"heat_per_shot": 2.2, "heat_max": 100.0, "cool_rate": 14.0, "overheat_lock_s": 4.0,
+	},
+	"autocannon": {
+		"purpose": "the autocannon — a vehicle weapon; carrying it is the whole cost",
+		"cls": "chemical", "muzzle": 1020.0, "drag_k": 0.00022, "mass_g": 240.0, "damage": 155.0,
+		"rpm": 220.0, "cycle_s": 0.0, "mag": 20, "reload_s": 7.0,
+		"spread_mrad": 1.0, "bloom_mrad": 3.0, "bloom_max": 10.0, "settle_s": 1.0,
+		"recoil": 14.0, "recover_s": 0.8,
+		"heat_per_shot": 5.0, "heat_max": 100.0, "cool_rate": 10.0, "overheat_lock_s": 6.0,
+	},
 	"carbine": {
 		# FOR: the baseline everything else is measured against. It already exists as a model with FP
 		# arms, so it is the one weapon where "does the table match how it feels" can actually be asked.
@@ -1644,6 +1686,13 @@ func _range_run() -> void:
 			var drop_a: float = float(fa.get("drop_m", 0.0))
 			# time to kill: rounds needed at this hit rate, paced by cycle and reloads
 			var hit_frac := float(hits) / float(RANGE_SHOTS)
+			# SUSTAINED RATE. Cyclic rate is a lie for anything belt-fed: the real ceiling is whichever
+			# comes first, the magazine or the barrel. Rounds until overheat, then a forced pause.
+			var sustained: float = 60.0 / maxf(shot_dt, 0.001)
+			if wd.heat_per_shot > 0.0:
+				var burst: float = floor(wd.heat_max / wd.heat_per_shot)
+				var burst_t: float = burst * shot_dt
+				sustained = burst / maxf(burst_t + wd.overheat_lock_s, 0.001) * 60.0
 			var ttk_s := "  --  "
 			if hit_frac > 0.0:
 				# rounds needed at THIS hit rate, paced by the cycle and by reloads
@@ -4435,6 +4484,11 @@ func _make_car(d: VehicleDef = null) -> Node3D:
 	for wp in [Vector3(-1.05, 0.45, wz), Vector3(1.05, 0.45, wz), Vector3(-1.05, 0.45, -wz), Vector3(1.05, 0.45, -wz)]:
 		var wheel := MeshInstance3D.new()
 		var cm := CylinderMesh.new()
+		# 64 radial segments is Godot's default and absurd for a placeholder wheel: it put the box car
+		# at 3,096 triangles, which is a silly baseline to measure a whole roster against on a
+		# potato-hardware target. Twelve reads as round at the distance a chase camera sits.
+		cm.radial_segments = 12
+		cm.rings = 1
 		cm.height = 0.35
 		cm.top_radius = 0.45
 		cm.bottom_radius = 0.45

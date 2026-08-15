@@ -611,10 +611,9 @@ Prerequisite for everything below.
       out-of-repo/gated here, so no live `--proving`, and handling can't be judged from a screenshot
       anyway (the reason the proving ground exists). Run `-- --proving launch,barge,skiff,box` on the
       laptop: the boats should top the water phase and the box should flounder on it.
-- [ ] **The placeholder car is 3,096 triangles.** A box with four wheels, on a potato-hardware target
-      -- Godot's CylinderMesh defaults to 64 radial segments, so the wheels are ~700 each. Only one
-      vehicle is spawned at a time so it is not urgent, but it is a silly baseline to measure the
-      roster against.
+- [x] **The placeholder car is 3,096 triangles.** Was Godot's CylinderMesh default of 64 radial
+      segments. Twelve segments and one ring reads as round at chase-camera distance: **3,096 -> 312**,
+      and the warthog's 19,600 now compares against something sane.
 
 ## Weapons, HUD and on-foot — the tech-tree programme
 
@@ -693,8 +692,16 @@ behaviour, not art.
         The carbine read 0% at 200m, a range it should own. Split into COLD (first aimed shot, the
         time-to-first-hit the item asked for and I had not reported) and BURST. Carbine now 100% cold
         at 200m and 0% in burst, which is the honest description of a carbine.
-- [ ] **Chemical projectile** — the big family. Rate, recoil, magazine, reload, heat, spread growth.
-      Musket, bolt-action, carbine (exists), SMG, LMG, autocannon.
+- [x] **Chemical projectile** — the big family. Rate, recoil, magazine, reload, heat, spread growth.
+      Musket, bolt-action, carbine (exists), SMG, LMG, autocannon. Every row is the same parameter
+      set; what differs is where each puts its ceiling -- the musket's is the 15s reload, the
+      bolt-action's the cycle, the SMG's spread growth, the LMG's HEAT, and the autocannon's is that
+      it is a vehicle weapon being carried. Heat is the new contract (default 0 = never overheats, so
+      every earlier row is untouched) and it is the brake that is NOT the magazine: sustained rate now
+      reports rounds-until-glowing rather than cyclic rate, which is a lie for anything belt-fed.
+      At 100m: musket 75%/32.6s ttk, bolt_action 100%/3.1s, smg 92% cold but 50% burst/0.94s,
+      lmg 100% cold 50% burst/0.67s, autocannon 100% cold and **0% burst at every range** -- the
+      table saying plainly that you cannot walk it onto target from the shoulder.
 - [ ] **Directed energy** — no drop, no lead, but heat and charge. Should feel unlike the others,
       not just be a rifle with a beam.
 - [ ] **Guided / indirect** — mortar, rocket, the backpack MLRS. Fire-and-forget vs steered, minimum

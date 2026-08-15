@@ -63,6 +63,15 @@ extends Resource
 @export var hold_s := 0.0          # seconds at full draw before the shake sets in
 @export var hold_mrad := 0.0       # added dispersion per second held beyond hold_s
 
+# --- heat (chemical and energy classes) ------------------------------------------------------------
+# The upper bound on sustained fire that is not the magazine. A belt-fed gun does not stop because it
+# is empty, it stops because the barrel is glowing -- so heat is what separates an LMG from a carbine
+# with a bigger magazine, and it is the only brake a directed-energy weapon has at all.
+@export var heat_per_shot := 0.0   # 0 = never overheats (every row that predates this)
+@export var heat_max := 100.0
+@export var cool_rate := 25.0      # units shed per second when not firing
+@export var overheat_lock_s := 0.0 # forced cooling pause once heat_max is reached
+
 # --- terminal -----------------------------------------------------------------------------------
 @export var damage := 34.0         # per hit against the standard target
 @export var pellets := 1           # >1 = a spread of projectiles per shot (shot, flechette)
