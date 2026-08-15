@@ -91,9 +91,14 @@ Write the "what actually happened" notes into the commit message, and keep this 
       local props ignore it; fast movers (bullets, aircraft, vehicles at speed) stay analytic.
       Box3D is a paper candidate only until this exists -- no Godot binding, so it needs a GDExtension
       against a v0.1.0 C API, which is worth writing only if the table says Jolt is not good enough.
-- [ ] **FPS controls proper.** WALK mode is a camera with a speed. Needs: acceleration, crouch,
+- [x] **FPS controls proper.** WALK mode is a camera with a speed. Needs: acceleration, crouch,
       sprint with a cost, jump, fall damage, stance affecting spread, and the ring frame handled
       correctly (up points at the axis, which the camera already does and the movement does not).
+      Done in player.gd: move_toward accel/decel (ground+air), Ctrl-crouch (capsule shrink, camera
+      drop, headroom-gated standup), Shift-sprint with stamina drain/regen + exhaustion lockout,
+      jump blocked while crouched, impact-speed fall damage, stance-driven carbine spread. Ring
+      frame: explicit up_direction=UP + constant gravity per the physbench decision (radial gravity
+      would be wrong in this flat player-centred world). Not runtime-tested here — verify on laptop.
 - [ ] **HUD.** Currently a debug wall of text. Needs a real one -- and per
       `.decisions/design-laws.md#diegetic-tools-not-hud`, **information must be a physical ownable
       tool, not free overlay**. Ammo count comes from looking at the weapon; bearing comes from a

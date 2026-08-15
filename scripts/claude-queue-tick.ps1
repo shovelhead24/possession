@@ -76,8 +76,18 @@ if (Test-Path $cool) {
     $until = Get-Content $cool -Raw
     try { $u = [datetime]::Parse($until.Trim()) } catch { $u = Get-Date }
     if ((Get-Date) -lt $u) {
-        Say "skip: cooling down until $($u.ToString('HH:mm'))"
-        exit 0
+        # DO NOT TRUST THE CLOCK -- TEST IT. The reset time is either parsed from a message or, worse,
+        # guessed at five hours, and the real window is dynamic on Anthropic's side. On 2026-08-15 a
+        # false positive parked the queue until 22:38 while the dashboard showed 25% used with four
+        # hours left. A probe costs a few Haiku tokens and turns a lost evening into a lost cycle.
+        $probe = & claude -p 'reply with the single word: ok' --model haiku 2>&1 | Out-String
+        if ($probe -match '"api_error_status"\s*:\s*429' -or
+            $probe -match '(?i)(session limit|usage limit|rate limit|limit reached)') {
+            Say "skip: cooling down until $($u.ToString('HH:mm')) (probe confirms still limited)"
+            exit 0
+        }
+        Remove-Item $cool -Force -ErrorAction SilentlyContinue
+        Say "cooldown cleared early: probe says the limit is gone (was waiting until $($u.ToString('HH:mm')))"
     }
     Remove-Item $cool -Force -ErrorAction SilentlyContinue
     Say "cooldown over, resuming"
@@ -224,7 +234,23 @@ Remove-Item $lock -Force -ErrorAction SilentlyContinue
 # the wall every 30 minutes from ~17:00 to 21:00, matched nothing, recorded no cooldown, and logged
 # "tick done" nine times in a row while doing absolutely nothing. Match the clock time it actually
 # prints, and only fall back to the 5h guess when there is no time to read.
-if ($out -match '(?i)(session limit|usage limit|rate limit|quota|too many requests|limit reached|resets?[ :])') {
+# DETECT THE ERROR, NOT THE PROSE. This used to substring-match the whole of $out for phrases
+# including 'resets '. Since the run became streamed, $out is the entire JSON transcript -- every
+# word the agent writes, not just its final answer -- so on 2026-08-15 the physics bake-off item
+# tripped it by writing about RESETTING bodies between scenarios, and the queue stood down for five
+# hours at 25% session usage. Match the structured failure instead: stream-json reports
+# "is_error":true with "api_error_status":429, which cannot be produced by the agent talking.
+$limited = ($out -match '"api_error_status"\s*:\s*429')
+# and pull the human message out of the RESULT field only, never the transcript
+$resultText = ""
+# Non-greedy up to the field terminator. The previous pattern used an escaped-quote character
+# class that did not survive being written to file and threw "Unterminated [] set" at runtime.
+if ($out -match '"result"\s*:\s*"(.{0,400}?)","') { $resultText = $Matches[1] }
+if (-not $limited -and $resultText -match '(?i)(session limit|usage limit|rate limit|limit reached)') {
+    $limited = $true
+}
+if ($limited) {
+    $out = $resultText   # so the reset-time parse below reads the message, not the whole run
     $resume = (Get-Date).AddHours(5)                       # last resort: session windows are ~5h
     # NOTE: PowerShell needs elseif on the SAME line as the closing brace. On its own line it
     # parses as a separate statement and silently swallows the rest of the file.
@@ -259,6 +285,18 @@ if ($out -match '(?i)(session limit|usage limit|rate limit|quota|too many reques
     if ($resume -gt $cap) { $resume = $cap }
     $resume.ToString('o') | Set-Content $cool -Encoding ascii
     Say "hit a usage limit -- standing down until $($resume.ToString('HH:mm'))"
+    # BUT DO NOT WALK AWAY FROM WORK. This path used to exit before the uncommitted-work check
+    # below, so on 2026-08-15 a run that had implemented FPS controls (+174 lines in player.gd) and
+    # ticked the item hit a FALSE limit and left all of it unsaved and unflagged for forty minutes.
+    # Being rate-limited says nothing about whether the tree is clean.
+    $stranded = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" }
+    if ($stranded.Count -gt 0) {
+        Say "  AND it left $($stranded.Count) files uncommitted -- flagging so the work is not lost"
+        if ($topitem) { Say "  it was working on: $($topitem.Trim())" }
+        foreach ($d in $stranded | Select-Object -First 8) { Say "        $d" }
+        "AUTO-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): rate-limited mid-item and left work uncommitted while working on:`n$topitem`nClears itself once the tree is clean; or delete this file." |
+            Set-Content $pause -Encoding ascii
+    }
     exit 0
 }
 
