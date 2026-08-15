@@ -98,6 +98,24 @@ $open = (Select-String -Path "$repo\TASKS.md" -Pattern '^- \[ \]' -ErrorAction S
 if (-not $open) { Say "queue empty -- nothing to do"; exit 0 }
 
 New-Item -ItemType File -Path $lock -Force | Out-Null
+
+# --- work on the unattended branch, not on whatever happens to be checked out ----------------
+# Interactive sessions live on main. Unattended work gets its own branch so the two cannot
+# interleave in one history, and so a bad tick is quarantined rather than sitting on the branch
+# everything else is built from. Safe to switch here: the dirty-tree gate above already guarantees
+# there is nothing in the working tree to carry across or clobber.
+$branch = "unattended"
+$cur = (git rev-parse --abbrev-ref HEAD)
+if ($cur -ne $branch) {
+    git checkout $branch --quiet
+    if ($LASTEXITCODE -ne 0) {
+        Say "skip: cannot switch to $branch (on $cur)"
+        Remove-Item $lock -Force -ErrorAction SilentlyContinue
+        exit 0
+    }
+    Say "switched from $cur to $branch"
+}
+
 Say "=== tick starting (${open} items open) ==="
 
 $prompt = @'
@@ -181,4 +199,14 @@ if ($left -ge $open) {
     Say "=== tick did NOT complete an item (${open} -> ${left} open) -- see the output above ==="
     exit 0
 }
+# --- get it off the machine -------------------------------------------------------------------
+# A tick that commits and never pushes is a tick whose work exists on one disk. That is how 183
+# commits accumulated locally over three weeks. Push every time; a no-op push costs nothing.
+git push origin $branch --quiet
+if ($LASTEXITCODE -eq 0) {
+    Say "pushed $branch"
+} else {
+    Say "PUSH FAILED for $branch -- work is committed locally but not backed up"
+}
+
 Say "=== tick done (${left} items left) ==="
