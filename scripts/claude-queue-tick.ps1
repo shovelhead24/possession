@@ -99,22 +99,13 @@ if (-not $open) { Say "queue empty -- nothing to do"; exit 0 }
 
 New-Item -ItemType File -Path $lock -Force | Out-Null
 
-# --- work on the unattended branch, not on whatever happens to be checked out ----------------
-# Interactive sessions live on main. Unattended work gets its own branch so the two cannot
-# interleave in one history, and so a bad tick is quarantined rather than sitting on the branch
-# everything else is built from. Safe to switch here: the dirty-tree gate above already guarantees
-# there is nothing in the working tree to carry across or clobber.
-$branch = "unattended"
-$cur = (git rev-parse --abbrev-ref HEAD)
-if ($cur -ne $branch) {
-    git checkout $branch --quiet
-    if ($LASTEXITCODE -ne 0) {
-        Say "skip: cannot switch to $branch (on $cur)"
-        Remove-Item $lock -Force -ErrorAction SilentlyContinue
-        exit 0
-    }
-    Say "switched from $cur to $branch"
-}
+# --- whatever branch is checked out ------------------------------------------------------------
+# The tick works on the CURRENT branch and never switches. A previous version of this script forced
+# a checkout of a dedicated branch, which was wrong in a way that only shows up in use: `git
+# checkout` rewrites the working tree, so a tick firing while Godot is running or the editor is open
+# would swap the files underneath them and leave the machine on a different branch than it was left
+# on. One branch, shared with whoever is at the keyboard -- semi-attended, which is what this is.
+$branch = (git rev-parse --abbrev-ref HEAD)
 
 Say "=== tick starting (${open} items open) ==="
 

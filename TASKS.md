@@ -76,5 +76,14 @@ behaviour, not art.
 ---
 
 **Completed items live in `TASKS-done.md`.** They were 88% of this file (679 of 768 lines) and the
-unattended tick re-read all of it every 30 minutes to find one unchecked line. Keep this file to the
-open queue; write the "what actually happened" notes into the archive or the commit message.
+tick re-read all of it every 30 minutes to find one unchecked line.
+
+Which file to read depends on the question:
+- **"What do I do next?"** — this file only. Grep for `^- \[ \]` and read that item. Do not load the
+  archive; it cannot tell you anything about an unstarted task.
+- **"What tasks should exist?"** — read `TASKS-done.md` in full, and it is worth the tokens. Planning
+  needs the whole history: what was already tried, what turned out to be wrong, which findings
+  generated follow-ups. Half this project's best items came out of something that had just been
+  finished, and you cannot see those patterns from eight open lines.
+
+Write the "what actually happened" notes into the commit message, and keep this file to the queue.
