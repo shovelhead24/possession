@@ -109,6 +109,29 @@ $branch = (git rev-parse --abbrev-ref HEAD)
 
 Say "=== tick starting (${open} items open) ==="
 
+# --- PRE-FLIGHT: does this already exist? ------------------------------------------------------
+# Every tick is a COLD session. It cannot know what previous ticks built, so it rebuilds things.
+# Twice on 2026-08-15 alone: the docking mechanic was fully implemented by an earlier run and simply
+# never ticked off, and a second identical `rim` shot framing was appended next to the first. The
+# check is pure reading, so it runs on a cheap model -- the expensive judgement is in the work, not
+# in grepping for prior art.
+$topitem = (Select-String -Path "$repo\TASKS.md" -Pattern '^- \[ \]' | Select-Object -First 1).Line
+$priorart = ""
+if ($topitem) {
+    Say "next item: $($topitem.Substring(0, [Math]::Min(100, $topitem.Length)))"
+    $scoutprompt = @"
+Read-only survey, no edits. The next task is:
+$topitem
+
+Does anything in this repository ALREADY implement this, in whole or in part? Search the code, and
+check TASKS-done.md for a completed item covering it. Answer in at most 10 lines: either
+'NOTHING FOUND' or a list of file:line references with one clause each on what is already there.
+Do not suggest an approach and do not write anything.
+"@
+    $priorart = & claude -p $scoutprompt --model sonnet --permission-mode acceptEdits 2>&1 | Out-String
+    Add-Content -Path $log -Value "--- prior art (sonnet) ---`n$priorart" -Encoding utf8
+}
+
 $prompt = @'
 Take the top unchecked item from TASKS.md, do it, tick it, and commit. One item only.
 Follow the rules at the top of that file. In particular: read the preview or screenshot image
@@ -123,6 +146,11 @@ note why in TASKS.md and take the next one. Keep output short.
 # So every tick could edit freely and then could not commit -- "git add/commit return 'This command
 # requires approval' in every form I tried" is in this very log, from a tick that did the work and
 # had to abandon it in the working tree. Least privilege: grant git, not the world.
+if ($priorart.Trim()) {
+    $prompt = $prompt + "`n`nA read-only survey of the repo reported the following prior art for this item. Verify before" `
+        + " trusting it, but do NOT rebuild something that already exists -- finish, fix or tick it instead:`n" + $priorart
+}
+Say "models: sonnet (prior-art survey) + opus (work)"
 $out = & claude -p $prompt --permission-mode acceptEdits `
     --allowedTools 'Bash(git add:*)' 'Bash(git commit:*)' 'Bash(git status:*)' 'Bash(git diff:*)' 2>&1 | Out-String
 Add-Content -Path $log -Value $out -Encoding utf8

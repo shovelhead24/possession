@@ -19,3 +19,30 @@ game/shooter animation/Ch44_nonPBR.fbx
 # Maya source files — not importable by Godot
 game/t90 tank/
 game/mocks/dem/
+
+# --- logs and screenshot evidence -----------------------------------------------------------
+# 415 PNGs, 401MB, all of it committed -- which put 1.6GB in .git and grows every session. The
+# DURABLE artefact is logs/shots/JOURNAL.md: what the shot was taken to check, what was actually
+# there, what fell out. That text is the record and it is tiny. The images are supporting material
+# for whoever is looking that week, they live on disk, and they do not belong in history.
+logs/shots/**/*.png
+logs/shots/**/*.jpg
+logs/shots/index.html
+# ...but the journal IS the record and stays tracked, always.
+!logs/shots/JOURNAL.md
+# Churn: rewritten by every tick and every harness run, so they made every commit noisy.
+logs/queue_tick.log
+logs/s2_refetch.log
+logs/shots.log
+logs/shots_err.log
+logs/range.log
+logs/range_err.log
+logs/prove.log
+logs/prove_err.log
+logs/godot_latest.log
+logs/.queue_tick.lock
+logs/.queue_cooldown
+logs/.queue_paused
+# every other harness/debug log: regenerated on demand, never read from history
+logs/*.log
+!logs/shots/JOURNAL.md
