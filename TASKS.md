@@ -118,7 +118,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
       height + resolve() by zone), routed through player, enemy_controller, enemy_soldier, creature
       and bullet, with `game/tests/damage_test.gd`. Verified there via `--check-only`; could not
       re-run Godot this tick (execution permission-denied), but the code is committed and unbroken.
-- [ ] **Bake after assembly — the cost of kitbashing is object count.** Prerequisite for the recipe
+- [x] **Bake after assembly — the cost of kitbashing is object count.** Prerequisite for the recipe
       items below, and the thing that makes them safe. A building of 12 parts kept as 12
       MeshInstance3D nodes is 12 draw calls; a settlement of 200 is 2,400, on a GL Compatibility
       Intel UHD target. This project has already been eaten once from the other direction -- 24k
@@ -131,6 +131,19 @@ Write the "what actually happened" notes into the commit message, and keep this 
       so they stay separate while the chassis bakes. A character's parts must follow bones, which is
       why the existing assembler is correct FOR CHARACTERS and would be wrong copied wholesale.
       Bake collision the same way if a physics island ever lands — one cooked shape, not 12.
+      Done: new `game/pipeline/mesh_baker.gd` — `MeshBaker.bake(root)` walks the static kitbash,
+      groups every MeshInstance3D descendant's surfaces by effective material (override > surface
+      override > mesh material) into one ArrayMesh (one surface per material, transforms baked in via
+      a parent-chain walk that matches ring_vibes._rel_xform), then discards the merged part nodes.
+      Dynamic parts survive: a node in group `no_bake` (or meta `bake=false`) and its whole subtree
+      are left untouched, so wheels/turrets/bone-attached parts stay separate. Collision baking is
+      deferred to when a physics island actually lands. It is a standalone utility (not wired into
+      recipes yet — those are the items below); the existing character assembler is untouched.
+      Self-test at `game/tests/bake_test.gd` (surface-per-material, geometry preserved, nodes
+      discarded, dynamic survives, no-op when all dynamic). NOT runtime-tested this tick: Godot
+      execution is permission-denied in the queue-wake session (both the `-s` and the sanctioned
+      `-- --selftest` scene forms were gated), same as the damage tick. Run on the attended laptop:
+      `godot --headless --path game -s res://tests/bake_test.gd` — expect `BAKE SELFTEST: PASS`.
 - [ ] **Unlock the assembler from Skeleton3D.** Socket becomes a Node3D by name, not a bone; the
       bone path stays as one implementation of it. This is the enabling change and everything below
       is cheap once it lands. `PartDef.bone_name` -> `socket`, `CharacterRecipe` -> `Recipe`.
