@@ -7,6 +7,21 @@ One entry per `--shots` run. Convention, from 2026-08-09:
 - **Saw** — what was actually there, including things not being looked for.
 - **Fell out** — tasks created or closed as a result.
 
+**Which tool answers the question.** A screenshot answers *does it read* -- a judgement about
+appearance that no number substitutes for: does the rim wall dominate the horizon, does the swell
+look like water, is that a docking port or a cyan rectangle. Telemetry answers *does it work* --
+drop, group size, time-to-kill, triangle count. The whole weapons programme (six mechanics classes)
+was built without a single screenshot, correctly, because none of it is visible. Shooting a picture
+to answer a measurable question is the expensive way to get a worse answer.
+
+**When a shot shows something wrong, INSTRUMENT before re-shooting.** This is where the cost
+actually goes. On 2026-08-13, eleven shot runs and 78 images answered about four questions, because
+the loop was: change a value, shoot, squint, change another. The containment field took three runs
+of guessing and was then solved in one by tinting CDLOD water magenta so the shader had to say
+whether it was drawing that surface at all. A probe that makes the code confess beats another look.
+A run is a Godot launch of 3-8 minutes plus the tokens to read the images; two of those buys a lot
+of thinking.
+
 Shots live in `logs/shots/<YYYYMMDD_HHMM>[_label]/`. They are never overwritten — earlier runs
 destroyed the previous evidence every time, which defeated the point of keeping them.
 
