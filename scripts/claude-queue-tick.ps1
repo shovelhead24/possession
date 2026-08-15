@@ -72,8 +72,20 @@ if (Test-Path $cool) {
 #   resume:  Remove-Item C:\Games\possession\logs\.queue_paused
 if (Test-Path $pause) {
     $why = (Get-Content $pause -Raw -EA SilentlyContinue)
-    Say "skip: queue PAUSED. $($why.Trim())"
-    exit 0
+    # AN AUTO-PAUSE MUST NOT OUTLIVE ITS CAUSE. The auto-pause below latches the queue when a run
+    # leaves work uncommitted, so the next tick cannot pile onto it. That is right, but as first
+    # written it was a latch with nobody watching: it fired on 2026-08-13 and the queue sat dead for
+    # TWO DAYS while work carried on around it, which is the silent-failure pattern this project
+    # keeps producing. If the tree is clean again the reason is gone, so clear it and carry on.
+    # A pause set BY HAND has no such condition and stays until a human removes it.
+    $dirtynow = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" }
+    if ($why -match 'AUTO' -and $dirtynow.Count -eq 0) {
+        Remove-Item $pause -Force -ErrorAction SilentlyContinue
+        Say "auto-pause cleared: the tree is clean again, so whatever caused it is resolved"
+    } else {
+        Say "skip: queue PAUSED. $($why.Trim())"
+        exit 0
+    }
 }
 
 # --- is someone else already working in here? -----------------------------------------------
@@ -203,7 +215,7 @@ $after = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne
 if ($after.Count -gt 0) {
     Say "PROBLEM: the run left $($after.Count) files uncommitted. Pausing the queue so the next tick does not pile on."
     foreach ($d in $after | Select-Object -First 8) { Say "        $d" }
-    "Auto-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): a tick left work uncommitted. Review, commit or discard, then delete this file." |
+    "AUTO-paused $(Get-Date -Format 'yyyy-MM-dd HH:mm'): a tick left work uncommitted. Clears itself once the tree is clean; or delete this file." |
         Set-Content $pause -Encoding ascii
     exit 0
 }
