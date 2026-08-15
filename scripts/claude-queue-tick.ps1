@@ -80,7 +80,13 @@ if (Test-Path $cool) {
         # guessed at five hours, and the real window is dynamic on Anthropic's side. On 2026-08-15 a
         # false positive parked the queue until 22:38 while the dashboard showed 25% used with four
         # hours left. A probe costs a few Haiku tokens and turns a lost evening into a lost cycle.
-        $probe = & claude -p 'reply with the single word: ok' --model haiku 2>&1 | Out-String
+        # PROBE WITH THE MODEL THAT WILL DO THE WORK. Haiku was the obvious choice on cost, and it
+        # is the wrong question: if limits are enforced per model, Haiku answers while Opus is still
+        # blocked, the cooldown clears, and a full Opus run is spun up only to be rejected -- burning
+        # a real attempt every cycle instead of waiting quietly. The probe has to test the capability
+        # actually needed. It is nearly free either way: rejected costs nothing because the request
+        # never runs, and accepted is a handful of tokens for a one-word answer.
+        $probe = & claude -p 'reply with the single word: ok' 2>&1 | Out-String
         if ($probe -match '"api_error_status"\s*:\s*429' -or
             $probe -match '(?i)(session limit|usage limit|rate limit|limit reached)') {
             Say "skip: cooling down until $($u.ToString('HH:mm')) (probe confirms still limited)"
