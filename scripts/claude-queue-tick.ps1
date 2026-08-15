@@ -37,7 +37,10 @@ $log   = "$logs\queue_tick.log"
 $lock  = "$logs\.queue_tick.lock"
 $cool  = "$logs\.queue_cooldown"
 $pause = "$logs\.queue_paused"
-$status = "$logs	ick-status.txt"
+# Join-Path, not "$logs	ick-status.txt" -- writing that through a tool that treats backslash-t
+# as an escape produced a literal TAB in the path, and every status write failed with
+# "Illegal characters in path" for hours. No backslash in a literal means nothing to collapse.
+$status = Join-Path $logs 'tick-status.txt'
 New-Item -ItemType Directory -Force -Path $logs | Out-Null
 $script:tickStart = Get-Date
 $topitem = $null
