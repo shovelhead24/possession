@@ -593,10 +593,24 @@ Prerequisite for everything below.
       the frame total gave 338,444 for all twenty-one vehicles, because that is the terrain and the
       trees, against which a placeholder car is a rounding error. Now counts the vehicle's own
       subtree: placeholder 3,096 tris, warthog GLTF 19,600 -- comparable at last.
-- [ ] **Water phase for the proving course.** The harness item above asked for road/offroad/slope/
+- [x] **Water phase for the proving course.** The harness item above asked for road/offroad/slope/
       WATER and only the first three exist. A boat driven at millstreet is aground for the whole run,
       so this needs the course to warp to a coastal patch for one phase (mizen_head or slea_head --
       0% nodata, real coastline) rather than a synthetic strip like the bump section.
+      New `water` phase appended to `PROVE_PHASES`; `_prove_phase` gains a water branch and a
+      `_prove_find_water` helper that warps to a coastal patch (mizen_head, then slea_head/halong/
+      palawan as fallbacks), waits for the stream, then spirals out from the patch centre for a point
+      deep enough (>3m, floats even the barge's 2.4m draft) with land in sight -- the same phantom-void
+      guard the shot harness's sea framing uses. The hull is pointed at the deepest water in a short
+      sweep so it runs to open sea, not back onto the beach. Only the FIRST water phase waits for the
+      stream (the patch stays resident for the rest); `_load_roadlines` always keeps the home
+      centrelines, so the on-road phases of the following vehicles are unaffected by the warp. `water`
+      pins `_prove_offroad=1` so the land classes read their off-road drag on the sea -- which IS the
+      comparison the boat/hover/sub rows exist for. No existing phase changes: every new branch is
+      gated on the `water` flag no other phase sets. NOT run-verified: the Godot binary is
+      out-of-repo/gated here, so no live `--proving`, and handling can't be judged from a screenshot
+      anyway (the reason the proving ground exists). Run `-- --proving launch,barge,skiff,box` on the
+      laptop: the boats should top the water phase and the box should flounder on it.
 - [ ] **The placeholder car is 3,096 triangles.** A box with four wheels, on a potato-hardware target
       -- Godot's CylinderMesh defaults to 64 radial segments, so the wheels are ~700 each. Only one
       vehicle is spawned at a time so it is not urgent, but it is a silly baseline to measure the
@@ -665,7 +679,20 @@ behaviour, not art.
       of effect as the bullet dropping less antispinward, at a fortieth of the speed. The asymmetry
       is only 4-6% at throwing speeds, so it is a curiosity here rather than a targeting problem —
       it is the 400m rifle shot and the 18km vertical where it bites.
-- [ ] **Tensioned** — draw time, hold penalty, drop. Sling, bow, crossbow, speargun.
+- [x] **Tensioned** — draw time, hold penalty, drop. Sling, bow, crossbow, speargun. The shot costs
+      time BEFORE it happens and holding it drawn costs accuracy, so you cannot sit at the ready the
+      way you can with a firearm; the crossbow buys "holds indefinitely" with a 3.4s draw. The drop is
+      not a parameter -- at 34-92 m/s the existing ring ballistics do it, and it is brutal: the bow
+      drops 13m at 100m, the speargun over a kilometre at 400m.
+      TWO HARNESS FIXES it forced, both the usual failure of a metric that flatters:
+      - **Hit rate ignored drop entirely.** The bow scored 100% at 100m while dropping 13m. A shooter
+        zeroes, so the drop itself is not the miss -- the miss is MISJUDGING the range and holding
+        over by the wrong amount. Now sampled as the drop difference across a 10% range error, which
+        is centimetres for a flat rifle and most of the drop for a lobbed spear.
+      - **Every shot was fired at cyclic rate**, so "accuracy" was really twelve-rounds-into-a-burst.
+        The carbine read 0% at 200m, a range it should own. Split into COLD (first aimed shot, the
+        time-to-first-hit the item asked for and I had not reported) and BURST. Carbine now 100% cold
+        at 200m and 0% in burst, which is the honest description of a carbine.
 - [ ] **Chemical projectile** — the big family. Rate, recoil, magazine, reload, heat, spread growth.
       Musket, bolt-action, carbine (exists), SMG, LMG, autocannon.
 - [ ] **Directed energy** — no drop, no lead, but heat and charge. Should feel unlike the others,

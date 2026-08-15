@@ -947,6 +947,11 @@ const PROVE_PHASES := [
 	{"name": "climb",  "secs": 14.0, "throttle": 1.0, "steer": 0.0, "uphill": true},
 	# the calibrated bump strip: washboard, swell, kerbs, a ramp and a drop, then potholes
 	{"name": "bumps",  "secs": 40.0, "throttle": 1.0, "steer": 0.0, "strip": true},
+	# open water. Warps the course to a coastal patch (mizen_head/slea_head -- real coastline, 0%
+	# nodata) so a boat has sea under it instead of being aground at millstreet for the whole run. The
+	# land classes flounder here (offroad drag on the water), which is the comparison: this is the
+	# phase the hover/boat/sub rows exist for. See _prove_find_water.
+	{"name": "water",  "secs": 20.0, "throttle": 1.0, "steer": 0.0, "water": true},
 ]
 
 var _prove_throttle := 0.0        # scripted input; _drive_tick reads these when _proving is set
@@ -1129,6 +1134,21 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	if bool(phase.get("strip", false)):
 		start_arc = PROVE_STRIP_ARC - 20.0
 		start_lat = PROVE_STRIP_LAT
+	var water_heading := 0.0
+	if bool(phase.get("water", false)):
+		var wp := await _prove_find_water()
+		if wp.x < 1e19:
+			start_arc = wp.x
+			start_lat = wp.y
+			# point at the deepest water within a short sweep, so the hull runs to open sea rather
+			# than the beach it started near -- a boat that drives itself aground measures nothing
+			var wbest := _sea_depth(start_arc, start_lat)
+			for wk in 16:
+				var wa := TAU * float(wk) / 16.0
+				var wdh := _sea_depth(start_arc + cos(wa) * 120.0, start_lat + sin(wa) * 120.0)
+				if wdh > wbest:
+					wbest = wdh
+					water_heading = wa
 	_car_arc = start_arc
 	_car_lat = start_lat
 	_car_speed = 0.0
@@ -1147,15 +1167,20 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 	_boarded = false
 	_stamina = 1.0        # each phase measures a fresh mount, so the table isn't skewed by the prior phase
 	_spooked = 0.0
-	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false))
-	_car_heading = road_heading if pure_road else 0.0
+	var pure_road: bool = have_road and not bool(phase.get("offroad", false)) and not bool(phase.get("strip", false)) and not bool(phase.get("uphill", false)) and not bool(phase.get("water", false))
+	if bool(phase.get("water", false)):
+		_car_heading = water_heading
+	elif pure_road:
+		_car_heading = road_heading
+	else:
+		_car_heading = 0.0
 	# PIN the drag term to the phase's intended surface, don't derive it from live position. Deriving
 	# it meant a 14s full-throttle run drove off the 8m ribbon within a car length (a straight tangent
 	# can't follow a curving polyline), so "accel" settled at the OFF-road terminal (9.8) and the
 	# on-road figure was never measured. Pinning makes the course identical and the table comparable,
 	# which is the whole point of the harness. On-road for accel/brake/circle and the synthetic bump
 	# strip (so it carries enough speed to cross every obstacle); off-road for rough and climb.
-	_prove_offroad = 1.0 if (bool(phase.get("offroad", false)) or bool(phase.get("uphill", false))) else 0.0
+	_prove_offroad = 1.0 if (bool(phase.get("offroad", false)) or bool(phase.get("uphill", false)) or bool(phase.get("water", false))) else 0.0
 	_offroad = _prove_offroad
 	if bool(phase.get("uphill", false)):
 		# aim at the steepest uphill within a short sweep, so "grade" means something
@@ -1206,6 +1231,45 @@ func _prove_phase(vname: String, phase: Dictionary) -> void:
 		turn_r if str(phase["name"]) == "circle" else 0.0,
 		jolt, grade if str(phase["name"]) == "climb" else 0.0,
 		_susp_travel, air])
+
+func _prove_find_water() -> Vector2:
+	# Warp the proving course to a coastal patch and return an offshore point with land in sight, or
+	# (1e20,1e20) if none is reachable. The rest of the course runs at millstreet, where the sea is a
+	# thin fringe and a boat is aground for the whole run; the water phase needs real coastline under
+	# it (mizen_head/slea_head are 0% nodata) for the boat/hover/sub rows to measure at all.
+	var idx := -1
+	for pname in ["mizen_head", "slea_head", "halong_bay", "palawan"]:
+		idx = _patch_names.find(pname)
+		if idx >= 0:
+			break
+	if idx < 0:
+		print("  water: no coastal patch loaded")
+		return Vector2(1e20, 1e20)
+	_warp_to(idx)
+	# let the stream land so the hull rides the streamed tier, not the 512 array -- only the FIRST
+	# water phase waits; the patch stays resident for the vehicles that follow (matches --shots)
+	var waited := 0.0
+	while _hires_idx != idx and waited < 20.0:
+		await get_tree().create_timer(0.5).timeout
+		waited += 0.5
+	var r: Vector4 = _patch_rects[idx]
+	# spiral out from the patch centre for water deep enough to float even the deepest-draft barge
+	# (2.4m) that also HAS a coast -- the land-in-sight test rejects the phantom void that would float
+	# a hull on nothing (the same guard the shot harness's sea framing uses).
+	for ring_i in range(1, 80):
+		var rad := float(ring_i) * 250.0
+		for k in 12:
+			var a := TAU * float(k) / 12.0
+			var p := Vector2(r.x + cos(a) * rad, r.y + sin(a) * rad)
+			if absf(p.y) > WIDTHS[w_idx] * 0.45 or _sea_depth(p.x, p.y) <= 3.0:
+				continue
+			if not _land_in_sight(p.x, p.y):
+				continue
+			print("  water: %s, %.0fm offshore, depth %.1fm"
+				% [_patch_names[idx], rad, _sea_depth(p.x, p.y)])
+			return p
+	print("  water: no sea within reach of %s" % _patch_names[idx])
+	return Vector2(1e20, 1e20)
 
 # Triangles belonging to ONE node's subtree. The frame total is useless for comparing vehicles: the
 # first roster run reported 338,444 for all twenty-one of them, because that is the terrain, the trees
@@ -1297,6 +1361,38 @@ const WEAPON_ROWS := {
 		"cls": "thrown", "muzzle": 15.0, "drag_k": 0.0012, "mass_g": 1200.0, "damage": 160.0,
 		"blast_r": 3.5, "fuse_s": 2.5, "lob_mrad": 600.0, "spread_mrad": 20.0,
 		"rpm": 0.0, "cycle_s": 2.4, "mag": 0, "reload_s": 0.0,
+	},
+	# --- TENSIONED (TASKS.md "Tensioned: draw time, hold penalty, drop"). Stored muscle or spring, so
+	# the shot costs time BEFORE it happens and holding it drawn costs accuracy -- you cannot sit at
+	# the ready the way you can with a firearm. The drop is not a parameter: at 35-90 m/s the existing
+	# ballistics do it for free, and it is severe.
+	"sling": {
+		"purpose": "the sling — ammunition is any stone; everything else about it is a penalty",
+		"cls": "tensioned", "muzzle": 40.0, "drag_k": 0.0008, "mass_g": 60.0, "damage": 22.0,
+		"draw_s": 1.6, "hold_s": 0.6, "hold_mrad": 9.0,
+		"spread_mrad": 9.0, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 0.5,
+		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 2.2, "mag": 0, "reload_s": 0.0,
+	},
+	"bow": {
+		"purpose": "the bow — quiet, quick to loose, and you feel every second you hold it drawn",
+		"cls": "tensioned", "muzzle": 62.0, "drag_k": 0.0005, "mass_g": 32.0, "damage": 46.0,
+		"draw_s": 0.9, "hold_s": 1.8, "hold_mrad": 4.0,
+		"spread_mrad": 3.2, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 0.5,
+		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 1.7, "mag": 0, "reload_s": 0.0,
+	},
+	"crossbow": {
+		"purpose": "the crossbow — holds itself at full draw, and makes you pay for it in reload",
+		"cls": "tensioned", "muzzle": 92.0, "drag_k": 0.0004, "mass_g": 40.0, "damage": 68.0,
+		"draw_s": 3.4, "hold_s": 999.0, "hold_mrad": 0.0,
+		"spread_mrad": 1.6, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 0.5,
+		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 4.0, "mag": 0, "reload_s": 0.0,
+	},
+	"speargun": {
+		"purpose": "the speargun — one heavy shot, and it works where powder does not",
+		"cls": "tensioned", "muzzle": 34.0, "drag_k": 0.0006, "mass_g": 900.0, "damage": 85.0,
+		"draw_s": 2.8, "hold_s": 999.0, "hold_mrad": 0.0,
+		"spread_mrad": 2.4, "bloom_mrad": 0.0, "bloom_max": 0.0, "settle_s": 0.5,
+		"recoil": 0.0, "recover_s": 0.1, "rpm": 0.0, "cycle_s": 3.6, "mag": 0, "reload_s": 0.0,
 	},
 	"carbine": {
 		# FOR: the baseline everything else is measured against. It already exists as a model with FP
@@ -1455,7 +1551,7 @@ func _range_run() -> void:
 	if want.is_empty():
 		want = WEAPON_ROWS.keys()
 	print("RANGE  ring R=%.0fm  omega=%.6f rad/s  surface %.0f m/s" % [_radius(), _omega(), _omega() * _radius()])
-	print("%-10s %-9s %6s %7s %7s %8s %8s %7s" % ["weapon", "range", "hit%", "group", "drop", "flight", "spin-dif", "ttk"])
+	print("%-10s %-9s %6s %6s %7s %7s %8s %8s %7s" % ["weapon", "range", "cold%", "burst%", "group", "drop", "flight", "spin-dif", "ttk"])
 	for wname in want:
 		if not WEAPON_ROWS.has(wname):
 			print("RANGE skip %s (no such weapon)" % wname)
@@ -1475,6 +1571,13 @@ func _range_run() -> void:
 				float(ta["arc"]) - float(ts["arc"])]
 				+ "blast %.1fm  %s" % [wd.blast_r, fuse_txt])
 			continue
+		if wd.cls == "tensioned":
+			# the ranged table below still applies -- it has a projectile -- but draw and hold are the
+			# class and appear nowhere in it. A crossbow that holds at full draw forever and a bow that
+			# starts shaking after two seconds are the same row otherwise.
+			var hold_txt := "holds indefinitely" if wd.hold_s > 100.0 				else "steady %.1fs then +%.0f mrad/s" % [wd.hold_s, wd.hold_mrad]
+			print("%-10s tension  draw %.1fs  %s  (drop below is the real cost)"
+				% [wname, wd.draw_s, hold_txt])
 		if wd.cls == "melee":
 			var swing: float = wd.windup_s + wd.commit_s
 			var dps: float = wd.damage / maxf(wd.cycle_s, 0.01)
@@ -1486,6 +1589,15 @@ func _range_run() -> void:
 		var rng := RandomNumberGenerator.new()
 		for dist in RANGE_TARGETS:
 			rng.seed = hash(str(wname) + str(dist))     # identical course per weapon, per range
+			# HOLDOVER ERROR. The hit test used to model dispersion only, so the bow scored 100% at
+			# 100m while dropping 13m and the speargun scored 33% at 400m while dropping over a
+			# kilometre. A shooter ZEROES for the range, so the drop itself is not the miss -- the miss
+			# is misjudging the range and holding over by the wrong amount. Take the drop difference
+			# across a 10% range error: that is the vertical error in metres, and for a flat-shooting
+			# rifle it is centimetres while for a lobbed spear it is most of the drop.
+			var f_near := _shot_flight(dist, 0.0, true, wd.muzzle, wd.drag_k)
+			var f_far := _shot_flight(dist * 1.1, 0.0, true, wd.muzzle, wd.drag_k)
+			var hold_err: float = absf(float(f_far.get("drop_m", 0.0)) - float(f_near.get("drop_m", 0.0)))
 			var bloom := 0.0
 			var hits := 0
 			var worst := 0.0
@@ -1500,9 +1612,26 @@ func _range_run() -> void:
 				# recoil is a systematic RISE, not scatter -- it walks the group up, and only partly recovers
 				var rec: float = wd.recoil * (1.0 - clampf(shot_dt / maxf(wd.recover_s, 0.01), 0.0, 1.0))
 				var off := Vector2(cos(ang), sin(ang)) * mag_mrad + Vector2(0.0, rec)
-				pts.append(off * dist * 0.001)          # mrad -> metres at this range
+				# dispersion is angular (mrad -> metres at this range); the holdover error is already
+				# in metres and does not scale with anything else
+				var pt: Vector2 = off * dist * 0.001
+				pt.y += rng.randf_range(-1.0, 1.0) * hold_err
+				pts.append(pt)
 				bloom = minf(bloom + wd.bloom_mrad, wd.bloom_max)
 				bloom = maxf(bloom - (shot_dt / maxf(wd.settle_s, 0.01)) * wd.bloom_mrad, 0.0)
+			# COLD BORE, the first aimed shot: no bloom, no accumulated recoil, just inherent dispersion
+			# plus the holdover error. Without this the table conflates "how accurate is this weapon"
+			# with "how accurate is it twelve rounds into a burst" -- which is why the carbine read 0%
+			# at 200m, a range it should own. The item asks for time-to-first-hit; this is that.
+			var cold_hits := 0
+			for i in RANGE_SHOTS:
+				var ca := rng.randf_range(0.0, TAU)
+				var cm: float = absf(rng.randfn(0.0, wd.spread_mrad * 0.5))
+				var cp: Vector2 = Vector2(cos(ca), sin(ca)) * cm * dist * 0.001
+				cp.y += rng.randf_range(-1.0, 1.0) * hold_err
+				if cp.length() <= RANGE_TARGET_R:
+					cold_hits += 1
+			var cold_frac := float(cold_hits) / float(RANGE_SHOTS)
 			# group size = extreme spread, the way a shooter would measure it
 			for a in pts.size():
 				for b in range(a + 1, pts.size()):
@@ -1523,9 +1652,9 @@ func _range_run() -> void:
 				ttk_s = "%5.2fs" % ttk
 			# no hits means no time-to-kill. Clamping the hit rate to 0.001 to avoid the divide printed
 			# 487s, which reads as a slow weapon rather than as a weapon that cannot reach.
-			print("%-10s %7.0fm %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s" % [
-				wname, dist, hit_frac * 100.0, worst, drop_s, float(fs.get("t", 0.0)),
-				drop_a - drop_s, ttk_s])
+			print("%-10s %7.0fm %5.0f%% %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s" % [
+				wname, dist, cold_frac * 100.0, hit_frac * 100.0, worst, drop_s,
+				float(fs.get("t", 0.0)), drop_a - drop_s, ttk_s])
 	# THE VERTICAL SHOT. The item says long shots "drift sideways"; they do not, and this is the test
 	# that shows why. Coriolis is -2*omega x v, and omega points along the SPIN AXIS -- so for anyone
 	# standing on the floor, the deflection is always in the ARC-radial plane and never across the

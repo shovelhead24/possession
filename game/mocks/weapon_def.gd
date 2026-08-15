@@ -54,6 +54,15 @@ extends Resource
 @export var blast_r := 0.0         # effective blast radius, m; 0 = point impact only
 @export var lob_mrad := 785.0      # preferred throw elevation (785 mrad = 45 deg)
 
+# --- tensioned (the `tensioned` class only) --------------------------------------------------------
+# Draw, hold, drop. The class trait is that the SHOT COSTS TIME BEFORE IT HAPPENS, and that holding
+# the drawn weapon costs you accuracy -- so unlike a firearm you cannot sit at the ready indefinitely.
+# The drop falls out of the ballistics for free: these are 30-90 m/s weapons, so gravity has whole
+# fractions of a second to work.
+@export var draw_s := 0.0          # seconds to reach full draw; 0 = not a tensioned weapon
+@export var hold_s := 0.0          # seconds at full draw before the shake sets in
+@export var hold_mrad := 0.0       # added dispersion per second held beyond hold_s
+
 # --- terminal -----------------------------------------------------------------------------------
 @export var damage := 34.0         # per hit against the standard target
 @export var pellets := 1           # >1 = a spread of projectiles per shot (shot, flechette)

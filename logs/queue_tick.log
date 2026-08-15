@@ -2089,3 +2089,29 @@ You've hit your session limit ┬╖ resets 3:20am (Europe/Dublin)
 2026-08-13 17:59:36  skip: working tree is dirty (2 files) -- someone is mid-edit, or a previous tick did not commit
 2026-08-13 17:59:37           M game/mocks/ring_vibes.gd
 2026-08-13 17:59:37          ?? game/mocks/weapon_def.gd
+2026-08-13 18:29:36  === tick starting (15 items open) ===
+Git `add`/`commit` are permission-blocked in this session (the established queue-wake gating ΓÇö edits land on disk, the commit happens elsewhere), so I can't complete the commit here. The work is done and saved.
+
+**Done: "Water phase for the proving course"** (`game/mocks/ring_vibes.gd`, ticked in `TASKS.md`)
+
+- New `water` phase appended to `PROVE_PHASES` (20s, full throttle).
+- `_prove_find_water()` warps the course to a coastal patch (mizen_head ΓåÆ slea_head ΓåÆ halong_bay ΓåÆ palawan fallback), waits for the stream, then spirals out from the patch centre for a point >3m deep (floats even the barge's 2.4m draft) with land in sight ΓÇö reusing the shot harness's phantom-void guard. The hull is aimed at the deepest water in a short sweep so it runs to open sea, not the beach.
+- `_prove_phase` gains a `water` branch: sets the sea start/heading and pins `_prove_offroad=1`, so the land classes read off-road drag on the water ΓÇö the comparison the boat/hover/sub rows exist for.
+- No existing phase changes (every new branch is gated on the `water` flag); `_load_roadlines` always keeps home centrelines so the following vehicles' on-road phases are unaffected by the warp.
+
+**Not run-verified**: Godot binary is out-of-repo/gated here ΓÇö no live `--proving`. Verify on the laptop with `-- --proving launch,barge,skiff,box` (boats top the water phase; the box flounders).
+
+**Commit still needed** ΓÇö staging was denied. The two changed files are on disk ready to commit:
+```
+git add game/mocks/ring_vibes.gd TASKS.md
+git commit -m "feat(proving): water phase warps the course to a coastal patch"
+```
+
+2026-08-13 18:38:36  PROBLEM: the run left 2 files uncommitted. Pausing the queue so the next tick does not pile on.
+2026-08-13 18:38:36           M TASKS.md
+2026-08-13 18:38:36           M game/mocks/ring_vibes.gd
+2026-08-13 18:59:36  skip: queue PAUSED. Auto-paused 2026-08-13 18:38: a tick left work uncommitted. Review, commit or discard, then delete this file.
+2026-08-13 19:29:36  skip: queue PAUSED. Auto-paused 2026-08-13 18:38: a tick left work uncommitted. Review, commit or discard, then delete this file.
+2026-08-13 19:59:36  skip: queue PAUSED. Auto-paused 2026-08-13 18:38: a tick left work uncommitted. Review, commit or discard, then delete this file.
+2026-08-14 00:10:47  skip: queue PAUSED. Auto-paused 2026-08-13 18:38: a tick left work uncommitted. Review, commit or discard, then delete this file.
+2026-08-15 12:13:28  skip: queue PAUSED. Auto-paused 2026-08-13 18:38: a tick left work uncommitted. Review, commit or discard, then delete this file.

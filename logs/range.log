@@ -5,7 +5,7 @@ ring_vibes: DEM texture 1920x1920, mpp=46.9
 ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
 ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
 ring_vibes: tree pack — 3 variants x 4 LODs loaded
-ring_vibes: far band rebuilt around arc 0 km (457 ms)
+ring_vibes: far band rebuilt around arc 0 km (435 ms)
 ring_vibes: containment field 1500-4000m on lat -25000
 ring_vibes: containment field 1500-4000m on lat 25000
 ring_vibes: texture compression — s3tc true, bptc true, etc2 true
@@ -24,31 +24,31 @@ ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring 
 ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
 ring_vibes: 143141 OSM buildings loaded (2 styles)
 RANGE  ring R=477465m  omega=0.004342 rad/s  surface 2073 m/s
-weapon     range       hit%   group    drop   flight spin-dif     ttk
-spear       melee   reach 2.6m  arc  25deg  windup 0.42s  committed 1.12s  dps  50.0  ttk 2.62s
-blade       melee   reach 1.3m  arc  70deg  windup 0.22s  committed 0.50s  dps  69.1  ttk 1.87s
-club        melee   reach 1.5m  arc 120deg  windup 0.58s  committed 1.43s  dps  45.9  ttk 3.28s
-improvised  melee   reach 1.0m  arc  50deg  windup 0.30s  committed 0.75s  dps  25.7  ttk 4.50s
-rock       thrown   spinward    54m (3.52s)  antispin    56m (3.63s)  diff +2m  blast 0.0m  impact
-javelin    thrown   spinward    85m (3.50s)  antispin    90m (3.66s)  diff +5m  blast 0.0m  impact
-grenade    thrown   spinward    49m (3.53s)  antispin    51m (3.62s)  diff +2m  blast 6.0m  4.0s fuse
-molotov    thrown   spinward    42m (3.54s)  antispin    43m (3.62s)  diff +2m  blast 4.5m  impact
-sticky     thrown   spinward    23m (1.90s)  antispin    24m (1.95s)  diff +1m  blast 3.5m  2.5s fuse
-carbine          5m   100%   0.07m  -0.01m   0.006s    0.00m   0.26s
-carbine         10m   100%   0.10m  -0.01m   0.011s    0.00m   0.27s
-carbine         25m   100%   0.32m  -0.01m   0.028s    0.00m   0.29s
-carbine         50m    92%   0.46m   0.02m   0.056s   -0.03m   0.34s
-carbine        100m    67%   0.45m   0.11m   0.113s   -0.13m   0.50s
-carbine        200m    17%   1.48m   0.46m   0.231s   -0.41m   1.77s
-carbine        400m     0%   2.84m   2.02m   0.478s   -1.75m    --  
-RANGE spear: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE blade: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE club: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE improvised: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE rock: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE javelin: straight up -> back down 7s later, 2m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE grenade: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE molotov: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
-RANGE sticky: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+weapon     range      cold% burst%   group    drop   flight spin-dif     ttk
+carbine          5m   100%   100%   0.06m  -0.01m   0.006s    0.00m   0.26s
+carbine         10m   100%   100%   0.09m  -0.01m   0.011s    0.00m   0.27s
+carbine         25m   100%   100%   0.31m  -0.01m   0.028s    0.00m   0.29s
+carbine         50m   100%    83%   0.41m   0.02m   0.056s   -0.03m   0.36s
+carbine        100m   100%    67%   0.93m   0.11m   0.113s   -0.13m   0.50s
+carbine        200m   100%     0%   1.80m   0.46m   0.231s   -0.41m    --  
+carbine        400m    58%     0%   3.66m   2.02m   0.478s   -1.75m    --  
+bow        tension  draw 0.9s  steady 1.8s then +4 mrad/s  (drop below is the real cost)
+bow              5m   100%   100%   0.04m   0.02m   0.081s    0.00m   5.18s
+bow             10m   100%   100%   0.09m   0.11m   0.162s   -0.03m   5.26s
+bow             25m   100%   100%   0.32m   0.77m   0.406s   -0.09m   5.51s
+bow             50m    67%    42%   1.24m   3.18m   0.819s   -0.44m  13.06s
+bow            100m     8%     8%   4.26m  13.08m   1.657s   -2.09m  62.86s
+bow            200m     8%     0%  22.80m  55.11m   3.403s  -11.06m    --  
+bow            400m     0%     0%  91.58m 249.93m   7.258s  -76.34m    --  
+crossbow   tension  draw 3.4s  holds indefinitely  (drop below is the real cost)
+crossbow         5m   100%   100%   0.01m  -0.01m   0.054s    0.00m   8.05s
+crossbow        10m   100%   100%   0.03m   0.05m   0.109s    0.00m   8.11s
+crossbow        25m   100%   100%   0.17m   0.33m   0.273s   -0.03m   8.27s
+crossbow        50m    75%    83%   0.53m   1.49m   0.550s   -0.28m  10.15s
+crossbow       100m    17%     0%   2.48m   6.05m   1.111s   -1.22m    --  
+crossbow       200m     8%     0%  10.52m  25.11m   2.266s   -5.72m    --  
+crossbow       400m     0%     0%  43.97m 109.46m   4.739s  -31.78m    --  
 RANGE carbine: straight up -> back down 180s later, 18167m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE bow: straight up -> back down 14s later, 18m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE crossbow: straight up -> back down 21s later, 57m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
 RANGE done
