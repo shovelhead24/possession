@@ -79,6 +79,19 @@ Write the "what actually happened" notes into the commit message, and keep this 
       compass you found. That law makes this design work, not just layout work.
 - [ ] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
       already exists.
+- [ ] **Bake after assembly — the cost of kitbashing is object count.** Prerequisite for the recipe
+      items below, and the thing that makes them safe. A building of 12 parts kept as 12
+      MeshInstance3D nodes is 12 draw calls; a settlement of 200 is 2,400, on a GL Compatibility
+      Intel UHD target. This project has already been eaten once from the other direction -- 24k
+      trees at ~30 tris each, fixed with billboards and MultiMesh -- and a Box3D dev describes the
+      same wall from the physics side: kitbashed strongholds reaching 50,000 separate collision
+      meshes, solved by cooking them into a single pre-optimised uber shape.
+      THE RULE: assemble from parts, then bake. What must move independently stays a node; what is
+      static relative to its parent gets merged into one ArrayMesh, one surface per material, and the
+      part nodes discarded. A building's walls and roof merge. A vehicle's wheels must steer and roll
+      so they stay separate while the chassis bakes. A character's parts must follow bones, which is
+      why the existing assembler is correct FOR CHARACTERS and would be wrong copied wholesale.
+      Bake collision the same way if a physics island ever lands — one cooked shape, not 12.
 - [ ] **Unlock the assembler from Skeleton3D.** Socket becomes a Node3D by name, not a bone; the
       bone path stays as one implementation of it. This is the enabling change and everything below
       is cheap once it lands. `PartDef.bone_name` -> `socket`, `CharacterRecipe` -> `Recipe`.
