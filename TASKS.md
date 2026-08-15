@@ -665,7 +665,15 @@ behaviour, not art.
       the helpless window, dps and ttk.
       spear 2.6m/1.12s committed/50.0dps, blade 1.3m/0.50s/69.1, club 1.5m 120deg/1.43s/45.9,
       improvised 1.0m/0.75s/25.7.
-- [ ] **Melee balance needs an opponent, not a table.** The rows above show the blade beating the
+- [x] **Melee balance needs an opponent, not a table.** Added the smallest opponent that makes reach
+      and commitment pay: it closes at 2.2 m/s, swings on its own timer, and hits 1.8x harder when it
+      catches you inside your own recovery window. Simulated in the harness, not an NPC in the world
+      -- the same relationship the proving course has to actual driving.
+      **The ranking inverts, which is the whole point.** Against a static target the blade beat the
+      spear on both dps and ttk. Against something that hits back: spear wins with 57.9 hp left,
+      blade and club with 34.5, improvised loses every time. Reach buys you swings while they are
+      still walking in, and that is worth 23 hp the table could not see.
+  Superseded note: The rows above show the blade beating the
       spear on BOTH dps and ttk, which is correct arithmetic and the wrong conclusion: reach and
       commitment only pay off against something that hits back, and the range harness fires at a
       target that never does. Needs a sparring dummy that closes, swings on its own timer and

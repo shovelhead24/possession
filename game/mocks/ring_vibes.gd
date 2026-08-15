@@ -1626,6 +1626,52 @@ func _throw_flight(muzzle: float, drag_k: float, elev_mrad: float, spinward: boo
 			return {"t": t, "arc": absf(theta * R)}
 	return {"t": t, "arc": 0.0}
 
+# A SPARRING PARTNER (TASKS.md "Melee balance needs an opponent, not a table"). The melee rows were
+# measured against a target that never hits back, so the blade beat the spear on both dps and ttk --
+# correct arithmetic, wrong conclusion, because reach and commitment are only worth anything when
+# something is trying to hit you. This is the smallest opponent that makes those two parameters pay:
+# it closes, it swings on its own timer, and it punishes the window you are committed for.
+#
+# Deliberately NOT an NPC in the world -- it is a simulation inside the harness, the same way the
+# proving course is a scripted drive rather than a driver.
+const SPAR_HP := 100.0
+const SPAR_REACH := 1.4
+const SPAR_DPS := 26.0            # what it does to you while you are inside its reach
+const SPAR_SWING_S := 0.9
+const SPAR_CLOSE_MPS := 2.2       # how fast it closes the gap
+const SPAR_TRIALS := 40
+
+func _spar(wd: WeaponDef, rng: RandomNumberGenerator) -> Dictionary:
+	# One exchange from first contact. Returns whether you won and what it cost.
+	var you := 100.0
+	var them := SPAR_HP
+	var gap := 6.0                 # metres, closing
+	var t := 0.0
+	var my_cd := 0.0
+	var their_cd := SPAR_SWING_S
+	var committed := 0.0           # seconds left of your own recovery, during which you cannot avoid
+	while t < 30.0 and you > 0.0 and them > 0.0:
+		var dt := 0.05
+		t += dt
+		gap = maxf(gap - SPAR_CLOSE_MPS * dt, 0.6)
+		my_cd = maxf(my_cd - dt, 0.0)
+		their_cd = maxf(their_cd - dt, 0.0)
+		committed = maxf(committed - dt, 0.0)
+		# you swing as soon as they are inside YOUR reach -- which is the point of reach: you get to
+		# start swinging while they are still walking in
+		if my_cd <= 0.0 and gap <= wd.reach:
+			them -= wd.damage
+			my_cd = wd.cycle_s
+			committed = wd.commit_s
+		# they swing whenever you are inside THEIR reach, and a committed opponent cannot avoid it
+		if their_cd <= 0.0 and gap <= SPAR_REACH:
+			var taken: float = SPAR_DPS * SPAR_SWING_S
+			if committed > 0.0:
+				taken *= 1.8       # caught mid-recovery: the whole reason commit_s is a cost
+			you -= taken
+			their_cd = SPAR_SWING_S
+	return {"won": them <= 0.0 and you > 0.0, "t": t, "hp": maxf(you, 0.0)}
+
 func _range_run() -> void:
 	await get_tree().process_frame
 	var args := OS.get_cmdline_user_args()
@@ -1703,9 +1749,24 @@ func _range_run() -> void:
 			var swing: float = wd.windup_s + wd.commit_s
 			var dps: float = wd.damage / maxf(wd.cycle_s, 0.01)
 			var kill: float = ceil(RANGE_TARGET_HP / maxf(wd.damage, 0.001)) * wd.cycle_s + wd.windup_s
+			# and now against something that fights back
+			var srng := RandomNumberGenerator.new()
+			srng.seed = hash(wname)
+			var wins := 0
+			var hp_sum := 0.0
+			var t_sum := 0.0
+			for _i in SPAR_TRIALS:
+				var r := _spar(wd, srng)
+				if bool(r["won"]):
+					wins += 1
+				hp_sum += float(r["hp"])
+				t_sum += float(r["t"])
 			print("%-10s  melee   reach %.1fm  arc %3.0fdeg  windup %.2fs  committed %.2fs  "
 				% [wname, wd.reach, wd.arc_deg, wd.windup_s, swing]
 				+ "dps %5.1f  ttk %.2fs" % [dps, kill])
+			print("%-10s  spar    win %3.0f%%  hp left %5.1f  exchange %.1fs"
+				% [wname, float(wins) / float(SPAR_TRIALS) * 100.0,
+				hp_sum / float(SPAR_TRIALS), t_sum / float(SPAR_TRIALS)])
 			continue
 		var rng := RandomNumberGenerator.new()
 		for dist in RANGE_TARGETS:
