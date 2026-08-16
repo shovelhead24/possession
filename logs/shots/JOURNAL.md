@@ -336,3 +336,34 @@ The tick that wrote it could not launch Godot, and recorded
 - Building recipes should be treated as "renders, unverified in detail" until such a framing exists.
   Do not tick that verification note off on the strength of these two runs.
 
+---
+
+## 2026-08-16 — the silhouette framing itself (`--shots millstreet --silhouette`)
+
+**Looking for:** whether the new `--silhouette` framing actually answers the "does it read"
+question the parade could not — close, side-on, unobstructed, clean daylit sky, lit face — for the
+whole roster. This is verification of the FRAMING (the multiplier), not a judgement of any one
+recipe. The tick that wrote `--silhouette` never ran Godot; this is its first run.
+
+**Saw:** it does exactly what it was built to do. Each subject is parked to fill the frame off its
+own bounding sphere (a 5m box and a 12m airplane fill it the same), shot side-on and front
+three-quarter, with the near flank sun-lit — form, not a backlit shadow. The 30m scatter clear
+worked: nothing stands in front of any subject (the fir-tree-dead-centre problem is gone; some
+grass tufts remain on the ground but obstruct nothing). Against the parade's ~5%-of-frame dusk
+rear-quarters this is a different instrument.
+- `sixby` reads instantly as cab-and-bed; `warthog` (bespoke ref) is razor-sharp — the bar.
+- `airplane` tq: crossed plank wings, unmistakably winged.
+- `box` (no recipe): a plain slab, framed identically — the honest control.
+- `rotor`: the framing makes the known failure unarguable — a solid octagonal disc on a stalk, a
+  patio table, no mast, no blades. Exactly the next queue item's diagnosis, now trivially legible.
+- Cost stayed modest: baked chassis + separate wheels, `sil` tris 312–528 for the generated
+  recipes, warthog 19600 (its imported mesh). Frame times 8–14ms.
+
+**Fell out:**
+- The framing task is done and verified; ticked. Every recipe item after it can now be judged on a
+  close, clean read instead of squinting at a parade.
+- The building-recipe follow-up (2026-08-16 note: "cover BUILDINGS as well") is still open — this
+  pass is vehicles/roster only, matching the item's own text. A single-instance building framing is
+  a separate item, not folded in here.
+- The rotor recipe is confirmed the clearest failure and is the next queued item.
+

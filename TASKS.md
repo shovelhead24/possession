@@ -198,7 +198,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
       `& C:\Godot\Godot_v4.5.1-stable_win64.exe --headless --path C:\Games\possession\game res://mocks/ring_vibes.tscn -- --shots millstreet,java_majapahit --only ground`
       -- expect millstreet gables with visible doors + chimneys and java_majapahit joglos with a
       veranda, both still tinted per-building, and no inside-out roofs.
-- [ ] **Shot framing for silhouettes (`_shot_run`).** FELL OUT of the 2026-08-16 vehicle-recipe
+- [x] **Shot framing for silhouettes (`_shot_run`).** FELL OUT of the 2026-08-16 vehicle-recipe
       review (`logs/shots/JOURNAL.md`, `logs/shots/20260816_1134_vehicle_recipes/`). The `--vehicles`
       parade cannot answer the question it is used for. Every one of the 22 frames is rear-quarter,
       at distance, with the subject about 5% of frame in failing light -- and the same fir tree sits
@@ -212,6 +212,16 @@ Write the "what actually happened" notes into the commit message, and keep this 
       judgement, and they are all currently being reviewed through this framing.
       Do NOT re-shoot the vehicles to judge them until this exists; instrument first, per the
       journal's own standing note.
+      DONE + VERIFIED THIS TICK. The `--silhouette` branch was already implemented in ring_vibes.gd
+      (flag at 2452, `_shoot_silhouette` at 2487, `_shot_hold_cam` pin at 92/6639) -- built but never
+      run. Ran it: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet
+      --silhouette --label silhouette`. The wrapper worked and the shots
+      (`logs/shots/20260816_1625_silhouette/`) confirm the framing does its job: each subject fills
+      the frame off its own bounding sphere, side-on + three-quarter, 30m scatter cleared so nothing
+      stands in front, clean daylit sky, sun-lit flank. sixby/warthog read instantly; the rotor's
+      disc-on-stalk failure is now unarguable. Journal entry written. Scope is vehicles/roster only,
+      per the item text; the single-instance BUILDING framing (2026-08-16 journal note) stays a
+      separate open item.
 - [ ] **Rotor recipe does not read.** FELL OUT of the same review. The `rotor` recipe renders as a
       solid octagonal plate on a stalk above the body -- a patio table or a mushroom, not a
       helicopter. It is the one recipe in the set that actively misleads about what the vehicle is.
