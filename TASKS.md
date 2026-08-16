@@ -198,6 +198,29 @@ Write the "what actually happened" notes into the commit message, and keep this 
       `& C:\Godot\Godot_v4.5.1-stable_win64.exe --headless --path C:\Games\possession\game res://mocks/ring_vibes.tscn -- --shots millstreet,java_majapahit --only ground`
       -- expect millstreet gables with visible doors + chimneys and java_majapahit joglos with a
       veranda, both still tinted per-building, and no inside-out roofs.
+- [ ] **Shot framing for silhouettes (`_shot_run`).** FELL OUT of the 2026-08-16 vehicle-recipe
+      review (`logs/shots/JOURNAL.md`, `logs/shots/20260816_1134_vehicle_recipes/`). The `--vehicles`
+      parade cannot answer the question it is used for. Every one of the 22 frames is rear-quarter,
+      at distance, with the subject about 5% of frame in failing light -- and the same fir tree sits
+      dead centre, directly in front of the vehicle, in most of them. The silhouettes were *just*
+      legible; that is not good enough for a judgement call that is entirely about appearance.
+      A silhouette question wants: close, side-on, unobstructed, against clean sky, sun not behind
+      the subject. Suggest a `--silhouette` framing that parks the camera at a fixed offset from the
+      subject's bounding box (so every vehicle fills the frame the same regardless of length),
+      shoots side-on and three-quarter, and either lifts above the canopy or clears scatter within a
+      small radius first. This is a MULTIPLIER -- every recipe item after it is a "does it read"
+      judgement, and they are all currently being reviewed through this framing.
+      Do NOT re-shoot the vehicles to judge them until this exists; instrument first, per the
+      journal's own standing note.
+- [ ] **Rotor recipe does not read.** FELL OUT of the same review. The `rotor` recipe renders as a
+      solid octagonal plate on a stalk above the body -- a patio table or a mushroom, not a
+      helicopter. It is the one recipe in the set that actively misleads about what the vehicle is.
+      Silhouette-first (aesthetic.md): what says "rotorcraft" is a THIN horizontal line held well
+      above a body, plus a mast -- not a filled disc, and not one that wide relative to the chassis.
+      Two or four thin blade boxes on a short mast, at a smaller radius. Cheap: it is a change to one
+      entry in `VEHICLE_RECIPES`, not to the recipe system.
+      While in there: `tractor` is currently told apart from the plain box by TINT rather than shape,
+      which passes "is it different" and fails "is it a tractor". Lower priority than the rotor.
 - [ ] **Weapon recipes.** A receiver with barrel/stock/sight/magazine sockets. Fourteen weapons
       currently share zero geometry; the tech tree is a shape argument as much as a stats one, and
       a musket and an SMG should read as related-but-not-the-same at a glance.

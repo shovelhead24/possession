@@ -1,6 +1,6 @@
-STATE=running
-DETAIL=Read ring_vibes.gd
+STATE=idle
+DETAIL=done, 7 items left
 ITEM=- [ ] **Building recipes.** `_build_buildings` places one box with a roof. Sockets for wall, roof,
 BRANCH=semi-attended
 STARTED=2026-08-16 11:31:15
-UPDATED=2026-08-16 11:33:31
+UPDATED=2026-08-16 11:46:35
