@@ -416,3 +416,30 @@ glance." First run of a thing built this tick; needed a look, not a number.
 - Minor cosmetic: the musket's buttstock leaves a ~9cm gap to the lock (socket offsets), and the
   parade floats each weapon against distant terrain rather than clean sky (looking level at 50m). Both
   legible as-is; not worth a follow-up item unless a later pass wants presentation-grade frames.
+
+
+## 2026-08-16 — structure recipes, dock port on screen (`--shots millstreet --only dock --label structure_dock`)
+
+**Looking for:** whether the dock port, converted from an inline spine+collar+struts weld to a
+`STRUCTURE_RECIPES` data entry (baked to one mesh via the shared assembler), still renders correctly.
+The conversion was written by a prior tick that died dirty before running it — committed as wip
+(232ce38), item left unticked. This run is the missing verification: does the recipe-built dock read
+as the built structure it did before, or did the assembler/bake path break the geometry?
+
+**Saw:** it reads, identical to the old hand-welded port.
+- **Spine** — the dark hull-grey girder reaching up toward the axis, running off the top of frame:
+  "the bottom of something much larger," as intended.
+- **Collar** — the horizontal ring across the middle, with the emissive **cyan lamp panels
+  alternating with dark hull segments** exactly as the old `i % 2` did. The alternation is what makes
+  roll and range legible, and it survived the vertex-colour→shared-material move cleanly.
+- **Struts** — the shorter members tying the collar back to the spine, visible between the lit panels
+  and the central spine.
+- One baked mesh (two surfaces: hull + lamp). Frame tris 115660 total, ~32 fps on the Intel UHD; the
+  port itself is the placeholder ~200-tri geometry, the rest is the settlement behind it.
+- No GDScript errors at scene load — the `_build_structure`→`CharacterAssembler.apply`→`MeshBaker.bake`
+  path (fourth consumer of the Skeleton3D-unlocked assembler) runs clean.
+
+**Fell out:**
+- Structure-recipes item done + ticked. The recipe format (radial `ring` repeat with `count`/`radius`/
+  `alt_mat`) is in place for "whatever else gets hand-built next"; nothing else is hand-built to
+  convert right now, so the forward half of the item is groundwork, not outstanding work.

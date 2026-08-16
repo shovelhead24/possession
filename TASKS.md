@@ -259,8 +259,22 @@ Write the "what actually happened" notes into the commit message, and keep this 
       same (the item's named test PASSES), and bow/crossbow/grenade/mlrs/etc. all read distinct. Tris
       36–300, one baked mesh each. Journal entry written. Minor cosmetic notes (musket wrist gap; parade
       backdrop is distant terrain not clean sky) logged in the journal, not worth a follow-up item.
-- [ ] **Structure recipes.** The dock port, and whatever else gets hand-built next. It is already
+- [x] **Structure recipes.** The dock port, and whatever else gets hand-built next. It is already
       spine + collar + struts; that is a recipe written in GDScript instead of data.
+      The conversion was written by a prior tick (committed as wip 232ce38 when that run died dirty)
+      but never RUN — item left unticked for verification. This tick ran it. `STRUCTURE_RECIPES` (the
+      fourth consumer of the Skeleton3D-unlocked assembler) holds the `dock` entry as data: spine +
+      collar + struts, with a `ring` field that radially repeats a part `count` times at `radius`
+      facing outward and alternates `alt_mat` on odd segments (the lit-panel run on the collar).
+      `_build_structure` assembles via the shared `CharacterAssembler.apply` and bakes to one mesh
+      (two surfaces: hull + lamp); the old inline weld in `_build_walls` is gone, replaced by
+      `_build_structure("dock")`. Geometry data matches the old weld exactly. VERIFIED VISUALLY via
+      `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet --only dock
+      --label structure_dock` (wrapper accepted): `logs/shots/20260816_2148_structure_dock/
+      millstreet_dock.png` shows the spine reaching toward the axis, the collar with cyan lamp panels
+      alternating with hull, and the struts between — identical to the hand-welded port, no scene-load
+      error. Journal entry written. Forward half ("whatever else gets hand-built next") is groundwork;
+      nothing else is hand-built to convert right now.
 - [ ] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.
 - [ ] **Progression rules.** The player ARRIVES from a spacefaring civilisation and gets stripped of
       it (`the-toll` in docs/vignettes.md). The tree is therefore about RECOVERING capability, not
