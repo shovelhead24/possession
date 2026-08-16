@@ -288,3 +288,74 @@ Write the "what actually happened" notes into the commit message, and keep this 
       BLOCKED (2026-08-13): `docs/draws.md` exists as design but there is no draws or settlement
       system in the engine at all, so this would mean inventing salvage/trade/ownership from scratch
       rather than wiring up something that exists. Needs the draws work first.
+
+## Queued 2026-08-16 — decided by the user, in answer to a direct ask
+
+- [ ] **Extend `--silhouette` to buildings and structures.** The framing built for vehicles is the
+      only thing in the harness that can answer a "does this read" question about an object, and it
+      only knows about the vehicle roster. Buildings and structures have the same problem and no
+      such framing: `building recipes` shipped with a door, a chimney and a veranda that **nobody
+      has ever seen** -- the `ground` framing it recorded to verify itself contains no buildings at
+      all, and from `air` a door is sub-pixel (`logs/shots/JOURNAL.md`, 2026-08-16).
+      Same treatment: close, side-on and three-quarter, camera offset from the subject's bounding
+      box so every subject fills the frame regardless of size, scatter cleared, clean sky.
+      Subjects: one instance of each building style (gable, meru) and each structure (the dock port).
+      Then USE it -- confirm the gable's door and chimney and the meru's veranda are actually there,
+      and write the entry.
+- [ ] **Rotor fuselage.** The blade fix (5afe963) worked: mast, main blades and tail rotor read as
+      rotorcraft parts. The body under them did not change, so the whole still reads as a flatbed
+      truck with a propeller bolted on rather than a helicopter. Silhouette-first: a rotorcraft is a
+      SHORT, TALL fuselage sitting on skids, not a long low bed on four wheels. Give the `rotor`
+      recipe its own body proportions and swap the wheels for skids.
+      Scoped deliberately to the rotor. The `tractor` has a milder version of the same problem --
+      told apart from the plain box by tint rather than shape -- and is NOT part of this item.
+- [ ] **Verification sweep of every "NOT runtime-tested" note.** For most of this project's life the
+      tick could not launch Godot (the allowlist granted a command spelling nobody types -- fixed in
+      764bf46), so item after item shipped with a note saying it had not been run. Those notes are
+      now checkable for the first time. Go through `TASKS.md` and `TASKS-done.md`, collect every item
+      carrying "NOT runtime-tested" / "NOT run-verified" / "verify on laptop", run the harness or
+      selftest each one names, and record the result against it -- passed, failed, or no longer
+      applicable because the code moved.
+      This is not busywork: the first three such notes checked on 2026-08-16 turned up a HEAD that
+      did not compile at all (31e0132), which had been shipped past by three consecutive items.
+      Fix what is cheap and obviously broken; raise a new item for anything that is not.
+- [ ] **Replace `ebro_delta` and `savannah` with candidates that survive 84 km.** Both are live in
+      the ring serving terrain that contradicts their catalogued biome: `ebro_delta` was scouted as a
+      flat delta (p99 37 m) and now measures 1..1209 m, having re-acquired the Els Ports foothills --
+      the exact failure the 2026-07-23 re-centring already fixed once. `savannah` was p99 21 m and is
+      now 1..406 m.
+      **THIS ITEM CARRIES EXPLICIT AUTHORISATION** to drop those two, which the standing rule at the
+      top of this file otherwise forbids ("never re-centre or refetch a patch unprompted"). The
+      authorisation covers `ebro_delta` and `savannah` ONLY. Do not touch any other patch.
+      THE TRAP, which is the whole difficulty: `docs/terrain/splice-portfolio.md` establishes that
+      small tightly-framed features -- delta plains, city footprints, single valleys -- do not
+      survive a 4x widening, because the surrounding region reasserts itself. So swapping in another
+      delta and another city REPRODUCES THE BUG. The real question is whether an 84 km patch of a
+      "Metro/city" biome means a city, or a city and its hinterland -- and if it is the latter, the
+      catalogue entry is what needs rewriting, not the location. Answer that before scouting.
+      Note the coverage cost: Metro/city has only two candidates (`cork_city`, `savannah`) and is
+      already flagged thin, so dropping `savannah` leaves one. Delta marsh has `camargue` and
+      `danube_delta` cataloged but unscouted -- and both are subject to the same widening trap.
+      Scout at the 84 km footprint, not at 22 km. Propose with `tools/dem/patch_census.py`; the image
+      decides.
+- [ ] **Edge feathering at patch boundaries.** The known fix for the remaining boundary steps: near a
+      boundary, sample both patches and lerp by edge proximity. Never attempted because it needs
+      visual iteration to judge blend width, and the last attempt at it was unattended.
+      DEPENDS ON the `--silhouette`-style close framing work above -- a blend width cannot be judged
+      from a landscape framing at altitude. Produce a comparison strip at several blend widths and
+      put it in the journal for a human to choose from. **Do not pick the width unattended.**
+      Related and separate: patches OVERLAP by ~7 km (91.3 km average width, 84 km spacing) and
+      `patch_at()` returns the first match by index, so the lower-indexed patch wins the whole
+      overlap band. That is the same seam problem in its sharpest form.
+- [ ] **OSM roads for `cork_city`.** `pipeline.py` deliberately skips `fetch_osm_roads.py` because
+      Overpass is rate-limited and 33 unattended queries risks an IP ban. Do this one deliberately
+      and throttled. Cork's organic (non-grid) street character is currently asserted from real-world
+      knowledge, never verified against actual OSM data.
+      `savannah`'s roads were part of this task and are DEFERRED: the replace item above may delete
+      that patch entirely, and fetching roads for a patch that is about to be dropped spends a
+      rate-limited budget on nothing.
+- [ ] **Height calibration against real DEM terrain.** No haze or boundary-layer height has ever been
+      tuned against the real terrain -- every value in `ring_vibes.gd` was picked ad hoc against
+      whichever terrain, noise or real, happened to be loaded that session. This is the missing
+      groundwork under the atmosphere-density decision (`.decisions/world.md`), which has a shape but
+      no real numbers. Needs a dedicated pass with the ring height-scale otherwise settled.

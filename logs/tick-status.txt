@@ -1,6 +1,6 @@
-STATE=idle
-DETAIL=done, 7 items left
-ITEM=- [ ] **Building recipes.** `_build_buildings` places one box with a roof. Sockets for wall, roof,
+STATE=running
+DETAIL=Read ring_vibes.gd
+ITEM=- [ ] **Deployable** ? mines, sensors, a tripod turret. Placed, then persistent.
 BRANCH=semi-attended
-STARTED=2026-08-16 11:31:15
-UPDATED=2026-08-16 11:46:35
+STARTED=2026-08-16 21:51:15
+UPDATED=2026-08-16 21:52:04
