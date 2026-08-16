@@ -268,3 +268,39 @@ looks like on approach.
   each frame, right for procedural cylinders and wrong for imported ones, and for imported wheels the
   steer write then wiped the roll. The axle is now derived from geometry (shortest local AABB axis).
 
+---
+
+## 2026-08-16 — vehicle recipes, first look (`--shots millstreet --vehicles`)
+
+**Looking for:** whether the kitbash recipe system (4d6dec1) actually produces different silhouettes,
+or whether the twenty-one recipe-less rows still photograph the same. This is the first
+run-verification of that item — the tick that wrote it could not launch Godot, same gate as the three
+items before it.
+
+**Saw:**
+- **The mechanism works.** `sixby` (flatbed) reads as a genuine cab-and-bed: tall dark cab, tan bed
+  behind it. Against `box` (no recipe — a low flat slab) that is real variety off shared parts, and
+  the wheels stayed separate through the bake as intended.
+- **`rotor` does not read.** It is a solid octagonal plate sitting on a stalk above the body: a
+  mushroom, or a patio table. No mast, no blades, and the disc is far too large relative to the
+  chassis. It is the clearest failure in the set and the one recipe that actively misleads.
+- **`airplane` reads adequately** — flat plank wings crossing a body. Crude, but unmistakably a
+  winged thing, which is all a placeholder owes.
+- **`tractor` is distinguished mainly by TINT, not shape.** A green box with a slightly taller cab.
+  It passes the "is it different" test and fails the "is it a tractor" one.
+- Reference point: `warthog`, which has a bespoke imported mesh, reads instantly. That is the bar,
+  and the gap between it and the generated recipes is mostly about part shapes, not the system.
+
+**Fell out:**
+- **The rotor recipe needs a mast and thin blades, not a disc.** Silhouette-first (aesthetic.md):
+  the thing that says "helicopter" is a thin horizontal line high above a body, not a filled plate.
+- **The parade framing does not answer the question it is used for.** Every vehicle is shot
+  rear-quarter, at distance, occupying roughly 5% of frame, in failing light — and the same fir tree
+  sits dead centre, directly in front of the subject, in most of the 22 frames. I could just about
+  judge these silhouettes; I should not have had to. A silhouette question wants a close, side-on,
+  unobstructed framing against clean sky. That is a harness change, not a vehicle change, and it
+  belongs to whoever next touches `_shot_run` — deliberately not done here because a queue tick was
+  live inside `ring_vibes.gd` at the time.
+- Confirmed `--shots` cannot run headless: it captures from a live viewport, so `--headless` writes
+  black frames. Now stated in the tick prompt.
+
