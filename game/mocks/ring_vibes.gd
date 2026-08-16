@@ -3529,50 +3529,11 @@ func _build_walls() -> void:
 	# cyan rectangle pasted on the sky, the same failure as the tree billboards. A docking port is the
 	# one piece of builders' architecture the player ever gets close to, so it has to read as built:
 	# a spine along the approach axis, a docking collar you aim INTO, and radial struts that give the
-	# eye something to judge range and roll against. Still placeholder geometry, but dimensional --
-	# roughly 300 triangles, authored directly per substrate.md gate 5.
-	var port := Node3D.new()
+	# eye something to judge range and roll against. Placeholder but dimensional (~200 triangles) --
+	# now a STRUCTURE_RECIPES entry (data, not inline welds) baked to one mesh, the same spine/collar/
+	# struts expressed like the vehicle/building/weapon recipes, per substrate.md gate 5.
+	var port := _build_structure("dock")
 	add_child(port)
-	var hull := StandardMaterial3D.new()
-	hull.albedo_color = Color(0.30, 0.33, 0.38)
-	hull.metallic = 0.6
-	hull.roughness = 0.45
-	var lamp := StandardMaterial3D.new()
-	lamp.albedo_color = Color(0.20, 0.55, 0.75)
-	lamp.emission_enabled = true
-	lamp.emission = Color(0.5, 0.9, 1.0)
-	lamp.emission_energy_multiplier = 1.1   # 3.0 blew the panels to flat white against black sky
-	# spine: the structure continues toward the axis, so it reads as the bottom of something much larger
-	var spine := MeshInstance3D.new()
-	var sbm := BoxMesh.new()
-	sbm.size = Vector3(26.0, 320.0, 26.0)
-	spine.mesh = sbm
-	spine.material_override = hull
-	# the collar is the capture point, so the spine runs UP from it toward the axis rather than
-	# straddling it -- otherwise you soft-capture into the middle of a girder
-	spine.position = Vector3(0.0, 172.0, 0.0)
-	port.add_child(spine)
-	# collar: eight segments around the approach axis -- the ring you fly into, and the thing that
-	# makes roll and range legible at a glance
-	for i in 8:
-		var a := TAU * float(i) / 8.0
-		var seg := MeshInstance3D.new()
-		var cbm := BoxMesh.new()
-		cbm.size = Vector3(34.0, 12.0, 12.0)
-		seg.mesh = cbm
-		seg.material_override = hull if i % 2 == 0 else lamp
-		seg.position = Vector3(sin(a) * 62.0, 0.0, cos(a) * 62.0)
-		seg.rotation.y = -a
-		port.add_child(seg)
-		# strut back to the spine
-		var strut := MeshInstance3D.new()
-		var tbm := BoxMesh.new()
-		tbm.size = Vector3(52.0, 5.0, 5.0)
-		strut.mesh = tbm
-		strut.material_override = hull
-		strut.position = Vector3(sin(a) * 34.0, 0.0, cos(a) * 34.0)
-		strut.rotation.y = -a
-		port.add_child(strut)
 	# Orient the spine along RING UP (toward the axis), not world up. They coincide at DOCK_ARC 0 and
 	# nowhere else, so building the basis properly means moving the port later is a constant change
 	# rather than a bug. Basis() takes COLUMNS.
@@ -5977,6 +5938,102 @@ const WEAPON_RECIPES := {
 		{"slot": "top",  "socket": "body", "kind": "cyl", "size": Vector3(0.030, 0.05, 0.030), "pos": Vector3(0, 0.08, 0), "tint": Color(0.42, 0.43, 0.47)},
 	],
 }
+
+# STRUCTURE RECIPES. Fourth consumer of the Skeleton3D-unlocked assembler (characters, vehicles,
+# buildings, weapons -- now structures). The dock port was spine + collar + struts welded inline;
+# this is the same three pieces expressed as DATA, per the item. Everything is static relative to
+# the core axis, so the assembled kitbash bakes to one mesh (one surface per material). A `ring`
+# field radially repeats a part `count` times around the core at `radius`, facing outward, and can
+# alternate to a second material (`alt_mat`) on odd segments -- that lit-panel alternation is what
+# makes roll and range legible on the collar. `mat` names a material from _structure_materials.
+const STRUCTURE_RECIPES := {
+	# dock -- an axis-structure docking port. A spine reaching on toward the ring axis (so it reads as
+	# the bottom of something much larger), a capture collar of eight segments you aim INTO, and radial
+	# struts tying the collar back to the spine. Core-local frame: +y toward the axis; the caller
+	# orients the whole thing along ring-up. Geometry matches the old inline weld exactly.
+	"dock": [
+		{"slot": "spine",  "socket": "core", "kind": "box", "size": Vector3(26.0, 320.0, 26.0), "pos": Vector3(0.0, 172.0, 0.0), "mat": "hull"},
+		{"slot": "collar", "socket": "core", "kind": "box", "size": Vector3(34.0, 12.0, 12.0),   "pos": Vector3.ZERO, "mat": "hull", "ring": {"count": 8, "radius": 62.0, "alt_mat": "lamp"}},
+		{"slot": "strut",  "socket": "core", "kind": "box", "size": Vector3(52.0, 5.0, 5.0),      "pos": Vector3.ZERO, "mat": "hull", "ring": {"count": 8, "radius": 34.0}},
+	],
+}
+
+func _structure_materials() -> Dictionary:
+	# One shared instance per material, so the baker groups every part into just two surfaces. hull is
+	# the girderwork; lamp is the emissive panel that alternates around the collar. Same values the
+	# inline dock port used, so the render is unchanged -- only the authoring moved to data.
+	var hull := StandardMaterial3D.new()
+	hull.albedo_color = Color(0.30, 0.33, 0.38)
+	hull.metallic = 0.6
+	hull.roughness = 0.45
+	var lamp := StandardMaterial3D.new()
+	lamp.albedo_color = Color(0.20, 0.55, 0.75)
+	lamp.emission_enabled = true
+	lamp.emission = Color(0.5, 0.9, 1.0)
+	lamp.emission_energy_multiplier = 1.1   # 3.0 blew the panels to flat white against black sky
+	return {"hull": hull, "lamp": lamp}
+
+func _build_structure(key: String) -> Node3D:
+	# Assemble a named structure recipe onto a core chassis via the SHARED assembler, then bake the
+	# static kitbash to one mesh -- a handful of surfaces, not a node per strut. Returns the root; the
+	# caller positions and orients it (the dock is stood up along ring-up toward the axis).
+	var root := Node3D.new()
+	root.name = "structure_" + key
+	var core := Node3D.new()
+	core.name = "core"
+	root.add_child(core)
+	_apply_structure_recipe(root, key)
+	MeshBaker.bake(root)
+	return root
+
+func _apply_structure_recipe(root: Node3D, key: String) -> void:
+	var specs: Array = STRUCTURE_RECIPES.get(key, [])
+	var mats := _structure_materials()
+	var recipe := Recipe.new()
+	recipe.body_plan = "structure"
+	for spec: Dictionary in specs:
+		var ring: Dictionary = spec.get("ring", {})
+		if ring.is_empty():
+			_add_structure_part(recipe, spec["slot"], spec, spec.get("pos", Vector3.ZERO), Vector3.ZERO, spec.get("mat", "hull"), mats)
+			continue
+		# Radially repeat this part around the core axis, one PartDef per segment (unique slot), each
+		# facing outward (rotation.y = -a, matching the old `seg.rotation.y = -a`).
+		var count: int = ring.get("count", 1)
+		var radius: float = ring.get("radius", 0.0)
+		var alt: String = ring.get("alt_mat", "")
+		for i in count:
+			var a := TAU * float(i) / float(count)
+			var pos: Vector3 = spec.get("pos", Vector3.ZERO) + Vector3(sin(a) * radius, 0.0, cos(a) * radius)
+			var mat_key: String = alt if (alt != "" and i % 2 == 1) else spec.get("mat", "hull")
+			_add_structure_part(recipe, "%s_%d" % [spec["slot"], i], spec, pos, Vector3(0.0, -rad_to_deg(a), 0.0), mat_key, mats)
+	CharacterAssembler.apply(root, recipe)
+
+func _add_structure_part(recipe: Recipe, slot: String, spec: Dictionary, pos: Vector3, rot: Vector3, mat_key: String, mats: Dictionary) -> void:
+	var pd := PartDef.new()
+	pd.slot = slot
+	pd.socket = spec.get("socket", "core")
+	pd.mesh = _structure_part_mesh(spec, mats.get(mat_key, mats["hull"]))
+	pd.offset_position = pos
+	pd.offset_rotation_degrees = rot
+	recipe.parts[slot] = pd
+
+func _structure_part_mesh(spec: Dictionary, mat: Material) -> Mesh:
+	# tinted box | 12-segment cylinder, same generator shape as the vehicle/weapon parts but drawing its
+	# material from the shared _structure_materials set (so parts merge to one surface per material).
+	var size: Vector3 = spec.get("size", Vector3.ONE)
+	if spec.get("kind", "box") == "cyl":
+		var cm := CylinderMesh.new()
+		cm.radial_segments = 12
+		cm.rings = 1
+		cm.height = size.y
+		cm.top_radius = size.x * 0.5
+		cm.bottom_radius = size.x * 0.5
+		cm.material = mat
+		return cm
+	var bm := BoxMesh.new()
+	bm.size = size
+	bm.material = mat
+	return bm
 
 func _build_vehicle_defs() -> void:
 	# Turn each data row into a typed VehicleDef, applying the row over the resource's defaults.
