@@ -97,7 +97,22 @@ function Clean($t) {
 function Say($m) {
     $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $(Clean $m)"
     Write-Host $line
-    Add-Content -Path $log -Value $line -Encoding utf8
+    # A LOCKED LOG MUST NOT COST A DAY OF FORENSICS. On 2026-08-16 an interactive session armed a
+    # `tail -f` on this file to watch tick outcomes; the watcher timed out but the tail process
+    # outlived it and kept the handle. Every Add-Content from 11:48 onward threw "cannot access the
+    # file because it is being used by another process", and because $ErrorActionPreference is
+    # Continue the ticks carried on working perfectly while writing nothing down. Nine and a half
+    # hours and six completed items left no log at all -- the third time this project has lost a
+    # long run to a write that failed quietly (see the tab-in-path bug, b6d2dea).
+    # Retry first: most contention is momentary. If it is not, write to a sideband file rather than
+    # drop the line -- a split log is a nuisance, an empty one is a lost day.
+    for ($i = 0; $i -lt 3; $i++) {
+        try { Add-Content -Path $log -Value $line -Encoding utf8 -ErrorAction Stop; return }
+        catch { Start-Sleep -Milliseconds 120 }
+    }
+    try {
+        Add-Content -Path ($log -replace '\.log$', '-locked.log') -Value $line -Encoding utf8 -ErrorAction Stop
+    } catch { }
 }
 
 function Dirt { @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" } }
