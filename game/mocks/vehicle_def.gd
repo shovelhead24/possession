@@ -19,6 +19,12 @@ extends Resource
 @export var length := 4.2          # nose-to-tail metres -- sizes the placeholder box and its wheelbase
 @export var tint := Color(0.33, 0.36, 0.30)  # placeholder body colour, so cycling reads as a change
 
+# Kitbash recipe (see ring_vibes.VEHICLE_RECIPES): names a set of parts hung off the chassis sockets
+# (roof/nose/tail/bed/wing) via the shared CharacterAssembler, then baked to one mesh. This is what
+# turns the identical placeholder box into per-row silhouettes -- a turret, a cab-and-bed, a rotor, a
+# wing -- for the cost of a few shared parts. "" = plain box (every car/bike row, and the fallback).
+@export var recipe := ""
+
 # mass / buoyancy / lift are carried for the classes below (hover, boat, air) that will read them.
 # The wheeled model does not touch them yet -- the handling physics is under a no-change gate, so
 # they are a data contract here, not a behaviour change.

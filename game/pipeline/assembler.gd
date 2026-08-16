@@ -19,13 +19,19 @@ static func assemble(recipe: Recipe) -> Node3D:
 		push_error("CharacterAssembler: template '%s' has no Node3D root" % recipe.body_plan)
 		return null
 
+	return apply(root, recipe)
+
+# Attach a recipe's parts onto an EXISTING root that already carries the named sockets. Used when the
+# root is built in code (a vehicle chassis, a structure) rather than instantiated from a template.
+static func apply(root: Node3D, recipe: Recipe) -> Node3D:
+	if not root or not recipe:
+		return root
 	for slot: String in recipe.parts:
 		var part_def: PartDef = recipe.parts[slot]
 		if not part_def or not part_def.mesh:
 			continue
 		var mat: Material = recipe.material_overrides.get(slot, null)
 		_attach_part(root, part_def, mat)
-
 	return root
 
 static func _attach_part(root: Node3D, part: PartDef, mat: Material) -> void:
