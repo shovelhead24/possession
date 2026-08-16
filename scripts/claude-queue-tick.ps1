@@ -299,11 +299,17 @@ new docs unless the item asks for one. Verify visually with `-- --shots <patch>`
 visual, and check whether a feature already exists before building it. If the top item is blocked,
 note why in TASKS.md and take the next one. Keep output short.
 
-Godot is at C:\Godot\Godot_v4.5.1-stable_win64.exe and you ARE allowed to run it. Verify your work
-by running it -- the harnesses are `-- --selftest`, `-- --proving`, `-- --range` and `-- --shots
-<patch>`. Example:
-  & "C:\Godot\Godot_v4.5.1-stable_win64.exe" --headless --path "C:\Games\possession\game" res://mocks/ring_vibes.tscn -- --selftest
+You ARE allowed to run Godot, but ONLY through the wrapper, and the exact spelling matters. Run it
+as `scripts/godot.cmd` from the repo root, with no quotes, no `&` call operator and no absolute
+path -- those forms are refused, which is why four items in a row shipped unverified. Example:
+  scripts/godot.cmd --headless --path game res://mocks/ring_vibes.tscn -- --selftest
+The harnesses are `-- --selftest`, `-- --proving`, `-- --range` and `-- --shots <patch>`. Note that
+`--shots` captures from a live viewport, so it needs a real window -- omit `--headless` for it.
+There are also script selftests: `scripts/godot.cmd --headless --path game -s res://tests/<name>.gd`
+(assembler_test, bake_test, damage_test all currently pass).
 A change that has not been run is not finished; say so plainly in TASKS.md if you could not run it.
+If the wrapper is refused, say so explicitly in your summary and name the exact command you tried --
+do not silently fall back to shipping unverified work.
 '@
 
 # BROADENED THREE TIMES, each because the narrow version was silently refusing the tick. The third:
@@ -342,6 +348,9 @@ $sb = New-Object System.Text.StringBuilder
 $acts = 0
 & claude -p $prompt --permission-mode acceptEdits --output-format stream-json --verbose `
     --allowedTools 'Bash(git:*)' 'PowerShell(git:*)' `
+    'Bash(scripts/godot.cmd:*)' 'Bash(./scripts/godot.cmd:*)' `
+    'PowerShell(scripts\godot.cmd:*)' 'PowerShell(.\scripts\godot.cmd:*)' `
+    'Bash(C:/Godot/Godot_v4.5.1-stable_win64.exe:*)' `
     'Bash(C:\Godot\Godot_v4.5.1-stable_win64.exe:*)' 'PowerShell(C:\Godot\Godot_v4.5.1-stable_win64.exe:*)' 2>&1 |
     ForEach-Object {
         $line = $_
