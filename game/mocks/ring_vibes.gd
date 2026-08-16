@@ -89,6 +89,7 @@ var _wall_shadow_soft := 220.0      # penumbra width at the wall-shadow edge, me
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
 var sun_paused := false
+var _shot_hold_cam := false       # --silhouette pins the camera; stop the chase cam fighting it
 
 var _cam: Camera3D
 var _hud: Label
@@ -2244,7 +2245,7 @@ func _shot_run() -> void:
 	var oi := args.find("--only")
 	if oi >= 0 and oi + 1 < args.size() and not args[oi + 1].begins_with("--"):
 		only = Array(args[oi + 1].split(","))
-	var want_vehicles := args.has("--vehicles")
+	var want_vehicles := args.has("--vehicles") or args.has("--silhouette")
 	var wi := args.find("--wall")
 	if wi >= 0 and wi + 1 < args.size():
 		wall_top_h = float(args[wi + 1])
@@ -2428,7 +2429,7 @@ func _shot_run() -> void:
 	# OPT-IN (`--vehicles`): this is a whole-roster parade, and it was running on every landscape
 	# question anybody asked.
 	if not want_vehicles:
-		print("SHOT vehicles skipped (pass --vehicles for the roster parade)")
+		print("SHOT vehicles skipped (pass --vehicles for the roster parade, --silhouette for the recipe read)")
 		if _hud: _hud.visible = true
 		if _perf: _perf.visible = true
 		get_tree().quit()
@@ -2441,6 +2442,26 @@ func _shot_run() -> void:
 	_cam.position = cpos + _ring_up(cpos) * 6.0
 	for _k in 30:
 		await get_tree().process_frame
+	# SILHOUETTE PARADE (`--silhouette`). The rear-quarter chase framing below cannot answer the one
+	# question the vehicle recipes exist to pass -- "does this read as a tractor / a helicopter" -- and
+	# it was being used for exactly that (2026-08-16 journal): every subject ~5% of frame, at distance,
+	# in failing light, with a fir tree parked dead centre in most frames. This framing instead sits the
+	# camera at a fixed offset from each vehicle's own bounding SPHERE (so length does not change how
+	# much of frame it fills), shoots side-on and front three-quarter, clears the scatter within a small
+	# radius so nothing stands in front, and lights the visible face rather than backlighting it.
+	if args.has("--silhouette"):
+		sun_angle = 0.5   # a high mid-morning at home (arc ~0): clean daylight, not the parade's dusk
+		for vi in _vehicles.size():
+			_select_vehicle(vi)
+			for _k in 16:
+				await get_tree().process_frame   # let the suspension settle the body onto the ground
+			await _shoot_silhouette(vi, dir)
+		_shot_hold_cam = false
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
 	for vi in _vehicles.size():
 		_select_vehicle(vi)
 		for _k in 24:
@@ -2462,6 +2483,58 @@ func _shot_run() -> void:
 	if _perf: _perf.visible = true
 	print("SHOTS done")
 	get_tree().quit()
+
+func _shoot_silhouette(vi: int, dir: String) -> void:
+	# Two framings per vehicle -- side-on and front three-quarter -- each parked at a fixed offset from
+	# the subject's bounding SPHERE. The sphere (not the box) makes the fit independent of view angle and
+	# of which axis is longest, so a 4m box and a 12m airplane both fill the frame the same. See the
+	# 2026-08-16 journal entry that this framing fell out of; it is the multiplier that lets every recipe
+	# after it be judged on "does it read".
+	_shot_hold_cam = true
+	# Clear the scatter in a small radius so nothing stands between camera and subject (the fir-tree-dead-
+	# centre problem). Reuse the trample set: mark near trees down and rebuild the LOD buckets, which
+	# already skip downed indices. Cheap on repeat -- every vehicle parks at the same spot, so after the
+	# first pass the guard finds them already down and does no rebuild.
+	var cpos := _car.global_position
+	var cleared := 0
+	for i in _tree_ground.size():
+		if not _tree_down.has(i) and cpos.distance_squared_to(_tree_ground[i]) < 30.0 * 30.0:
+			_tree_down[i] = true
+			cleared += 1
+	if cleared > 0:
+		_update_tree_lod(true)
+	var local := _model_aabb(_car)
+	var xf := _car.global_transform
+	var basis := xf.basis.orthonormalized()          # strip any body pitch/roll drift's scale, keep facing
+	var center := xf * local.get_center()
+	var up := _ring_up(center)
+	var rad: float = maxf(0.5 * local.size.length(), 0.5)
+	# Sun not behind the subject: shoot from whichever flank the sun lights, so the near face reads as
+	# form rather than a flat backlit shadow. to_sun is world-space near the home arc, where the parade is.
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	var side: float = 1.0 if basis.x.dot(to_sun) >= 0.0 else -1.0
+	var fov := 42.0                                  # narrow: less perspective stretch on a close subject
+	var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.15   # margin so the silhouette clears the edges
+	var vname: String = _vehicles[vi]["name"]
+	# local -Z is the vehicle's forward (see _make_warthog); +y lifts the eye so the roofline reads
+	var views := [
+		{"n": "side", "off": Vector3(side, 0.16, 0.0)},
+		{"n": "tq", "off": Vector3(side * 0.82, 0.28, -0.55)},
+	]
+	for v in views:
+		var off: Vector3 = (v["off"] as Vector3).normalized()
+		_cam.fov = fov
+		_cam.global_position = center + (basis * off) * dist
+		_cam.look_at(center, up)
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		var path := "%s/sil_%s_%s.png" % [dir, vname, v["n"]]
+		get_viewport().get_texture().get_image().save_png(path)
+		print("SHOT sil %-10s %-4s tris=%-6d scene=%-7d %s  %s" % [vname, str(v["n"]),
+			_node_tris(_car) if _car != null else 0,
+			RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
+			await _measure_frame_ms(8), path])
+	_shot_hold_cam = false
 
 func _align_sweep() -> void:
 	# `-- --align` sweeps a GRID of sample points across every patch and checks that the CPU and the
@@ -6561,9 +6634,12 @@ func _drive_tick(delta: float) -> void:
 	# framing it had on the surface. _dive is 0 for every other class, so this is a no-op for them.
 	# lift the chase cam with a climbing flyer so it keeps its framing instead of craning up at the aircraft;
 	# _altitude is 0 for every non-air class, so this is a no-op for them (as _dive is for non-subs).
-	var cam_target: Vector3 = cam_ground + cam_up * (5.0 - _dive + _altitude)
-	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-6.0 * delta))
-	_cam.look_at(pos + up * 2.0, up)
+	# --silhouette drives the parade but frames each vehicle off its own bounding box from a pinned
+	# camera; the chase cam must not drag it back behind the car mid-shot.
+	if not _shot_hold_cam:
+		var cam_target: Vector3 = cam_ground + cam_up * (5.0 - _dive + _altitude)
+		_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-6.0 * delta))
+		_cam.look_at(pos + up * 2.0, up)
 	_hud_timer += delta
 	if _hud_timer > 0.25:
 		_hud_timer = 0.0
