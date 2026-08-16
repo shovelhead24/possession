@@ -2266,6 +2266,18 @@ func _shot_run() -> void:
 	# scene alike reads "60 fps" -- it would be timing the wait, not the work.
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 
+	# DEPLOYABLES (`--deployables`). Player-placed objects -- mines, sensors, a tripod turret -- placed,
+	# saved, reloaded, and shot silhouette-style at home. Opt-in and self-contained (it quits after), so
+	# it never rides along on a landscape run. Proves the "placed, then persistent" pair on screen: the
+	# nodes framed here are the ones read back from the save file, not the ones just built.
+	if args.has("--deployables"):
+		await _deployable_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
+
 	for pname in want:
 		var idx := _patch_names.find(pname)
 		if idx < 0 and pname != "millstreet":
@@ -2583,6 +2595,60 @@ func _weapon_parade(dir: String) -> void:
 			get_viewport().get_texture().get_image().save_png(path)
 			print("SHOT weapon %-12s %-4s recipe=%-10s tris=%-5d %s" % [wn, str(v["n"]),
 				_weapon_recipe_key(str(wn)), _node_tris(node), path])
+		node.queue_free()
+		await get_tree().process_frame
+	_shot_hold_cam = false
+
+func _deployable_parade(dir: String) -> void:
+	# The "placed, then persistent" proof, on screen. Place one of each deployable near home on the
+	# ground, SAVE the list, then RELOAD it and build only what came back from the file -- so the frames
+	# below are evidence the round-trip works, not just that the meshes exist. Each is framed side-on and
+	# three-quarter off its own bounding sphere, the same clean silhouette device the weapons parade uses.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	sun_angle = 0.5                                       # high mid-morning at home: clean daylight
+	var r := _radius()
+	# Place one of each, spaced along the strip so they don't overlap, then persist and read back.
+	var placed := [
+		Deployables.make_placement("mine",   0.0, -4.0, 0.0),
+		Deployables.make_placement("sensor", 0.0,  0.0, 0.0),
+		Deployables.make_placement("turret", 0.0,  4.0, 0.6),
+	]
+	Deployables.save(placed)
+	var loaded: Array = Deployables.load()
+	print("SHOT deployables: placed %d, saved to %s, reloaded %d" % [placed.size(), Deployables.SAVE_PATH, loaded.size()])
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	for p in loaded:
+		var key := str(p["key"])
+		var arc := float(p["arc"])
+		var lat := float(p["lat"])
+		var node := Deployables.build(key)
+		add_child(node)
+		# Sit it ON the terrain and stand it up along ring-up (local +Y = up), yawed by the placement.
+		var pos := _ring_pos(arc / r, lat, _terrain_h(arc, lat))
+		var up := _ring_up(pos)
+		var right := up.cross(Vector3(0.0, 0.0, 1.0)).normalized()
+		var basis := Basis(up, float(p["yaw"])) * Basis(right, up, right.cross(up))
+		node.global_transform = Transform3D(basis, pos)
+		var local := _model_aabb(node)
+		var center := node.global_transform * local.get_center()
+		var nbasis := node.global_transform.basis.orthonormalized()
+		var rad: float = maxf(0.5 * local.size.length(), 0.4)
+		var side: float = 1.0 if nbasis.x.dot(to_sun) >= 0.0 else -1.0
+		var fov := 40.0
+		var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.2
+		# local -Z is the facing (the turret barrel points -Z); +y lifts the eye so the top line reads
+		for v in [{"n": "side", "off": Vector3(side, 0.14, 0.0)}, {"n": "tq", "off": Vector3(side * 0.82, 0.26, -0.55)}]:
+			var off: Vector3 = (v["off"] as Vector3).normalized()
+			_cam.fov = fov
+			_cam.global_position = center + (nbasis * off) * dist
+			_cam.look_at(center, up)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+			var path := "%s/deployable_%s_%s.png" % [dir, key, v["n"]]
+			get_viewport().get_texture().get_image().save_png(path)
+			print("SHOT deployable %-8s %-4s tris=%-5d %s" % [key, str(v["n"]), _node_tris(node), path])
 		node.queue_free()
 		await get_tree().process_frame
 	_shot_hold_cam = false
