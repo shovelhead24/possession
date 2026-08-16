@@ -1,6 +1,10 @@
-extends Node3D
-const Damage = preload("res://damage.gd")
 class_name Creature
+extends Node3D
+# class_name MUST precede every member declaration. It used to sit below the `const` above, which
+# is not a parse error -- it just silently fails to register the global type, so `Creature` did not
+# exist anywhere in the project and damage_test.gd could not compile. Same class of failure as the
+# stale global_script_class_cache entry for Recipe: nothing complains, the type is simply absent.
+const Damage = preload("res://damage.gd")
 # Generic startle/flee proxy — the wildlife.md primitive. One behavior, parameterized:
 # deer (calm, flees far) and wolf (approaches, fast, night) are the same code, different presets.
 # Silhouette-first crude proxy (aesthetic.md pillar): body + 4 legs + head, procedural gait.
