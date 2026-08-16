@@ -2423,6 +2423,17 @@ func _shot_run() -> void:
 				pname, shot["n"],
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
 				await _measure_frame_ms(), path])
+	# WEAPONS (`--weapons`). The same silhouette question as the vehicles -- "does a musket read as a
+	# musket, an SMG as an SMG" -- but weapons are held, not driven, so this parade floats each one above
+	# home terrain against clean sky rather than entering DRIVE. Opt-in, and it quits after, so it never
+	# taxes a landscape run.
+	if args.has("--weapons"):
+		await _weapon_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
 	# VEHICLES. The patch loop above never enters DRIVE, so an imported car model could be sideways,
 	# giant or underground and no frame would catch it. Enter DRIVE at home, let the chase cam settle,
 	# and shoot each vehicle from behind -- the framing that shows orientation, scale and grounding.
@@ -2534,6 +2545,46 @@ func _shoot_silhouette(vi: int, dir: String) -> void:
 			_node_tris(_car) if _car != null else 0,
 			RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
 			await _measure_frame_ms(8), path])
+	_shot_hold_cam = false
+
+func _weapon_parade(dir: String) -> void:
+	# Build each weapon from its recipe, float it above home terrain against sky, and shoot it side-on and
+	# front three-quarter off its own bounding sphere -- the same clean framing the vehicle silhouettes
+	# use, so length does not change how much of frame the subject fills. This is the "does it read"
+	# device for the weapon recipes; the answer is entirely visual, so it has to be looked at, not counted.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	sun_angle = 0.5                                       # high mid-morning at home: clean daylight
+	var r := _radius()
+	var anchor := _ring_pos(0.0, 0.0, _terrain_h(0.0, 0.0) + 50.0)   # 50m up at home arc, above the scatter
+	var up := _ring_up(anchor)
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	for wn in WEAPON_ROWS.keys():
+		var node := _make_weapon(str(wn))
+		add_child(node)
+		node.global_position = anchor
+		var local := _model_aabb(node)
+		var center := node.global_transform * local.get_center()
+		var basis := node.global_transform.basis.orthonormalized()
+		var rad: float = maxf(0.5 * local.size.length(), 0.15)
+		var side: float = 1.0 if basis.x.dot(to_sun) >= 0.0 else -1.0
+		var fov := 40.0
+		var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.2
+		# local -Z is the muzzle line; +y lifts the eye so the top line (sight/stock) reads
+		for v in [{"n": "side", "off": Vector3(side, 0.12, 0.0)}, {"n": "tq", "off": Vector3(side * 0.82, 0.24, -0.55)}]:
+			var off: Vector3 = (v["off"] as Vector3).normalized()
+			_cam.fov = fov
+			_cam.global_position = center + (basis * off) * dist
+			_cam.look_at(center, up)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+			var path := "%s/weapon_%s_%s.png" % [dir, wn, v["n"]]
+			get_viewport().get_texture().get_image().save_png(path)
+			print("SHOT weapon %-12s %-4s recipe=%-10s tris=%-5d %s" % [wn, str(v["n"]),
+				_weapon_recipe_key(str(wn)), _node_tris(node), path])
+		node.queue_free()
+		await get_tree().process_frame
 	_shot_hold_cam = false
 
 func _align_sweep() -> void:
@@ -5149,6 +5200,63 @@ func _recipe_mesh(spec: Dictionary) -> Mesh:
 	bm.material = mat
 	return bm
 
+# WEAPONS. Same framing as vehicles and buildings, third consumer of the unlocked assembler: a tech
+# tree from a sharpened stick to a backpack MLRS is not 22 weapon models, it is a receiver with named
+# sockets (barrel/sight/magazine/grip/stock) plus a handful of parts over the top -- so a musket and an
+# SMG read as related-but-not-the-same at a glance, which is the whole point of the tree being a shape
+# argument as much as a stats one. WEAPON_ROWS stays pure mechanics; the shape is chosen from it here.
+func _make_weapon(name: String) -> Node3D:
+	var root := Node3D.new()
+	root.name = "weapon_" + name
+	_add_weapon_sockets(root)
+	_apply_weapon_recipe(root, _weapon_recipe_key(name))
+	MeshBaker.bake(root)                       # a gun is static: one mesh, not a part per draw call
+	return root
+
+func _add_weapon_sockets(root: Node3D) -> void:
+	# The named mount points a recipe hangs parts on. Local frame: forward (muzzle) is -Z, up is +Y,
+	# origin at the grip/trigger. These are the "receiver with barrel/stock/sight/magazine sockets" the
+	# item asks for -- the reusable interface every weapon shape is written against.
+	var sockets := {
+		"body":     Vector3(0, 0.0,    0.0),
+		"barrel":   Vector3(0, 0.012, -0.20),
+		"sight":    Vector3(0, 0.075, -0.02),
+		"magazine": Vector3(0, -0.065, -0.02),
+		"grip":     Vector3(0, -0.070,  0.11),
+		"stock":    Vector3(0, 0.0,     0.22),
+	}
+	for n in sockets:
+		var s := Node3D.new()
+		s.name = n
+		s.position = sockets[n]
+		root.add_child(s)
+
+func _apply_weapon_recipe(root: Node3D, key: String) -> void:
+	var specs: Array = WEAPON_RECIPES.get(key, WEAPON_RECIPES["chemical"])
+	var recipe := Recipe.new()
+	recipe.body_plan = "weapon"
+	for spec: Dictionary in specs:
+		var pd := PartDef.new()
+		pd.slot = spec["slot"]
+		pd.socket = spec["socket"]
+		pd.mesh = _recipe_mesh(spec)          # same tinted box|cyl generator the vehicles use
+		pd.offset_position = spec.get("pos", Vector3.ZERO)
+		pd.offset_rotation_degrees = spec.get("rot", Vector3.ZERO)
+		recipe.parts[spec["slot"]] = pd
+	CharacterAssembler.apply(root, recipe)
+
+func _weapon_recipe_key(name: String) -> String:
+	# Most specific wins: a name-level shape (musket vs the carbine both being `chemical`) beats the
+	# mechanics-class default. A couple of rows whose SHAPE family differs from their mechanics class
+	# are aliased -- a thrown javelin is a spear, a speargun looks like a crossbow.
+	if WEAPON_RECIPES.has(name):
+		return name
+	const ALIAS := {"javelin": "spear", "speargun": "crossbow"}
+	if ALIAS.has(name):
+		return ALIAS[name]
+	var cls := str(WEAPON_ROWS.get(name, {}).get("cls", "chemical"))
+	return cls if WEAPON_RECIPES.has(cls) else "chemical"
+
 # THE AXLE IS THE SHORTEST AXIS OF THE WHEEL. Derived, not assumed: the procedural cylinder spins
 # about its own Y, an imported GLTF wheel about whatever axis the artist modelled it on, and the code
 # that spins them cannot know which without looking. A wheel is wide in two dimensions and narrow in
@@ -5729,6 +5837,146 @@ const BUILDING_RECIPES := [
 		],
 	},
 ]
+
+# Weapon shapes, keyed by mechanics class (the default) with name-level overrides where a row's SHAPE
+# should differ from its class-mate (musket vs carbine, both `chemical`). Same spec shape as
+# VEHICLE_RECIPES: a tinted box|cyl hung on a named socket at an offset. A `cyl` size is
+# Vector3(diameter, length, _) and a rot(90,0,0) lays it along the barrel line (-Z), exactly as the
+# vehicle turret barrel does. Colours are just tints; a gun of 6 parts bakes to a handful of surfaces.
+const WEAPON_RECIPES := {
+	# --- CHEMICAL PROJECTILE: the carbine, the reference every other row is measured against. The full
+	# receiver -- barrel + handguard + iron sight + box magazine + pistol grip + stock -- is the shape
+	# the rest are variations on. (carbine and bolt_action both fall here.)
+	"chemical": [
+		{"slot": "receiver",  "socket": "body",     "kind": "box", "size": Vector3(0.050, 0.095, 0.32), "pos": Vector3(0, 0, 0),        "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.028, 0.34, 0.028), "pos": Vector3(0, 0, -0.12),    "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "handguard", "socket": "barrel",   "kind": "box", "size": Vector3(0.050, 0.050, 0.18), "pos": Vector3(0, -0.006, 0.05), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "sight",     "socket": "sight",    "kind": "box", "size": Vector3(0.014, 0.032, 0.05), "pos": Vector3(0, 0, 0),        "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "magazine",  "socket": "magazine", "kind": "box", "size": Vector3(0.038, 0.140, 0.065),"pos": Vector3(0, -0.06, 0),    "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "grip",      "socket": "grip",     "kind": "box", "size": Vector3(0.036, 0.110, 0.050),"pos": Vector3(0, -0.05, 0),    "rot": Vector3(14, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",     "socket": "stock",    "kind": "box", "size": Vector3(0.038, 0.085, 0.20), "pos": Vector3(0, -0.015, 0.08),"tint": Color(0.11, 0.11, 0.12)},
+	],
+	# musket -- a very long barrel, a full WOODEN stock fore and aft, NO magazine and no pistol grip.
+	# Reads as "old and single-shot" against the carbine at a glance, which is the whole exercise.
+	"musket": [
+		{"slot": "lock",      "socket": "body",   "kind": "box", "size": Vector3(0.040, 0.060, 0.16), "pos": Vector3(0, 0, 0),        "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "barrel",    "socket": "barrel", "kind": "cyl", "size": Vector3(0.024, 0.74, 0.024), "pos": Vector3(0, 0.006, -0.33), "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "forestock", "socket": "barrel", "kind": "box", "size": Vector3(0.045, 0.050, 0.50), "pos": Vector3(0, -0.02, -0.16),"tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "butt",      "socket": "stock",  "kind": "box", "size": Vector3(0.042, 0.085, 0.30), "pos": Vector3(0, -0.03, 0.10), "tint": Color(0.34, 0.20, 0.09)},
+	],
+	# smg -- short barrel, a long stick magazine, a stubby folding stock. The close-quarters read.
+	"smg": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.045, 0.085, 0.22), "pos": Vector3(0, 0, 0),      "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",   "socket": "barrel",   "kind": "cyl", "size": Vector3(0.024, 0.12, 0.024), "pos": Vector3(0, 0, -0.02),  "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "sight",    "socket": "sight",    "kind": "box", "size": Vector3(0.012, 0.028, 0.04), "pos": Vector3(0, 0, 0),      "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "magazine", "socket": "magazine", "kind": "box", "size": Vector3(0.030, 0.220, 0.055),"pos": Vector3(0, -0.10, 0.02),"tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "grip",     "socket": "grip",     "kind": "box", "size": Vector3(0.034, 0.100, 0.045),"pos": Vector3(0, -0.045, 0), "rot": Vector3(10, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.028, 0.050, 0.14), "pos": Vector3(0, -0.005, 0.02),"tint": Color(0.20, 0.20, 0.22)},
+	],
+	# lmg -- heavy long barrel, a big box magazine, a bipod. Reads as "supported and belt-hungry".
+	"lmg": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.065, 0.110, 0.38), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",   "socket": "barrel",   "kind": "cyl", "size": Vector3(0.038, 0.48, 0.038), "pos": Vector3(0, 0, -0.18),   "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "boxmag",   "socket": "magazine", "kind": "box", "size": Vector3(0.100, 0.130, 0.150),"pos": Vector3(0, -0.05, 0.02),"tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "bipodL",   "socket": "barrel",   "kind": "box", "size": Vector3(0.012, 0.22, 0.012), "pos": Vector3(-0.05, -0.13, 0.24), "rot": Vector3(0, 0, 22),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "bipodR",   "socket": "barrel",   "kind": "box", "size": Vector3(0.012, 0.22, 0.012), "pos": Vector3(0.05, -0.13, 0.24),  "rot": Vector3(0, 0, -22), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "sight",    "socket": "sight",    "kind": "box", "size": Vector3(0.014, 0.030, 0.05), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.045, 0.090, 0.20), "pos": Vector3(0, -0.02, 0.08),"tint": Color(0.34, 0.20, 0.09)},
+	],
+	# autocannon -- a vehicle weapon carried by hand: a very long thick barrel with a muzzle brake and a
+	# heavy feed. The "this is too much gun" read.
+	"autocannon": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.100, 0.150, 0.46), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",   "socket": "barrel",   "kind": "cyl", "size": Vector3(0.060, 0.82, 0.060), "pos": Vector3(0, 0, -0.36),   "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "brake",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.090, 0.10, 0.090), "pos": Vector3(0, 0, -0.76),   "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "feed",     "socket": "magazine", "kind": "box", "size": Vector3(0.130, 0.160, 0.18), "pos": Vector3(0, -0.02, 0.06),"tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.060, 0.100, 0.20), "pos": Vector3(0, -0.02, 0.06),"tint": Color(0.11, 0.11, 0.12)},
+	],
+	# --- DIRECTED ENERGY: a receiver with an emitter and cooling coils where a barrel and magazine sit,
+	# and a battery cell where a box mag would be. (beam_rifle and cutter both fall here.)
+	"energy": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.050, 0.100, 0.30), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "emitter",  "socket": "barrel",   "kind": "cyl", "size": Vector3(0.050, 0.22, 0.050), "pos": Vector3(0, 0, -0.10),   "rot": Vector3(90, 0, 0), "tint": Color(0.25, 0.55, 0.62)},
+		{"slot": "coilA",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.075, 0.02, 0.075), "pos": Vector3(0, 0, -0.02),   "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "coilB",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.075, 0.02, 0.075), "pos": Vector3(0, 0, -0.14),   "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "cell",     "socket": "magazine", "kind": "box", "size": Vector3(0.050, 0.100, 0.12), "pos": Vector3(0, -0.045, 0.04),"tint": Color(0.25, 0.55, 0.62)},
+		{"slot": "grip",     "socket": "grip",     "kind": "box", "size": Vector3(0.036, 0.100, 0.05), "pos": Vector3(0, -0.045, 0),  "rot": Vector3(14, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.040, 0.080, 0.18), "pos": Vector3(0, -0.015, 0.06),"tint": Color(0.11, 0.11, 0.12)},
+	],
+	# --- MELEE default (improvised): a short haft and a small head. spear/club/blade override below.
+	"melee": [
+		{"slot": "haft", "socket": "body",   "kind": "cyl", "size": Vector3(0.028, 0.50, 0.028), "pos": Vector3(0, 0, -0.02), "rot": Vector3(90, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "head", "socket": "barrel", "kind": "box", "size": Vector3(0.050, 0.090, 0.06), "pos": Vector3(0, 0, -0.06), "tint": Color(0.20, 0.20, 0.22)},
+	],
+	# spear -- a long thin shaft and a leaf point at the tip (javelin aliases to this).
+	"spear": [
+		{"slot": "shaft", "socket": "body",   "kind": "cyl", "size": Vector3(0.024, 1.30, 0.024), "pos": Vector3(0, 0, -0.15), "rot": Vector3(90, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "point", "socket": "barrel", "kind": "box", "size": Vector3(0.020, 0.05, 0.20),  "pos": Vector3(0, 0, -0.60), "tint": Color(0.42, 0.43, 0.47)},
+	],
+	# club -- a thin handle and a fat heavy head at the end.
+	"club": [
+		{"slot": "haft", "socket": "body",   "kind": "cyl", "size": Vector3(0.032, 0.46, 0.032), "pos": Vector3(0, 0, 0.02),  "rot": Vector3(90, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "head", "socket": "barrel", "kind": "cyl", "size": Vector3(0.150, 0.18, 0.150), "pos": Vector3(0, 0, -0.02), "rot": Vector3(90, 0, 0), "tint": Color(0.30, 0.29, 0.27)},
+	],
+	# blade -- a handle, a cross-guard and a long flat blade.
+	"blade": [
+		{"slot": "handle", "socket": "body",   "kind": "box", "size": Vector3(0.028, 0.038, 0.12), "pos": Vector3(0, 0, 0.14),  "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "guard",  "socket": "body",   "kind": "box", "size": Vector3(0.100, 0.028, 0.028),"pos": Vector3(0, 0, 0.06),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "blade",  "socket": "barrel", "kind": "box", "size": Vector3(0.014, 0.090, 0.50), "pos": Vector3(0, 0, -0.18), "tint": Color(0.42, 0.43, 0.47)},
+	],
+	# --- TENSIONED default (sling): a small pouch on two cords. bow/crossbow override; speargun aliases
+	# to crossbow.
+	"tensioned": [
+		{"slot": "pouch", "socket": "body", "kind": "box", "size": Vector3(0.050, 0.030, 0.09), "pos": Vector3(0, -0.20, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "cordL", "socket": "body", "kind": "box", "size": Vector3(0.006, 0.40, 0.006), "pos": Vector3(-0.03, 0, 0), "rot": Vector3(0, 0, 8),  "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "cordR", "socket": "body", "kind": "box", "size": Vector3(0.006, 0.40, 0.006), "pos": Vector3(0.03, 0, 0),  "rot": Vector3(0, 0, -8), "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# bow -- held vertically: a grip, two forward-curved limbs, a string. The D-shape reads on sight.
+	"bow": [
+		{"slot": "grip",   "socket": "body", "kind": "box", "size": Vector3(0.032, 0.14, 0.03),  "pos": Vector3(0, 0, 0),      "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "upper",  "socket": "body", "kind": "box", "size": Vector3(0.020, 0.42, 0.02),  "pos": Vector3(0, 0.26, 0),   "rot": Vector3(20, 0, 0),  "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "lower",  "socket": "body", "kind": "box", "size": Vector3(0.020, 0.42, 0.02),  "pos": Vector3(0, -0.26, 0),  "rot": Vector3(-20, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "string", "socket": "body", "kind": "box", "size": Vector3(0.006, 0.90, 0.006), "pos": Vector3(0, 0, 0.10),   "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# crossbow -- a stock along the aim line, a horizontal prod and string across the front, a bolt on the
+	# rail (speargun aliases here).
+	"crossbow": [
+		{"slot": "stock",  "socket": "body",   "kind": "box", "size": Vector3(0.038, 0.05, 0.46), "pos": Vector3(0, 0, 0.06),   "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "prod",   "socket": "barrel", "kind": "box", "size": Vector3(0.680, 0.02, 0.03), "pos": Vector3(0, 0, -0.14),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "string", "socket": "barrel", "kind": "box", "size": Vector3(0.500, 0.006, 0.006),"pos": Vector3(0, 0, 0.02),  "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "bolt",   "socket": "body",   "kind": "box", "size": Vector3(0.012, 0.012, 0.40),"pos": Vector3(0, 0.04, -0.06),"tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "grip",   "socket": "grip",   "kind": "box", "size": Vector3(0.034, 0.09, 0.045),"pos": Vector3(0, -0.04, 0),  "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# --- GUIDED / INDIRECT default (rocket): a long launch tube with a fatter warhead nose. mortar/mlrs
+	# override.
+	"guided": [
+		{"slot": "tube",     "socket": "body",   "kind": "cyl", "size": Vector3(0.090, 0.88, 0.090), "pos": Vector3(0, 0, -0.08), "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "warhead",  "socket": "barrel", "kind": "cyl", "size": Vector3(0.110, 0.14, 0.110), "pos": Vector3(0, 0, -0.30), "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "sight",    "socket": "sight",  "kind": "box", "size": Vector3(0.020, 0.05, 0.03),  "pos": Vector3(0, 0.03, 0.10),"tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "grip",     "socket": "grip",   "kind": "box", "size": Vector3(0.036, 0.10, 0.05),  "pos": Vector3(0, -0.05, 0), "rot": Vector3(14, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# mortar -- a steeply tilted tube on a baseplate with a bipod. The indirect-fire read.
+	"mortar": [
+		{"slot": "tube",   "socket": "body", "kind": "cyl", "size": Vector3(0.080, 0.66, 0.080), "pos": Vector3(0, 0.16, -0.02), "rot": Vector3(112, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "plate",  "socket": "body", "kind": "box", "size": Vector3(0.260, 0.03, 0.26),  "pos": Vector3(0, -0.30, 0.14), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "bipodL", "socket": "body", "kind": "box", "size": Vector3(0.014, 0.40, 0.014), "pos": Vector3(-0.08, -0.10, 0.10), "rot": Vector3(24, 0, 18),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "bipodR", "socket": "body", "kind": "box", "size": Vector3(0.014, 0.40, 0.014), "pos": Vector3(0.08, -0.10, 0.10),  "rot": Vector3(24, 0, -18), "tint": Color(0.42, 0.43, 0.47)},
+	],
+	# mlrs -- a backpack box behind a cluster of four launch tubes. The "you are wearing the launcher" read.
+	"mlrs": [
+		{"slot": "pack",  "socket": "body",   "kind": "box", "size": Vector3(0.340, 0.36, 0.16), "pos": Vector3(0, 0, 0.10),  "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "tubeA", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(-0.10, 0.10, -0.05), "rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "tubeB", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(0.10, 0.10, -0.05),  "rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "tubeC", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(-0.10, -0.02, -0.05),"rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "tubeD", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(0.10, -0.02, -0.05), "rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+	],
+	# --- THROWN default (grenade/rock/molotov/sticky): a compact hand object, not a long arm at all --
+	# which IS the distinction the tree wants to read.
+	"thrown": [
+		{"slot": "body", "socket": "body", "kind": "cyl", "size": Vector3(0.075, 0.12, 0.075), "pos": Vector3(0, 0, 0),    "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "top",  "socket": "body", "kind": "cyl", "size": Vector3(0.030, 0.05, 0.030), "pos": Vector3(0, 0.08, 0), "tint": Color(0.42, 0.43, 0.47)},
+	],
+}
 
 func _build_vehicle_defs() -> void:
 	# Turn each data row into a typed VehicleDef, applying the row over the resource's defaults.

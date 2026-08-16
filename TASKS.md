@@ -240,9 +240,25 @@ Write the "what actually happened" notes into the commit message, and keep this 
       Tractor sub-note left as-is: under this clean framing the tractor's tall cab + exhaust stack +
       rear implement bar DO read as a distinct shape (the "told apart by tint" call came from the old
       dusk parade where the shapes weren't legible), so no change was warranted.
-- [ ] **Weapon recipes.** A receiver with barrel/stock/sight/magazine sockets. Fourteen weapons
+- [x] **Weapon recipes.** A receiver with barrel/stock/sight/magazine sockets. Fourteen weapons
       currently share zero geometry; the tech tree is a shape argument as much as a stats one, and
       a musket and an SMG should read as related-but-not-the-same at a glance.
+      DONE + VERIFIED THIS TICK. Same pattern as the vehicle/building recipes (fourth consumer of the
+      Skeleton3D-unlocked assembler): `_add_weapon_sockets` builds a receiver Node3D carrying the named
+      body/barrel/sight/magazine/grip/stock mounts (local frame: muzzle -Z, up +Y); `WEAPON_RECIPES`
+      hangs tinted box|cyl parts via the shared `CharacterAssembler.apply`, then `MeshBaker.bake`s each
+      gun to ONE mesh. Recipes keyed by mechanics class (chemical/energy/melee/thrown/tensioned/guided)
+      with name-level overrides where the SHAPE differs from its class-mate (musket, smg, lmg,
+      autocannon, spear, club, blade, bow, crossbow, mortar, mlrs); `_weapon_recipe_key` aliases
+      javelin→spear and speargun→crossbow. WEAPON_ROWS stays pure mechanics — shape is derived from it,
+      not stored on it. A `--weapons` silhouette parade (`_weapon_parade`) floats each of the 22 rows
+      above home terrain and shoots it side-on + three-quarter off its own bounding sphere.
+      Ran it: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet --only
+      ground --weapons --label weapons` (wrapper accepted; parse pre-checked with --check-only). Read
+      the shots in `logs/shots/20260816_1657_weapons/`: carbine/musket/smg read as related-but-not-the-
+      same (the item's named test PASSES), and bow/crossbow/grenade/mlrs/etc. all read distinct. Tris
+      36–300, one baked mesh each. Journal entry written. Minor cosmetic notes (musket wrist gap; parade
+      backdrop is distant terrain not clean sky) logged in the journal, not worth a follow-up item.
 - [ ] **Structure recipes.** The dock port, and whatever else gets hand-built next. It is already
       spine + collar + struts; that is a recipe written in GDScript instead of data.
 - [ ] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.

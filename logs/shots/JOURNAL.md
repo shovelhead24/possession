@@ -387,3 +387,32 @@ selection marker — present on every subject (checked the tractor frame), not p
 - Tractor sub-note (bundled in that item) left unchanged: under this clean framing its tall cab +
   exhaust stack + rear implement bar already read as a distinct shape; the "told apart by tint"
   call came from the old dusk parade where shapes weren't legible. No follow-up spun out.
+
+
+## 2026-08-16 — weapon recipes, first read (`--shots millstreet --only ground --weapons --label weapons`)
+
+**Looking for:** whether the new weapon recipe system (a receiver with barrel/sight/magazine/grip/
+stock sockets + a `--weapons` silhouette parade) makes the 22-row roster read as distinct shapes —
+specifically the item's own test, that "a musket and an SMG read as related-but-not-the-same at a
+glance." First run of a thing built this tick; needed a look, not a number.
+
+**Saw:** it reads, across every family.
+- carbine (`chemical`): receiver, top sight, barrel + handguard forward, box mag + pistol grip below,
+  stock behind — the textbook rifle the rest are variations on.
+- musket: long steel barrel, full WOODEN fore/butt stock, no mag, no pistol grip — unmistakably older
+  and longer than the carbine. (One cosmetic gap between butt and lock at the wrist; reads fine.)
+- smg: compact receiver, short barrel, a dominant long stick magazine straight down, short folding
+  stock. Related to the carbine but obviously the close-quarters cousin. **The named test passes.**
+- bow: vertical D — string + two forward-curved wooden limbs + grip. crossbow/speargun: horizontal
+  prod across a stock. grenade & the thrown family: a small canister with a fuze cap, clearly a hand
+  object, not a long arm. mlrs: backpack box + tube cluster. All distinct at a glance.
+- Cost modest and baked: `tris` 36 (blade/sling) to 300 (mlrs); firearms ~108–180. One mesh per
+  weapon, per the bake rule.
+- Recipe mapping correct in the log: spear/javelin→spear, speargun→crossbow, carbine/bolt_action→
+  chemical, beam_rifle/cutter→energy, rock/grenade/molotov/sticky→thrown.
+
+**Fell out:**
+- Weapon-recipes item done + ticked.
+- Minor cosmetic: the musket's buttstock leaves a ~9cm gap to the lock (socket offsets), and the
+  parade floats each weapon against distant terrain rather than clean sky (looking level at 50m). Both
+  legible as-is; not worth a follow-up item unless a later pass wants presentation-grade frames.
