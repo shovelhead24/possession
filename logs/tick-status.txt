@@ -1,6 +1,6 @@
 STATE=running
-DETAIL=PowerShell git -C C:\\Games\\possession add TASKS.md
-ITEM=- [ ] **Damage model** ? locational, on the player and on NPCs, shared with the creature system that
+DETAIL=Edit assembler.gd
+ITEM=- [ ] **Vehicle recipes.** `_make_car` builds a box with four wheels inline, and every row that has
 BRANCH=semi-attended
-STARTED=2026-08-15 22:51:14
-UPDATED=2026-08-15 22:52:59
+STARTED=2026-08-15 23:21:15
+UPDATED=2026-08-15 23:27:44

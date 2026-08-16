@@ -12,8 +12,10 @@
 #   * working tree dirty?   -> exit; someone is mid-edit, or the last tick did not commit
 #   * cooling down?         -> exit until the recorded reset time passes
 #   * queue empty?          -> exit quietly
-#   * hit a usage limit?    -> record when to resume, exit
-#   * left work uncommitted -> pause the queue and say so, rather than let the next tick pile on
+#   * hit a usage limit?    -> commit whatever it wrote, record when to resume, exit
+#   * left work uncommitted -> COMMIT IT (a run only starts clean, so the work is its own), leave
+#                              the item unticked, and let the next run continue it
+#   * HEAD does not compile -> pause; the work is safely committed but a human has to look
 #
 # So a suspend just means some firings are missed; the next one after wake picks up. Nothing has to
 # survive sleep except two small files.
@@ -96,6 +98,81 @@ function Say($m) {
     $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $(Clean $m)"
     Write-Host $line
     Add-Content -Path $log -Value $line -Encoding utf8
+}
+
+function Dirt { @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" } }
+
+# RESCUE THE RUN'S OWN WORK RATHER THAN LATCHING OVER IT.
+# This used to only ever pause, on the reasoning that a dirty tree is ambiguous -- a person mid-edit
+# or a dead tick -- and committing blind is how the whole HUD implementation ended up inside a commit
+# titled as a logging change. That reasoning is sound in general and does not apply HERE, because of
+# a precondition established above: this script refuses to start unless the tree is clean. So
+# anything dirty at THIS point was written by the run that just finished, and nothing else. It is the
+# one place in the system where the authorship of a change is not a guess.
+#
+# The cost of getting this wrong the old way was measured on 2026-08-16: a rate limit landed at 23:27
+# with two files unsaved, and because the pause only releases on a clean tree -- which nothing
+# unattended could produce -- the queue skipped every ten minutes for TWELVE HOURS. The work was two
+# small additive functions that would have committed cleanly.
+#
+# It commits, it does NOT tick the item off. Partial work stays on the queue and the next run
+# continues it with the code in hand instead of rebuilding it from a cold start.
+function CommitStranded($reason) {
+    $s = @(Dirt)   # @() so an empty result is an empty array, not $null with no .Count
+    if ($s.Count -eq 0) { return $true }
+    Say "  rescuing $($s.Count) uncommitted files -- they can only be this run's own work"
+    foreach ($d in $s | Select-Object -First 8) { Say "        $d" }
+    # A patch alongside the commit, because a commit can still be reverted by mistake and this is
+    # cheap. Keeps the pre-existing forensic habit rather than replacing it.
+    $patch = Join-Path $logs ("uncommitted-" + (Get-Date -Format 'yyyyMMdd_HHmm') + ".patch")
+    git diff -- . ':(exclude)logs' | Set-Content $patch -Encoding utf8
+    $item = if ($topitem) { $topitem.Trim() } else { "(item unknown)" }
+    git add -A -- . ':(exclude)logs'
+    $msg = "wip(queue): partial work rescued by the tick -- $reason`n`n" `
+         + "Committed by claude-queue-tick.ps1, not by the agent that wrote it: the run ended with a`n" `
+         + "dirty tree, and a run only starts from a clean one, so this is its own unfinished work.`n`n" `
+         + "The item is deliberately NOT ticked off -- it stays at the top of the queue and the next`n" `
+         + "run continues it.`n`n" `
+         + "Item: $item`n"
+    git commit -q -m $msg
+    if ($LASTEXITCODE -ne 0) {
+        Say "  RESCUE FAILED: git commit returned $LASTEXITCODE -- pausing so nothing piles on"
+        "AUTO-PAUSE. Set at $(Get-Date -Format 'HH:mm'): a run left work uncommitted AND the rescue commit failed.`nIt was working on: $topitem" |
+            Set-Content $pause -Encoding ascii
+        return $false
+    }
+    Say "  rescued as $(git rev-parse --short HEAD) (patch also at $patch)"
+    return $true
+}
+
+# DOES THE PROJECT STILL PARSE? The gap that let a broken HEAD ship on 2026-08-15.
+# Two type-registration failures neither of which reports itself: `Recipe` was renamed but
+# .godot/global_script_class_cache.cfg still held the old name, and `Creature` had its class_name
+# below a const so it never registered at all. Headless resolves global class names from that cache,
+# so assembler.gd would not parse and everything downstream failed to compile -- while the queue
+# logged three consecutive items as done, each noting only that it could not run-verify.
+# `--editor --quit` rescans, which BOTH rewrites the stale cache (fixing that failure outright) and
+# surfaces parse errors. Cheap insurance against committing a project that cannot load.
+function ParseGate {
+    $godot = "C:\Godot\Godot_v4.5.1-stable_win64.exe"
+    if (-not (Test-Path $godot)) { Say "parse gate skipped: no Godot at $godot"; return $true }
+    SetStatus "running" "parse gate (rescan)"
+    $o = & $godot --headless --path "$repo\game" --editor --quit 2>&1 | Out-String
+    $errs = @($o -split "`n" | Where-Object { $_ -match 'SCRIPT ERROR|Parse Error|Compile Error' })
+    if ($errs.Count -gt 0) {
+        Say "PARSE GATE FAILED -- the project does not compile. $($errs.Count) errors:"
+        foreach ($e in $errs | Select-Object -First 12) { Say "        $(Clean $e)" }
+        return $false
+    }
+    # The rescan writes .uid files and may rewrite the class cache. Untracked files count as a dirty
+    # tree, so left alone they would stand the queue down forever on the next firing.
+    if (@(Dirt).Count -gt 0) {
+        git add -A -- . ':(exclude)logs'
+        git commit -q -m "chore(godot): rescan artifacts (class cache / .uid) from the tick's parse gate"
+        Say "  committed rescan artifacts"
+    }
+    Say "parse gate passed"
+    return $true
 }
 
 # --- already running? -----------------------------------------------------------------------
@@ -361,14 +438,13 @@ if ($limited) {
     # below, so on 2026-08-15 a run that had implemented FPS controls (+174 lines in player.gd) and
     # ticked the item hit a FALSE limit and left all of it unsaved and unflagged for forty minutes.
     # Being rate-limited says nothing about whether the tree is clean.
-    $stranded = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" }
-    if ($stranded.Count -gt 0) {
-        Say "  AND it left $($stranded.Count) files uncommitted -- flagging so the work is not lost"
-        if ($topitem) { Say "  it was working on: $($topitem.Trim())" }
-        foreach ($d in $stranded | Select-Object -First 8) { Say "        $d" }
-        "AUTO-PAUSE (rate limit hit AND work left uncommitted). Set at $(Get-Date -Format 'HH:mm').`nNo wait time -- it releases as soon as the tree is clean.`nIt was working on: $topitem" |
-            Set-Content $pause -Encoding ascii
-    }
+    #
+    # It now COMMITS that work instead of pausing over it. The pause was worse than the disease: it
+    # released only on a clean tree, and the only thing that could clean the tree was the pause
+    # lifting, so a limit landing mid-item deadlocked the queue until a human noticed. On 2026-08-16
+    # that cost twelve hours over two additive functions.
+    if ($topitem) { Say "  it was working on: $($topitem.Trim())" }
+    [void](CommitStranded "hit a usage limit mid-item")
     exit 0
 }
 
@@ -378,24 +454,29 @@ if ($limited) {
 # 2026-08-10 -- a class_name that only resolves in the editor left the project unparseable, the
 # agent could not verify anything, no commit happened, and each following tick piled on more.
 # Nothing detected it. Now it does, and it stops the queue rather than compounding.
-$after = @(git status --porcelain -- . ':(exclude)logs') | Where-Object { $_ -ne "" }
-if ($after.Count -gt 0) {
-    # SAY WHAT IT WAS DOING, not just that it failed. When this fired on 2026-08-13 it recorded only
-    # "2 files uncommitted", and those edits were later swept into an unrelated commit by a `git add
-    # -A` two days later. The code survived; the PURPOSE did not, and reconstructing it afterwards
-    # took five minutes of archaeology that a diffstat and one line of item text would have answered.
-    Say "PROBLEM: the run left $($after.Count) files uncommitted. Pausing the queue so the next tick does not pile on."
+# SAY WHAT IT WAS DOING, not just that it failed. When this fired on 2026-08-13 it recorded only
+# "2 files uncommitted", and those edits were later swept into an unrelated commit by a `git add -A`
+# two days later. The code survived; the PURPOSE did not, and reconstructing it afterwards took five
+# minutes of archaeology that a diffstat and one line of item text would have answered. So the
+# rescue commit names the item in its message.
+if (@(Dirt).Count -gt 0) {
+    Say "the run left work uncommitted."
     if ($topitem) { Say "  it was working on: $($topitem.Trim())" }
-    foreach ($d in $after | Select-Object -First 8) { Say "        $d" }
     Say "  diffstat:"
     foreach ($l in @(git diff --stat -- . ':(exclude)logs')) { if ($l) { Say "        $l" } }
-    # The diff itself, capped: enough to see the intent and recover the work by hand if the tree gets
-    # clobbered before anyone looks. 400 lines is a couple of screens, not a second copy of the repo.
-    $patch = Join-Path $logs ("uncommitted-" + (Get-Date -Format 'yyyyMMdd_HHmm') + ".patch")
-    git diff -- . ':(exclude)logs' | Select-Object -First 400 | Set-Content $patch -Encoding utf8
-    Say "  saved a recoverable patch: $patch"
-    "AUTO-PAUSE (not a rate limit). Set at $(Get-Date -Format 'HH:mm') because a run ended with work uncommitted.`nThere is no wait time -- it releases as soon as the tree is clean.`nIt was working on: $topitem" |
+    if (-not (CommitStranded "the run ended without committing")) { exit 0 }
+}
+
+# NOW check the project still loads. This runs on every path that reaches here, committed by the
+# agent or rescued above, because the failure it catches is invisible to everything else: three
+# items in a row shipped against a HEAD that could not compile, each logging only that it had not
+# been able to run-verify. A broken HEAD must stop the queue -- that is a human's problem, not
+# something the next cold run should discover the hard way.
+if (-not (ParseGate)) {
+    SetStatus "idle" "PARSE GATE FAILED"
+    "AUTO-PAUSE. Set at $(Get-Date -Format 'HH:mm'): the project does not compile after this run.`nThe work IS committed -- see the log for the parse errors. Fix them, then delete this file.`nIt was working on: $topitem" |
         Set-Content $pause -Encoding ascii
+    Say "queue paused: HEAD does not compile. Nothing further will run until that is fixed."
     exit 0
 }
 
@@ -423,3 +504,4 @@ if ($LASTEXITCODE -eq 0) {
 
 SetStatus "idle" "done, $left items left"
 Say "=== tick done (${left} items left) ==="
+
