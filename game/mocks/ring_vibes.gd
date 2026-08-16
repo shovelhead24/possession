@@ -5685,11 +5685,15 @@ const VEHICLE_RECIPES := {
 		{"slot": "drum",   "socket": "turret", "kind": "cyl", "size": Vector3(1.1, 0.5, 1.1),  "pos": Vector3(0, 0.5, 0),   "tint": Color(0.28, 0.30, 0.28)},
 		{"slot": "barrel", "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 1.8, 0.18),"pos": Vector3(0, 0.55, 1.0),"rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.20)},
 	],
-	# rotor -- a mast, a wide thin main disc and a tail disc; the helicopter read from above.
+	# rotor -- a short mast holding two crossed THIN blade boxes well above the body, plus a small tail
+	# rotor. The read is a thin horizontal line held aloft, not a filled disc (the old wide flat cylinder
+	# photographed as a patio table); crossed blades at a smaller radius say "rotorcraft" side-on.
 	"rotor": [
-		{"slot": "mast",  "socket": "turret", "kind": "cyl", "size": Vector3(0.2, 0.8, 0.2),  "pos": Vector3(0, 0.4, 0),    "tint": Color(0.20, 0.20, 0.22)},
-		{"slot": "disc",  "socket": "turret", "kind": "cyl", "size": Vector3(7.0, 0.05, 7.0), "pos": Vector3(0, 0.85, 0),   "tint": Color(0.16, 0.16, 0.18)},
-		{"slot": "tailr", "socket": "tail",   "kind": "cyl", "size": Vector3(1.6, 0.04, 1.6), "pos": Vector3(0.3, 0.2, 0),  "rot": Vector3(0, 0, 90), "tint": Color(0.16, 0.16, 0.18)},
+		{"slot": "mast",    "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 0.9, 0.18), "pos": Vector3(0, 0.45, 0),  "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "bladeA",  "socket": "turret", "kind": "box", "size": Vector3(5.5, 0.06, 0.3),  "pos": Vector3(0, 0.95, 0),  "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "bladeB",  "socket": "turret", "kind": "box", "size": Vector3(0.3, 0.06, 5.5),  "pos": Vector3(0, 0.95, 0),  "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "tbladeA", "socket": "tail",   "kind": "box", "size": Vector3(0.05, 1.4, 0.22), "pos": Vector3(0.3, 0.2, 0), "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "tbladeB", "socket": "tail",   "kind": "box", "size": Vector3(0.05, 0.22, 1.4), "pos": Vector3(0.3, 0.2, 0), "tint": Color(0.14, 0.14, 0.16)},
 	],
 	# wing -- two swept wings and a tail fin; the fixed-wing read (airplane, lifter).
 	"wing": [

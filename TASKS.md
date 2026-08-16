@@ -222,15 +222,24 @@ Write the "what actually happened" notes into the commit message, and keep this 
       disc-on-stalk failure is now unarguable. Journal entry written. Scope is vehicles/roster only,
       per the item text; the single-instance BUILDING framing (2026-08-16 journal note) stays a
       separate open item.
-- [ ] **Rotor recipe does not read.** FELL OUT of the same review. The `rotor` recipe renders as a
+- [x] **Rotor recipe does not read.** FELL OUT of the same review. The `rotor` recipe renders as a
       solid octagonal plate on a stalk above the body -- a patio table or a mushroom, not a
       helicopter. It is the one recipe in the set that actively misleads about what the vehicle is.
       Silhouette-first (aesthetic.md): what says "rotorcraft" is a THIN horizontal line held well
       above a body, plus a mast -- not a filled disc, and not one that wide relative to the chassis.
       Two or four thin blade boxes on a short mast, at a smaller radius. Cheap: it is a change to one
       entry in `VEHICLE_RECIPES`, not to the recipe system.
-      While in there: `tractor` is currently told apart from the plain box by TINT rather than shape,
-      which passes "is it different" and fails "is it a tractor". Lower priority than the rotor.
+      DONE + VERIFIED THIS TICK. Rewrote the `rotor` entry only: the 7.0-wide flat disc is gone,
+      replaced by two crossed THIN blade boxes (5.5 span, 0.06 thick, 0.3 chord) on a short 0.9 mast,
+      held ~1m above the body top; the tail disc became a small crossed blade pair. Ran the silhouette
+      harness (`scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet
+      --silhouette --label rotor_read`, wrapper accepted). `logs/shots/20260816_1635_rotor_read/
+      sil_rotor_{side,tq}.png` read unambiguously as a rotorcraft -- a thin blade line aloft on a mast
+      plus a tail-rotor cross, not a plate. (The cyan box in-frame is the harness's selection marker,
+      on every vehicle; not part of the recipe.)
+      Tractor sub-note left as-is: under this clean framing the tractor's tall cab + exhaust stack +
+      rear implement bar DO read as a distinct shape (the "told apart by tint" call came from the old
+      dusk parade where the shapes weren't legible), so no change was warranted.
 - [ ] **Weapon recipes.** A receiver with barrel/stock/sight/magazine sockets. Fourteen weapons
       currently share zero geometry; the tech tree is a shape argument as much as a stats one, and
       a musket and an SMG should read as related-but-not-the-same at a glance.
