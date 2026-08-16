@@ -4963,7 +4963,74 @@ func _make_car(d: VehicleDef = null) -> Node3D:
 		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0, "offset": wp,
 			"rest": wheel.transform.basis, "axle": _wheel_axle(wheel)})
 	add_child(root)
+	# Kitbash pass. A recipe hangs a few shared parts off the chassis sockets so the identical box
+	# reads as a cab-and-bed, a turret, a rotor or a wing -- visible variety for the cost of a handful
+	# of parts, not twenty-one models. Then bake: the chassis parts merge to one mesh (draw-call cost
+	# is the whole reason to bake before shipping the roster), while the wheels stay dynamic to roll
+	# and steer. Rows with no recipe are byte-for-byte the old box.
+	if d and d.recipe != "":
+		_add_vehicle_sockets(root, length)
+		_apply_recipe(root, d.recipe)
+		for w in _wheels:
+			(w["pivot"] as Node).add_to_group(MeshBaker.SKIP_GROUP)
+		MeshBaker.bake(root)
 	return root
+
+func _add_vehicle_sockets(root: Node3D, length: float) -> void:
+	# Named Node3D mounts the shared parts attach to (see VEHICLE_RECIPES). Body-relative: the box top
+	# face is y=1.4, the nose is +z and the tail is -z, so a socket scales with the chassis length.
+	var sockets := {
+		"cab":    Vector3(0, 1.4, 0.10 * length),
+		"bed":    Vector3(0, 1.4, -0.22 * length),
+		"turret": Vector3(0, 1.5, 0.0),
+		"nose":   Vector3(0, 1.05, 0.42 * length),
+		"tail":   Vector3(0, 1.5, -0.42 * length),
+		"wing":   Vector3(0, 1.35, 0.0),
+	}
+	for n in sockets:
+		var s := Node3D.new()
+		s.name = n
+		s.position = sockets[n]
+		root.add_child(s)
+
+func _apply_recipe(root: Node3D, recipe_name: String) -> void:
+	# Reuse the character kitbash machinery for vehicles: build a Recipe of PartDefs from the named
+	# spec and hang them off the chassis sockets via CharacterAssembler, now unlocked from Skeleton3D
+	# (its socket is a Node3D by name). This is the payoff of that unlock -- one assembler, two consumers.
+	var specs: Array = VEHICLE_RECIPES.get(recipe_name, [])
+	if specs.is_empty():
+		return
+	var recipe := Recipe.new()
+	recipe.body_plan = "vehicle"
+	for spec: Dictionary in specs:
+		var pd := PartDef.new()
+		pd.slot = spec["slot"]
+		pd.socket = spec["socket"]
+		pd.mesh = _recipe_mesh(spec)
+		pd.offset_position = spec.get("pos", Vector3.ZERO)
+		pd.offset_rotation_degrees = spec.get("rot", Vector3.ZERO)
+		recipe.parts[spec["slot"]] = pd
+	CharacterAssembler.apply(root, recipe)
+
+func _recipe_mesh(spec: Dictionary) -> Mesh:
+	# One shared generator makes every vehicle part -- a tinted box or a 12-segment cylinder. The
+	# roster is a set of these over a common chassis, not forty meshes; same framing as the trees.
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = spec.get("tint", Color(0.3, 0.3, 0.3))
+	var size: Vector3 = spec.get("size", Vector3.ONE)
+	if spec.get("kind", "box") == "cyl":
+		var cm := CylinderMesh.new()
+		cm.radial_segments = 12
+		cm.rings = 1
+		cm.height = size.y
+		cm.top_radius = size.x * 0.5
+		cm.bottom_radius = size.x * 0.5
+		cm.material = mat
+		return cm
+	var bm := BoxMesh.new()
+	bm.size = size
+	bm.material = mat
+	return bm
 
 # THE AXLE IS THE SHORTEST AXIS OF THE WHEEL. Derived, not assumed: the procedural cylinder spins
 # about its own Y, an imported GLTF wheel about whatever axis the artist modelled it on, and the code
@@ -5189,7 +5256,7 @@ const VEHICLE_ROWS := {
 		# stay on the carriageway; the opposite end of the axis from the tractor.
 		"purpose": "the road car — devours tarmac, helpless the moment the road ends",
 		"loco": "wheeled", "mass": 1050.0, "power": 16.0, "brake": 18.0, "top": 42.0, "reverse": -6.0,
-		"drag": 0.22, "offroad_drag": 0.95, "turn": 1.8, "offroad_turn": 0.75,
+		"drag": 0.22, "offroad_drag": 0.95, "turn": 1.8, "offroad_turn": 0.75, "recipe": "sport",
 		"grip_speed": 18.0, "ride": 0.26, "wheel_r": 0.34, "length": 4.4, "tint": Color(0.55, 0.18, 0.16),
 		"susp_travel": 0.18, "susp_stiff": 48.0, "susp_damp": 8.0, "susp_sag": 0.50,
 	},
@@ -5199,7 +5266,7 @@ const VEHICLE_ROWS := {
 		# and it goes. (Placeholder box shows four wheels for now; the geometry is a mesh job.)
 		"purpose": "the heavy 6x6 — slow and unstoppable, hardly notices the road ending",
 		"loco": "wheeled", "mass": 4200.0, "power": 14.0, "brake": 16.0, "top": 24.0, "reverse": -6.0,
-		"drag": 0.34, "offroad_drag": 0.22, "turn": 1.0, "offroad_turn": 0.12,
+		"drag": 0.34, "offroad_drag": 0.22, "turn": 1.0, "offroad_turn": 0.12, "recipe": "flatbed",
 		"grip_speed": 12.0, "ride": 0.70, "wheel_r": 0.62, "length": 7.0, "tint": Color(0.52, 0.44, 0.30),
 		"susp_travel": 0.55, "susp_stiff": 30.0, "susp_damp": 6.0, "susp_sag": 0.55,
 	},
@@ -5219,7 +5286,7 @@ const VEHICLE_ROWS := {
 		# the sportscar would bog in. Torque over speed; the honest opposite of the road car.
 		"purpose": "the tractor — crawls, but crosses soft ground nothing else will",
 		"loco": "wheeled", "mass": 3200.0, "power": 10.0, "brake": 12.0, "top": 12.0, "reverse": -4.0,
-		"drag": 0.40, "offroad_drag": 0.18, "turn": 1.2, "offroad_turn": 0.10,
+		"drag": 0.40, "offroad_drag": 0.18, "turn": 1.2, "offroad_turn": 0.10, "recipe": "tractor",
 		"grip_speed": 6.0, "ride": 0.75, "wheel_r": 0.80, "length": 4.0, "tint": Color(0.30, 0.45, 0.20),
 		"susp_travel": 0.40, "susp_stiff": 24.0, "susp_damp": 5.0, "susp_sag": 0.60,
 	},
@@ -5229,7 +5296,7 @@ const VEHICLE_ROWS := {
 		# a load has no traction in dirt. The reason roads matter; needs room and hates the rough.
 		"purpose": "the articulated hauler — road-bound freight, ponderous and wide-turning",
 		"loco": "wheeled", "mass": 14000.0, "power": 11.0, "brake": 10.0, "top": 26.0, "reverse": -4.0,
-		"drag": 0.30, "offroad_drag": 0.85, "turn": 0.7, "offroad_turn": 0.55,
+		"drag": 0.30, "offroad_drag": 0.85, "turn": 0.7, "offroad_turn": 0.55, "recipe": "flatbed",
 		"grip_speed": 16.0, "ride": 0.60, "wheel_r": 0.55, "length": 14.0, "tint": Color(0.30, 0.36, 0.46),
 		"susp_travel": 0.35, "susp_stiff": 40.0, "susp_damp": 7.0, "susp_sag": 0.60,
 	},
@@ -5244,7 +5311,7 @@ const VEHICLE_ROWS := {
 		# bites) that stop wheels dead. You take it not to travel but to go somewhere untravellable.
 		"purpose": "the tracked crawler — slow and road-blind, climbs the broken ground wheels can't",
 		"loco": "tracked", "mass": 9000.0, "power": 9.0, "brake": 12.0, "top": 9.0, "reverse": -4.0,
-		"drag": 0.35, "offroad_drag": 0.0, "turn": 1.4, "offroad_turn": 0.0,
+		"drag": 0.35, "offroad_drag": 0.0, "turn": 1.4, "offroad_turn": 0.0, "recipe": "turret",
 		"grip_speed": 0.0, "ride": 0.55, "wheel_r": 0.50, "length": 6.5, "tint": Color(0.34, 0.36, 0.32),
 		"susp_travel": 0.30, "susp_stiff": 40.0, "susp_damp": 7.0, "susp_sag": 0.55,
 	},
@@ -5440,7 +5507,7 @@ const VEHICLE_ROWS := {
 		# spot, reaching a ledge or rooftop no wheel or wing can -- the flyer for tight, slow, precise work.
 		"purpose": "the rotary — hovers, climbs vertically, pivots in place; slow but goes anywhere and waits there",
 		"loco": "air", "mass": 2400.0, "power": 8.0, "brake": 8.0, "top": 28.0, "reverse": -6.0,
-		"drag": 0.45, "offroad_drag": 0.0, "turn": 1.3, "offroad_turn": 0.0,
+		"drag": 0.45, "offroad_drag": 0.0, "turn": 1.3, "offroad_turn": 0.0, "recipe": "rotor",
 		"grip_speed": 0.0, "ride": 0.6, "wheel_r": 0.5, "length": 9.0, "tint": Color(0.28, 0.30, 0.34),
 		"lift": 1.0, "stall_speed": 0.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
@@ -5450,7 +5517,7 @@ const VEHICLE_ROWS := {
 		# turn, but nothing else on the ring crosses a 3,000 km circumference at this pace -- the long-haul flyer.
 		"purpose": "the fixed-wing — fast and far, but must hold airspeed or stall and banks through a wide turn",
 		"loco": "air", "mass": 3200.0, "power": 12.0, "brake": 6.0, "top": 90.0, "reverse": 0.0,
-		"drag": 0.12, "offroad_drag": 0.0, "turn": 1.1, "offroad_turn": 0.0,
+		"drag": 0.12, "offroad_drag": 0.0, "turn": 1.1, "offroad_turn": 0.0, "recipe": "wing",
 		"grip_speed": 40.0, "ride": 0.5, "wheel_r": 0.5, "length": 11.0, "tint": Color(0.40, 0.40, 0.44),
 		"lift": 1.0, "stall_speed": 30.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
@@ -5463,11 +5530,56 @@ const VEHICLE_ROWS := {
 		# the air does. Down low the airplane beats it everywhere; over the wall it is the only thing still flying.
 		"purpose": "the lifter — a mediocre aeroplane and the only craft that keeps flying once the air runs out",
 		"loco": "air", "mass": 9000.0, "power": 16.0, "brake": 6.0, "top": 120.0, "reverse": 0.0,
-		"drag": 0.22, "offroad_drag": 0.0, "turn": 0.7, "offroad_turn": 0.0,
+		"drag": 0.22, "offroad_drag": 0.0, "turn": 0.7, "offroad_turn": 0.0, "recipe": "wing",
 		"grip_speed": 60.0, "ride": 0.7, "wheel_r": 0.6, "length": 16.0, "tint": Color(0.52, 0.50, 0.46),
 		"lift": 0.85, "stall_speed": 45.0, "rcs": 7.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
 	},
+}
+
+# KITBASH RECIPES. A recipe is a small set of shared parts hung off the chassis sockets; a VehicleDef's
+# `recipe` field names one. This is the vehicles half of the "40 vehicles is not 40 models" framing --
+# six recipes turn eight identical boxes into eight silhouettes, and a new one is a data row, not a mesh
+# job. Each spec: slot (unique in the recipe), socket (a chassis Node3D by name), kind (box|cyl), size,
+# pos/rot offset from the socket, tint. Parts merge into the baked chassis; only the wheels stay dynamic.
+const VEHICLE_RECIPES := {
+	# flatbed -- a cab up front and a low cargo bed with a headboard behind (sixby, hauler).
+	"flatbed": [
+		{"slot": "cab",   "socket": "cab", "kind": "box", "size": Vector3(1.9, 1.0, 1.5),  "pos": Vector3(0, 0.5, 0),    "tint": Color(0.30, 0.32, 0.30)},
+		{"slot": "bed",   "socket": "bed", "kind": "box", "size": Vector3(2.0, 0.35, 2.2), "pos": Vector3(0, 0.18, 0),   "tint": Color(0.24, 0.24, 0.22)},
+		{"slot": "board", "socket": "bed", "kind": "box", "size": Vector3(2.0, 0.8, 0.16), "pos": Vector3(0, 0.55, 1.1), "tint": Color(0.24, 0.24, 0.22)},
+	],
+	# sport -- a rear wing on struts and a front splitter; reads fast from the chase camera behind.
+	"sport": [
+		{"slot": "wing",     "socket": "tail", "kind": "box", "size": Vector3(1.9, 0.08, 0.5), "pos": Vector3(0, 0.45, 0),     "tint": Color(0.12, 0.12, 0.13)},
+		{"slot": "strutL",   "socket": "tail", "kind": "box", "size": Vector3(0.1, 0.45, 0.1), "pos": Vector3(-0.7, 0.22, 0),  "tint": Color(0.12, 0.12, 0.13)},
+		{"slot": "strutR",   "socket": "tail", "kind": "box", "size": Vector3(0.1, 0.45, 0.1), "pos": Vector3(0.7, 0.22, 0),   "tint": Color(0.12, 0.12, 0.13)},
+		{"slot": "splitter", "socket": "nose", "kind": "box", "size": Vector3(2.0, 0.06, 0.6), "pos": Vector3(0, -0.35, 0.2),  "tint": Color(0.10, 0.10, 0.10)},
+	],
+	# tractor -- a tall narrow cab, an exhaust stack and a rear implement bar.
+	"tractor": [
+		{"slot": "cab",   "socket": "cab", "kind": "box", "size": Vector3(1.4, 1.4, 1.3),  "pos": Vector3(0, 0.7, -0.4),  "tint": Color(0.26, 0.40, 0.18)},
+		{"slot": "stack", "socket": "cab", "kind": "cyl", "size": Vector3(0.18, 0.9, 0.18), "pos": Vector3(0.6, 0.7, 0.7), "tint": Color(0.15, 0.15, 0.15)},
+		{"slot": "tool",  "socket": "bed", "kind": "box", "size": Vector3(2.2, 0.5, 0.3),   "pos": Vector3(0, 0.0, -0.6),  "tint": Color(0.50, 0.45, 0.20)},
+	],
+	# turret -- a hull-top ring, a drum and a barrel (crawler); the military read.
+	"turret": [
+		{"slot": "ring",   "socket": "turret", "kind": "cyl", "size": Vector3(1.4, 0.25, 1.4), "pos": Vector3(0, 0.12, 0),  "tint": Color(0.30, 0.32, 0.30)},
+		{"slot": "drum",   "socket": "turret", "kind": "cyl", "size": Vector3(1.1, 0.5, 1.1),  "pos": Vector3(0, 0.5, 0),   "tint": Color(0.28, 0.30, 0.28)},
+		{"slot": "barrel", "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 1.8, 0.18),"pos": Vector3(0, 0.55, 1.0),"rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.20)},
+	],
+	# rotor -- a mast, a wide thin main disc and a tail disc; the helicopter read from above.
+	"rotor": [
+		{"slot": "mast",  "socket": "turret", "kind": "cyl", "size": Vector3(0.2, 0.8, 0.2),  "pos": Vector3(0, 0.4, 0),    "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "disc",  "socket": "turret", "kind": "cyl", "size": Vector3(7.0, 0.05, 7.0), "pos": Vector3(0, 0.85, 0),   "tint": Color(0.16, 0.16, 0.18)},
+		{"slot": "tailr", "socket": "tail",   "kind": "cyl", "size": Vector3(1.6, 0.04, 1.6), "pos": Vector3(0.3, 0.2, 0),  "rot": Vector3(0, 0, 90), "tint": Color(0.16, 0.16, 0.18)},
+	],
+	# wing -- two swept wings and a tail fin; the fixed-wing read (airplane, lifter).
+	"wing": [
+		{"slot": "wingL", "socket": "wing", "kind": "box", "size": Vector3(5.5, 0.12, 1.4), "pos": Vector3(-3.2, 0, 0), "tint": Color(0.40, 0.40, 0.44)},
+		{"slot": "wingR", "socket": "wing", "kind": "box", "size": Vector3(5.5, 0.12, 1.4), "pos": Vector3(3.2, 0, 0),  "tint": Color(0.40, 0.40, 0.44)},
+		{"slot": "fin",   "socket": "tail", "kind": "box", "size": Vector3(0.12, 1.2, 1.0), "pos": Vector3(0, 0.6, 0),  "tint": Color(0.40, 0.40, 0.44)},
+	],
 }
 
 func _build_vehicle_defs() -> void:

@@ -154,10 +154,26 @@ Write the "what actually happened" notes into the commit message, and keep this 
       `game/tests/assembler_test.gd`. NOT runtime-tested this session — Godot execution was
       permission-gated (Bash + PowerShell, every form denied). Run on the laptop:
       `godot --headless --path game -s res://tests/assembler_test.gd` — expect `ASSEMBLER SELFTEST: PASS`.
-- [ ] **Vehicle recipes.** `_make_car` builds a box with four wheels inline, and every row that has
+- [x] **Vehicle recipes.** `_make_car` builds a box with four wheels inline, and every row that has
       no bespoke mesh gets the identical shape -- twenty-one vehicles that photograph the same. A
       chassis with sockets (wheels, cab, bed, turret, tracks) plus a `recipe` field on VehicleDef
       turns the roster into visible variety for the cost of a few parts.
+      Done: `VEHICLE_RECIPES` const (6 recipes -- flatbed/sport/tractor/turret/rotor/wing) + a
+      `_recipe_mesh` generator (tinted box|cyl). `_make_car` now, when `d.recipe != ""`, builds named
+      chassis sockets (`cab/bed/turret/nose/tail/wing`, body-relative so they scale with length),
+      hangs the parts via the shared `CharacterAssembler.apply` (the payoff of the Skeleton3D unlock --
+      one assembler, two consumers), marks the wheel pivots `no_bake`, and `MeshBaker.bake`s the
+      chassis to one mesh while the wheels stay dynamic. `recipe` wired onto 8 rows: sportscar→sport,
+      sixby+hauler→flatbed, tractor→tractor, crawler→turret, rotor→rotor, airplane+lifter→wing. Rows
+      with no recipe are byte-for-byte the old box (boats/subs/hover/legged/bike/box/warthog untouched).
+      NOT runtime-tested this session: Godot execution is permission-gated (Bash sandboxed+unsandboxed,
+      PowerShell, cmd wrapper -- every form, even `--version`, returns "requires approval"), same as the
+      bake/assembler/damage ticks. GDScript statically checked (indentation, the const Vector3/Color
+      block parses like VEHICLE_ROWS, 8 recipe fields + 6 keys confirmed). VERIFY VISUALLY on the laptop:
+      `& C:\Godot\Godot_v4.5.1-stable_win64.exe --headless --path C:\Games\possession\game res://mocks/ring_vibes.tscn -- --shots millstreet --vehicles`
+      -- expect the sportscar/sixby/hauler/tractor/crawler/rotor/airplane/lifter frames in
+      `logs/shots/` to show distinct silhouettes, not eight identical boxes, and `SHOT vehicle` tris to
+      stay modest (baked chassis + 4 wheels).
 - [ ] **Building recipes.** `_build_buildings` places one box with a roof. Sockets for wall, roof,
       door, chimney, veranda, plus per-biome part sets, is how java stops looking like cork.
 - [ ] **Weapon recipes.** A receiver with barrel/stock/sight/magazine sockets. Fourteen weapons
