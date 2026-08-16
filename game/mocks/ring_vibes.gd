@@ -2631,6 +2631,18 @@ func _deployable_parade(dir: String) -> void:
 		var right := up.cross(Vector3(0.0, 0.0, 1.0)).normalized()
 		var basis := Basis(up, float(p["yaw"])) * Basis(right, up, right.cross(up))
 		node.global_transform = Transform3D(basis, pos)
+		# Clear the scatter around this spot so no fir tree stands between camera and subject -- the same
+		# device _shoot_silhouette uses (mark near trees down, rebuild the LOD buckets, which skip downed).
+		# The parade claims "the clean silhouette device" but only borrowed the camera offset, not this;
+		# without it the ground-placed sensor/turret shoot straight through a fir. Accumulates across the
+		# loop, so overlapping clears help later subjects.
+		var cleared := 0
+		for i in _tree_ground.size():
+			if not _tree_down.has(i) and pos.distance_squared_to(_tree_ground[i]) < 30.0 * 30.0:
+				_tree_down[i] = true
+				cleared += 1
+		if cleared > 0:
+			_update_tree_lod(true)
 		var local := _model_aabb(node)
 		var center := node.global_transform * local.get_center()
 		var nbasis := node.global_transform.basis.orthonormalized()

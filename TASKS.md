@@ -275,7 +275,23 @@ Write the "what actually happened" notes into the commit message, and keep this 
       alternating with hull, and the struts between — identical to the hand-welded port, no scene-load
       error. Journal entry written. Forward half ("whatever else gets hand-built next") is groundwork;
       nothing else is hand-built to convert right now.
-- [ ] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.
+- [x] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.
+      Already built by a prior tick (`game/pipeline/deployables.gd`, fifth consumer of the
+      Skeleton3D-unlocked assembler) with a selftest and a `--deployables` parade, but never RUN --
+      left unticked for verification, same as Structure recipes. This tick RAN it. Selftest PASS
+      (`scripts/godot.cmd --headless --path game -s res://tests/deployables_test.gd`): every recipe
+      builds to one baked mesh with geometry; a placement list survives save/load byte-for-byte; a bad
+      key is filtered so it never resurrects. Visual proof via
+      `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet --deployables
+      --label deployables` (wrapper accepted): parade prints `placed 3 ... reloaded 3` and frames the
+      RELOADED nodes -- so it is evidence of the round-trip, not just that meshes exist. The three read
+      as three distinct silhouettes: mine = low disc, sensor = tall thin mast + glowing dish, turret =
+      tripod + barrel (`logs/shots/20260816_2218_deployables/`, journal entry written).
+      One fix made this tick: the parade CLAIMED the clean silhouette device but had only copied the
+      camera offset, not the scatter-clear -- so the first run shot the sensor and turret straight
+      through a fir. Added the same `_shoot_silhouette` scatter-clear (mark near trees down within 30m,
+      rebuild LOD buckets) to `_deployable_parade`; second run clean. Player-placement input/HUD is a
+      gameplay item, not part of this one.
 - [ ] **Progression rules.** The player ARRIVES from a spacefaring civilisation and gets stripped of
       it (`the-toll` in docs/vignettes.md). The tree is therefore about RECOVERING capability, not
       inventing it -- a spear is what you use when they took your rifle. That inverts the usual

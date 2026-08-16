@@ -443,3 +443,38 @@ as the built structure it did before, or did the assembler/bake path break the g
 - Structure-recipes item done + ticked. The recipe format (radial `ring` repeat with `count`/`radius`/
   `alt_mat`) is in place for "whatever else gets hand-built next"; nothing else is hand-built to
   convert right now, so the forward half of the item is groundwork, not outstanding work.
+
+---
+
+## 2026-08-16 — deployables: placed, then persistent (`--deployables`, two runs)
+
+**Looking for:** whether the deployable system (`game/pipeline/deployables.gd`, fifth consumer of the
+Skeleton3D-unlocked assembler) actually works and reads — mine, sensor, tripod turret. It was built
+by a prior tick, with a selftest and a `--deployables` parade, but never RUN, so the item stood
+unticked. Two questions: does the placed→save→reload→build round-trip work on screen (the "then
+persistent" half), and do the three read as three distinct silhouettes.
+
+**Saw:**
+- **Selftest PASS** (`-s res://tests/deployables_test.gd`): every recipe builds to one baked mesh with
+  real geometry; a 3-placement list survives a save/load round-trip byte-for-byte; a bad key is
+  filtered on save so it never resurrects as an unbuildable ghost.
+- **Round-trip proven on screen:** the parade prints `placed 3, saved to user://deployables.json,
+  reloaded 3`, and the framed nodes are built from the *reloaded* list, not the ones just placed.
+- **Mine** reads as intended — a low dark drum, a yellow hazard band, a stub trigger prong. "Low disc."
+- **Turret** reads unambiguously as a tripod — three splayed legs to a hub, a body, a barrel out -Z.
+- **Sensor** reads as tall-and-thin — ground stake, thin mast, housing, a glowing cyan dish canted
+  skyward, distinct from the dark turret mast. Exactly the three-way silhouette contrast the recipes
+  aim for; none of the three could be confused for another at a glance.
+
+**Fell out:**
+- **First run: half the frames were shot straight through a fir tree** (sensor side + tq, turret tq).
+  The parade *claimed* "the same clean silhouette device" but had only borrowed the camera-offset
+  trick — not the scatter-clear that `_shoot_silhouette` does. Fixed in this tick: the parade now
+  marks near trees down within 30 m of each placement and rebuilds the LOD buckets, same mechanism.
+  Second run: all six frames clean. This is the fourth instance of the standing defect (landscape/
+  parade framings reused for object questions) — but here the fix was three lines of reuse, not a new
+  framing, so no new item; the already-queued "extend `--silhouette` to buildings and structures" item
+  is the general form.
+- Deployable item done + ticked. "Placed, then persistent" is the whole novel part and it is verified
+  both headless (selftest) and on screen (round-trip parade). Wiring deployables into actual player
+  placement (an input to drop one, a HUD affordance) is a gameplay item, not part of this one.
