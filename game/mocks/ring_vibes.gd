@@ -4509,112 +4509,156 @@ func _fill_mm(mmi: MultiMeshInstance3D, xfs: Array) -> void:
 # instead, so the offset is applied here per patch rather than baked into the file.
 # ---------------------------------------------------------------------------
 
-func _plinth(st: SurfaceTool, quad: Callable, e: float) -> void:
-	# An undercroft dropping a full building-height below the floor. Buildings are placed on the
-	# HIGHEST corner of their footprint so nothing is buried; that leaves the downhill side in the
-	# air, and this fills it. Which is also what hillside buildings actually do -- cut into the
-	# slope at the back, stand on stone or stilts at the front. Invisible on flat ground.
-	var base := Color(0.34, 0.31, 0.28)
-	quad.call(Vector3(-e, -1.0, e), Vector3(e, -1.0, e), Vector3(e, 0.02, e), Vector3(-e, 0.02, e), base)
-	quad.call(Vector3(e, -1.0, -e), Vector3(-e, -1.0, -e), Vector3(-e, 0.02, -e), Vector3(e, 0.02, -e), base)
-	quad.call(Vector3(e, -1.0, e), Vector3(e, -1.0, -e), Vector3(e, 0.02, -e), Vector3(e, 0.02, e), base)
-	quad.call(Vector3(-e, -1.0, -e), Vector3(-e, -1.0, e), Vector3(-e, 0.02, e), Vector3(-e, 0.02, -e), base)
-
-func _house_mesh() -> ArrayMesh:
-	# Unit house: footprint 1x1 in x/z, total height 1, walls to 0.72, gable ridge along z.
-	# Instance transforms scale it to real width/depth/height, so one mesh covers every building.
-	# Vertex colours carry wall-vs-roof; per-instance colour tints the whole thing for variety.
-	#
-	# Winding defines the normals here (generate_normals at the end) rather than both being
-	# asserted separately -- stating them independently is how you get geometry that is lit
-	# correctly and culled inside out, or vice versa. See the shader-winding note in
-	# .decisions/terrain.md: never hand-assert a normal and a winding and hope they agree.
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var wall := Color(0.82, 0.80, 0.75)
-	var roof := Color(0.30, 0.29, 0.31)
-	var wt := 0.72
-	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
-		for v in [a, c, b, a, d, c]:
-			st.set_color(col)
-			st.add_vertex(v)
-	var tri := func(a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
-		for v in [a, c, b]:
-			st.set_color(col)
-			st.add_vertex(v)
-	# walls, each wound as seen from OUTSIDE the house
-	quad.call(Vector3(-0.5, 0, 0.5), Vector3(0.5, 0, 0.5), Vector3(0.5, wt, 0.5), Vector3(-0.5, wt, 0.5), wall)
-	quad.call(Vector3(0.5, 0, -0.5), Vector3(-0.5, 0, -0.5), Vector3(-0.5, wt, -0.5), Vector3(0.5, wt, -0.5), wall)
-	quad.call(Vector3(0.5, 0, 0.5), Vector3(0.5, 0, -0.5), Vector3(0.5, wt, -0.5), Vector3(0.5, wt, 0.5), wall)
-	quad.call(Vector3(-0.5, 0, -0.5), Vector3(-0.5, 0, 0.5), Vector3(-0.5, wt, 0.5), Vector3(-0.5, wt, -0.5), wall)
-	# roof planes, ridge along z at x=0
-	quad.call(Vector3(-0.5, wt, 0.5), Vector3(0.0, 1.0, 0.5), Vector3(0.0, 1.0, -0.5), Vector3(-0.5, wt, -0.5), roof)
-	quad.call(Vector3(0.0, 1.0, 0.5), Vector3(0.5, wt, 0.5), Vector3(0.5, wt, -0.5), Vector3(0.0, 1.0, -0.5), roof)
-	# gable ends
-	tri.call(Vector3(-0.5, wt, 0.5), Vector3(0.5, wt, 0.5), Vector3(0.0, 1.0, 0.5), wall)
-	tri.call(Vector3(0.5, wt, -0.5), Vector3(-0.5, wt, -0.5), Vector3(0.0, 1.0, -0.5), wall)
-	_plinth(st, quad, 0.5)
-	st.generate_normals()
-	return st.commit()
-
-func _joglo_mesh() -> ArrayMesh:
-	# Javanese domestic form: low walls under a big tiered roof. That ratio -- wall almost nothing,
-	# roof almost everything -- is what reads as South-East Asian at a glance, far more than any
-	# ornament would at this distance. Lower hip skirt overhangs the walls; steep pyramid above.
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var wall := Color(0.74, 0.70, 0.62)
-	var roof := Color(0.26, 0.19, 0.15)
-	var wt := 0.30            # wall top -- deliberately low
-	var eave := 0.62          # skirt overhang half-extent
-	var mid := 0.30           # where the skirt meets the upper pyramid
-	var midy := 0.58
-	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
-		for v in [a, c, b, a, d, c]:
-			st.set_color(col)
-			st.add_vertex(v)
-	var tri := func(a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
-		for v in [a, c, b]:
-			st.set_color(col)
-			st.add_vertex(v)
-	# walls
-	quad.call(Vector3(-0.42, 0, 0.42), Vector3(0.42, 0, 0.42), Vector3(0.42, wt, 0.42), Vector3(-0.42, wt, 0.42), wall)
-	quad.call(Vector3(0.42, 0, -0.42), Vector3(-0.42, 0, -0.42), Vector3(-0.42, wt, -0.42), Vector3(0.42, wt, -0.42), wall)
-	quad.call(Vector3(0.42, 0, 0.42), Vector3(0.42, 0, -0.42), Vector3(0.42, wt, -0.42), Vector3(0.42, wt, 0.42), wall)
-	quad.call(Vector3(-0.42, 0, -0.42), Vector3(-0.42, 0, 0.42), Vector3(-0.42, wt, 0.42), Vector3(-0.42, wt, -0.42), wall)
-	# lower hip skirt: outer ring at eave height, inner ring at midy
-	var e := 0.34
-	quad.call(Vector3(-eave, e, eave), Vector3(eave, e, eave), Vector3(mid, midy, mid), Vector3(-mid, midy, mid), roof)
-	quad.call(Vector3(eave, e, -eave), Vector3(-eave, e, -eave), Vector3(-mid, midy, -mid), Vector3(mid, midy, -mid), roof)
-	quad.call(Vector3(eave, e, eave), Vector3(eave, e, -eave), Vector3(mid, midy, -mid), Vector3(mid, midy, mid), roof)
-	quad.call(Vector3(-eave, e, -eave), Vector3(-eave, e, eave), Vector3(-mid, midy, mid), Vector3(-mid, midy, -mid), roof)
-	# steep upper pyramid
-	var apex := Vector3(0, 1.0, 0)
-	tri.call(Vector3(-mid, midy, mid), Vector3(mid, midy, mid), apex, roof)
-	tri.call(Vector3(mid, midy, -mid), Vector3(-mid, midy, -mid), apex, roof)
-	tri.call(Vector3(mid, midy, mid), Vector3(mid, midy, -mid), apex, roof)
-	tri.call(Vector3(-mid, midy, -mid), Vector3(-mid, midy, mid), apex, roof)
-	_plinth(st, quad, 0.42)
-	st.generate_normals()
-	return st.commit()
-
 func _build_buildings() -> void:
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.roughness = 0.92
-	mat.metallic_specular = 0.1
+	# One MultiMesh per BUILDING_RECIPE (index = style): the recipe kitbashes a unit building from
+	# named-socket parts via the SHARED assembler -- the same one the vehicles use, the payoff of the
+	# Skeleton3D unlock -- then MeshBaker merges it to one mesh so a settlement of that style stays a
+	# handful of draw calls, not twelve nodes per house. Per-biome part sets are just different recipes
+	# (gable + door + chimney vs joglo + veranda), which is how java stops looking like cork.
 	_bldg_mmi = []
-	for m in [_house_mesh(), _joglo_mesh()]:
+	var mats := _building_materials()
+	for recipe in BUILDING_RECIPES:
+		var mesh := _bake_building_mesh(recipe["parts"], mats)
+		if mesh == null:
+			push_warning("ring_vibes: building recipe '%s' baked nothing" % recipe.get("name", "?"))
+			continue
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_colors = true
-		mm.mesh = m
-		mm.mesh.surface_set_material(0, mat)
+		mm.mesh = mesh
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mmi)
 		_bldg_mmi.append(mmi)
+
+func _building_materials() -> Dictionary:
+	# One shared StandardMaterial3D per part colour. vertex_color_use_as_albedo is what lets the
+	# per-building MultiMesh tint (cols[si] in _refill_buildings) keep multiplying the albedo, exactly
+	# as it did when wall/roof colour lived in vertex colours -- moving it to material albedo changes
+	# nothing on screen for the walls and roofs, it just lets MeshBaker group parts by material.
+	var defs := {
+		"base":   Color(0.34, 0.31, 0.28),
+		"wall":   Color(0.82, 0.80, 0.75),
+		"roof":   Color(0.30, 0.29, 0.31),
+		"trim":   Color(0.22, 0.20, 0.18),
+		"wall_j": Color(0.74, 0.70, 0.62),
+		"roof_j": Color(0.26, 0.19, 0.15),
+	}
+	var mats := {}
+	for k in defs:
+		var m := StandardMaterial3D.new()
+		m.albedo_color = defs[k]
+		m.roughness = 0.92
+		m.metallic_specular = 0.1
+		m.vertex_color_use_as_albedo = true
+		mats[k] = m
+	return mats
+
+func _bake_building_mesh(specs: Array, mats: Dictionary) -> Mesh:
+	# Build a unit chassis with named sockets, hang the parts via the shared assembler, bake to one
+	# mesh, keep the mesh and throw the scaffolding away. Runs entirely out of the SceneTree -- the
+	# assembler and baker only walk parent chains, so no node is ever visible on its own.
+	var chassis := Node3D.new()
+	_add_building_sockets(chassis)
+	var recipe := Recipe.new()
+	recipe.body_plan = "building"
+	for spec: Dictionary in specs:
+		var pd := PartDef.new()
+		pd.slot = spec["slot"]
+		pd.socket = spec["socket"]
+		pd.mesh = _building_part_mesh(spec, mats)
+		pd.offset_position = spec.get("pos", Vector3.ZERO)
+		pd.offset_rotation_degrees = spec.get("rot", Vector3.ZERO)
+		recipe.parts[spec["slot"]] = pd
+	CharacterAssembler.apply(chassis, recipe)
+	var baked := MeshBaker.bake(chassis)
+	var mesh: Mesh = baked.mesh if baked else null
+	chassis.free()
+	return mesh
+
+func _add_building_sockets(chassis: Node3D) -> void:
+	# The five named mounts the item calls for. Unit space: footprint is [-0.5,0.5], ground at y=0,
+	# +z is the front. wall/roof/chimney anchor at the origin (the part's own pos/size places it);
+	# door and veranda anchor on the front face, where they belong.
+	var sockets := {
+		"wall":    Vector3(0, 0, 0),
+		"roof":    Vector3(0, 0, 0),
+		"door":    Vector3(0, 0, 0.5),
+		"chimney": Vector3(0, 0, 0),
+		"veranda": Vector3(0, 0, 0.5),
+	}
+	for n in sockets:
+		var s := Node3D.new()
+		s.name = n
+		s.position = sockets[n]
+		chassis.add_child(s)
+
+func _building_part_mesh(spec: Dictionary, mats: Dictionary) -> Mesh:
+	# One generator per part: a tinted box for walls/plinth/door/chimney/veranda, or one of the two
+	# roof forms. Same framing as the vehicle recipes -- a small kit of shapes over a shared chassis.
+	var mat: Material = mats.get(spec.get("mat", "wall"), mats["wall"])
+	var size: Vector3 = spec.get("size", Vector3.ONE)
+	match spec.get("shape", "box"):
+		"gable":
+			return _gable_roof_mesh(size.x * 0.5, size.z * 0.5, size.y, mat)
+		"joglo":
+			return _joglo_roof_mesh(mat)
+		_:
+			var bm := BoxMesh.new()
+			bm.size = size
+			bm.material = mat
+			return bm
+
+func _gable_roof_mesh(hw: float, hz: float, ridge: float, mat: Material) -> ArrayMesh:
+	# Pitched roof, base at y=0 (sits on the wall top via the recipe's pos.y), ridge along z at x=0.
+	# Winding defines the normals (generate_normals at the end) -- see the shader-winding note in
+	# .decisions/terrain.md, never hand-assert a normal and a winding and hope they agree.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+		for v in [a, c, b, a, d, c]:
+			st.add_vertex(v)
+	var tri := func(a: Vector3, b: Vector3, c: Vector3) -> void:
+		for v in [a, c, b]:
+			st.add_vertex(v)
+	quad.call(Vector3(-hw, 0, hz), Vector3(0, ridge, hz), Vector3(0, ridge, -hz), Vector3(-hw, 0, -hz))
+	quad.call(Vector3(0, ridge, hz), Vector3(hw, 0, hz), Vector3(hw, 0, -hz), Vector3(0, ridge, -hz))
+	tri.call(Vector3(-hw, 0, hz), Vector3(hw, 0, hz), Vector3(0, ridge, hz))
+	tri.call(Vector3(hw, 0, -hz), Vector3(-hw, 0, -hz), Vector3(0, ridge, -hz))
+	st.generate_normals()
+	st.set_material(mat)
+	return st.commit()
+
+func _joglo_roof_mesh(mat: Material) -> ArrayMesh:
+	# Javanese tiered roof, base at y=0: a low hip skirt that overhangs the walls, then a steep
+	# pyramid. That wall-almost-nothing / roof-almost-everything ratio is what reads as South-East
+	# Asian at a glance. Heights are the original _joglo_mesh values rebased so the part sits on the
+	# 0.30 wall top (skirt outer 0.04, mid ring 0.28, apex 0.70), placed by the recipe's pos.y.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+		for v in [a, c, b, a, d, c]:
+			st.add_vertex(v)
+	var tri := func(a: Vector3, b: Vector3, c: Vector3) -> void:
+		for v in [a, c, b]:
+			st.add_vertex(v)
+	var e := 0.04
+	var midy := 0.28
+	var eave := 0.62
+	var mid := 0.30
+	quad.call(Vector3(-eave, e, eave), Vector3(eave, e, eave), Vector3(mid, midy, mid), Vector3(-mid, midy, mid))
+	quad.call(Vector3(eave, e, -eave), Vector3(-eave, e, -eave), Vector3(-mid, midy, -mid), Vector3(mid, midy, -mid))
+	quad.call(Vector3(eave, e, eave), Vector3(eave, e, -eave), Vector3(mid, midy, -mid), Vector3(mid, midy, mid))
+	quad.call(Vector3(-eave, e, -eave), Vector3(-eave, e, eave), Vector3(-mid, midy, mid), Vector3(-mid, midy, -mid))
+	var apex := Vector3(0, 0.70, 0)
+	tri.call(Vector3(-mid, midy, mid), Vector3(mid, midy, mid), apex)
+	tri.call(Vector3(mid, midy, -mid), Vector3(-mid, midy, -mid), apex)
+	tri.call(Vector3(mid, midy, mid), Vector3(mid, midy, -mid), apex)
+	tri.call(Vector3(-mid, midy, -mid), Vector3(-mid, midy, mid), apex)
+	st.generate_normals()
+	st.set_material(mat)
+	return st.commit()
 
 func _load_bldg_file(name: String, arc_off: float, lat_off: float, style: int) -> int:
 	var path := "res://mocks/dem/%s_bldg.dat" % name
@@ -5581,6 +5625,33 @@ const VEHICLE_RECIPES := {
 		{"slot": "fin",   "socket": "tail", "kind": "box", "size": Vector3(0.12, 1.2, 1.0), "pos": Vector3(0, 0.6, 0),  "tint": Color(0.40, 0.40, 0.44)},
 	],
 }
+
+# Building recipes, index = building style (see _load_bldg_file: 0 = gable, 1 = meru). Same shape as
+# VEHICLE_RECIPES: a list of parts, each a shape hung on a named socket at an offset. Per-biome
+# variety is a different part set, not a different mesh -- gable gets a door and a chimney, meru gets
+# a veranda. Unit space: footprint [-0.5,0.5], ground at y=0, +z front; the instance transform scales
+# it to the real footprint. `size.y` on a gable is the ridge rise above the wall top.
+const BUILDING_RECIPES := [
+	{
+		"name": "gable",
+		"parts": [
+			{"slot": "plinth", "socket": "wall",    "shape": "box",   "mat": "base",  "size": Vector3(1.0, 1.0, 1.0),    "pos": Vector3(0, -0.5, 0)},
+			{"slot": "walls",  "socket": "wall",    "shape": "box",   "mat": "wall",  "size": Vector3(1.0, 0.72, 1.0),   "pos": Vector3(0, 0.36, 0)},
+			{"slot": "pitch",  "socket": "roof",    "shape": "gable", "mat": "roof",  "size": Vector3(1.0, 0.28, 1.0),   "pos": Vector3(0, 0.72, 0)},
+			{"slot": "front",  "socket": "door",    "shape": "box",   "mat": "trim",  "size": Vector3(0.22, 0.5, 0.06),  "pos": Vector3(0, 0.25, 0)},
+			{"slot": "flue",   "socket": "chimney", "shape": "box",   "mat": "trim",  "size": Vector3(0.14, 0.55, 0.14), "pos": Vector3(0.24, 0.95, -0.18)},
+		],
+	},
+	{
+		"name": "meru",
+		"parts": [
+			{"slot": "plinth", "socket": "wall",    "shape": "box",   "mat": "base",   "size": Vector3(0.84, 1.0, 0.84),  "pos": Vector3(0, -0.5, 0)},
+			{"slot": "walls",  "socket": "wall",    "shape": "box",   "mat": "wall_j", "size": Vector3(0.84, 0.30, 0.84), "pos": Vector3(0, 0.15, 0)},
+			{"slot": "tier",   "socket": "roof",    "shape": "joglo", "mat": "roof_j", "size": Vector3.ONE,               "pos": Vector3(0, 0.30, 0)},
+			{"slot": "porch",  "socket": "veranda", "shape": "box",   "mat": "roof_j", "size": Vector3(0.7, 0.06, 0.34),  "pos": Vector3(0, 0.24, 0.05)},
+		],
+	},
+]
 
 func _build_vehicle_defs() -> void:
 	# Turn each data row into a typed VehicleDef, applying the row over the resource's defaults.

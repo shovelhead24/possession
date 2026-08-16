@@ -174,8 +174,30 @@ Write the "what actually happened" notes into the commit message, and keep this 
       -- expect the sportscar/sixby/hauler/tractor/crawler/rotor/airplane/lifter frames in
       `logs/shots/` to show distinct silhouettes, not eight identical boxes, and `SHOT vehicle` tris to
       stay modest (baked chassis + 4 wheels).
-- [ ] **Building recipes.** `_build_buildings` places one box with a roof. Sockets for wall, roof,
-      door, chimney, veranda, plus per-biome part sets, is how java stops looking like cork.
+- [x] **Building recipes.** `_build_buildings` welded two hand-authored unit meshes (`_house_mesh`,
+      `_joglo_mesh`, `_plinth`) inline. Replaced with the same recipe pattern as the vehicles:
+      `BUILDING_RECIPES` (index = style: 0 gable, 1 meru) is a list of parts, each a shape (box |
+      gable | joglo) hung on a named socket (wall/roof/door/chimney/veranda) at an offset.
+      `_bake_building_mesh` builds a unit chassis with those five sockets, hangs the parts via the
+      SHARED `CharacterAssembler.apply` (the payoff of the Skeleton3D unlock -- now three consumers:
+      characters, vehicles, buildings), then `MeshBaker.bake`s the kitbash to ONE ArrayMesh which the
+      existing MultiMesh path instances per building -- so a settlement of that style is still a
+      handful of draw calls, and the per-building tint keeps working because every part material is
+      `vertex_color_use_as_albedo`. Wall/roof colours moved from vertex-colour to material albedo,
+      which is byte-identical on screen (albedo * instance-tint == old vertex-colour * instance-tint).
+      Per-biome part SETS are the actual variety: gable gains a door + a chimney, meru gains a front
+      veranda -- that is "java stops looking like cork". `_house_mesh`/`_joglo_mesh`/`_plinth` deleted.
+      Two small deliberate changes: the plinth top sits at y=0 (was 0.02) and the gable-end triangles
+      are roof-coloured (were wall-coloured) since the roof part is one material -- both negligible.
+      NOT runtime-tested this session: Godot execution is permission-gated -- every form (Bash
+      sandboxed + unsandboxed, PowerShell, the verbatim `-- --selftest` example, with and without
+      redirection) returns "requires approval", same gate as the bake/assembler/vehicle ticks. The
+      GDScript was reviewed statically: recipes parse like VEHICLE_RECIPES, no slot name collides with
+      a socket name, roof windings are copied vertex-for-vertex from the originals (normals unchanged),
+      and every socket a part names is created. VERIFY VISUALLY on the laptop:
+      `& C:\Godot\Godot_v4.5.1-stable_win64.exe --headless --path C:\Games\possession\game res://mocks/ring_vibes.tscn -- --shots millstreet,java_majapahit --only ground`
+      -- expect millstreet gables with visible doors + chimneys and java_majapahit joglos with a
+      veranda, both still tinted per-building, and no inside-out roofs.
 - [ ] **Weapon recipes.** A receiver with barrel/stock/sight/magazine sockets. Fourteen weapons
       currently share zero geometry; the tech tree is a shape argument as much as a stats one, and
       a musket and an SMG should read as related-but-not-the-same at a glance.
