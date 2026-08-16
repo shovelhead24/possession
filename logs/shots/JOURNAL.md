@@ -304,3 +304,35 @@ items before it.
 - Confirmed `--shots` cannot run headless: it captures from a live viewport, so `--headless` writes
   black frames. Now stated in the tick prompt.
 
+---
+
+## 2026-08-16 — building recipes: no regression, new parts unconfirmed (two runs)
+
+**Looking for:** whether the building recipe rewrite (16b6479) still renders correctly, and whether
+the new per-biome parts are actually there — gable gains a door + chimney, meru gains a veranda.
+The tick that wrote it could not launch Godot, and recorded
+`--shots millstreet,java_majapahit --only ground` as the command to confirm it.
+
+**Saw:**
+- **That recorded command does not show a single building.** `millstreet ground` is a hedge-lined
+  road looking away from the settlement; `java_majapahit ground` puts the camera clipped underneath
+  some large flat plane with palm trunks passing through it. Zero buildings in either frame. The
+  verification command the tick wrote for its own work does not verify it.
+- Re-shot with `--only air`, which does contain them. **java_majapahit is a dense settlement** —
+  hundreds of buildings with distinct roofs, instanced across the valley, per-building tint varying.
+  `millstreet` shows scattered light structures across the fields.
+- So: **no regression.** Buildings render, the MultiMesh instancing path still works through the
+  bake, tint survived the move from vertex-colour to material albedo, and no roof is inside-out at
+  a scale where an inverted normal would show as a black facet.
+- **The new parts are NOT confirmed.** A door, a chimney and a veranda are not resolvable from the
+  air framing's altitude. Nothing in the harness gets close enough to a building to see them.
+
+**Fell out:**
+- Third independent instance today of the same defect: **the harness has landscape framings being
+  reused for object questions they cannot answer** (vehicle parade, building `ground`, building
+  `air`). Already queued as the `_shot_run` framing task, which a tick picked up at 11:51. Whatever
+  that task builds should cover BUILDINGS as well as vehicles — a close, unobstructed framing on a
+  single instance of a thing, not just a roster parade.
+- Building recipes should be treated as "renders, unverified in detail" until such a framing exists.
+  Do not tick that verification note off on the strength of these two runs.
+
