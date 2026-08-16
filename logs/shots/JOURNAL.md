@@ -367,3 +367,23 @@ rear-quarters this is a different instrument.
   a separate item, not folded in here.
 - The rotor recipe is confirmed the clearest failure and is the next queued item.
 
+
+## 2026-08-16 — rotor recipe re-read after the blade fix (`--shots millstreet --silhouette --label rotor_read`)
+
+**Looking for:** whether the rewritten `rotor` entry (solid 7.0 disc → two crossed thin blade
+boxes on a short mast, tail disc → a small blade cross) now reads as a rotorcraft under the same
+silhouette framing that made the old failure unarguable. Judgement of ONE recipe, on the framing
+proven the prior run.
+
+**Saw:** it reads. `sil_rotor_side.png` — a thin horizontal blade line held ~1m above the body on a
+short mast, plus a tail-rotor "+" at the stern; no plate, no patio table. `sil_rotor_tq.png` shows
+the crossed blades from above-quarter, unmistakably a rotor plane. Radius is smaller than the old
+disc (5.5 span vs 7.0) so it no longer overhangs the chassis like a mushroom cap. Cost stayed in
+the generated-recipe band (baked chassis + 4 wheels). The cyan box on the body is the harness
+selection marker — present on every subject (checked the tractor frame), not part of the recipe.
+
+**Fell out:**
+- Rotor item done + ticked.
+- Tractor sub-note (bundled in that item) left unchanged: under this clean framing its tall cab +
+  exhaust stack + rear implement bar already read as a distinct shape; the "told apart by tint"
+  call came from the old dusk parade where shapes weren't legible. No follow-up spun out.
