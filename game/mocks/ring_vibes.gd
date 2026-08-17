@@ -4881,10 +4881,13 @@ func _gable_roof_mesh(hw: float, hz: float, ridge: float, mat: Material) -> Arra
 	return st.commit()
 
 func _joglo_roof_mesh(mat: Material) -> ArrayMesh:
-	# Javanese tiered roof, base at y=0: a low hip skirt that overhangs the walls, then a steep
-	# pyramid. That wall-almost-nothing / roof-almost-everything ratio is what reads as South-East
-	# Asian at a glance. Heights are the original _joglo_mesh values rebased so the part sits on the
-	# 0.30 wall top (skirt outer 0.04, mid ring 0.28, apex 0.70), placed by the recipe's pos.y.
+	# Meru / joglo: a STACK of progressively smaller hip roofs, base at y=0. Each tier slopes up-and-in
+	# (the roof pitch), then the next tier's eave flares back out and up (the overhang), so the
+	# silhouette is the pagoda zigzag -- in, out, in, out -- not one smooth cap, which is what a tiered
+	# temple reads as. Every ring-to-ring band is built by the same band() helper with the winding the
+	# old skirt used, so generate_normals() lands them all outward whether a band slopes in or out (see
+	# the shader-winding note in .decisions/terrain.md -- never hand-assert a normal and a winding).
+	# Base overhang (0.62) and footprint are unchanged from the old skirt; sits on the 0.30 wall top.
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
@@ -4893,19 +4896,29 @@ func _joglo_roof_mesh(mat: Material) -> ArrayMesh:
 	var tri := func(a: Vector3, b: Vector3, c: Vector3) -> void:
 		for v in [a, c, b]:
 			st.add_vertex(v)
-	var e := 0.04
-	var midy := 0.28
-	var eave := 0.62
-	var mid := 0.30
-	quad.call(Vector3(-eave, e, eave), Vector3(eave, e, eave), Vector3(mid, midy, mid), Vector3(-mid, midy, mid))
-	quad.call(Vector3(eave, e, -eave), Vector3(-eave, e, -eave), Vector3(-mid, midy, -mid), Vector3(mid, midy, -mid))
-	quad.call(Vector3(eave, e, eave), Vector3(eave, e, -eave), Vector3(mid, midy, -mid), Vector3(mid, midy, mid))
-	quad.call(Vector3(-eave, e, -eave), Vector3(-eave, e, eave), Vector3(-mid, midy, mid), Vector3(-mid, midy, -mid))
-	var apex := Vector3(0, 0.70, 0)
-	tri.call(Vector3(-mid, midy, mid), Vector3(mid, midy, mid), apex)
-	tri.call(Vector3(mid, midy, -mid), Vector3(-mid, midy, -mid), apex)
-	tri.call(Vector3(mid, midy, mid), Vector3(mid, midy, -mid), apex)
-	tri.call(Vector3(-mid, midy, -mid), Vector3(-mid, midy, mid), apex)
+	var corners := func(w: float, y: float) -> Array:
+		return [Vector3(-w, y, w), Vector3(w, y, w), Vector3(w, y, -w), Vector3(-w, y, -w)]
+	# One four-sided band between a lower square ring (half-width w0 at y0) and an upper ring (w1 at y1).
+	var band := func(w0: float, y0: float, w1: float, y1: float) -> void:
+		var lo: Array = corners.call(w0, y0)
+		var hi: Array = corners.call(w1, y1)
+		for i in 4:
+			quad.call(lo[i], lo[(i + 1) % 4], hi[(i + 1) % 4], hi[i])
+	# (half-width, height) rings bottom -> top, alternating eave (wide) and shoulder (narrow): each
+	# eave is narrower than the one below but wider than the shoulder just under it, so the profile
+	# re-widens at every tier -- three overhanging tiers rising to a finial.
+	var rings := [
+		Vector2(0.62, 0.02), Vector2(0.34, 0.20),   # tier 1: eave -> shoulder
+		Vector2(0.48, 0.24), Vector2(0.26, 0.42),   # tier 2: flared eave -> shoulder
+		Vector2(0.36, 0.46), Vector2(0.15, 0.62),   # tier 3: flared eave -> shoulder
+	]
+	for i in range(rings.size() - 1):
+		band.call(rings[i].x, rings[i].y, rings[i + 1].x, rings[i + 1].y)
+	# Cap the top shoulder ring to the finial point.
+	var apex := Vector3(0, 0.78, 0)
+	var top: Array = corners.call(rings[-1].x, rings[-1].y)
+	for i in 4:
+		tri.call(top[i], top[(i + 1) % 4], apex)
 	st.generate_normals()
 	st.set_material(mat)
 	return st.commit()

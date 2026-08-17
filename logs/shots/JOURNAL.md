@@ -507,3 +507,64 @@ USE it: confirm the gable's door and chimney, and the meru's veranda, are actual
 - **Background is terrain, not clean sky.** Consistent with the weapon/deployable parades (which also
   float over home and look roughly level), and the subjects read clearly against it, so left as-is
   rather than re-pitching the established camera. Noted in case a later pass wants higher contrast.
+
+---
+
+## 2026-08-17 — rotor fuselage read (`--silhouette`, one run)
+
+**Looking for:** the blade fix (5afe963) made the mast/main-blades/tail-rotor read as rotorcraft
+parts, but the body under them was still the shared long-low box on four wheels, so the whole read as
+a flatbed truck with a propeller bolted on. The "rotor fuselage" item asked for a SHORT, TALL fuselage
+on skids instead. That code was written in a prior tick (committed in the wip `ffc3422`) but never
+run or ticked. Ran the vehicle silhouette parade to see whether the new body + skids reads as a
+helicopter: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet
+--silhouette --label rotor_fuselage` (wrapper accepted; script parse-checked clean first).
+
+**Saw:** `logs/shots/20260817_0325_rotor_fuselage/sil_rotor_{side,tq}.png`, tris=300, one baked mesh.
+- **Reads as a helicopter, both angles.** Side-on: a tall boxy cabin, the mast + main-blade line held
+  above the roofline, a thin tail boom running back to a tail-rotor cross, and two skids as feet under
+  the fuselage — not wheels. Three-quarter: the crossed main blades sit clearly aloft on the mast, the
+  tail-rotor cross stands off the boom, skids underneath. Nothing about it says "truck" any more.
+- The item's named failure ("long low bed on four wheels") is gone; the swap to `Vector3(2.0,2.2,4.6)`
+  + `_add_skids` did the job.
+
+**Fell out:**
+- Item done + ticked ("Rotor fuselage").
+- The cabin is still a plain box — boxy rather than the tapered/tadpole profile a real light helicopter
+  has. It reads unambiguously as a rotorcraft so this is not worth an item, but noted in case a later
+  aesthetic pass sweeps the whole roster's proportions. Tractor sub-note (told apart by tint) is out of
+  scope for this item, unchanged.
+
+---
+
+## 2026-08-17 — meru roof tiers, and the roof was never rendering (`--structures`, three runs)
+
+**Looking for:** the `--structures` run flagged the meru's joglo roof as a flat pale cap, not the
+stacked pagoda tiers `_joglo_roof_mesh` is meant to give. Rebuilt `_joglo_roof_mesh` as a stack of
+three overhanging hip tiers (each slopes up-and-in, the next eave flares back out) to a finial —
+same known-good winding as the old skirt, so `generate_normals()` lands every band outward — then
+re-shot: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots --structures --label
+meru_tiers`.
+
+**Saw:** the FIRST run of the new geometry still showed a bare box, meru **tris=36** (= base 12 +
+wall_j 12 + veranda 12, i.e. NO roof). Instrumented and found the real cause: **the meru roof has
+never rendered.** `_joglo_roof_mesh` commits fine (1 surface, 44 faces), but `MeshBaker` merges by
+material and the roof shares `roof_j` with the veranda, which is a `BoxMesh`. `SurfaceTool.append_from`
+silently DROPS a surface whose vertex format differs from what the bucket already holds — the roof
+(pos+normal, no UV) vs the veranda box (pos+normal+tangent+UV) — so whichever loses the format race is
+gone with no error. The gable roof only ever worked because its `roof` material is unshared. The
+journal's earlier "flat pale cap" was the pale sky-lit **wall top**, not the roof at all.
+- Fixed in `mesh_baker.gd`: replaced `append_from` with `_merge_surface`, which re-adds every vertex by
+  hand at a fixed (position, normal, uv) format, immune to source-format differences. `bake_test` still
+  PASS; vehicles/weapons/deployables/structures buckets are single-format so their output is unchanged.
+- After the fix, meru **tris=80** (roof 44 + veranda 12 + walls 12 + plinth 12). `logs/shots/
+  20260817_0738_meru_tiers/building_meru_{side,tq}.png` read unambiguously as a **three-tier pagoda** —
+  wide overhanging bottom tier, narrower middle, narrower top, finial point — correctly lit from both
+  angles (no inside-out faces), the veranda plank still present. Not a box-with-a-plank any more.
+
+**Fell out:**
+- Item done + ticked ("Meru roof reads as a flat cap, not tiers").
+- The `append_from` format-drop was a latent trap for the whole kit system: any recipe that hangs a
+  hand-built (SurfaceTool) part on the same material as a primitive-mesh (box/cyl) part would lose the
+  hand-built one silently. The baker fix closes it generally, not just for the meru. No follow-up item —
+  the fix is the general one, and `bake_test` guards it.

@@ -383,12 +383,26 @@ Write the "what actually happened" notes into the commit message, and keep this 
       sil_rotor_{side,tq}.png` read unambiguously as a helicopter from both angles -- tall cabin, main
       blades aloft on the mast, tail boom + tail rotor, skids not wheels -- the "flatbed with a
       propeller" read is gone. tris=300, one baked mesh. Journal entry written.
-- [ ] **Meru roof reads as a flat cap, not tiers.** Fell out of the `--structures` silhouette run
+- [x] **Meru roof reads as a flat cap, not tiers.** Fell out of the `--structures` silhouette run
       (`logs/shots/JOURNAL.md`, 2026-08-17): the meru's veranda reads, but its `joglo` roof
       (`_joglo_roof_mesh`, roof_j material) shows as a single pale block on top rather than the
       stacked pagoda tiers it is meant to be -- so a meru is a box-with-a-plank, not a tiered temple.
       Silhouette-first, same as the rotor: give the joglo form real stepped tiers (or fix why the
       existing ones don't read), then re-shoot with `-- --shots --structures` and confirm.
+      DONE + VERIFIED THIS TICK. Rebuilt `_joglo_roof_mesh` as three overhanging hip tiers to a finial
+      (each tier slopes up-and-in, the next eave flares back out -> the pagoda zigzag), reusing the old
+      skirt's winding so generate_normals lands them outward. But the re-shoot showed the roof STILL
+      missing (meru tris=36) -- so I found the actual cause: the meru roof was NEVER rendering. The
+      roof shares material roof_j with the veranda (a BoxMesh), and `MeshBaker` used
+      `SurfaceTool.append_from`, which SILENTLY DROPS a surface whose vertex format differs from the
+      bucket's (roof = pos+normal, box = pos+normal+tangent+uv). The gable roof only worked because its
+      material is unshared; the "flat pale cap" seen before was the sky-lit wall top, not the roof.
+      Fixed in `game/pipeline/mesh_baker.gd`: replaced `append_from` with `_merge_surface`, re-adding
+      every vertex by hand at a fixed (pos, normal, uv) format -- immune to source-format differences,
+      and general (closes the same trap for any future hand-built part sharing a material with a box).
+      `bake_test` still PASS (geometry preserved; other consumers are single-format so unchanged). After
+      the fix meru tris=80; `logs/shots/20260817_0738_meru_tiers/building_meru_{side,tq}.png` read as a
+      three-tier pagoda, correctly lit both angles. Journal entry written.
 - [ ] **Verification sweep of every "NOT runtime-tested" note.** For most of this project's life the
       tick could not launch Godot (the allowlist granted a command spelling nobody types -- fixed in
       764bf46), so item after item shipped with a note saying it had not been run. Those notes are

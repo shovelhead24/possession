@@ -71,7 +71,38 @@ static func _append(mi: MeshInstance3D, root: Node3D, buckets: Dictionary, order
 			st.begin(Mesh.PRIMITIVE_TRIANGLES)
 			buckets[mat] = st
 			order.append(mat)
-		buckets[mat].append_from(mesh, s, xf)
+		_merge_surface(buckets[mat], mesh, s, xf)
+
+# Re-add every vertex of one source surface into `st`, transformed by `xf` and normalised to a single
+# (position, normal, uv) format. Do NOT use SurfaceTool.append_from here: it silently DROPS a surface
+# whose vertex format differs from what the bucket already holds, so a SurfaceTool-built roof (no UVs)
+# vanishes the moment it shares a material with a BoxMesh part (UVs) -- which is exactly the meru,
+# whose joglo roof and veranda are both roof_j. Rebuilding by hand with a fixed format is immune.
+static func _merge_surface(st: SurfaceTool, mesh: Mesh, s: int, xf: Transform3D) -> void:
+	var arr := mesh.surface_get_arrays(s)
+	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	if verts.is_empty():
+		return
+	var norms := PackedVector3Array()
+	if arr[Mesh.ARRAY_NORMAL] != null:
+		norms = arr[Mesh.ARRAY_NORMAL]
+	var uvs := PackedVector2Array()
+	if arr[Mesh.ARRAY_TEX_UV] != null:
+		uvs = arr[Mesh.ARRAY_TEX_UV]
+	var idx := PackedInt32Array()
+	if arr[Mesh.ARRAY_INDEX] != null:
+		idx = arr[Mesh.ARRAY_INDEX]
+	var nbasis := xf.basis
+	var emit := func(vi: int) -> void:
+		st.set_normal((nbasis * norms[vi]).normalized() if vi < norms.size() else Vector3.UP)
+		st.set_uv(uvs[vi] if vi < uvs.size() else Vector2.ZERO)
+		st.add_vertex(xf * verts[vi])
+	if idx.size() > 0:
+		for i in idx:
+			emit.call(i)
+	else:
+		for i in verts.size():
+			emit.call(i)
 
 # material_override beats a per-surface override beats the mesh's own surface material (Godot order).
 static func _effective_material(mi: MeshInstance3D, s: int) -> Material:
