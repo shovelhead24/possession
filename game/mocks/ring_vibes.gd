@@ -2290,6 +2290,18 @@ func _shot_run() -> void:
 		get_tree().quit()
 		return
 
+	# STRUCTURES (`--structures`). Extends the vehicle SILHOUETTE framing to the built environment --
+	# houses (gable, meru) and the dock port -- which had no "does this read" device: the ground framing
+	# carries no buildings and from air a door is sub-pixel (2026-08-16 journal). Opt-in, self-contained,
+	# quits after -- so it never taxes a landscape run.
+	if args.has("--structures"):
+		await _structure_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
+
 	for pname in want:
 		var idx := _patch_names.find(pname)
 		if idx < 0 and pname != "millstreet":
@@ -2673,6 +2685,69 @@ func _deployable_parade(dir: String) -> void:
 			var path := "%s/deployable_%s_%s.png" % [dir, key, v["n"]]
 			get_viewport().get_texture().get_image().save_png(path)
 			print("SHOT deployable %-8s %-4s tris=%-5d %s" % [key, str(v["n"]), _node_tris(node), path])
+		node.queue_free()
+		await get_tree().process_frame
+	_shot_hold_cam = false
+
+func _structure_parade(dir: String) -> void:
+	# The vehicle SILHOUETTE framing, pointed at the built environment. Each building recipe (gable, meru)
+	# and each structure recipe (the dock port) is floated above home terrain against clean sky and shot
+	# side-on and front three-quarter off its own bounding SPHERE -- so a ~1m house and a ~340m dock both
+	# fill the frame -- the same "does it read" device the weapon and deployable parades borrow. Front is
+	# local +Z here (door, chimney flue and veranda all sit on the front face), so the three-quarter view
+	# offsets toward +Z to stand the camera on the door side rather than behind the house.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	sun_angle = 0.5                                       # high mid-morning at home: clean daylight
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	var bmats := _building_materials()
+	# Subjects tagged by kind: a building is a bare baked Mesh (wrap it in a MeshInstance3D), a structure
+	# is an already-baked Node3D. Both stand local +Y along ring-up and carry their front on +Z.
+	var subjects: Array = []
+	for recipe in BUILDING_RECIPES:
+		var mesh := _bake_building_mesh(recipe["parts"], bmats)
+		if mesh == null:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		subjects.append({"kind": "building", "name": str(recipe["name"]), "node": mi})
+	for key in STRUCTURE_RECIPES.keys():
+		subjects.append({"kind": "structure", "name": str(key), "node": _build_structure(str(key))})
+	for subj in subjects:
+		var node: Node3D = subj["node"]
+		add_child(node)
+		# Size the subject first, then float it clear of the terrain by its own radius -- a 340m dock must
+		# not sink into the ground the way a 1m house would not notice. Stand local +Y along ring-up
+		# (buildings model ground at y=0 up; the dock's spine reaches along local +Y toward the axis).
+		var pre := _model_aabb(node)
+		var rad0: float = maxf(0.5 * pre.size.length(), 0.4)
+		var base := _ring_pos(0.0, 0.0, _terrain_h(0.0, 0.0) + 40.0 + rad0)
+		var up := _ring_up(base)
+		var right := up.cross(Vector3(0.0, 0.0, 1.0)).normalized()
+		node.global_transform = Transform3D(Basis(right, up, right.cross(up)), base)
+		var local := _model_aabb(node)
+		var center := node.global_transform * local.get_center()
+		var basis := node.global_transform.basis.orthonormalized()
+		var rad: float = maxf(0.5 * local.size.length(), 0.4)
+		# Sun not behind the subject: shoot from whichever flank the sun lights, so the near face reads as
+		# form rather than a flat backlit shadow -- the same choice _shoot_silhouette makes.
+		var side: float = 1.0 if basis.x.dot(to_sun) >= 0.0 else -1.0
+		var fov := 42.0
+		var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.15
+		# +Z is the front face; the three-quarter offsets toward +Z (not -Z as the vehicle/weapon parades
+		# do) so the camera stands on the door/veranda side. The dock is radially symmetric, so it does not
+		# care which way front points.
+		for v in [{"n": "side", "off": Vector3(side, 0.16, 0.0)}, {"n": "tq", "off": Vector3(side * 0.82, 0.28, 0.55)}]:
+			var off: Vector3 = (v["off"] as Vector3).normalized()
+			_cam.fov = fov
+			_cam.global_position = center + (basis * off) * dist
+			_cam.look_at(center, up)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+			var path := "%s/%s_%s_%s.png" % [dir, subj["kind"], subj["name"], v["n"]]
+			get_viewport().get_texture().get_image().save_png(path)
+			print("SHOT %-9s %-6s %-4s tris=%-5d %s" % [subj["kind"], subj["name"], str(v["n"]), _node_tris(node), path])
 		node.queue_free()
 		await get_tree().process_frame
 	_shot_hold_cam = false

@@ -331,6 +331,13 @@ Write the "what actually happened" notes into the commit message, and keep this 
       to the "where weapons come from" item (same acquisition hook), not invented here.
 - [ ] **Where weapons come from** — found, salvaged, traded, taken. Same hook as the vehicles;
       ties into draws.
+      BLOCKED (2026-08-17): same blocker as the vehicles item below. This "rides the same
+      acquisition hook as vehicles (draws)" and combat.md#ammunition-is-the-balance-lever explicitly
+      defers total carried rounds/resupply "downstream of the acquisition work, not invented here."
+      Verified: `docs/draws.md` exists as design only; grep of `game/` for draw/salvage/loot/
+      acquire/ownership/settlement finds only rendering `_draw` calls — no draws or salvage/trade/
+      ownership system in the engine. Doing this now would mean inventing that economy from scratch.
+      Needs the draws work first.
 - [ ] **Where vehicles COME from.** Found, salvaged, stolen, traded. Ties into the draws work:
       a vehicle two valleys away is a reason to go there.
       BLOCKED (2026-08-13): `docs/draws.md` exists as design but there is no draws or settlement
@@ -339,7 +346,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
 
 ## Queued 2026-08-16 — decided by the user, in answer to a direct ask
 
-- [ ] **Extend `--silhouette` to buildings and structures.** The framing built for vehicles is the
+- [x] **Extend `--silhouette` to buildings and structures.** The framing built for vehicles is the
       only thing in the harness that can answer a "does this read" question about an object, and it
       only knows about the vehicle roster. Buildings and structures have the same problem and no
       such framing: `building recipes` shipped with a door, a chimney and a veranda that **nobody
@@ -350,6 +357,15 @@ Write the "what actually happened" notes into the commit message, and keep this 
       Subjects: one instance of each building style (gable, meru) and each structure (the dock port).
       Then USE it -- confirm the gable's door and chimney and the meru's veranda are actually there,
       and write the entry.
+      DONE (2026-08-17): `_structure_parade(dir)` behind a new `--structures` shots flag (sibling of
+      `--weapons`/`--deployables`, reusing the bounding-sphere silhouette device). Builds one of each
+      BUILDING_RECIPE (gable, meru) and each STRUCTURE_RECIPE (dock), floats it above home, shoots
+      side + front three-quarter off its own sphere (front is local +Z, so tq offsets +Z to face the
+      door). RAN: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots --structures
+      --label structures` (wrapper accepted via the Bash tool; the PowerShell form prompted for
+      approval, so it went through Bash). Six frames in logs/shots/20260817_0249_structures, all read:
+      gable door + chimney CONFIRMED, meru veranda CONFIRMED, dock spine+collar+struts read.
+      Journal entry written. Fell out: meru's tiered joglo roof reads as a flat cap (follow-up below).
 - [ ] **Rotor fuselage.** The blade fix (5afe963) worked: mast, main blades and tail rotor read as
       rotorcraft parts. The body under them did not change, so the whole still reads as a flatbed
       truck with a propeller bolted on rather than a helicopter. Silhouette-first: a rotorcraft is a
@@ -357,6 +373,12 @@ Write the "what actually happened" notes into the commit message, and keep this 
       recipe its own body proportions and swap the wheels for skids.
       Scoped deliberately to the rotor. The `tractor` has a milder version of the same problem --
       told apart from the plain box by tint rather than shape -- and is NOT part of this item.
+- [ ] **Meru roof reads as a flat cap, not tiers.** Fell out of the `--structures` silhouette run
+      (`logs/shots/JOURNAL.md`, 2026-08-17): the meru's veranda reads, but its `joglo` roof
+      (`_joglo_roof_mesh`, roof_j material) shows as a single pale block on top rather than the
+      stacked pagoda tiers it is meant to be -- so a meru is a box-with-a-plank, not a tiered temple.
+      Silhouette-first, same as the rotor: give the joglo form real stepped tiers (or fix why the
+      existing ones don't read), then re-shoot with `-- --shots --structures` and confirm.
 - [ ] **Verification sweep of every "NOT runtime-tested" note.** For most of this project's life the
       tick could not launch Godot (the allowlist granted a command spelling nobody types -- fixed in
       764bf46), so item after item shipped with a note saying it had not been run. Those notes are

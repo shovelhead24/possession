@@ -478,3 +478,32 @@ persistent" half), and do the three read as three distinct silhouettes.
 - Deployable item done + ticked. "Placed, then persistent" is the whole novel part and it is verified
   both headless (selftest) and on screen (round-trip parade). Wiring deployables into actual player
   placement (an input to drop one, a HUD affordance) is a gameplay item, not part of this one.
+
+---
+
+## 2026-08-17 — silhouette extended to buildings and structures (`--structures`, one run)
+
+**Looking for:** the vehicle silhouette framing had no way to answer "does this read" for the built
+environment — the ground framing carries no buildings and from air a door is sub-pixel (2026-08-16,
+below). Extend the same device (`_structure_parade`, `--structures`) to one of each building style
+(gable, meru) and the dock structure, each floated above home terrain and shot side-on and front
+three-quarter off its own bounding sphere so a ~1m house and a ~340m dock both fill the frame. Then
+USE it: confirm the gable's door and chimney, and the meru's veranda, are actually there.
+
+**Saw:** all six frames landed; every subject filled the frame regardless of scale, none occluded
+(floating 40m+ up clears the scatter without a trample pass).
+- **Gable — door ✓, chimney ✓.** The front three-quarter shows the door as a dark recessed slab on
+  the front face and the chimney flue standing off the ridge; the pitched gable end reads. A house.
+- **Meru — veranda ✓.** The dark plank projects from the front face in both views, unmistakable.
+- **Dock — reads as a docking port.** Spine reaching up, an eight-segment capture collar with the
+  lit-panel alternation (cyan emissive on odd segments), radial struts tying collar to spine. The
+  bounding-sphere fit pulled the camera ~500m back so the whole 340m of it framed cleanly.
+
+**Fell out:**
+- Item done + ticked ("Extend `--silhouette` to buildings and structures").
+- **The meru's tiered joglo roof does not read as tiered** — from both angles the roof is a flat pale
+  cap, not the stacked pagoda tiers `_joglo_roof_mesh` is meant to give. The veranda (what this item
+  asked to confirm) is fine; the roof read is a separate "does it read" gap. Queued as a follow-up.
+- **Background is terrain, not clean sky.** Consistent with the weapon/deployable parades (which also
+  float over home and look roughly level), and the subjects read clearly against it, so left as-is
+  rather than re-pitching the established camera. Noted in case a later pass wants higher contrast.
