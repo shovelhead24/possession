@@ -1998,7 +1998,7 @@ func _range_run() -> void:
 	if want.is_empty():
 		want = WEAPON_ROWS.keys()
 	print("RANGE  ring R=%.0fm  omega=%.6f rad/s  surface %.0f m/s" % [_radius(), _omega(), _omega() * _radius()])
-	print("%-10s %-9s %6s %6s %7s %7s %8s %8s %7s" % ["weapon", "range", "cold%", "burst%", "group", "drop", "flight", "spin-dif", "ttk"])
+	print("%-10s %-9s %6s %6s %7s %7s %8s %8s %7s %7s %8s" % ["weapon", "range", "cold%", "burst%", "group", "drop", "flight", "spin-dif", "ttk", "rd/kill", "kill/mag"])
 	for wname in want:
 		if not WEAPON_ROWS.has(wname):
 			print("RANGE skip %s (no such weapon)" % wname)
@@ -2150,16 +2150,28 @@ func _range_run() -> void:
 				var burst_t: float = burst * shot_dt
 				sustained = burst / maxf(burst_t + wd.overheat_lock_s, 0.001) * 60.0
 			var ttk_s := "  --  "
+			var need := 0.0
 			if hit_frac > 0.0:
 				# rounds needed at THIS hit rate, paced by the cycle and by reloads
-				var need: float = ceil(RANGE_TARGET_HP / maxf(wd.damage, 0.001)) / hit_frac
+				need = ceil(RANGE_TARGET_HP / maxf(wd.damage, 0.001)) / hit_frac
 				var ttk: float = need * shot_dt + floor(need / maxf(float(wd.mag), 1.0)) * wd.reload_s 					+ float(fs.get("t", 0.0))
 				ttk_s = "%5.2fs" % ttk
+			# AMMO ECONOMY -- the scarcity read. What a kill COSTS in rounds (need, at this hit rate) and how
+			# many kills a full magazine buys before the reload window. This is where balance is meant to
+			# live: two weapons with the same ttk are not the same weapon if one dries in three kills and
+			# the other in thirty. See .decisions/combat.md#ammunition-is-the-balance-lever. mag 0 (bows,
+			# single launchers) pays per shot, not per magazine, so kill/mag is left blank for them.
+			var rdkill_s := "  --  "
+			var killmag_s := "   --   "
+			if need > 0.0:
+				rdkill_s = "%6.1f" % need
+				if wd.mag > 0:
+					killmag_s = "%7.1f" % (float(wd.mag) / need)
 			# no hits means no time-to-kill. Clamping the hit rate to 0.001 to avoid the divide printed
 			# 487s, which reads as a slow weapon rather than as a weapon that cannot reach.
-			print("%-10s %7.0fm %5.0f%% %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s" % [
+			print("%-10s %7.0fm %5.0f%% %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s %7s %8s" % [
 				wname, dist, cold_frac * 100.0, hit_frac * 100.0, worst, drop_s,
-				float(fs.get("t", 0.0)), drop_a - drop_s, ttk_s])
+				float(fs.get("t", 0.0)), drop_a - drop_s, ttk_s, rdkill_s, killmag_s])
 	# THE VERTICAL SHOT. The item says long shots "drift sideways"; they do not, and this is the test
 	# that shows why. Coriolis is -2*omega x v, and omega points along the SPIN AXIS -- so for anyone
 	# standing on the floor, the deflection is always in the ARC-radial plane and never across the

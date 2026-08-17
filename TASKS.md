@@ -310,7 +310,25 @@ Write the "what actually happened" notes into the commit message, and keep this 
       start), leaving the genuinely-open sub-parts flagged. Did NOT invent mechanics or build a
       progression system in code -- the item states a principle, so the deliverable is the ratified
       principle, not a system.
-- [ ] **Ammunition and scarcity** as the real balance lever, not damage numbers.
+- [x] **Ammunition and scarcity** as the real balance lever, not damage numbers.
+      DONE + VERIFIED THIS TICK. Two deliverables: (1) ratified the balance philosophy in the decision
+      log — new `.decisions/combat.md#ammunition-is-the-balance-lever` (added to INDEX): tune
+      mag/reload/supply, reach for the `damage` field last, because two weapons with the same ttk are
+      not the same weapon if one dries in three kills and the other in thirty. Ties to the-toll
+      deprivation (progression.md), satisfies consumer-audit (named consumers: the shooter watching the
+      mag go dry, diegetically off the weapon; the balance table at design time), and protects the
+      "mobile not mighty" tone guard against a damage-number arms race. (2) Made scarcity a MEASURABLE
+      lever, not a claim: `--range` now prints `rd/kill` (rounds a kill costs at that range's hit rate)
+      and `kill/mag` (kills a full magazine buys before the reload window), computed from existing
+      weapon_def fields — no new economy invented. `mag`/`reload_s` had existed unconsumed-as-a-lever;
+      now they're first-class dials. Ran it: `scripts/godot.cmd --headless --path game
+      res://mocks/ring_vibes.tscn -- --range carbine,smg,lmg,musket,bolt_action,autocannon` (wrapper
+      accepted; RANGE done, exit 0, self-check delta 0.000m; output in logs/_range_out.txt). The columns
+      read the scarcity story straight off: musket 0.5 kill/mag (one round doesn't finish a kill) vs
+      bolt_action 2.5 vs lmg 33.3 vs autocannon 20.0 — wildly different supply profiles at similar ttks,
+      which is the whole point. Blank for no-reach ranges and for mag-0 classes (bows/launchers pay per
+      shot; energy pays heat; guided pays bulk). Total carried rounds + resupply deliberately deferred
+      to the "where weapons come from" item (same acquisition hook), not invented here.
 - [ ] **Where weapons come from** — found, salvaged, traded, taken. Same hook as the vehicles;
       ties into draws.
 - [ ] **Where vehicles COME from.** Found, salvaged, stolen, traded. Ties into the draws work:
