@@ -5207,27 +5207,41 @@ func _make_car(d: VehicleDef = null) -> Node3D:
 	# the wheels stay under the corners at any size. Pass no def and it reproduces the original box.
 	var length: float = d.length if d else 4.2
 	var tint: Color = d.tint if d else Color(0.33, 0.36, 0.30)
+	# Rotorcraft chassis (TASKS.md "Rotor fuselage"): the blade fix read, but a long low box on four
+	# wheels under it still read as a flatbed truck with a propeller bolted on. A helicopter is a SHORT,
+	# TALL fuselage sitting on SKIDS -- the length lives in a thin tail boom, not the cabin -- so the
+	# rotor gets its own body proportions and skids in place of wheels. The recipe below lifts the mast
+	# and blades onto the raised top and hangs the boom + tail rotor off the back.
+	var is_rotor := d != null and d.recipe == "rotor"
 	var wz: float = length / 3.0
 	_wheels = []
 	var root := Node3D.new()
 	var body := MeshInstance3D.new()
 	var bm := BoxMesh.new()
-	bm.size = Vector3(2.0, 1.0, length)
+	bm.size = Vector3(2.0, 2.2, 4.6) if is_rotor else Vector3(2.0, 1.0, length)
 	body.mesh = bm
 	var bmat := StandardMaterial3D.new()
 	bmat.albedo_color = tint
 	body.material_override = bmat
-	body.position.y = 0.9
+	body.position.y = 1.6 if is_rotor else 0.9
 	root.add_child(body)
 	var glass := MeshInstance3D.new()
 	var gm := BoxMesh.new()
-	gm.size = Vector3(1.7, 0.5, 1.1)
+	gm.size = Vector3(1.7, 0.6, 1.3) if is_rotor else Vector3(1.7, 0.5, 1.1)
 	glass.mesh = gm
 	var gmat := StandardMaterial3D.new()
 	gmat.albedo_color = Color(0.45, 0.75, 0.80)  # frutiger windscreen, obviously
-	glass.position = Vector3(0, 1.55, -0.12 * length)
+	glass.position = Vector3(0, 1.9, 1.7) if is_rotor else Vector3(0, 1.55, -0.12 * length)
 	glass.material_override = gmat
 	root.add_child(glass)
+	if is_rotor:
+		_add_skids(root)
+		add_child(root)
+		if d and d.recipe != "":
+			_add_vehicle_sockets(root, length)
+			_apply_recipe(root, d.recipe)
+			MeshBaker.bake(root)             # no wheels: whole chassis (body + skids + parts) is static
+		return root
 	var wmat := StandardMaterial3D.new()
 	wmat.albedo_color = Color(0.10, 0.10, 0.10)
 	for wp in [Vector3(-1.05, 0.45, wz), Vector3(1.05, 0.45, wz), Vector3(-1.05, 0.45, -wz), Vector3(1.05, 0.45, -wz)]:
@@ -5286,6 +5300,36 @@ func _add_vehicle_sockets(root: Node3D, length: float) -> void:
 		s.name = n
 		s.position = sockets[n]
 		root.add_child(s)
+
+func _add_skids(root: Node3D) -> void:
+	# Helicopter landing skids in place of the four wheels (TASKS.md "Rotor fuselage"): two fore-aft
+	# tubes low under the fuselage on short cross-struts. Static geometry, so they bake into the chassis
+	# with the body -- no _wheels entry, which the registration/suspension path already treats as a
+	# valid wheel-less state (the warthog registers empty). Local origin is ground level, so the tube
+	# bottoms sit near y=0 the way the wheel bottoms did.
+	var smat := StandardMaterial3D.new()
+	smat.albedo_color = Color(0.16, 0.16, 0.18)
+	for sx in [-0.85, 0.85]:
+		var skid := MeshInstance3D.new()
+		var sc := CylinderMesh.new()
+		sc.radial_segments = 8
+		sc.rings = 1
+		sc.height = 3.8
+		sc.top_radius = 0.09
+		sc.bottom_radius = 0.09
+		sc.material = smat
+		skid.mesh = sc
+		skid.rotation_degrees = Vector3(90, 0, 0)   # lay the tube fore-aft (along Z)
+		skid.position = Vector3(sx, 0.12, 0.0)
+		root.add_child(skid)
+		for sz in [-1.2, 1.2]:
+			var strut := MeshInstance3D.new()
+			var stm := BoxMesh.new()
+			stm.size = Vector3(0.12, 0.5, 0.12)
+			stm.material = smat
+			strut.mesh = stm
+			strut.position = Vector3(sx, 0.37, sz)  # skid top (~0.2) up to the fuselage bottom (~0.5)
+			root.add_child(strut)
 
 func _apply_recipe(root: Node3D, recipe_name: String) -> void:
 	# Reuse the character kitbash machinery for vehicles: build a Recipe of PartDefs from the named
@@ -5919,13 +5963,16 @@ const VEHICLE_RECIPES := {
 		{"slot": "drum",   "socket": "turret", "kind": "cyl", "size": Vector3(1.1, 0.5, 1.1),  "pos": Vector3(0, 0.5, 0),   "tint": Color(0.28, 0.30, 0.28)},
 		{"slot": "barrel", "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 1.8, 0.18),"pos": Vector3(0, 0.55, 1.0),"rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.20)},
 	],
-	# rotor -- a short mast holding two crossed THIN blade boxes well above the body, plus a small tail
-	# rotor. The read is a thin horizontal line held aloft, not a filled disc (the old wide flat cylinder
-	# photographed as a patio table); crossed blades at a smaller radius say "rotorcraft" side-on.
+	# rotor -- a helicopter, not a truck with a propeller. Its chassis is the SHORT, TALL fuselage on
+	# skids built in _make_car (is_rotor), so this recipe sits the mast + crossed THIN main blades on
+	# the raised top (fuselage top y~2.7), runs a thin tail BOOM off the back, and puts a small tail
+	# rotor at the boom's end. The read is a thin blade line held aloft over a tall cabin, plus boom and
+	# tail rotor -- a rotorcraft side-on, where the old wide flat disc photographed as a patio table.
 	"rotor": [
-		{"slot": "mast",    "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 0.9, 0.18), "pos": Vector3(0, 0.45, 0),  "tint": Color(0.20, 0.20, 0.22)},
-		{"slot": "bladeA",  "socket": "turret", "kind": "box", "size": Vector3(5.5, 0.06, 0.3),  "pos": Vector3(0, 0.95, 0),  "tint": Color(0.14, 0.14, 0.16)},
-		{"slot": "bladeB",  "socket": "turret", "kind": "box", "size": Vector3(0.3, 0.06, 5.5),  "pos": Vector3(0, 0.95, 0),  "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "mast",    "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 0.8, 0.18), "pos": Vector3(0, 1.6, 0),   "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "bladeA",  "socket": "turret", "kind": "box", "size": Vector3(5.5, 0.06, 0.3),  "pos": Vector3(0, 2.0, 0),   "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "bladeB",  "socket": "turret", "kind": "box", "size": Vector3(0.3, 0.06, 5.5),  "pos": Vector3(0, 2.0, 0),   "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "boom",    "socket": "tail",   "kind": "box", "size": Vector3(0.32, 0.4, 2.2),  "pos": Vector3(0, 0.2, 0.9), "tint": Color(0.28, 0.30, 0.34)},
 		{"slot": "tbladeA", "socket": "tail",   "kind": "box", "size": Vector3(0.05, 1.4, 0.22), "pos": Vector3(0.3, 0.2, 0), "tint": Color(0.14, 0.14, 0.16)},
 		{"slot": "tbladeB", "socket": "tail",   "kind": "box", "size": Vector3(0.05, 0.22, 1.4), "pos": Vector3(0.3, 0.2, 0), "tint": Color(0.14, 0.14, 0.16)},
 	],
