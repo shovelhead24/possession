@@ -292,10 +292,24 @@ Write the "what actually happened" notes into the commit message, and keep this 
       through a fir. Added the same `_shoot_silhouette` scatter-clear (mark near trees down within 30m,
       rebuild LOD buckets) to `_deployable_parade`; second run clean. Player-placement input/HUD is a
       gameplay item, not part of this one.
-- [ ] **Progression rules.** The player ARRIVES from a spacefaring civilisation and gets stripped of
+- [x] **Progression rules.** The player ARRIVES from a spacefaring civilisation and gets stripped of
       it (`the-toll` in docs/vignettes.md). The tree is therefore about RECOVERING capability, not
       inventing it -- a spear is what you use when they took your rifle. That inverts the usual
       shape and is worth exploiting.
+      DONE. Design/rules item -- no code surface, so no harness applies (nothing to run; not a
+      "NOT runtime-tested" gap). Ratified the rule in `.decisions/progression.md#recovery-not-invention`
+      (new decision file, added to INDEX): progression RECOVERS capability the player already had,
+      never invents it -- the three tiers are a climb back to a baseline already seen, and the player
+      keeps the KNOWLEDGE of the top of the tree while losing the means (which is what makes the-toll's
+      irony load-bearing). Corollaries recorded: tiers gate on re-acquisition (found/salvaged/traded/
+      taken -- the next queue items) not a research tree; no deep craft-from-scratch layer; the FP
+      carbine is dev-only test loadout; knowledge leads capability. Distinguished from the WORLD's
+      recovery (`recovery_band`/`tech_level`, civilization.md/lore.md) -- same story at one-person
+      scale. Updated the `docs/progression.md` planning surface: folded the rule into What's Settled
+      and resolved the two Open Questions it answers (tier gating shape, inventory/crafting, stripped
+      start), leaving the genuinely-open sub-parts flagged. Did NOT invent mechanics or build a
+      progression system in code -- the item states a principle, so the deliverable is the ratified
+      principle, not a system.
 - [ ] **Ammunition and scarcity** as the real balance lever, not damage numbers.
 - [ ] **Where weapons come from** — found, salvaged, traded, taken. Same hook as the vehicles;
       ties into draws.
