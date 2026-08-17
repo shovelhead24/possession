@@ -2905,6 +2905,8 @@ func _hires_decode(idx: int) -> void:
 	# WORKER THREAD. Only touches FileAccess + Image (both thread-safe in Godot 4); the texture is
 	# created by the main thread in _hires_poll(). Result is handed over via _hires_result.
 	var out := {"idx": idx, "ok": false}
+	var ms := {"read": 0.0, "filter": 0.0, "sat": 0.0, "detail": 0.0}   # per-phase cost, see _hires_poll STREAMPHASE
+	var t0 := Time.get_ticks_usec()
 	var base: String = "res://mocks/dem/%s" % _patch_names[idx]   # NOT PATCHES[idx], see _patch_meta
 	if FileAccess.file_exists(base + ".r16") and FileAccess.file_exists(base + ".json"):
 		var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".json"))
@@ -2912,6 +2914,7 @@ func _hires_decode(idx: int) -> void:
 		var h := int(meta["h"])
 		var hs := float(meta.get("h_scale", 16.0))
 		var raw := FileAccess.get_file_as_bytes(base + ".r16")
+		ms["read"] = float(Time.get_ticks_usec() - t0) / 1000.0
 		if raw.size() >= w * h * 2:
 			var res: int = mini(HIRES_RES, mini(w, h))
 			var floats := PackedFloat32Array()
@@ -2937,6 +2940,8 @@ func _hires_decode(idx: int) -> void:
 			out["field"] = floats
 			out["res"] = res
 			out["ok"] = true
+			ms["filter"] = float(Time.get_ticks_usec() - t0) / 1000.0 - float(ms["read"])
+			var t_sat := Time.get_ticks_usec()
 			if FileAccess.file_exists(base + "_sat.dat"):
 				var ci := Image.new()
 				if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
@@ -2955,15 +2960,19 @@ func _hires_decode(idx: int) -> void:
 						ci.compress(Image.COMPRESS_BPTC, Image.COMPRESS_SOURCE_SRGB)
 					out["col"] = ci
 					out["col_bytes"] = ci.get_data().size()
+			ms["sat"] = float(Time.get_ticks_usec() - t_sat) / 1000.0
 			# full-res gradient normals, same asset the home patch uses. These were generated for
 			# every patch all along (export_to_game.py always writes them) and simply never loaded,
 			# which is why only the starting area had fine relief.
+			var t_det := Time.get_ticks_usec()
 			if FileAccess.file_exists(base + "_detail.dat"):
 				var di := Image.new()
 				if di.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_detail.dat")) == OK:
 					di.resize(hires_tex_res, hires_tex_res, Image.INTERPOLATE_LANCZOS)
 					di.convert(Image.FORMAT_RGB8)
 					out["detail"] = di
+			ms["detail"] = float(Time.get_ticks_usec() - t_det) / 1000.0
+	out["ms"] = ms
 	_hires_result = out
 
 func _hires_poll() -> void:
@@ -2976,6 +2985,7 @@ func _hires_poll() -> void:
 		var r: Dictionary = _hires_result
 		_hires_result = {}
 		if r.get("ok", false) and int(r.get("idx", -1)) == _hires_pending:
+			var t_tex := Time.get_ticks_usec()
 			_hires_tex = ImageTexture.create_from_image(r["img"])
 			_hires_col_tex = ImageTexture.create_from_image(r["col"]) if r.has("col") else null
 			_tex_bytes = int(r.get("col_bytes", 0))
@@ -3001,6 +3011,7 @@ func _hires_poll() -> void:
 				m.set_shader_parameter("hires_own", _patch_own[_hires_idx])
 				m.set_shader_parameter("hires_offset", _patch_offset[_hires_idx])
 				m.set_shader_parameter("hires_valid", true)
+			var ms_tex := float(Time.get_ticks_usec() - t_tex) / 1000.0
 			# A landed stream CHANGES WHAT _terrain_h ANSWERS -- the hires tier now wins where the
 			# 512^2 array did, and the two disagree by whatever detail the array threw away. Anything
 			# already placed against the old tier is now at the wrong height, which is trees and the
@@ -3008,14 +3019,33 @@ func _hires_poll() -> void:
 			# The centrelines must follow the stream too, or the ribbon and the tree-clearing stay
 			# pinned to the home patch wherever you drive -- the shot harness already does this, live
 			# play did not.
+			var ms_roads := 0.0
 			if _roadline_patch != _hires_idx:
 				_roadline_patch = _hires_idx
+				var t_r := Time.get_ticks_usec()
 				_load_roadlines()
+				ms_roads = float(Time.get_ticks_usec() - t_r) / 1000.0
+			var t_tr := Time.get_ticks_usec()
 			_scatter_trees()
+			var ms_trees := float(Time.get_ticks_usec() - t_tr) / 1000.0
+			var t_b := Time.get_ticks_usec()
 			_refill_buildings(true)
+			var ms_bldg := float(Time.get_ticks_usec() - t_b) / 1000.0
+			var t_h := Time.get_ticks_usec()
 			_build_hedge_ribbon()
+			var ms_hedge := float(Time.get_ticks_usec() - t_h) / 1000.0
 			print("ring_vibes: streamed %s @ %d^2%s — re-placed objects onto the new tier" % [
 				_patch_names[_hires_idx], _hires_res, "" if _hires_col_tex else " (no imagery)"])
+			# --selftest instrument (TASKS: which phase eats the 12s stream budget). worker phases ride
+			# over in r["ms"]; the adopt phases are timed above on the main thread. Gated so it does not
+			# noise up live play / the shot & proving harnesses.
+			if "--selftest" in OS.get_cmdline_user_args() or "--streamprobe" in OS.get_cmdline_user_args():
+				var wm: Dictionary = r.get("ms", {})
+				print("STREAMPHASE %-18s worker read=%.0f filter=%.0f sat=%.0f detail=%.0f | main tex=%.0f roads=%.0f trees=%.0f bldg=%.0f hedge=%.0f (ms)" % [
+					_patch_names[_hires_idx],
+					float(wm.get("read", 0.0)), float(wm.get("filter", 0.0)),
+					float(wm.get("sat", 0.0)), float(wm.get("detail", 0.0)),
+					ms_tex, ms_roads, ms_trees, ms_bldg, ms_hedge])
 		_hires_pending = -1
 		return
 	# idle: does the camera's current patch differ from what's resident?
