@@ -99,6 +99,10 @@ Write the "what actually happened" notes into the commit message, and keep this 
       jump blocked while crouched, impact-speed fall damage, stance-driven carbine spread. Ring
       frame: explicit up_direction=UP + constant gravity per the physbench decision (radial gravity
       would be wrong in this flat player-centred world). Not runtime-tested here — verify on laptop.
+      VERIFIED 2026-08-17 (sweep): `player.gd` loads clean — `test_combat.tscn` headless (30 frames),
+      FPArms found the 49-bone skeleton, `_ready` ran, no script/parse errors. Movement *feel*
+      (accel curve, sprint drain, fall thresholds) is a play judgement with no harness, so that part
+      stays a laptop play-test, not a runtime-test gap.
 - [x] **HUD.** (Implemented by a queue tick at 18:37; the code is in commit 4d8cbd1, which is
       titled as a logging change because I swept it up with a blind `git add -A`. game/hud.tscn and
       game/player.gd are the actual work.) Currently a debug wall of text. Needs a real one -- and per
@@ -113,6 +117,9 @@ Write the "what actually happened" notes into the commit message, and keep this 
       hidden. No new mechanics: ammo-on-weapon stays deferred to the Ammunition item, and the
       compass/scope tools to the tools work -- the law names them, it doesn't ask to build them here.
       Not runtime-tested here (main scene test_combat.tscn, not the --shots ring mock) -- verify on laptop.
+      VERIFIED 2026-08-17 (sweep): `test_combat.tscn` loads clean headless — `hud.tscn` + `player.gd`
+      instantiate, no errors. One benign layout WARNING (`SubViewport` stretch at `player.gd:163`),
+      cosmetic and pre-existing; left alone.
 - [x] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
       already exists. Done in commit d7140a4: shared `game/damage.gd` (zone table + classify() by hit
       height + resolve() by zone), routed through player, enemy_controller, enemy_soldier, creature
@@ -144,6 +151,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
       execution is permission-denied in the queue-wake session (both the `-s` and the sanctioned
       `-- --selftest` scene forms were gated), same as the damage tick. Run on the attended laptop:
       `godot --headless --path game -s res://tests/bake_test.gd` — expect `BAKE SELFTEST: PASS`.
+      VERIFIED 2026-08-17 (sweep): ran it, `BAKE SELFTEST: PASS`.
 - [x] **Unlock the assembler from Skeleton3D.** Socket becomes a Node3D by name, not a bone; the
       bone path stays as one implementation of it. This is the enabling change and everything below
       is cheap once it lands. `PartDef.bone_name` -> `socket`, `CharacterRecipe` -> `Recipe`.
@@ -154,6 +162,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
       `game/tests/assembler_test.gd`. NOT runtime-tested this session — Godot execution was
       permission-gated (Bash + PowerShell, every form denied). Run on the laptop:
       `godot --headless --path game -s res://tests/assembler_test.gd` — expect `ASSEMBLER SELFTEST: PASS`.
+      VERIFIED 2026-08-17 (sweep): ran it, `ASSEMBLER SELFTEST: PASS`.
 - [x] **Vehicle recipes.** `_make_car` builds a box with four wheels inline, and every row that has
       no bespoke mesh gets the identical shape -- twenty-one vehicles that photograph the same. A
       chassis with sockets (wheels, cab, bed, turret, tracks) plus a `recipe` field on VehicleDef
@@ -174,6 +183,11 @@ Write the "what actually happened" notes into the commit message, and keep this 
       -- expect the sportscar/sixby/hauler/tractor/crawler/rotor/airplane/lifter frames in
       `logs/shots/` to show distinct silhouettes, not eight identical boxes, and `SHOT vehicle` tris to
       stay modest (baked chassis + 4 wheels).
+      VERIFIED 2026-08-17 (sweep): already run-verified visually by later shot sessions, no re-shoot
+      needed — `logs/shots/JOURNAL.md` 2026-08-16 (vehicle parade + `--silhouette`), rotor re-read,
+      and 2026-08-17 rotor-fuselage: the recipe silhouettes read distinct (sixby cab+bed, airplane
+      wings, rotor as a rotorcraft), wheels stay separate through the bake, tris in the 300–530 band.
+      Also loads clean in today's scene `--selftest`.
 - [x] **Building recipes.** `_build_buildings` welded two hand-authored unit meshes (`_house_mesh`,
       `_joglo_mesh`, `_plinth`) inline. Replaced with the same recipe pattern as the vehicles:
       `BUILDING_RECIPES` (index = style: 0 gable, 1 meru) is a list of parts, each a shape (box |
@@ -198,6 +212,12 @@ Write the "what actually happened" notes into the commit message, and keep this 
       `& C:\Godot\Godot_v4.5.1-stable_win64.exe --headless --path C:\Games\possession\game res://mocks/ring_vibes.tscn -- --shots millstreet,java_majapahit --only ground`
       -- expect millstreet gables with visible doors + chimneys and java_majapahit joglos with a
       veranda, both still tinted per-building, and no inside-out roofs.
+      VERIFIED 2026-08-17 (sweep): already run-verified visually, no re-shoot needed — the recorded
+      `--only ground` command was itself the wrong framing (showed no buildings, `JOURNAL.md`
+      2026-08-16), but the later `--structures` silhouette runs confirmed the parts directly:
+      2026-08-17 gable **door ✓ + chimney ✓**, meru **veranda ✓**, and (after the MeshBaker
+      mixed-format fix, dcc07cd) the meru roof reads as three pagoda tiers. Also loads clean in
+      today's scene `--selftest`.
 - [x] **Shot framing for silhouettes (`_shot_run`).** FELL OUT of the 2026-08-16 vehicle-recipe
       review (`logs/shots/JOURNAL.md`, `logs/shots/20260816_1134_vehicle_recipes/`). The `--vehicles`
       parade cannot answer the question it is used for. Every one of the 22 frames is rear-quarter,
@@ -403,7 +423,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
       `bake_test` still PASS (geometry preserved; other consumers are single-format so unchanged). After
       the fix meru tris=80; `logs/shots/20260817_0738_meru_tiers/building_meru_{side,tq}.png` read as a
       three-tier pagoda, correctly lit both angles. Journal entry written.
-- [ ] **Verification sweep of every "NOT runtime-tested" note.** For most of this project's life the
+- [x] **Verification sweep of every "NOT runtime-tested" note.** For most of this project's life the
       tick could not launch Godot (the allowlist granted a command spelling nobody types -- fixed in
       764bf46), so item after item shipped with a note saying it had not been run. Those notes are
       now checkable for the first time. Go through `TASKS.md` and `TASKS-done.md`, collect every item
@@ -413,6 +433,42 @@ Write the "what actually happened" notes into the commit message, and keep this 
       This is not busywork: the first three such notes checked on 2026-08-16 turned up a HEAD that
       did not compile at all (31e0132), which had been shipped past by three consecutive items.
       Fix what is cheap and obviously broken; raise a new item for anything that is not.
+      DONE 2026-08-17 (wrapper `scripts/godot.cmd` accepted every form). The union of harnesses the
+      notes name is a SMALL set; running each once against HEAD closes every note that names it, so
+      that is what was done rather than N reruns of the same command:
+        - `-s tests/assembler_test.gd` -> **ASSEMBLER SELFTEST: PASS** (TASKS.md "Unlock the assembler")
+        - `-s tests/bake_test.gd`      -> **BAKE SELFTEST: PASS** (TASKS.md "Bake after assembly")
+        - `-s tests/damage_test.gd`    -> **DAMAGE SELFTEST: PASS** (Damage model)
+        - `-- --selftest` (ring)       -> exit 0, **HEAD COMPILES**, full 35-patch load/stream; the
+          single most important result — it is exactly the "does HEAD even build" check that caught
+          31e0132. Covers every note whose code lives in `ring_vibes.gd` (vehicles, buildings, sea,
+          LOD, roads, hedges, structures, deployables) — the bulk of the `TASKS-done.md` "no live
+          --proving/--shots" notes, which are all archived DONE items whose code this run exercises.
+        - `test_combat.tscn` (headless, 30 frames) -> loads clean (Player movement + HUD notes).
+        - `-- --range`                 -> ballistics selfcheck delta 0.000m, `RANGE done` (weapon rows).
+        - `-- --proving`               -> runs, coherent per-vehicle suspension telemetry (box `bumps`
+          jolt 1.87m == the calibrated strip). Closes the `TASKS-done.md` vehicle "no live --proving".
+        - Vehicle + building recipe visual notes: NOT re-shot — already run-verified in
+          `logs/shots/JOURNAL.md` (2026-08-16/17 silhouette + `--structures` runs). Annotated in place.
+      TWO FINDINGS, neither cheap-and-obvious, both raised as items below rather than chased here:
+      the ring `--selftest` reports **28/35 patches streamed OK** — 7 hit the exact 12.0s stream
+      budget (cork_city, mizen_head, norwegian_fjord, olympic_forest, iceland_highland, badlands_sd,
+      lofoten); and a cosmetic `SubViewport` stretch warning at `player.gd:163`.
+- [ ] **7 of 35 patches miss the `--selftest` stream budget.** The 2026-08-17 verification sweep ran
+      `-- --selftest` and got **28/35 streamed OK**; the other 7 (cork_city, mizen_head,
+      norwegian_fjord, olympic_forest, iceland_highland, badlands_sd, lofoten) each hit the stream
+      timeout at *exactly* 12.0s, so this is the budget cutting them off, not a crash — the run still
+      exits 0. Question first, before touching the budget: is 12.0s the honest cost of streaming a
+      1536^2 tier for those patches on this box (in which case raise the budget or make streaming
+      async), or are those specific patches doing extra work (they skew coastal/high-relief — is it
+      road-cell rebuild, texture decode, or building cull)? Instrument which phase eats the 12s before
+      changing a number. Not visual; telemetry answers this.
+- [ ] **Cosmetic: `SubViewport` stretch warning at `player.gd:163`.** `test_combat.tscn` load prints
+      "Can't change the size of a `SubViewport` with a `SubViewportContainer` parent that has
+      `stretch` enabled" — the FP-arms viewport is resized manually while its container has `stretch`
+      on. Harmless (arms still render) and pre-existing, so it was left untouched by the sweep; fix is
+      either `SubViewportContainer.stretch = false` or drop the manual `size` write, but confirm the
+      FP-arms overlay still frames correctly after, since that resize may be load-bearing.
 - [ ] **Replace `ebro_delta` and `savannah` with candidates that survive 84 km.** Both are live in
       the ring serving terrain that contradicts their catalogued biome: `ebro_delta` was scouted as a
       flat delta (p99 37 m) and now measures 1..1209 m, having re-acquired the Els Ports foothills --

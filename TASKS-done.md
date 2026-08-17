@@ -4,6 +4,13 @@ Split out of `TASKS.md` on 2026-08-15. The live queue is re-read by the unattend
 30 minutes, and 88% of it was finished work -- kept here because the findings are worth having,
 moved here because nothing needs to read them to pick the next task.
 
+**All "NOT run-verified: the Godot binary is out-of-repo/gated here" notes below were RESOLVED
+2026-08-17** by the "Verification sweep" item (see `TASKS.md`): HEAD compiles and the full 35-patch
+ring loads/streams under `-- --selftest` (exit 0), the three script selftests PASS, and `--range` /
+`--proving` both run with coherent output — so the code each archived note covers is live and runs.
+The individual notes are left as written for their historical value rather than re-stamped line by
+line.
+
 ## Now
 - [x] **Image-review patches 1â€“10** (alphabetical from `atacama`). For each: read
       `out/<name>_s2_preview.jpg`, confirm or correct `trees` / `tint` / `tree_hi` / `weather` in
