@@ -366,13 +366,23 @@ Write the "what actually happened" notes into the commit message, and keep this 
       approval, so it went through Bash). Six frames in logs/shots/20260817_0249_structures, all read:
       gable door + chimney CONFIRMED, meru veranda CONFIRMED, dock spine+collar+struts read.
       Journal entry written. Fell out: meru's tiered joglo roof reads as a flat cap (follow-up below).
-- [ ] **Rotor fuselage.** The blade fix (5afe963) worked: mast, main blades and tail rotor read as
+- [x] **Rotor fuselage.** The blade fix (5afe963) worked: mast, main blades and tail rotor read as
       rotorcraft parts. The body under them did not change, so the whole still reads as a flatbed
       truck with a propeller bolted on rather than a helicopter. Silhouette-first: a rotorcraft is a
       SHORT, TALL fuselage sitting on skids, not a long low bed on four wheels. Give the `rotor`
       recipe its own body proportions and swap the wheels for skids.
       Scoped deliberately to the rotor. The `tractor` has a milder version of the same problem --
       told apart from the plain box by tint rather than shape -- and is NOT part of this item.
+      DONE + VERIFIED THIS TICK. The code was written by a prior tick (committed in the wip ffc3422)
+      but never run or ticked: `_make_car` now branches on `is_rotor` to a SHORT/TALL fuselage box
+      (2.0, 2.2, 4.6) with `_add_skids` (two fore-aft skid tubes on struts) in place of the four
+      wheels, and the `rotor` recipe hangs mast + crossed main blades on the raised top plus a tail
+      boom + tail-rotor cross. Parse-checked clean, then ran the vehicle silhouette parade:
+      `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet --silhouette
+      --label rotor_fuselage` (wrapper accepted). `logs/shots/20260817_0325_rotor_fuselage/
+      sil_rotor_{side,tq}.png` read unambiguously as a helicopter from both angles -- tall cabin, main
+      blades aloft on the mast, tail boom + tail rotor, skids not wheels -- the "flatbed with a
+      propeller" read is gone. tris=300, one baked mesh. Journal entry written.
 - [ ] **Meru roof reads as a flat cap, not tiers.** Fell out of the `--structures` silhouette run
       (`logs/shots/JOURNAL.md`, 2026-08-17): the meru's veranda reads, but its `joglo` roof
       (`_joglo_roof_mesh`, roof_j material) shows as a single pale block on top rather than the
