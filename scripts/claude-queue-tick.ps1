@@ -1,4 +1,4 @@
-﻿# One pass at the work queue, unattended, safe to fire repeatedly.
+# One pass at the work queue, unattended, safe to fire repeatedly.
 #
 # Runs Claude Code in print mode against TASKS.md: it takes the top unchecked item, does it, ticks
 # it, commits. One item per run.
@@ -502,6 +502,22 @@ if (-not (ParseGate)) {
         Set-Content $pause -Encoding ascii
     Say "queue paused: HEAD does not compile. Nothing further will run until that is fixed."
     exit 0
+}
+
+# --- keep the shot gallery current ------------------------------------------------------------
+# logs/shots/index.html is how a human actually LOOKS at a shot session, and it is gitignored -- a
+# generated local artifact that cannot arrive by pull. Nothing ever ran the generator, so it sat at
+# its 2026-08-15 state while twelve further sessions wrote images underneath it. The shots were
+# being taken correctly and were invisible to the person they were taken for, which is the same
+# silent-failure shape as the log that stopped writing: the work happens, the evidence does not
+# reach anyone. Cheap and idempotent -- it reads the folders and JOURNAL.md and stores nothing of
+# its own -- so it just runs every tick.
+$gallery = "$repo\tools\build_shot_gallery.py"
+if (Test-Path $gallery) {
+    $g = & python $gallery 2>&1 | Out-String
+    if ($LASTEXITCODE -ne 0) { $g = & py $gallery 2>&1 | Out-String }
+    $gline = ($g -split "`n" | Where-Object { $_.Trim() } | Select-Object -Last 1)
+    if ($gline) { Say "gallery: $gline" }
 }
 
 # --- did it actually DO anything? -----------------------------------------------------------
