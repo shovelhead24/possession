@@ -454,15 +454,41 @@ Write the "what actually happened" notes into the commit message, and keep this 
       the ring `--selftest` reports **28/35 patches streamed OK** — 7 hit the exact 12.0s stream
       budget (cork_city, mizen_head, norwegian_fjord, olympic_forest, iceland_highland, badlands_sd,
       lofoten); and a cosmetic `SubViewport` stretch warning at `player.gd:163`.
-- [ ] **7 of 35 patches miss the `--selftest` stream budget.** The 2026-08-17 verification sweep ran
-      `-- --selftest` and got **28/35 streamed OK**; the other 7 (cork_city, mizen_head,
-      norwegian_fjord, olympic_forest, iceland_highland, badlands_sd, lofoten) each hit the stream
-      timeout at *exactly* 12.0s, so this is the budget cutting them off, not a crash — the run still
-      exits 0. Question first, before touching the budget: is 12.0s the honest cost of streaming a
-      1536^2 tier for those patches on this box (in which case raise the budget or make streaming
-      async), or are those specific patches doing extra work (they skew coastal/high-relief — is it
-      road-cell rebuild, texture decode, or building cull)? Instrument which phase eats the 12s before
-      changing a number. Not visual; telemetry answers this.
+- [x] **7 of 35 patches miss the `--selftest` stream budget.** DIAGNOSED 2026-08-18. Ran the
+      STREAMPHASE instrument (built by a prior tick, never run):
+      `scripts/godot.cmd --headless --path game res://mocks/ring_vibes.tscn -- --selftest` (wrapper
+      accepted; full log `logs/_streamphase_out.txt`). ANSWER to the item's question: it is the HONEST
+      cost of the worker decode — NOT per-patch extra work, and specifically NOT road-cell rebuild or
+      building cull (those are the small MAIN-thread `roads` 1.6–5.9s / `bldg` ~25–90ms columns). The
+      12s lives entirely in the WORKER `_hires_decode`, dominated by three phases:
+        - `detail` — LANCZOS resize of the detail-normal PNG to `hires_tex_res=8192²` + convert:
+          3.0–8.3s, the single biggest phase on EVERY patch and, unlike `sat`, NOT capped to source dims;
+        - `filter` — box-mean downsample of the r16, O(source pixels) so it scales with r16 size: 1.5–4.5s;
+        - `sat` — imagery PNG decode + resize + S3TC/BPTC compress: 1.4–4.0s typical, but borneo_highland
+          spiked to **20.5s** (a lone over-large sat, flagged in the follow-up).
+      Each FAIL patch's OWN worker sum independently exceeds 12s (cairngorms 14.7s, dolomites 14.9s,
+      tatra_spruce 14.7s, norwegian_fjord 15.9s, olympic_forest 12.4s, iceland_highland 15.7s,
+      badlands_sd 12.1s, borneo_highland 27.2s); the passing band is 6.5–10.8s. The heavy patches are the
+      high-relief / coastal ones because they carry LARGER source assets (bigger r16 + sat/detail PNGs,
+      consistent with the 8192 refetch), so filter+detail cost proportionally more.
+      Also settled: "the 7" is NOT a fixed patch list. This run scored **26/35** (9 fails), the sweep
+      scored 28/35 (7), and the failing SETS don't match — cork_city + mizen_head PASSED here, cairngorms
+      + dolomites + tatra did not fail in the sweep. Several patches sit right on the 12s line and jitter
+      (± a heavy predecessor overrunning into the next window — a mild cascade) tips borderline ones over.
+      So it is "whichever ~7–9 land above the cutoff this run", not seven specific patches.
+      Diagnosis done per the item ("instrument which phase eats the 12s before changing a number").
+      The number change is deferred to the follow-up below.
+- [ ] **Streaming decode is ~12s per patch — shrink it, don't just move the budget.** Follow-up from the
+      STREAMPHASE diagnosis above. Levers, in order of value: **(1)** the detail-normal is resized to
+      `hires_tex_res=8192²` UNCONDITIONALLY in `_hires_decode` (near line 2971) — biggest phase, and
+      unlike `sat` it is never capped to the source dimensions. Try capping it to `min(hires_tex_res,
+      source dims)` (as `sat` already does) or to a smaller normal-map res. **THIS IS VISUAL** (it is the
+      fine-relief normal map) so it must go through the close/`--silhouette` verification path, not a
+      blind number change — which is why it is a separate item, not folded into the diagnosis.
+      **(2)** borneo_highland's `sat`=20.5s is a lone outlier — inspect that patch's `_sat.dat` for an
+      over-large / mis-refetched canvas. **(3)** if the cost is deemed irreducible, raise the selftest
+      budget to ~16s AND stop the per-patch wait inheriting a heavy predecessor's overrun, so the
+      pass/fail set stops flapping. Re-measure with the STREAMPHASE lines of `-- --selftest`.
 - [ ] **Cosmetic: `SubViewport` stretch warning at `player.gd:163`.** `test_combat.tscn` load prints
       "Can't change the size of a `SubViewport` with a `SubViewportContainer` parent that has
       `stretch` enabled" — the FP-arms viewport is resized manually while its container has `stretch`
