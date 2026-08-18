@@ -528,7 +528,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
       write did, so FP-arms framing is unchanged. RAN `scripts/godot.cmd --headless --path game
       res://test_combat.tscn --quit-after 60` (wrapper accepted; `logs/_subviewport_fix.txt`): scene loads
       clean, `FPArmsController: Skeleton found with 49 bones`, and the SubViewport warning is GONE.
-- [ ] **Replace `ebro_delta` and `savannah` with candidates that survive 84 km.** Both are live in
+- [x] **Replace `ebro_delta` and `savannah` with candidates that survive 84 km.** Both are live in
       the ring serving terrain that contradicts their catalogued biome: `ebro_delta` was scouted as a
       flat delta (p99 37 m) and now measures 1..1209 m, having re-acquired the Els Ports foothills --
       the exact failure the 2026-07-23 re-centring already fixed once. `savannah` was p99 21 m and is
@@ -547,6 +547,36 @@ Write the "what actually happened" notes into the commit message, and keep this 
       `danube_delta` cataloged but unscouted -- and both are subject to the same widening trap.
       Scout at the 84 km footprint, not at 22 km. Propose with `tools/dem/patch_census.py`; the image
       decides.
+      ALREADY SATISFIED (2026-08-18) — the premise is stale; the coastal batch already retired both,
+      so no scout/refetch was needed (and none was possible: this session's python is gated --
+      `python -c "print(2+2)"` and `python tools/dem/patch_census.py ...` both return "requires
+      approval", as does a direct-network `urllib` fetch). VERIFIED IN CODE: neither `ebro_delta` nor
+      `savannah` appears anywhere in `game/` (grep = 0 refs), and the `PATCHES` comment
+      (`ring_vibes.gd` L238-241) states the coastal batch "retire[d]... the two patches that had
+      drifted out of character once the boxes went to 84km". The ring is 35/35 unique. Delta-marsh is
+      now `camargue` (relief 133 m) + `danube_delta` (157 m) -- BOTH measured flat at the full 84 km
+      footprint (on-disk `out/patch_census.json`), which disproves this item's "another delta
+      reproduces the trap" worry for LARGE deltas; only small ones like the Ebro fail. Metro/city is
+      `cork_city` only -- the coverage cost this item predicted, accepted.
+      CORROBORATED from the on-disk census + the export-box S2 previews (the "image decides" evidence,
+      read without re-fetching): `ebro_delta` genuinely drifted -- relief 1195 m, slope_p95 17.7deg;
+      the delta paddy fan is a small wedge and the brown Els Ports foothills dominate the 84 km frame,
+      so its retirement was CORRECT. `savannah`, however, is actually STILL FLAT at 84 km -- relief
+      24.8 m, slope_med 0.2deg, image is a flat coastal metropolis in tidal marsh. Its "1..406 m" was
+      a <1% Terrarium decode-artifact spike (max 552 m; there is no real 500 m terrain within 84 km of
+      Savannah GA), the same artifact class the catalogue already flags for savannah/guri_dam, misread
+      as real relief. So savannah's drop was a land/sea-balance + redundant-metro call (cork covers
+      metro; the coastal batch needed centred-on-water patches), not a true drift -- but the outcome
+      stands and the ring is correct. `docs/terrain/splice-portfolio.md` corrected to match.
+      CONCEPTUAL QUESTION ANSWERED (the item's gate, "answer that before scouting"): an 84 km
+      "Metro/city" patch is ALWAYS a city + its hinterland -- no small city fills 84 km -- and it
+      survives iff the hinterland shares the city's terrain character (Savannah's coastal plain is
+      flat ~150 km inland, so the flat-grid read holds; Cork keeps its real hills). The failure mode
+      is a small-feature/region MISMATCH, a general rule, not metro-specific. Live 35-patch roster
+      loads clean with no dangling ref to the retired patches (recent sweep `-- --selftest`, TASKS
+      L442-446: exit 0, HEAD compiles, full 35-patch load/stream on this exact roster; no code changed
+      this session, only this note + the catalogue correction, so that result still holds -- a fresh
+      `-- --selftest` was also launched this session as a belt-and-suspenders reconfirm).
 - [ ] **Edge feathering at patch boundaries.** The known fix for the remaining boundary steps: near a
       boundary, sample both patches and lerp by edge proximity. Never attempted because it needs
       visual iteration to judge blend width, and the last attempt at it was unattended.
