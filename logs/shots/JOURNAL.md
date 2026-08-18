@@ -568,3 +568,35 @@ journal's earlier "flat pale cap" was the pale sky-lit **wall top**, not the roo
   hand-built (SurfaceTool) part on the same material as a primitive-mesh (box/cyl) part would lose the
   hand-built one silently. The baker fix closes it generally, not just for the meru. No follow-up item —
   the fix is the general one, and `bake_test` guards it.
+
+---
+
+## 2026-08-18 — detail-normal cap loses no relief (before/after, dolomites)
+
+**Looking for:** the streaming-decode shrink (item "Streaming decode is ~12s per patch") capped the
+detail-normal resize to `min(hires_tex_res, source dims)` instead of upsampling every patch to 8192².
+The item flags this as VISUAL — it is the fine-relief normal map — and forbids shipping it as a blind
+number change, so: does capping to the source resolution cost any visible relief? A/B on one high-relief
+patch: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots dolomites --only ground,air
+--label detailcap_after` (capped HEAD), then the same run with the resize temporarily reverted to the old
+unconditional `resize(8192,8192)` (`--label detailcap_before`), then restored via `git checkout`.
+
+**Saw:** `20260818_0825_detailcap_after/` vs `20260818_0828_detailcap_before/`, ground and air, are
+**pixel-for-pixel indistinguishable** — same ridgelines, snow patches, flank shading, forest micro-detail,
+and the ring rising in the ground frame. No softening, no lost relief. Matches the analytical argument:
+every `_detail.dat` source is ≤6400², so the old code was LANCZOS-*upsampling* to 8192², which invents no
+information; sampling the native-res texture in the shader gives the same lighting. The cap is strictly
+more faithful (native source vs interpolated), never less.
+Numbers alongside (the `--selftest` re-measure, `logs/_streamphase_capped.txt`): the `detail` worker phase
+fell from the diagnosed **3000–8300ms** to **58–1506ms** — no longer the dominant phase — and the stream
+pass rate went **26–28/35 → 34/35**. So the cost was genuinely shrunk, not moved.
+
+**Fell out:**
+- Item "Streaming decode is ~12s per patch — shrink it" ticked (lever 1 shipped by a prior tick, verified
+  here numerically + visually).
+- `borneo_highland`'s 20.5s `sat` spike from the diagnosis did NOT recur (2139ms this run); its `_sat.dat`
+  is 116MB, large but not over-large (dolomites' is 140MB and decodes at 2381ms). Transient cold-touch,
+  not a mis-refetched canvas — lever (2) closed, no action.
+- `lofoten` is the one remaining FAIL (12.0s). Root cause found from file sizes, not jitter: its `.r16` is
+  **78.6MB (6144×6400)**, 3–7× every other patch's heightfield, so the O(source-pixels) `filter` phase
+  alone blows the budget. Over-large *source*, refetch-class → new follow-up item, not touched here.

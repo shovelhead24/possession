@@ -478,7 +478,7 @@ Write the "what actually happened" notes into the commit message, and keep this 
       So it is "whichever ~7–9 land above the cutoff this run", not seven specific patches.
       Diagnosis done per the item ("instrument which phase eats the 12s before changing a number").
       The number change is deferred to the follow-up below.
-- [ ] **Streaming decode is ~12s per patch — shrink it, don't just move the budget.** Follow-up from the
+- [x] **Streaming decode is ~12s per patch — shrink it, don't just move the budget.** Follow-up from the
       STREAMPHASE diagnosis above. Levers, in order of value: **(1)** the detail-normal is resized to
       `hires_tex_res=8192²` UNCONDITIONALLY in `_hires_decode` (near line 2971) — biggest phase, and
       unlike `sat` it is never capped to the source dimensions. Try capping it to `min(hires_tex_res,
@@ -489,6 +489,27 @@ Write the "what actually happened" notes into the commit message, and keep this 
       over-large / mis-refetched canvas. **(3)** if the cost is deemed irreducible, raise the selftest
       budget to ~16s AND stop the per-patch wait inheriting a heavy predecessor's overrun, so the
       pass/fail set stops flapping. Re-measure with the STREAMPHASE lines of `-- --selftest`.
+      DONE + VERIFIED 2026-08-18. Lever (1) was already coded by a prior tick (rescued in wip 0762205,
+      whose blind commit MIS-titled it "Where weapons come from"; the actual change is the detail cap) but
+      never run/ticked. This tick finished it: RAN `-- --selftest` (wrapper accepted, `logs/_streamphase
+      _capped.txt`) — the `detail` worker phase fell from the diagnosed **3000–8300ms → 58–1506ms** (no
+      longer the dominant phase) and stream pass went **26–28/35 → 34/35**, so cost was SHRUNK not moved.
+      VISUAL check per the item's requirement: before/after `--shots dolomites --only ground,air` (capped
+      HEAD vs the resize temporarily reverted to `resize(8192,8192)`, restored via `git checkout`) are
+      pixel-for-pixel identical — no relief lost (upsampling ≤6400²→8192² invents no information; the cap
+      is strictly more faithful). Journal entry 2026-08-18.
+      Lever (2) CLOSED: borneo's 20.5s `sat` did NOT recur (2139ms this run); its `_sat.dat` is 116MB,
+      large but not over-large (dolomites' 140MB decodes at 2381ms) — transient cold-touch, not a
+      mis-refetched canvas. Lever (3) unwarranted now (34/35 pass). Residual `lofoten` fail raised below.
+- [ ] **lofoten fails `--selftest` on an over-large `.r16` (6144×6400, 78.6MB).** Found 2026-08-18 while
+      verifying the detail-cap shrink: with that shrink landed, `lofoten` is the ONE remaining stream FAIL
+      (12.0s), and it is not jitter — its `.r16` heightfield is 78.6MB / 6144×6400, 3–7× every other
+      patch's, so the O(source-pixels) box-mean `filter` phase alone (`_hires_decode` ~line 2925) blows
+      the budget regardless of the detail/sat cost. This is the borneo-shaped "over-large source" problem
+      on the r16/filter axis. Fix is to re-export/downsample lofoten's `.r16` to the ~2000–2500² band the
+      other patches sit in — but that is REFETCH-CLASS (rule at top of file: never re-centre/refetch a
+      patch unprompted), so it needs explicit authorisation before acting. Confirm the p99 height and
+      coastline survive the downsample (lofoten is the storm coastal patch, sea 83.5%).
 - [ ] **Cosmetic: `SubViewport` stretch warning at `player.gd:163`.** `test_combat.tscn` load prints
       "Can't change the size of a `SubViewport` with a `SubViewportContainer` parent that has
       `stretch` enabled" — the FP-arms viewport is resized manually while its container has `stretch`
