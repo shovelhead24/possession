@@ -510,12 +510,24 @@ Write the "what actually happened" notes into the commit message, and keep this 
       other patches sit in — but that is REFETCH-CLASS (rule at top of file: never re-centre/refetch a
       patch unprompted), so it needs explicit authorisation before acting. Confirm the p99 height and
       coastline survive the downsample (lofoten is the storm coastal patch, sea 83.5%).
-- [ ] **Cosmetic: `SubViewport` stretch warning at `player.gd:163`.** `test_combat.tscn` load prints
+- [x] **Cosmetic: `SubViewport` stretch warning at `player.gd:163`.** `test_combat.tscn` load prints
       "Can't change the size of a `SubViewport` with a `SubViewportContainer` parent that has
       `stretch` enabled" — the FP-arms viewport is resized manually while its container has `stretch`
       on. Harmless (arms still render) and pre-existing, so it was left untouched by the sweep; fix is
       either `SubViewportContainer.stretch = false` or drop the manual `size` write, but confirm the
       FP-arms overlay still frames correctly after, since that resize may be load-bearing.
+      DONE + VERIFIED 2026-08-18. Took the "drop the manual `size` write" branch, because the resize was
+      NOT load-bearing: both scenes' `SubViewportContainer` already carry `stretch = true` + full-rect
+      anchors (preset 15, world.tscn:78-85 / test_combat.tscn:158-165), so the container itself sizes the
+      child SubViewport to the whole window and rescales it on resize. The manual `weapon_viewport.size =
+      get_viewport().size` in `_ready` and the `_on_viewport_size_changed` handler it hung off the
+      `size_changed` signal were writing the SAME size the container already sets — pure redundancy
+      fighting stretch, which is exactly what raised the warning. Removed the `_ready` write, the signal
+      connection, and the now-dead `_on_viewport_size_changed` func (grep confirms no other caller).
+      Behaviour-preserving: stretch keeps the SubViewport at full-window size/aspect just as the manual
+      write did, so FP-arms framing is unchanged. RAN `scripts/godot.cmd --headless --path game
+      res://test_combat.tscn --quit-after 60` (wrapper accepted; `logs/_subviewport_fix.txt`): scene loads
+      clean, `FPArmsController: Skeleton found with 49 bones`, and the SubViewport warning is GONE.
 - [ ] **Replace `ebro_delta` and `savannah` with candidates that survive 84 km.** Both are live in
       the ring serving terrain that contradicts their catalogued biome: `ebro_delta` was scouted as a
       flat delta (p99 37 m) and now measures 1..1209 m, having re-acquired the Els Ports foothills --

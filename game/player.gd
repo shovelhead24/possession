@@ -158,10 +158,10 @@ func _ready():
 		# Set all weapon meshes to layer 2 so only weapon camera sees them
 		_set_layer_recursive(weapon_holder, 2)
 
-	# Resize weapon viewport to match window
-	if weapon_viewport:
-		weapon_viewport.size = get_viewport().size
-		get_viewport().size_changed.connect(_on_viewport_size_changed)
+	# The SubViewportContainer parent has stretch=true, so it already keeps this
+	# SubViewport sized to the full window (and rescales it on resize). Writing the
+	# size here as well is redundant and triggers Godot's "can't change the size of a
+	# SubViewport with a stretching container parent" warning, so leave it to stretch.
 
 	# Load HUD scene if not assigned in inspector
 	if not hud_scene:
@@ -212,10 +212,6 @@ func _on_window_focus_lost():
 
 func _on_window_focus_gained():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-
-func _on_viewport_size_changed():
-	if weapon_viewport:
-		weapon_viewport.size = get_viewport().size
 
 func _set_layer_recursive(node: Node, layer: int):
 	# Set visual layer on VisualInstance3D nodes (meshes, etc.)
