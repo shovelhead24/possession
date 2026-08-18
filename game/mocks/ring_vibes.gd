@@ -2302,6 +2302,18 @@ func _shot_run() -> void:
 		get_tree().quit()
 		return
 
+	# SEAM (`--seam`). Edge-feather comparison strip: parks a low view across an arc-adjacent patch
+	# ownership boundary and shoots the SAME frame at several `patch_blend_km` widths for a human to
+	# choose from. Opt-in, self-contained, quits after -- so it never rides a landscape run. The width
+	# is NOT picked here (TASKS.md: "Do not pick the width unattended").
+	if args.has("--seam"):
+		await _seam_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
+
 	for pname in want:
 		var idx := _patch_names.find(pname)
 		if idx < 0 and pname != "millstreet":
@@ -2530,6 +2542,86 @@ func _shot_run() -> void:
 	if _perf: _perf.visible = true
 	print("SHOTS done")
 	get_tree().quit()
+
+func _seam_parade(dir: String) -> void:
+	# EDGE-FEATHER COMPARISON STRIP (TASKS.md "Edge feathering at patch boundaries"). Parks a low view
+	# across an arc-adjacent patch ownership boundary and shoots the SAME frame at several
+	# `patch_blend_km` widths, so a human can pick the width by looking. The width is NOT chosen here.
+	#
+	# The seam shot is between two ARRAY-tier splice patches: the home DEM and the one streamed hires
+	# patch both WIN before the feather branch in sample_h_raw, so leaving them on would draw an
+	# un-feathered surface on one side of the boundary. Force both off for the run -- nothing is placed
+	# or driven for a parked screenshot, so this has no other effect. _hires_poll re-enables hires when
+	# a stream lands, so re-assert it (and the width) every capture.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	if _patch_rects.size() < 2:
+		print("SHOT seam: need >=2 patches, have %d" % _patch_rects.size())
+		return
+	var circ: float = CIRCUMFERENCES[c_idx]
+	var rad := _radius()
+	# arc-adjacent pair: patch 0 and its nearest neighbour by arc -- the same "nearest" that
+	# _clip_patch_overlap uses to set ownership, so their shared boundary is exactly halfway between.
+	var a := 0
+	var b := -1
+	var best := circ
+	for j in _patch_rects.size():
+		if j == a:
+			continue
+		var d: float = absf(wrapf(_patch_rects[j].x - _patch_rects[a].x, -circ * 0.5, circ * 0.5))
+		if d < best:
+			best = d
+			b = j
+	if b < 0:
+		print("SHOT seam: no neighbour found")
+		return
+	var ra: Vector4 = _patch_rects[a]
+	var d_ab: float = wrapf(_patch_rects[b].x - ra.x, -circ * 0.5, circ * 0.5)   # signed arc a->b
+	var to_b: float = signf(d_ab)
+	var seam_arc: float = ra.x + d_ab * 0.5                                       # ownership boundary
+	var seam_lat: float = ra.y
+	# Frame from ABOVE, offset back over the lower side, looking down at the boundary. The camera must
+	# clear the feathered ground at EVERY width: the feather raises the low side toward the high side
+	# inside the band, so a low camera ends up underground at wide blend (found the hard way -- the 3km
+	# frame of the first low pass showed the camera under a risen surface). A weighted average is bounded
+	# by the two sides, so max(h_a,h_b)+400m clears it at all widths and a down-look lights the terrain
+	# instead of silhouetting it. Narrow FOV magnifies the ~km-scale band.
+	var h_a: float = _terrain_h(seam_arc - to_b * 60.0, seam_lat)      # a's side height
+	var h_b: float = _terrain_h(seam_arc + to_b * 60.0, seam_lat)      # neighbour's side height
+	var to_low: float = to_b if h_b < h_a else -to_b                   # arc dir toward the lower side
+	var cam_arc: float = seam_arc + to_low * 1600.0
+	var cam_pos := _ring_pos(cam_arc / rad, seam_lat, maxf(h_a, h_b) + 400.0)
+	var tgt_pos := _ring_pos(seam_arc / rad, seam_lat, (h_a + h_b) * 0.5)   # boundary point, mid-height
+	var up := _ring_up(cam_pos)
+	sun_paused = true
+	sun_angle = fposmod(-seam_arc / rad + 0.45, TAU)   # put THIS arc in mid-morning
+	_cam.fov = 50.0
+	_cam.global_position = cam_pos
+	_cam.look_at(tgt_pos, up)
+	var na := str(_patch_names[a])
+	var nb := str(_patch_names[b])
+	print("SHOT seam: %s|%s boundary @ %.1f%% arc, step here=%.1fm there=%.1fm" % [na, nb,
+		100.0 * seam_arc / circ, _terrain_h(seam_arc - to_b * 50.0, seam_lat),
+		_terrain_h(seam_arc + to_b * 50.0, seam_lat)])
+	# let the CDLOD bubble retile around the parked camera. The recenter is throttled (_band_cd up to
+	# 1.5s) and blocked the frame the camera teleports (_cam_speed spikes), so wait on the clock.
+	await get_tree().create_timer(3.0).timeout
+	_cam.global_position = cam_pos                     # re-assert in case a mode tick nudged it
+	_cam.look_at(tgt_pos, up)
+	for km in [0.0, 1.0, 2.0, 3.0]:
+		for m in _mats:
+			m.set_shader_parameter("use_dem", false)
+			m.set_shader_parameter("hires_valid", false)
+			m.set_shader_parameter("patch_blend_km", km)
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		var path := "%s/seam_%s-%s_%dkm.png" % [dir, na, nb, int(km)]
+		get_viewport().get_texture().get_image().save_png(path)
+		print("SHOT seam %s|%s blend=%dkm  %s" % [na, nb, int(km), path])
+	for m in _mats:
+		m.set_shader_parameter("patch_blend_km", 0.0)   # leave the feather off
+	_shot_hold_cam = false
 
 func _shoot_silhouette(vi: int, dir: String) -> void:
 	# Two framings per vehicle -- side-on and front three-quarter -- each parked at a fixed offset from
