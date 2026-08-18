@@ -2968,7 +2968,12 @@ func _hires_decode(idx: int) -> void:
 			if FileAccess.file_exists(base + "_detail.dat"):
 				var di := Image.new()
 				if di.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_detail.dat")) == OK:
-					di.resize(hires_tex_res, hires_tex_res, Image.INTERPOLATE_LANCZOS)
+					# Never upsample, same as sat above -- every _detail.dat source is <=6400^2, so
+					# resizing to a flat 8192^2 was the biggest stream phase and invented no relief.
+					# hires_tex_res is a CAP (see its decl), not a target.
+					var dtgt: int = mini(hires_tex_res, mini(di.get_width(), di.get_height()))
+					if di.get_width() != dtgt or di.get_height() != dtgt:
+						di.resize(dtgt, dtgt, Image.INTERPOLATE_LANCZOS)
 					di.convert(Image.FORMAT_RGB8)
 					out["detail"] = di
 			ms["detail"] = float(Time.get_ticks_usec() - t_det) / 1000.0
