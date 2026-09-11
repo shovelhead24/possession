@@ -62,7 +62,8 @@ scene.camera = camera
 camera_data.type = 'ORTHO'
 camera_data.ortho_scale = span * 1.65
 camera_data.clip_end = max(1000, span * 20)
-for filename, direction in [('preview.png', (1.3,-1.8,1.1)), ('side.png', (1,0,0.15))]:
+side_direction = (0,-1,0.15) if size.x >= size.y else (1,0,0.15)
+for filename, direction in [('preview.png', (1.3,-1.8,1.1)), ('side.png', side_direction)]:
     camera.location = center + Vector(direction).normalized() * span * 4
     camera.rotation_euler = (center - camera.location).to_track_quat('-Z','Y').to_euler()
     scene.render.filepath = str(folder / filename)

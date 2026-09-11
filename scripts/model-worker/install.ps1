@@ -13,7 +13,7 @@ $workshop=Join-Path $repo 'model-workshop'
 $archive=Join-Path $repo 'docs\archive\TASKS-before-model-production.md'
 New-Item -ItemType Directory -Force $scriptDest,$workshop,(Join-Path $workshop 'lib'),(Split-Path $archive) | Out-Null
 if (!(Test-Path $archive)) { Copy-Item -LiteralPath (Join-Path $repo 'TASKS.md') -Destination $archive }
-foreach ($file in @('worker.ps1','launch.vbs','result.schema.json','validate_model.py','README.md','install.ps1')) {
+foreach ($file in @('worker.ps1','launch.vbs','result.schema.json','validate_model.py','README.md','install.ps1','test-worker.ps1','test-render.ps1','BRIEF.md','project.godot')) {
     Copy-Item -LiteralPath (Join-Path $source $file) -Destination $scriptDest -Force
     Copy-Item -LiteralPath (Join-Path $source $file) -Destination $installed -Force
 }
@@ -62,6 +62,8 @@ $config | ConvertTo-Json | Set-Content (Join-Path $installed 'config.json') -Enc
 if ($LASTEXITCODE -ne 0) { throw 'Worker preflight failed' }
 $action=New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\wscript.exe" -Argument ('//B //NoLogo "'+(Join-Path $installed 'launch.vbs')+'"') -WorkingDirectory $installed
 $trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15)
+$config.pollAnchorUtc=([DateTime]::Parse($trigger.StartBoundary)).ToUniversalTime().ToString('o')
+$config | ConvertTo-Json | Set-Content (Join-Path $installed 'config.json') -Encoding UTF8
 $settings=New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun -ExecutionTimeLimit (New-TimeSpan -Hours 4) -MultipleInstances IgnoreNew
 $principal=New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName 'possession-model-production' -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'Possession model production. Hidden worker; retries usage limits every 15 minutes; isolated asset-production checkout.' -Force -ErrorAction Stop | Out-Null

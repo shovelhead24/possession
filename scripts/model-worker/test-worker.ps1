@@ -33,6 +33,9 @@ $answer=Invoke-Agent 'test' 'test' 'quota'
 if ($null -ne $answer -or $script:state.status -ne 'waiting_for_usage') { throw 'Quota was not preserved' }
 $delay=([DateTime]::Parse($script:state.nextAttemptUtc).ToUniversalTime()-[DateTime]::UtcNow).TotalMinutes
 if ($delay -lt 14.9 -or $delay -gt 15.1) { throw 'Retry is not 15 minutes' }
+$config | Add-Member -NotePropertyName pollAnchorUtc -NotePropertyValue ([DateTime]::UtcNow.AddMinutes(-1).ToString('o'))
+$alignedDelay=([DateTime]::Parse((Next-PollUtc)).ToUniversalTime()-[DateTime]::UtcNow).TotalMinutes
+if ($alignedDelay -lt 13.9 -or $alignedDelay -gt 14.1) { throw 'Retry skipped the next scheduled boundary' }
 function Run-Child {
     [IO.File]::WriteAllText((Join-Path $runtime 'success.result.json'), '{"status":"ready","summary":"valid result"}')
     return [pscustomobject]@{code=0; output='Documentation discusses usage limits; this run succeeded.'}
