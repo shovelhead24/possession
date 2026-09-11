@@ -3,6 +3,9 @@ config_version=5
 [application]
 config/name="Possession Model Workshop"
 
+[filesystem]
+import/blender/enabled=false
+
 [rendering]
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
