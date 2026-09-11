@@ -6,7 +6,7 @@ New area doc (2026-07-22). Core thesis: any convenience that would normally be a
 
 - Convenience earns a body. Zoom → binoculars. Waypoint-bearing → compass. Dialect legibility → translator. If it can't be held, dropped, or lost, it isn't real enough to keep.
 - **Retroactive confirmation:** the journal (knowledge.md) already followed this rule before it had a name — a physical pin-book instead of a quest-log HUD.
-- Tools are found in the world (loot, trade, ruins), never quest-rewarded — consistent with the no-missions law.
+- Tools are found, salvaged, traded or given through credible relationships. A chosen bargain may transfer an actual tool under `.decisions/design-laws.md#chosen-commitments`; an abstract completion reward dispenser remains excluded.
 
 ## Worked Tools
 
@@ -33,7 +33,7 @@ Alongside the transport ladder (world.md) and the progression tiers (progression
 
 ## The Artery Rule (2026-07-22)
 
-If free expression is the heart, tools are the arteries — so **a tool only earns a slot if it has at least two unscripted uses**, discovered through the systems (fire, tempo, knowledge, animals, factions, terrain), never assigned by content. One-use tools are keys wearing costumes; keys are missions wearing costumes. The second use is never tutorialized — finding it *is* the content.
+If free expression is the heart, tools are the arteries — so **a tool only earns a slot if it has at least two unscripted uses**, discovered through the systems (fire, tempo, knowledge, animals, factions, terrain), never assigned by content. Prefer broadly useful tools over single scripted keys; the test is whether the tool opens meaningful choices, not whether an encounter resembles a quest. The second use is never tutorialized — finding it *is* the content.
 
 ## Catalog Sketch — goodies × vignettes (2026-07-22, examples not commitments)
 
@@ -85,7 +85,7 @@ Criteria: systems touched × buildable cheapness × theme fit.
 
 **Flagged weakest, honestly:** radio (probably breaks knowledge-pyramid pacing — quarantined until proven safe); rope (tarpit unless abstracted).
 
-**Saloon piano — pardoned by user decree (2026-07-22):** ranked weakest systemically, kept anyway — as the flagship of an emergent-comedy principle: *comedy obeys the same laws as everything else or it isn't funny here.* No authored jokes, no wacky NPCs, no joke quests (impossible anyway — no missions). The humor budget is entirely systems playing ridiculous inputs completely straight: the piano as a legitimate tempo-writer for a room, the boar derailing a solemn negotiation because pressure said so, flamingos betraying your ambush. Surprise survives because nothing is *authored to be funny* — the simulation just refuses to break character. Same law as the deer moment, pointed at absurdity instead of awe.
+**Saloon piano — pardoned by user decree (2026-07-22):** ranked weakest systemically, kept anyway — as the flagship of an emergent-comedy principle: *comedy obeys the same laws as everything else or it isn't funny here.* No authored jokes, no wacky NPCs, no prescribed joke sequences; chosen requests remain subject to the same straight-faced world logic. The humor budget is entirely systems playing ridiculous inputs completely straight: the piano as a legitimate tempo-writer for a room, the boar derailing a solemn negotiation because pressure said so, flamingos betraying your ambush. Surprise survives because nothing is *authored to be funny* — the simulation just refuses to break character. Same law as the deer moment, pointed at absurdity instead of awe.
 
 ## Open Questions
 

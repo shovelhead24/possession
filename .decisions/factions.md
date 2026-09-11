@@ -35,3 +35,9 @@ tuning value the L5 history pass derives from communication speed (rumor decay �
 **Status:** active
 **Decision:** The player can never *join* a faction. Standing with a faction is expressed entirely through reputation — decaying, distorting claims about you in the same rumor machinery.
 **Why:** Two existing laws already converge on this, so it is a consequence rather than a fresh choice. `no-missions` forbids assignments, and enrollment without duties is hollow — membership that obliges nothing is a label. Meanwhile `reputation = the knowledge pyramid inverted` (`docs/factions.md`) already carries the whole relationship: being *known as one of ours* **is** membership, in machinery that exists. A separate membership flag would duplicate it, which `decomplect` argues against. Recorded explicitly because "can I join?" is a question that will keep being asked.
+
+### reciprocal-local-relations — Chosen obligations without faction membership
+**Date:** 2026-09-10
+**Status:** active
+**Decision:** `player-known-never-enrolled` remains active, but its historical no-missions rationale is narrowed by `design-laws.md#chosen-commitments`. Requests, promises and actor-funded bargains are permitted; they need no membership flag or mandatory duty ladder. Consequential relations must have plausible, discoverable reflections during play, not only a terminal montage.
+**Why:** Attachment and reciprocity give the independent world personal stakes. Neither requires turning factions into assignment dispensers or making all NPCs know what the player did.

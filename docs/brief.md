@@ -19,7 +19,7 @@ Sources: the May 2026 design session ([vision.md](vision.md), [moments/](moments
 
 ## 1. Design Principles — RATIFIED 2026-07-19 (`.decisions/design-laws.md`)
 
-From the April brainstorm, ratified as law after two days of load-bearing use — along with four session-coined laws (no missions; intensity not valence; observation never rerolls; world never reads knowledge):
+From the April brainstorm, ratified in July; the 2026-09-10 synthesis refines witnessing, replaces the categorical no-missions ban with chosen commitments, and makes continuous local consequences explicit. See `.decisions/design-laws.md` for current decisions and supersession history.
 
 1. **You do not simulate the world. You simulate the player's relationship to the world.**
 2. "We do not simulate detail — we acknowledge it."
@@ -72,8 +72,8 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 | Macro geography | [geography.md](geography.md) | arc sketch proposed | enclave distance; armada landfall; P2 start | — |
 | Perception/interaction resolution | [perception.md](perception.md) | live brainstorm, proposed | vision cone angles; hearing granularity | — |
 | Aesthetic & directorial philosophy | [aesthetic.md](aesthetic.md) | palette locked (Halo CE L2); pillars proposed | craft shot-list gap | — |
-| Pacing & motivation (no-missions) | [pacing.md](pacing.md) | model assembled | short-term layer needs playtest | — |
-| Ending (leave branch) | [moments/the_return.md](moments/the_return.md) | decided: portal mechanism, co-op unilateral, staging | telegraphing; NG+ carryover UI | — |
+| Pacing & motivation | [pacing.md](pacing.md) | self-direction and local consequences adopted | define the 30-second gameplay loop | — |
+| Ending | [moments/the_return.md](moments/the_return.md) | neutral Stay/Leave framing; unilateral co-op is a candidate | costs of both choices; legible shared agency | — |
 | Post-credits / sequel hook | [moments/human_armada.md](moments/human_armada.md) | tentative tease only | timing; save-continuity requirements | — |
 | Moments | [moments/](moments/) | 12 director's notes | which moment the slice proves | #4 |
 
@@ -81,7 +81,7 @@ From the April brainstorm, ratified as law after two days of load-bearing use �
 
 The brainstorm's full stack — Facts → Pressures → Intentions → Actions → Encounters, plus "throwing a bone" stagnation detection and competence-vector player modeling — is coherent and matches the theme. It is also **enormous**. The scope question (D7) isn't "is this good" but "how much does the first playable slice need" — plausibly *none of it*: deer/wolves are ambient AI, the first settlement can be static, and pressures can arrive with the medieval tier.
 
-**2026-07-18 refinement (see simulation.md):** no mission layer, ever — architecturally (bake produces space, runtime produces time) and thematically (missions violate witnessing-over-heroism). Instead: the runtime mirror stack R0–R5 with the player as an ordinary intention-holding entity, a self-authored journal the bone-throwing system reads as signal, and an *arc director* that schedules the authored spine as world-logic inevitabilities, not tasks.
+**Current boundary (amended 2026-09-10):** no compulsory assignment/completion/reward layer. NPC requests, bargains and chosen promises may use ordinary facts and intentions; they do not make the world wait for the player. The R0–R5 proposal, self-authored journal and independent arc remain. See `.decisions/design-laws.md#chosen-commitments` and simulation.md.
 
 ## 6. Interaction Fidelity — RATIFIED 2026-07-19 (`.decisions/design-laws.md`)
 
@@ -124,3 +124,22 @@ One unbroken stretch of walking that tests: terrain streaming, the curve render,
 
 ---
 *Living document. Sections get hydrated down into area docs as decisions land.*
+
+## 10. Whole-game synthesis — adopted 2026-09-10
+
+The intended experience is gaining freedom without gaining command over history. Apply these priorities when evaluating new mechanics:
+
+- **Local attachment:** the player can change particular lives and places. Define credible, perceptible consequences throughout play; the ending montage cannot carry all acknowledgement.
+- **Chosen commitments:** requests, promises and bargains are allowed. Preserve choice and causal world independence rather than enforcing a blanket ban on quest-like encounters. No general quest framework is being commissioned.
+- **Continuous progression:** recovery reinterprets familiar geography. Earlier people, places and commitments remain meaningful after flight; earned local power is welcome, historical omnipotence is not.
+- **Scale with intimacy:** memorable ordinary life, quiet and anticipated arrivals give spectacle weight. Keep survival shallow and do not turn every animal or journey into resource maintenance.
+- **Shared discovery:** co-op knowledge differences create conversation and mutual contribution. Neither player becomes a permanent guide or passenger.
+- **An earned choice:** Stay and Leave both have costs; specify those costs without moral grading. Unilateral co-op departure requires a legible approach and deliberate activation and remains unratified as the final interaction until playtested. Preserve the unbroken opening; test cinematic timing by its effect.
+
+Detailed implications live in vision.md, pacing.md, progression.md, factions.md, co-op.md and moments/the_return.md. This records design direction, not a claim that these systems are implemented.
+
+### Next essential design discussion: the 30-second gameplay loop — OPEN
+
+Before selecting more feature work, identify what is enjoyable and repeatable in ordinary play: what the player notices, understands, chooses, does and perceives as consequence. Test the proposition across travel, danger, people, quiet, capability changes and co-op. Thirty seconds is a lens on experience, not a mandatory encounter timer. Specific verbs, resource pressures and cadence are not yet selected. See pacing.md for the discussion brief.
+
+The proposed exploration slice remains a candidate delivery vehicle for that loop, not a substitute for defining it. Do not commit to a new combat slice or expand the roster by inference from this synthesis.

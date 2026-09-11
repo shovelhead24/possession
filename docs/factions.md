@@ -78,9 +78,13 @@ Notes on the shape:
   in the arc stretch that currently has none.
 - **Gap check:** this fills 18–25% and ~30%, the two stretches `draws.md` flagged as empty.
 
-## The No-Missions Boundary
+## Chosen commitments and local consequences
 
-NPCs may *ask* for help — honest simulation, people ask. But: no quest log entry, no reward contract, no tracking UI. The ask is an encounter (R4); caring is the player's journal pin. Factions never court the player as a content dispenser.
+NPCs may ask, bargain, offer payment from their own means and remember promises. The player may refuse, accept, abandon or record an intention in the journal. Actors keep pursuing their needs; there is no mandatory assignment chain or automatic completion checklist. This supersedes the blanket no-reward-contract wording under `.decisions/design-laws.md#chosen-commitments`.
+
+Consequential encounters must identify a credible later reflection: a changed greeting, access, an absent person, a repaired place, a remembered refusal or a distorted rumor. These are examples, not a required feature catalogue. Responses require plausible information and provenance; neither universal praise nor immediate global reputation changes are permitted. A player should be able to notice some consequences during ordinary play, before the ending montage. Particular lives can change even when a major disaster cannot be prevented.
+
+Settlements can sustain ordinary visits, companionship and attachment. Known-never-enrolled remains the faction relationship model; voluntary commitments do not require membership ranks or institutional duty chains.
 
 ## Settled 2026-07-29 → `.decisions/factions.md`
 

@@ -6,7 +6,7 @@ High-level and mostly-static. Changes rarely, and only deliberately. The working
 
 **You arrived late to something enormous.**
 
-The ring is indifferent to your presence. It was here before you. It will be here after you. You are a witness, not a protagonist. The world does not reward you directly — it reshapes opportunity gradients.
+The ring is indifferent to your presence. It was here before you. It will be here after you. You witness history at a scale you cannot command. Particular lives and places can still change because of you. The world does not reward you directly — it reshapes opportunity gradients.
 
 ## Non-Negotiables
 
@@ -15,7 +15,7 @@ These can be changed, but only by mutual agreement.
 - **The landing sequence is unbroken.** No cuts, no loading screens, no fade to black. The player watches the ring rush up from the pilot's seat the entire way down. Mouse look only. No thrust.
 - **Fully explorable terrain.** If you can see it, you can reach it. No invisible walls, no locked zones.
 - **Scale without fanfare.** The ring's size is shown, not announced. No music sting. No UI callout.
-- **Witnessing over heroism.** The world's biggest moments happen whether you're ready or not. You don't outrun the disaster. You watch it.
+- **Witnessing over heroism.** The world's biggest moments happen whether you're ready or not. You cannot command history, but local rescue, loss, trust and attachment remain consequential. Witnessing never means universal helplessness.
 - **Couch co-op first.** Two players, one screen. All design decisions are tested against this.
 - **Potato hardware target.** GL Compatibility renderer. Intel UHD. If it doesn't run on a Dell Latitude, it doesn't ship.
 
@@ -57,12 +57,12 @@ The relay was already on when you found it. You didn't wake it. Something else d
 
 The armada arrives because someone tried to contact home using ancient tech on the ring. They are not looking for you. They want the ring.
 
-- **The good ending:** destroy the relay. Stay.
-- **The other ending:** ring the bell. Leave. The game lets you go back after the credits and ring it anyway.
+- **Stay:** destroy the relay and remain. Staying carries costs as well as commitments; it is not labelled the good ending.
+- **Leave:** ring the bell and return. Leaving is a legitimate choice with consequences, not a failed moral test. The game lets you go back after the credits and ring it anyway.
 
 Ringing the bell is not cowardly. But it tests your courage in a suddenly much more dramatic way.
 
-**The leave ending, staged (2026-07-22):** the mechanism itself is simple to operate — the entire difficulty is the journey to reach it, not solving it once there; no puzzle, no skill check, you just ring it. What plays over ringing it is a procedurally assembled vignette montage built from the actual world state at that moment (see simulation.md "Ending Vignette Assembly") — what you did, who you helped or didn't, what you still believe that's gone stale. Staged to a reference track (Garbage, "Cherry Lips (Go with the Flow)" — bittersweet, ambiguous, not triumphant) with the game's own title card appearing for the first time at the song's bell section — three bells at once: the song's, the diegetic one, the name. Same withholding logic as "names come last," applied to the game's own name. Closes on an extended held black screen before any credits — reflection, not a cut. See [moments/the_return.md](moments/the_return.md); decisions in `.decisions/ending.md`. (The stay/destroy-relay ending is untouched by any of this.)
+**The leave ending, staged (2026-07-22):** the mechanism itself is simple to operate — the entire difficulty is the journey to reach it, not solving it once there; no puzzle, no skill check, you just ring it. What plays over ringing it is a procedurally assembled vignette montage built from the actual world state at that moment (see simulation.md "Ending Vignette Assembly") — what you did, who you helped or didn't, what you still believe that's gone stale. Staged to a reference track (Garbage, "Cherry Lips (Go with the Flow)" — bittersweet, ambiguous, not triumphant) with the game's own title card appearing for the first time at the song's bell section — three bells at once: the song's, the diegetic one, the name. Same withholding logic as "names come last," applied to the game's own name. Closes on an extended held black screen before any credits — reflection, not a cut. See [moments/the_return.md](moments/the_return.md); decisions in `.decisions/ending.md`. (This staging remains specific to leaving; the 2026-09-10 neutral-choice framing governs both branches.)
 
 **Structural bookend:** the landing sequence (opening) and this ending are both fixed, authored, non-systemic sequences — everything between them is emergent simulation. The game is authored at both ends and alive in the middle.
 
@@ -83,7 +83,7 @@ Ringing the bell is not cowardly. But it tests your courage in a suddenly much m
 
 **Cautionary, not aspirational: Far Cry 2 (2026-07-26).** Same Heart-of-Darkness-shaped indifference we're reaching for, but it fails in two separable ways worth naming so we don't repeat them: (1) **indifference without awe** — pure cynicism, no sublime counterweight, whereas our tone list above is awe-first indifference (the ring is indifferent *and* beautiful); (2) **systemic expression with no reflection** — decades of emergent player behavior, and the ending barely acknowledges the specific shape of what you did.
 
-(1) is answered by the awe-heavy moment list below. **(2) is only partly answered, and this needs honesty, not a victory lap (2026-07-26 self-correction):** the ending's fact-driven vignette assembly (`.decisions/ending.md`) is necessary but not sufficient by itself — a single mirror at the very end, however well-built, doesn't fix 30+ hours of feeling unacknowledged along the way. The actual fix requires *continuous* reflection throughout play, not a terminal one. The mechanism for that already exists (reputation as the knowledge pyramid inverted — factions.md) but we have not specified that it must surface *often enough and legibly enough* to function as an ongoing mirror. Until that's explicit, the ending is still carrying the whole burden alone. Open gap, tracked in TODO.md.
+(1) is answered by the awe-heavy moment list below. **(2) is only partly answered, and this needs honesty, not a victory lap (2026-07-26 self-correction):** the ending's fact-driven vignette assembly (`.decisions/ending.md`) is necessary but not sufficient by itself — a single mirror at the very end, however well-built, doesn't fix 30+ hours of feeling unacknowledged along the way. The actual fix requires *continuous* reflection throughout play, not a terminal one. The mechanism for that already exists (reputation as the knowledge pyramid inverted — factions.md) but we have not specified that it must surface *often enough and legibly enough* to function as an ongoing mirror. The 2026-09-10 local-agency decision now makes continuous, perceptible reflection a requirement. Specific responses and their timing remain to be designed and playtested; see factions.md and TODO.md.
 
 ## Moments
 
@@ -104,3 +104,15 @@ Individual moment docs live in [moments/](moments/). Each is a short director's 
 
 ---
 *Living document. No review schedule — revisit when something feels wrong.*
+
+## Design synthesis — adopted 2026-09-10
+
+The emotional through-line is gaining freedom without gaining command of history. Progression changes the meaning of familiar geography: a dangerous crossing becomes a route, then a place you can fly over and choose to revisit because somebody matters there. Earlier people, places and commitments remain relevant across Survival, Medieval and Ancient Alien; the tiers transform one game rather than replace it with three unrelated games.
+
+Recovery preserves the gap between knowing what is possible and possessing the means. Mobility is real power and should feel liberating; the world's scale supplies its limits without cancelling the achievement. A late-game player may be locally formidable and still unable to control an armada.
+
+Asymmetric co-op knowledge should create useful conversation and shared discovery. Both players need meaningful agency; neither is the other's permanent guide, passenger or exposition device. Chosen promises and bargains are permitted under `.decisions/design-laws.md#chosen-commitments`; the ring continues without waiting for them.
+
+Judge the authored opening and ending by what players perceive and feel. Keep the unbroken descent and restrained spectacle. Treat the unilateral shared ending as a playtestable proposal with legible approach and deliberate activation, not a consequence justified solely by the world's indifference. Both ending branches need concrete, understandable costs; their exact consequences remain to be designed.
+
+The long-arc design question is: **by the time I can leave, what has happened that makes me hesitate?** The next design discussion concerns the **30-second gameplay loop** that supports this arc; no specific loop has yet been ratified.

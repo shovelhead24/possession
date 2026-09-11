@@ -14,7 +14,7 @@ The arc runs crash → stripped → hunted → survivor → discover people → 
 
 **The transport ladder is the progression ladder's shadow** (world.md): walk → horse → vehicle/boat → flyer → ancient rim transit — each tier redefines "far" and what you can *know* (knowledge.md).
 
-**No missions, ever** — progression is self-directed via the journal (pins as player-authored goals) plus the world's opportunity gradients. See simulation.md for the architecture and the arc director's inevitability rules.
+**Self-directed progression** — journal pins, chosen commitments and the world's opportunity gradients supply direction; requests and bargains are allowed under `.decisions/design-laws.md#chosen-commitments`. See simulation.md for the architecture and the arc director's inevitability rules.
 
 ## Open Questions
 
@@ -27,4 +27,10 @@ The arc runs crash → stripped → hunted → survivor → discover people → 
 
 ## Tone Guard
 
-Progression serves witnessing, not power fantasy — the biggest things still happen without you (docs/vision.md). Tier 3 makes you mobile, not mighty.
+Progression gives real power without command over history. Flight, tools and weapons should feel liberating and may make the player locally formidable; the biggest events still happen independently. Do not cancel earned capability merely to enforce helplessness.
+
+## Continuity across tiers — adopted 2026-09-10
+
+Each major capability changes how existing geography can be read and traversed. Preserve familiar routes, people and consequences across tiers; do not make all earlier places disposable when flight arrives. A capability milestone should demonstrate a changed route or choice in a known place and a reason that place still matters. Revisits are opportunities, not compulsory backtracking. Recovery remains acquisition rather than research, with shallow improvisation rather than a deep crafting economy.
+
+The 30-second loop discussion will establish which immediate decisions remain enjoyable at every tier and how capability changes their options. Specific verbs, tier gates and survival tuning remain open.

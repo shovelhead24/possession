@@ -1,6 +1,6 @@
 # First Slice Mock — Design
 
-Design doc (2026-07-26) for the playable test of the no-missions short-term-pacing bet (pacing.md). The slice: **crash → wilderness walk → the deer → day/night → the wolves → crest the ridge → ring-curve reveal.** Its single job: *does walking this world with only survival + terrain pulling you forward feel compelling, with no missions?* If yes, the core bet is essentially won; if it lulls, we learn it here, cheap.
+Design doc (2026-07-26) for the playable test of the no-missions short-term-pacing bet (pacing.md). The slice: **crash → wilderness walk → the deer → day/night → the wolves → crest the ridge → ring-curve reveal.** Its single job: *does walking this world with only survival + terrain pulling you forward feel compelling, with no missions?* If yes, that supports the early exploration loop; it does not yet prove social attachment, cross-tier progression or the whole game. If it lulls, we learn it here, cheap.
 
 ## Findings the mock surfaced for the REAL terrain system
 
@@ -35,3 +35,7 @@ The deer clearing must produce **zero** writes to any threat/encounter/intensity
 - Creature proxy fidelity ceiling — how crude before it breaks immersion rather than reading as stylized? (Distance and darkness hide a lot; a playtest call.)
 - Sound sourcing: pure CC0 mix, or synthesize ambient wind procedurally? (Wind is easy to synth; wolves/foley want real samples.)
 - Does the slice need hunger/cold as an *explicit* survival pull, or is terrain + wolves + the ridge enough short-term pull on their own? (The minimal version tests the purest hypothesis.)
+
+## Acceptance refinement — 2026-09-10
+
+The exploration slice remains proposed, not a newly approved implementation plan. Its immediate purpose is to test ordinary decisions and attention as well as the final reveal. The next design conversation will specify the 30-second loop and then refine the route's acceptance criteria. Keep quiet observation, readable choices and a terrain-based escape; do not add hunger chores or a fixed event cadence merely to fill time. The deer null-write remains mandatory. Broader social attachment and cross-tier returns require later tests, not extra scope in this first walk.

@@ -1,6 +1,6 @@
 # Ending (leave branch)
 
-Covers only the "ring the bell, leave" ending (vision.md "The Choice"). The stay/destroy-relay ending is untouched by these entries.
+Covers only the "ring the bell, leave" ending (vision.md "The Choice"). Earlier entries concern the leave branch; `ending-choice-without-verdict` below also governs the framing of staying.
 
 ### ending-mechanism — Proximity-easy mechanism; content is procedurally assembled, not fixed
 **Date:** 2026-07-22
@@ -17,7 +17,7 @@ Covers only the "ring the bell, leave" ending (vision.md "The Choice"). The stay
 
 ### ending-coop-unilateral — Either player rings the bell alone; ends the session for both
 **Date:** 2026-07-22
-**Status:** active (adopted direction — wants a real co-op playtest before treated as unchangeable)
+**Status:** SUPERSEDED 2026-09-10 by ending-shared-agency
 **Decision:** No split ending, no consent gate. Either player reaching proximity and ringing the mechanism ends the game for both players immediately. Physical blocking (if player collision exists) is the only in-fiction way to contest it. The assembled vignette montage (`ending-mechanism`) interleaves both players' knowledge-pyramid threads around the shared R0 fact set — neither player's ending is privileged.
 **Why:** Rejects a negotiated/split ending as inconsistent with every other refusal to accommodate the player (no missions, no valence, arc director never waits) — a consent gate on the ending would be that same softening aimed at the co-op layer. Unilateral makes the co-op partner a second, human arc director; the negotiation happens at the couch, not in a menu. Risk: could read as robbed-of-content rather than dramatic depending on execution — mitigated by proximity already requiring the whole journey, but genuinely untested.
 
@@ -26,3 +26,15 @@ Covers only the "ring the bell, leave" ending (vision.md "The Choice"). The stay
 **Status:** active
 **Decision:** Once triggered, the ending is a fixed, authored, song-scored sequence — off the runtime tempo director's authority entirely, symmetric with the landing sequence's fixed opening (the game is authored at both ends, alive in the middle). The game's title card appears for the first time during this sequence, timed to a musically-marked moment ("the bell section" of the reference track) — same withholding logic as "names come last." The game closes on an extended held black screen before any credits UI.
 **Why:** Reference track (Garbage, "Cherry Lips (Go with the Flow)") set the emotional register: bittersweet, ambiguous, not triumphant. A real licensed track is a production/rights question for later, not a design blocker now — treat as reference/temp-track per standard practice. Delaying the title mirrors character names being withheld; the held black screen extends "scale without fanfare" to the closing frame.
+
+### ending-shared-agency — Unilateral ending is a proposal to test
+**Date:** 2026-09-10
+**Status:** active
+**Decision:** Preserve unilateral shared departure as a candidate, not a settled rule. Its approach must be physically legible to both players and activation deliberate, with an opportunity for couch negotiation. Mere proximity or accidental traversal must not silently end the other player's journey. No vote UI is prescribed, and whether consent or another interaction is needed remains open until a two-player test demonstrates agency. Do not rely on bodily blocking as the sole safeguard. Shared facts and interleaved per-player memories remain the montage model.
+**Why:** World indifference does not by itself justify one player feeling robbed by their partner. Judge the sequence by what both players understand and experience, not thematic consistency alone.
+
+### ending-choice-without-verdict — Both branches have costs
+**Date:** 2026-09-10
+**Status:** active
+**Decision:** Use neutral Stay and Leave names, never good and other endings. Both choices need understandable costs and attachments grounded in the playthrough; the exact costs remain an explicit design question. The montage reflects facts without moral grading. Keep the unbroken opening and restrained ending, but tune musical/title timing and the held black screen against player experience rather than treating discomfort or duration as proof of emotional effect.
+**Why:** Departure only becomes a meaningful choice if staying is neither costless nor the author's designated correct answer. Local relationships established throughout play must carry the decision before the montage begins.
