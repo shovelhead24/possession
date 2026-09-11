@@ -1,3 +1,11 @@
+# Blade — redesign required
+
+The user rejected the current export as cartoonish. Target a crudely realistic utilitarian knife/short cutting tool, with a human-sized grip, restrained guard, plausible steel thickness and practical construction. Remove the swollen bronze/gold guard and toy-like segmented grip. Aim for approximately 0.30–0.50 m overall and a 0.11–0.14 m grip; the catalogue's 1.3 m attack reach is not the object's length.
+
+The previous README incorrectly called the 1.3 m mesh plausible for a quick one-handed blade and used “Halo CE” to justify exaggerated forms. That direction is superseded. Read ../../../../ART_DIRECTION.md via the workshop root (model-workshop/ART_DIRECTION.md). Rebuild the geometry and materials, then replace historical measurements below with fresh export measurements. Keep useful attachment markers and deterministic rebuild instructions. Current PNGs/GLB still depict the rejected design until regeneration succeeds.
+
+## Previous export record — superseded aesthetic approval
+
 # Blade
 
 Finished low-poly melee weapon for Possession. The design is an original one-handed close-range military cleaver: a broad faceted single edge, short tapered spine reinforcement, swept bronze hand guard, and compact dark rubber grip. The restrained industrial palette, economical detail, and broad face breaks follow Halo CE-era readability while keeping the silhouette distinct from a spear or two-handed sword.
