@@ -28,6 +28,9 @@ $values=@('space in path','embedded "quote"','C:\trailing\')
 $child=Run-Child 'C:\Program Files\nodejs\node.exe' (@('-e','process.stdout.write(JSON.stringify(process.argv.slice(1)))')+$values) 'arguments' '' 1
 $actual=@(($child.output.Trim() | ConvertFrom-Json))
 for ($i=0;$i -lt $values.Count;$i++) { if ($actual[$i] -cne $values[$i]) { throw "Argument quoting mismatch $i" } }
+$unicode='review '+[char]0x2014+' '+[char]0x00e9
+$roundtrip=Run-Child 'C:\Program Files\nodejs\node.exe' @('-e','process.stdin.setEncoding("utf8");process.stdin.on("data",s=>process.stdout.write(s))') 'unicode' $unicode 1
+if ($roundtrip.output.Trim() -cne $unicode) { throw 'Unicode prompt encoding failed' }
 function Run-Child { return [pscustomobject]@{code=1; output='usage_limit_reached: try again later'} }
 $answer=Invoke-Agent 'test' 'test' 'quota'
 if ($null -ne $answer -or $script:state.status -ne 'waiting_for_usage') { throw 'Quota was not preserved' }

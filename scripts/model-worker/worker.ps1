@@ -1,7 +1,7 @@
 param([switch]$CheckOnly)
 $ErrorActionPreference = 'Stop'
 $homeDir = $PSScriptRoot
-$config = Get-Content (Join-Path $homeDir 'config.json') -Raw | ConvertFrom-Json
+$config = Get-Content (Join-Path $homeDir 'config.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $runtime = Join-Path $homeDir 'runtime'
 New-Item -ItemType Directory -Force $runtime | Out-Null
 try { $lock = [IO.File]::Open((Join-Path $runtime 'worker.lock'), 'OpenOrCreate', 'ReadWrite', 'None') }
@@ -47,7 +47,9 @@ function Run-Child([string]$exe, [string[]]$arguments, [string]$name, [string]$i
     if (!$process.Start()) { throw "Cannot start $exe" }
     $outTask = $process.StandardOutput.ReadToEndAsync()
     $errTask = $process.StandardError.ReadToEndAsync()
-    $process.StandardInput.Write($inputText)
+    $inputBytes = [Text.Encoding]::UTF8.GetBytes($inputText)
+    $process.StandardInput.BaseStream.Write($inputBytes, 0, $inputBytes.Length)
+    $process.StandardInput.BaseStream.Flush()
     $process.StandardInput.Close()
     if (!$process.WaitForExit($minutes * 60000)) {
         # Only this worker's child tree; never kill by executable name.
@@ -87,14 +89,14 @@ function Invoke-Agent([string]$prompt, [string]$model, [string]$name, [string[]]
     }
     if ($result.code -ne 0) { throw "Agent exited $($result.code); see $name.stderr.log and stdout.log" }
     if (!(Test-Path $resultPath)) { throw 'Agent returned no structured result' }
-    return (Get-Content $resultPath -Raw | ConvertFrom-Json)
+    return (Get-Content $resultPath -Raw -Encoding UTF8 | ConvertFrom-Json)
 }
 try {
     foreach ($path in @($config.checkout, $config.codex, $config.blender, $config.godot)) {
         if (!(Test-Path -LiteralPath $path)) { throw "Missing prerequisite: $path" }
     }
     $queue = Get-Content (Join-Path $homeDir 'queue.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    if (Test-Path $statePath) { $script:state = Get-Content $statePath -Raw | ConvertFrom-Json }
+    if (Test-Path $statePath) { $script:state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json }
     else {
         $script:state = [pscustomobject]@{ status='ready'; updatedUtc=''; nextAttemptUtc=''; current=''; message='';
             items=@($queue | ForEach-Object { [pscustomobject]@{id=$_.id; status='pending'; failures=0; note=''; phase='build'} }) }
