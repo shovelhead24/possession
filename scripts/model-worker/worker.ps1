@@ -22,6 +22,14 @@ function Save-State {
 function Quote-Arg([string]$value) {
     '"' + [regex]::Replace([regex]::Replace($value, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1') + '"'
 }
+function Next-PollUtc {
+    if ($config.PSObject.Properties['pollAnchorUtc']) {
+        $anchor=[DateTime]::Parse($config.pollAnchorUtc).ToUniversalTime()
+        $steps=[Math]::Floor(([DateTime]::UtcNow-$anchor).TotalMinutes / 15) + 1
+        return $anchor.AddMinutes(15 * $steps).ToString('o')
+    }
+    return [DateTime]::UtcNow.AddMinutes(15).ToString('o')
+}
 function Run-Child([string]$exe, [string[]]$arguments, [string]$name, [string]$inputText = '', [int]$minutes = 45) {
     $info = New-Object Diagnostics.ProcessStartInfo
     $info.FileName = $exe
@@ -72,7 +80,7 @@ function Invoke-Agent([string]$prompt, [string]$model, [string]$name, [string[]]
     $result = Run-Child $config.codex $agentArgs $name $prompt
     if ($result.code -ne 0 -and $result.output -match '(?i)usage.limit|rate.limit|quota.exceeded|usage_limit_reached|too many requests') {
         $script:state.status = 'waiting_for_usage'
-        $script:state.nextAttemptUtc = [DateTime]::UtcNow.AddMinutes(15).ToString('o')
+        $script:state.nextAttemptUtc = Next-PollUtc
         $script:state.message = 'Usage limit: preserve current asset and retry in 15 minutes.'
         Save-State
         return $null
@@ -94,7 +102,8 @@ try {
     }
     if ($CheckOnly) { Write-Output "Configuration valid: $($queue.Count) assets; 15-minute retry; hidden children."; exit 0 }
     if (Test-Path (Join-Path $runtime 'PAUSE')) { $script:state.status='paused'; Save-State; exit 0 }
-    if ($script:state.nextAttemptUtc -and [DateTime]::Parse($script:state.nextAttemptUtc).ToUniversalTime() -gt [DateTime]::UtcNow) { exit 0 }
+    # The scheduler supplies the cadence. Do not skip an entire poll because a previous
+    # request finished a few seconds after the scheduled boundary.
     $script:state.nextAttemptUtc = ''
     $until = [DateTime]::UtcNow.AddMinutes(90)
     while ([DateTime]::UtcNow -lt $until) {
@@ -111,6 +120,7 @@ try {
         $item.status = 'working'
         $script:state.current = $item.id
         $script:state.status = 'building'
+        $script:state.message = "Building $($item.id); progress is retained in the model checkout."
         Save-State
         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         $name = "$stamp-$($item.id)"
@@ -162,7 +172,7 @@ Review this Possession 3D asset using BOTH attached renders plus $folder/README.
             $item.status=if ($item.failures -ge 3) { 'blocked' } else { 'pending' }
             $script:state.status='retry_pending'
             $script:state.message=$item.note
-            $script:state.nextAttemptUtc=[DateTime]::UtcNow.AddMinutes(15).ToString('o')
+            $script:state.nextAttemptUtc=Next-PollUtc
             Save-State
             break
         }
