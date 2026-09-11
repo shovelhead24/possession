@@ -1,0 +1,11 @@
+# Possession unattended model worker
+
+Windows Task Scheduler runs the existing possession-queue-tick task every 15 minutes. WScript launches PowerShell hidden; all child processes use CreateNoWindow. The worker continues immediately to the next asset while successful, up to a 90-minute batch boundary. A held file lock plus IgnoreNew prevents overlapping workers. Usage-limit responses save progress and wait at least 15 minutes before another attempt. This retries the authenticated Codex CLI itself; it does not consume model tokens for a separate heartbeat conversation or depend on a rate-limit reset hook.
+
+Windows must be running and the configured user logged in. Locking the desktop is fine. StartWhenAvailable catches missed starts; WakeToRun requests wake where supported. A powered-off machine cannot poll. No guaranteed maximum recovery latency during sleep, network outages or service outages.
+
+Runtime status: runtime/state.json. Detailed agent, renderer and import logs are beside it. To pause, create an empty runtime/PAUSE file; the worker finishes its current item and stops before another. To resume, remove PAUSE and start the scheduled task, or wait for the next trigger. Disable the Windows task to stop future launches. Three unsuccessful attempts block that item and move on to the rest of the queue. A usage limit does not consume an attempt. Blocked items require review and resetting their status/failures in state.json while the worker is stopped. No work remains means no further model calls.
+
+The worker uses the user's existing ChatGPT Codex login. It does not buy tokens or redeem credits. Ordinary construction uses Luna; complex models, repairs and visual review use Sol. The work happens on the asset-production branch in a separate checkout. Only the asset and shared model helpers are staged and committed. There are no automatic pushes or merges into the interactive game checkout. The previous non-art backlog is archived in docs/archive/TASKS-before-model-production.md.
+
+Source configuration and scripts are versioned in scripts/model-worker. The installed runtime is a separate copy so model agents cannot change their own scheduler. Backups of the two original task definitions are saved under original-tasks. The unrelated satellite-download task remains disabled.

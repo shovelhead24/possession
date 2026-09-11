@@ -1,0 +1,1 @@
+{"type":"object","additionalProperties":false,"properties":{"status":{"type":"string","enum":["ready","revise","blocked"]},"summary":{"type":"string"}},"required":["status","summary"]}
