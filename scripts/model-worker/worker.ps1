@@ -12,8 +12,12 @@ function Save-State {
     $script:state.updatedUtc = [DateTime]::UtcNow.ToString('o')
     $temp = "$statePath.tmp"
     [IO.File]::WriteAllText($temp, ($script:state | ConvertTo-Json -Depth 10), (New-Object Text.UTF8Encoding($false)))
-    if (Test-Path $statePath) { [IO.File]::Replace($temp, $statePath, $null) }
+    if (Test-Path $statePath) { [IO.File]::Replace($temp, $statePath, "$statePath.bak") }
     else { [IO.File]::Move($temp, $statePath) }
+    $done=@($script:state.items | Where-Object status -eq 'complete').Count
+    $blocked=@($script:state.items | Where-Object status -eq 'blocked').Count
+    $statusText=@('# Possession model production', '', "Completed: $done / $($script:state.items.Count). Needs attention: $blocked.", '', "State: $($script:state.status)", "Current asset: $($script:state.current)", "Updated (UTC): $($script:state.updatedUtc)", "Next retry (UTC): $($script:state.nextAttemptUtc)", '', $script:state.message, '', 'The Windows task checks every 15 minutes. Create runtime/PAUSE to pause after the current item.', '', "Model files: $($config.checkout)\model-workshop\assets") -join "`r`n"
+    [IO.File]::WriteAllText((Join-Path $homeDir 'STATUS.md'), $statusText)
 }
 function Quote-Arg([string]$value) {
     '"' + [regex]::Replace([regex]::Replace($value, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1') + '"'
@@ -28,6 +32,8 @@ function Run-Child([string]$exe, [string[]]$arguments, [string]$name, [string]$i
     $info.RedirectStandardInput = $true
     $info.RedirectStandardOutput = $true
     $info.RedirectStandardError = $true
+    $info.StandardOutputEncoding = New-Object Text.UTF8Encoding($false)
+    $info.StandardErrorEncoding = New-Object Text.UTF8Encoding($false)
     $process = New-Object Diagnostics.Process
     $process.StartInfo = $info
     if (!$process.Start()) { throw "Cannot start $exe" }
@@ -55,15 +61,16 @@ function Run-Child([string]$exe, [string[]]$arguments, [string]$name, [string]$i
     return [pscustomobject]@{ code=$code; output=($stdout + "`n" + $stderr) }
 }
 function Invoke-Agent([string]$prompt, [string]$model, [string]$name, [string[]]$images = @()) {
+    [IO.File]::WriteAllText((Join-Path $runtime "$name.prompt.txt"), $prompt)
     $resultPath = Join-Path $runtime "$name.result.json"
     if (Test-Path $resultPath) { Remove-Item -LiteralPath $resultPath }
-    $agentArgs = @('exec', '--ignore-user-config', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"',
+    $agentArgs = @('exec', '--ignore-user-config', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '-c', 'windows.sandbox="elevated"',
         '-c', 'model_reasoning_effort="medium"', '-C', $config.checkout, '-m', $model,
         '--json', '--color', 'never', '--output-schema', (Join-Path $homeDir 'result.schema.json'), '-o', $resultPath)
     foreach ($img in $images) { $agentArgs += @('--image', $img) }
     $agentArgs += '-'
     $result = Run-Child $config.codex $agentArgs $name $prompt
-    if ($result.output -match '(?i)usage.limit|rate.limit|quota.exceeded|usage_limit_reached|too many requests') {
+    if ($result.code -ne 0 -and $result.output -match '(?i)usage.limit|rate.limit|quota.exceeded|usage_limit_reached|too many requests') {
         $script:state.status = 'waiting_for_usage'
         $script:state.nextAttemptUtc = [DateTime]::UtcNow.AddMinutes(15).ToString('o')
         $script:state.message = 'Usage limit: preserve current asset and retry in 15 minutes.'
@@ -78,11 +85,11 @@ try {
     foreach ($path in @($config.checkout, $config.codex, $config.blender, $config.godot)) {
         if (!(Test-Path -LiteralPath $path)) { throw "Missing prerequisite: $path" }
     }
-    $queue = @(Get-Content (Join-Path $homeDir 'queue.json') -Raw | ConvertFrom-Json)
+    $queue = Get-Content (Join-Path $homeDir 'queue.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     if (Test-Path $statePath) { $script:state = Get-Content $statePath -Raw | ConvertFrom-Json }
     else {
         $script:state = [pscustomobject]@{ status='ready'; updatedUtc=''; nextAttemptUtc=''; current=''; message='';
-            items=@($queue | ForEach-Object { [pscustomobject]@{id=$_.id; status='pending'; failures=0; note=''} }) }
+            items=@($queue | ForEach-Object { [pscustomobject]@{id=$_.id; status='pending'; failures=0; note=''; phase='build'} }) }
         Save-State
     }
     if ($CheckOnly) { Write-Output "Configuration valid: $($queue.Count) assets; 15-minute retry; hidden children."; exit 0 }
@@ -98,7 +105,9 @@ try {
             $script:state.message = 'Queue exhausted; no further model calls until more work is added.'
             Save-State; break
         }
+        if (!$item.PSObject.Properties['phase']) { $item | Add-Member -NotePropertyName phase -NotePropertyValue 'build' }
         $spec = $queue | Where-Object id -eq $item.id | Select-Object -First 1
+        if (!$spec -or !$spec.source -or !$spec.key) { throw "Missing catalogue specification for $($item.id)" }
         $item.status = 'working'
         $script:state.current = $item.id
         $script:state.status = 'building'
@@ -113,6 +122,7 @@ Use Blender at $($config.blender) in background mode. Create a reusable, determi
 When files are ready for the supervisor's independent render/validation return status ready and a short summary. If unable, return blocked and a concrete reason. Never claim that screenshots were inspected unless you actually opened them.
 "@
         try {
+            if ($item.phase -ne 'review') {
             $answer = Invoke-Agent $prompt $model "$name-build"
             if ($null -eq $answer) { break }
             if ($answer.status -ne 'ready') { throw $answer.summary }
@@ -124,6 +134,8 @@ When files are ready for the supervisor's independent render/validation return s
             if ($validation.code -ne 0 -or $validation.output -notmatch 'MODEL_VALIDATION_PASSED') { throw "Geometry/render validation failed; see $name-validation logs" }
             $import = Run-Child $config.godot @('--headless','--path',(Join-Path $config.checkout 'model-workshop'),'--editor','--import') "$name-import" '' 5
             if ($import.code -ne 0 -or $import.output -match '(?m)^(SCRIPT ERROR|ERROR):') { throw "Godot import failed; see $name-import logs" }
+            $item.phase='review'
+            }
             $script:state.status='reviewing'; Save-State
             $reviewPrompt = @"
 Review this Possession 3D asset using BOTH attached renders plus $folder/README.md and metrics.json. Catalogue: $($spec.source). Read model-workshop/BRIEF.md. Look critically at silhouette, recognizable function, proportions, original Halo CE era low-poly styling, material separation and useful pivots. Images were rendered independently from the actual exported GLB. Do not change files. Return ready only if this is a usable, convincing asset for the stated role; generic crude primitives or a wrong/missing part require revise with actionable fixes. Check documented dimensions against catalogue scale. Be economical but do not rubber-stamp. This is visual art review, not gameplay design.
@@ -135,12 +147,16 @@ Review this Possession 3D asset using BOTH attached renders plus $folder/README.
             $relative = "model-workshop/assets/$($spec.category)/$($spec.key)"
             $add = Run-Child 'git.exe' @('add','--',$relative,'model-workshop/lib') "$name-stage" '' 1
             if ($add.code -ne 0) { throw "Cannot stage asset; see $name-stage logs" }
-            $commit = Run-Child 'git.exe' @('commit','-m',"Add reviewed $($spec.key) model",'--',$relative,'model-workshop/lib') "$name-commit" '' 1
-            if ($commit.code -ne 0) { throw "Cannot commit asset; see $name-commit logs" }
+            $diff = Run-Child 'git.exe' @('diff','--cached','--quiet','--',$relative,'model-workshop/lib') "$name-diff" '' 1
+            if ($diff.code -eq 1) {
+                $commit = Run-Child 'git.exe' @('commit','-m',"Add reviewed $($spec.key) model",'--',$relative,'model-workshop/lib') "$name-commit" '' 1
+                if ($commit.code -ne 0) { throw "Cannot commit asset; see $name-commit logs" }
+            } elseif ($diff.code -ne 0) { throw 'Unable to inspect staged model changes' }
             $item.status='complete'; $item.note=$review.summary
             $script:state.message="Completed $($item.id) using $model; visual review passed."
             Save-State
         } catch {
+            $item.phase='build'
             $item.failures++
             $item.note=$_.Exception.Message
             $item.status=if ($item.failures -ge 3) { 'blocked' } else { 'pending' }

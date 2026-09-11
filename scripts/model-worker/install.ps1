@@ -52,7 +52,10 @@ if ($LASTEXITCODE -eq 1) {
 if (!(Test-Path $checkout)) {
     git -C $repo worktree add -b asset-production $checkout HEAD
     if ($LASTEXITCODE -ne 0) { throw 'Cannot create isolated model worktree' }
-} else { throw "Checkout already exists: inspect it before reinstalling to avoid overwriting active work." }
+} else {
+    $branch=git -C $checkout branch --show-current
+    if ($branch -ne 'asset-production') { throw "Unexpected checkout branch: $branch" }
+}
 $config=[ordered]@{checkout=$checkout; codex='C:\Users\Bran the builder\AppData\Local\OpenAI\Codex\bin\8e5b6932251c2c1c\codex.exe'; blender='C:\Program Files\Blender Foundation\Blender 4.4\blender.exe'; godot='C:\Godot\Godot_v4.5.1-stable_win64.exe'}
 $config | ConvertTo-Json | Set-Content (Join-Path $installed 'config.json') -Encoding UTF8
 & (Join-Path $installed 'worker.ps1') -CheckOnly
@@ -61,8 +64,8 @@ $action=New-ScheduledTaskAction -Execute "$env:SystemRoot\System32\wscript.exe" 
 $trigger=New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 15)
 $settings=New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun -ExecutionTimeLimit (New-TimeSpan -Hours 4) -MultipleInstances IgnoreNew
 $principal=New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive -RunLevel Limited
-Register-ScheduledTask -TaskName 'possession-queue-tick' -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'Possession model production. Hidden worker; retries usage limits every 15 minutes; isolated asset-production checkout.' -Force | Out-Null
-Start-ScheduledTask -TaskName 'possession-queue-tick'
-Get-ScheduledTask -TaskName 'possession-queue-tick' | Select-Object TaskName,State
+Register-ScheduledTask -TaskName 'possession-model-production' -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'Possession model production. Hidden worker; retries usage limits every 15 minutes; isolated asset-production checkout.' -Force -ErrorAction Stop | Out-Null
+Start-ScheduledTask -TaskName 'possession-model-production' -ErrorAction Stop
+Get-ScheduledTask -TaskName 'possession-model-production' | Select-Object TaskName,State
 Write-Output "Worker installed: $installed"
 Write-Output "Model checkout: $checkout"
