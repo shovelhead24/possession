@@ -13,11 +13,12 @@ $workshop=Join-Path $repo 'model-workshop'
 $archive=Join-Path $repo 'docs\archive\TASKS-before-model-production.md'
 New-Item -ItemType Directory -Force $scriptDest,$workshop,(Join-Path $workshop 'lib'),(Split-Path $archive) | Out-Null
 if (!(Test-Path $archive)) { Copy-Item -LiteralPath (Join-Path $repo 'TASKS.md') -Destination $archive }
-foreach ($file in @('worker.ps1','launch.vbs','result.schema.json','validate_model.py','README.md','install.ps1','test-worker.ps1','test-render.ps1','BRIEF.md','project.godot')) {
+foreach ($file in @('worker.ps1','launch.vbs','result.schema.json','validate_model.py','README.md','install.ps1','test-worker.ps1','test-render.ps1','ART_DIRECTION.md','BRIEF.md','project.godot')) {
     Copy-Item -LiteralPath (Join-Path $source $file) -Destination $scriptDest -Force
     Copy-Item -LiteralPath (Join-Path $source $file) -Destination $installed -Force
 }
 Copy-Item -LiteralPath (Join-Path $source 'BRIEF.md') -Destination $workshop -Force
+Copy-Item -LiteralPath (Join-Path $source 'ART_DIRECTION.md') -Destination $workshop -Force
 Copy-Item -LiteralPath (Join-Path $source 'project.godot') -Destination $workshop -Force
 Set-Content (Join-Path $workshop 'lib\.gitkeep') ''
 Set-Content (Join-Path $workshop '.gitignore') ".godot/`n**/*.png`n**/*.blend1`n**/__pycache__/`n"

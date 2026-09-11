@@ -127,6 +127,12 @@ try {
         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
         $name = "$stamp-$($item.id)"
         $folder = Join-Path $config.checkout "model-workshop\assets\$($spec.category)\$($spec.key)"
+        $history = Join-Path $folder "review-history\$name"
+        New-Item -ItemType Directory -Force $history | Out-Null
+        foreach ($evidence in @('README.md','preview.png','side.png','metrics.json','review.json')) {
+            $previous = Join-Path $folder $evidence
+            if (Test-Path $previous) { Copy-Item -LiteralPath $previous -Destination (Join-Path $history "before-$evidence") }
+        }
         $model = if ($item.failures -ge 1 -or $spec.complex) { 'gpt-5.6-sol' } else { 'gpt-5.6-luna' }
         $prompt = @"
 You are producing one finished low-poly 3D asset for Possession. Work only in model-workshop/ in this isolated checkout. Do not push, modify game mechanics, install software, access credentials, purchase anything, alter the scheduler, or commit; the supervisor commits validated assets. The 30-second gameplay loop is intentionally deferred. Read model-workshop/BRIEF.md and the selected asset's existing files; avoid loading unrelated repository docs. Task: $($spec.id). Catalogue data: $($spec.source)
@@ -134,6 +140,7 @@ Use Blender at $($config.blender) in background mode. Create a reusable, determi
 When files are ready for the supervisor's independent render/validation return status ready and a short summary. If unable, return blocked and a concrete reason. Never claim that screenshots were inspected unless you actually opened them.
 "@
         try {
+            $prompt += "`nRead model-workshop/ART_DIRECTION.md first; it supersedes earlier aesthetic guidance. Target CRUDE REALISM: believable practical objects rendered economically, not cartoon/toy proportions. Gameplay attack reach is NOT physical model length. Before building, correct misleading README guidance identified by prior review and record why it changed. After exporting, update measured facts. Do not rationalize a bad silhouette by renaming it. Compare saved before-preview.png and before-side.png in $history when present."
             if ($item.phase -ne 'review') {
             $answer = Invoke-Agent $prompt $model "$name-build"
             if ($null -eq $answer) { break }
@@ -152,9 +159,16 @@ When files are ready for the supervisor's independent render/validation return s
             $reviewPrompt = @"
 Review this Possession 3D asset using BOTH attached renders plus $folder/README.md and metrics.json. Catalogue: $($spec.source). Read model-workshop/BRIEF.md. Look critically at silhouette, recognizable function, proportions, original Halo CE era low-poly styling, material separation and useful pivots. Images were rendered independently from the actual exported GLB. Do not change files. Return ready only if this is a usable, convincing asset for the stated role; generic crude primitives or a wrong/missing part require revise with actionable fixes. Check documented dimensions against catalogue scale. Be economical but do not rubber-stamp. This is visual art review, not gameplay design.
 "@
+            $reviewPrompt += "`nART DIRECTION OVERRIDE: Read model-workshop/ART_DIRECTION.md. First judge the attached images before reading this asset's README; describe the visible object and physical plausibility. Reject toy-like swollen forms, oversized decorative guards, candy/plastic materials and implausible hand scale. Gameplay reach is NOT object length. Then read README/metrics to find misleading assumptions. If off target, prescribe both concrete model/material changes AND a README direction correction; never relax the global target to justify existing geometry. Do not require extra decorative complexity for simple objects. Prior approvals are not evidence."
             $review = Invoke-Agent $reviewPrompt 'gpt-5.6-sol' "$name-review" @((Join-Path $folder 'preview.png'),(Join-Path $folder 'side.png'))
             if ($null -eq $review) { break }
+            [IO.File]::WriteAllText((Join-Path $history 'review-1.json'), ($review | ConvertTo-Json))
+            foreach ($evidence in @('README.md','preview.png','side.png','metrics.json')) { Copy-Item -LiteralPath (Join-Path $folder $evidence) -Destination (Join-Path $history "after-$evidence") }
             if ($review.status -ne 'ready') { throw "Visual review: $($review.summary)" }
+            $review = Invoke-Agent ($reviewPrompt + "`nThis is the independent final approval round. Do not read previous review results. Challenge the construction, human scale and crude realism afresh; approve only if the current exported model meets that target.") 'gpt-5.6-sol' "$name-confirm" @((Join-Path $folder 'preview.png'),(Join-Path $folder 'side.png'))
+            if ($null -eq $review) { break }
+            [IO.File]::WriteAllText((Join-Path $history 'review-2.json'), ($review | ConvertTo-Json))
+            if ($review.status -ne 'ready') { throw "Final visual review: $($review.summary)" }
             [IO.File]::WriteAllText((Join-Path $folder 'review.json'), ($review | ConvertTo-Json))
             $relative = "model-workshop/assets/$($spec.category)/$($spec.key)"
             $add = Run-Child 'git.exe' @('add','--',$relative,'model-workshop/lib') "$name-stage" '' 1
@@ -171,7 +185,7 @@ Review this Possession 3D asset using BOTH attached renders plus $folder/README.
             $item.phase='build'
             $item.failures++
             $item.note=$_.Exception.Message
-            $item.status=if ($item.failures -ge 3) { 'blocked' } else { 'pending' }
+            $item.status=if ($item.failures -ge 6) { 'blocked' } else { 'pending' }
             $script:state.status='retry_pending'
             $script:state.message=$item.note
             $script:state.nextAttemptUtc=Next-PollUtc
