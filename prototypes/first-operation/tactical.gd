@@ -3,6 +3,7 @@ extends "res://study.gd"
 var walker: CharacterBody3D
 var flying := false
 var jump_held := false
+var kit: Node
 const EYE := 1.65
 const RELAY_SHIFT := Vector3(0,0,-268)
 
@@ -91,6 +92,7 @@ func building(origin: Vector3, wall: Material, roof: Material) -> void:
 
 func _ready() -> void:
 	super._ready()
+	if not shots_running: Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 	walker=CharacterBody3D.new()
 	walker.name="Player"
 	walker.floor_snap_length=0.4
@@ -101,7 +103,11 @@ func _ready() -> void:
 	shape.shape=capsule;shape.position.y=0.9
 	walker.add_child(shape);add_child(walker)
 	viewpoint(1)
-	help.text="TACTICAL VALLEY / GREYBOX\nWASD walk · Right mouse look · Shift sprint · Space jump\n1 FOB · 2 ridge · 3 gully · 4 compound · V fly/walk\nE station · R route at table · F sky · Tab guide\nL interrupt link · B support availability"
+	help.text="TACTICAL VALLEY / GREYBOX\nWASD walk · Mouse look · Shift sprint · Space jump\n1 FOB · 2 ridge · 3 gully · 4 compound · V fly/walk\nE station · R route at table · F sky · Tab guide\nL interrupt link · B support availability"
+	if not OS.get_cmdline_user_args().has("--no-kit"): install_kit()
+
+func install_kit() -> void:
+	kit=preload("res://arena_kit.gd").new();add_child(kit)
 
 func viewpoint(index: int) -> void:
 	var points := [Vector3(3.5,0.2,4.5),Vector3(-32,0,-140),Vector3(25,0,-140),Vector3(0,0,-274)]
@@ -118,6 +124,7 @@ func use_station() -> void:
 		state.request_support();support_status.text=state.report
 
 func _unhandled_input(event: InputEvent) -> void:
+	if kit and kit.driving and event is InputEventKey and event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_V]: return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_V:
 		flying=not flying
 		if not flying and is_instance_valid(walker):
@@ -157,7 +164,10 @@ func capture_sequence() -> void:
 	var folder := args[args.find("--capture")+1]
 	DirAccess.make_dir_recursive_absolute(folder)
 	help.hide()
-	for shot in ["fob-route","ridge","gully","compound","interior","overview"]:
+	for shot in ["fob-route","ridge","gully","compound","interior","overview","Railgun","Blade","Spear","Club","Improvised","Rock","vehicle-yard"]:
+		if kit and shot in kit.names: kit.select_weapon(kit.names.find(shot));viewpoint(1)
+		if shot=="vehicle-yard":
+			kit.overlay.hide();camera.position=Vector3(-24,5,24);camera.look_at(Vector3(-24,1.5,9))
 		match shot:
 			"fob-route": viewpoint(1);camera.look_at(Vector3(0,3,-100))
 			"ridge": viewpoint(2)

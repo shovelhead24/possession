@@ -245,7 +245,7 @@ func use_station() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if shots_running: return
 	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT:
-		Input.mouse_mode=Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE
+		if event.pressed: Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 	if event is InputEventMouseMotion and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
 		camera.rotate_y(-event.relative.x*0.003)
 		camera.rotation.x=clampf(camera.rotation.x-event.relative.y*0.003,-1.4,1.4)

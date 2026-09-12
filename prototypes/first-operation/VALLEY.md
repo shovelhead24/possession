@@ -6,11 +6,13 @@ Walk from the FOB to the relay compound roughly 300 metres away. The western rid
 
 ## Controls
 
-- WASD: walk. Hold right mouse to look. Shift: sprint. Space: jump.
+- WASD: walk. Mouse look starts automatically; Escape releases it and right click recaptures it. Shift: sprint. Space: jump.
 - 1: FOB; 2: ridge; 3: gully; 4: compound entrance.
 - V: switch between walking and inspection flight. Q/Z raise/lower in flight.
 - E: use a nearby station. R: select the approach at the FOB table.
 - F: compare skies. Tab: hide guide. L/B: debug link loss/support availability.
+
+C cycles weapons; left mouse uses them against the range targets. G enters/exits a nearby vehicle; WASD drives and Space brakes. See [asset integration and terrain plan](INTEGRATION.md) for source assets and current limitations.
 
 ## Terrain contract and scope
 
@@ -18,7 +20,7 @@ This bounded 360 × 460 metre layout is an authored procedural fixture, not an i
 
 The distant ring is still a visual proxy. A gap in its near strip prevents it from occluding the tactical terrain. The main ringworld renderer and DEM data are unchanged.
 
-Next integration work remains explicit: existing first-person arms and held weapons; vehicle driving and model comparisons; adaptation to the latest ringworld height/LOD representation; field/road metadata, trees and buildings sharing that terrain; enemy roles and combat. Medieval assets remain eligible for the test sandbox without reinstating a medieval campaign progression requirement. Do not call this a combat-tested encounter or a finished biome.
+Initial local arms, seven weapons and two drivable vehicles are now present. Next integration work remains explicit: grip/animation calibration, original vehicle handling and model comparisons; adaptation to the latest ringworld height/LOD representation; field/road metadata, trees and buildings sharing that terrain; enemy roles and combat. Medieval assets remain eligible for the test sandbox without reinstating a medieval campaign progression requirement. Do not call this a combat-tested encounter or a finished biome.
 
 ## Verified
 
