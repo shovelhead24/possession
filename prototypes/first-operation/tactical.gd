@@ -105,7 +105,7 @@ func _ready() -> void:
 	viewpoint(1)
 	support_status.text="E / CALL STRIKE ON RANGE"
 	relay_status.text="E / CONNECT RELAY"
-	help.text="TACTICAL VALLEY / GREYBOX\nWASD walk · Mouse look · Shift sprint · Space jump\n1 FOB · 2 ridge · 3 gully · 4 compound · V fly/walk\nE station · R route at table · F sky · Tab guide\nL interrupt link · B support availability"
+	help.text="TACTICAL VALLEY / GREYBOX\nWASD walk · Mouse look · Shift sprint · Space jump\n1 FOB · 2 ridge · 3 gully · 4 compound · V fly/walk\nE interact · R route at table · F sky · Tab guide\nL interrupt link · B support availability"
 	if not OS.get_cmdline_user_args().has("--no-kit"): install_kit()
 
 func install_kit() -> void:
@@ -120,6 +120,12 @@ func viewpoint(index: int) -> void:
 	camera.look_at(Vector3(0,2,-300) if index>1 else Vector3(0,1.2,0))
 
 func use_station() -> void:
+	if kit:
+		if kit.driving:
+			kit.toggle_vehicle();return
+		for vehicle in kit.vehicles:
+			if walker.position.distance_to(vehicle.position)<6:
+				kit.toggle_vehicle();return
 	if camera.position.distance_to(Vector3(0,2,-296.5))<5:
 		state.relay=State.Relay.OPERATIONAL
 		state.report="RELAY CONNECTED"

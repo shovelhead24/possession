@@ -77,7 +77,7 @@ func _ready() -> void:
 		target.add_child(shape);arena.add_child(target)
 		arena.box(Vector3.ZERO,cube.size,arena.material(Color(0.5,0.25,0.16)),target)
 	var layer=CanvasLayer.new();add_child(layer)
-	status=Label.new();status.position=Vector2(20,160);status.text="C weapon · Left mouse use · G enter/exit nearby vehicle\nRange targets stand to the right of the FOB";layer.add_child(status)
+	status=Label.new();status.position=Vector2(20,160);status.text="C weapon · Left mouse use · E enter/exit nearby vehicle\nRange targets stand to the right of the FOB";layer.add_child(status)
 	var reticle=Label.new();reticle.text="+";reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER);layer.add_child(reticle)
 	reticle.position=get_viewport().get_visible_rect().size*.5-Vector2(5,10)
 	if arena.shots_running: layer.hide()
@@ -127,7 +127,7 @@ func select_weapon(index: int) -> void:
 	selected=posmod(index,weapons.size())
 	for i in range(weapons.size()): weapons[i].visible=i==selected
 	if arms: arms.set_weapon_pose(names[selected].to_lower())
-	if status: status.text=names[selected]+" · C cycle · Left mouse use · G vehicle"
+	if status: status.text=names[selected]+" · C cycle · Left mouse use · E interact"
 
 func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void:
 	var model=imported(path)
@@ -142,7 +142,7 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 	var body=CharacterBody3D.new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
 	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
 	arena.add_child(body);vehicles.append(body)
-	arena.label3(label+" / G",pos+Vector3(0,3.5,0),32)
+	arena.label3(label+" / E",pos+Vector3(0,3.5,0),32)
 
 func toggle_vehicle() -> void:
 	if driving:
@@ -160,14 +160,13 @@ func toggle_vehicle() -> void:
 		status.text="Exit obstructed";return
 	for body in vehicles:
 		if arena.walker.position.distance_to(body.position)<6:
-			driving=body;speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · G exit";return
+			driving=body;speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit";return
 	status.text="Move closer to a vehicle to enter"
 
 func _input(event: InputEvent) -> void:
 	if arena.shots_running: return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_C: select_weapon(selected+1)
-		if event.keycode==KEY_G: toggle_vehicle()
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
 		use_weapon()
 
