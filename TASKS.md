@@ -4,7 +4,7 @@
 
 - [ ] Capture current in-game haze as the scale reference; assemble annotated E3 2000 references and an outdoor sky/world look-development scene with purple accents. Test a mostly static painterly sky with subtle motion and spatially correct ring landmarks before production art.
 - [ ] Audit and calibrate the common material/export/review-render pipeline using fixed reference objects before any further autonomous art production. Separate technical failures, art revisions and reviewer disagreement; retain comparable evidence.
-- [ ] Build a standalone Godot FOB/map/relay greybox harness, using existing project conventions without depending on the terrain demo.
+- [x] Build a standalone Godot FOB/map/relay greybox harness, using existing project conventions without depending on the terrain demo. See prototypes/first-operation/README.md; free-flight fixture, not a combat slice.
 - [ ] Prototype a physical planning table/projector with two routes, relay coverage, selected-route feedback and legible unknown/offline states.
 - [ ] Prototype a modular FOB layout with planning, rearm and deployment locations at player scale.
 - [ ] Prototype relay/console states and communications-dependent support acknowledgement; avoid a circular support prerequisite.
@@ -16,3 +16,5 @@
 - [ ] Redesign the unattended queue for approved bounded work only; add phase-specific failures and an infrastructure-stop condition before considering re-enablement.
 
 Existing exports remain in the isolated asset-production checkout. No assets are deleted or merged by this planning change. Holographic maps require runtime visuals and interaction; a GLB plus two screenshots cannot establish completion.
+
+Prototype progress (2026-09-12): physical route selection, relay states, support acknowledgement, material swatches and a proposed moving sky are available in prototypes/first-operation. The remaining unchecked items include integration and readability work; the sky and Blender review pipeline are not approved. Fourth-failure global stop installed and tested; unattended production remains disabled pending diagnosis and approved job contracts.

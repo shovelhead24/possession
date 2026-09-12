@@ -49,5 +49,17 @@ function Run-Child { return [pscustomobject]@{code=0; output='no structured resu
 $rejected=$false
 try { Invoke-Agent 'test' 'test' 'missing' | Out-Null } catch { $rejected=$true }
 if (!$rejected) { throw 'Missing result incorrectly accepted' }
+$script:state | Add-Member -NotePropertyName current -NotePropertyValue 'test-asset'
+$item=[pscustomobject]@{id='test-asset'; status='pending'; failures=0; phase='build'; note=''}
+$script:state | Add-Member -NotePropertyName items -NotePropertyValue @($item)
+1..3 | ForEach-Object { Register-WorkFailure $item 'test visual rejection' 'reviewing' "run-$_" }
+if (Test-WorkerStopped) { throw 'Stopped before the fourth failure' }
+Register-WorkFailure $item 'shared renderer defect' 'validating' 'run-4'
+if (!(Test-WorkerStopped) -or $item.failures -ne 4 -or $script:state.status -ne 'retry_review_required') { throw 'Fourth failure did not stop the entire queue' }
+$flag=Get-Content (Join-Path $runtime 'RETRY_REVIEW_REQUIRED.json') -Raw | ConvertFrom-Json
+if ($flag.stage -ne 'validating' -or $item.artFailures -ne 3 -or $item.technicalFailures -ne 1) { throw 'Failure diagnosis/counters incorrect' }
+Remove-Item -LiteralPath (Join-Path $runtime 'PAUSE')
+if (!(Test-WorkerStopped)) { throw 'Removing PAUSE bypassed the review flag' }
+Write-Output 'PASS: fourth failure stops all work; persistent review flag survives PAUSE removal; art and technical counters separated.'
 Write-Output 'PASS: Windows argument quoting, atomic state replacement, exclusive lock, 15-minute quota retry, false-positive protection, missing-result rejection.'
 Write-Output "Test evidence: $runtime"

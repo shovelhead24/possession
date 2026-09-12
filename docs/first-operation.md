@@ -47,3 +47,7 @@ The old model worker is paused and its Windows task disabled. It can generate Bl
 ## Art production authority — 2026-09-12
 
 See [art-production-brief.md](art-production-brief.md): E3 2000 Halo reference, purple accents, sky as a primary composition, and preservation of the current build's scale-giving haze. The first visual test is an outdoor sky/world reference scene plus calibrated material inspection. Static catalogue renders are insufficient for production approval. Worker remains paused.
+
+## First runnable fixture (2026-09-12)
+
+See [FOB and sky study](../prototypes/first-operation/README.md) for the one-click launcher, controls, validation and limitations. This isolates the interaction and look-development checks from the main terrain demo. It does not establish combat quality or approve final art.

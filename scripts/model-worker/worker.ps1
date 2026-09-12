@@ -15,7 +15,7 @@ function Save-State {
     if (Test-Path $statePath) { [IO.File]::Replace($temp, $statePath, "$statePath.bak") }
     else { [IO.File]::Move($temp, $statePath) }
     $done=@($script:state.items | Where-Object status -eq 'complete').Count
-    $blocked=@($script:state.items | Where-Object status -eq 'blocked').Count
+    $blocked=@($script:state.items | Where-Object { $_.status -in @('blocked','needs_review') }).Count
     $statusText=@('# Possession model production', '', "Completed: $done / $($script:state.items.Count). Needs attention: $blocked.", '', "State: $($script:state.status)", "Current asset: $($script:state.current)", "Updated (UTC): $($script:state.updatedUtc)", "Next retry (UTC): $($script:state.nextAttemptUtc)", '', $script:state.message, '', 'The Windows task checks every 15 minutes. Create runtime/PAUSE to pause after the current item.', '', "Model files: $($config.checkout)\model-workshop\assets") -join "`r`n"
     [IO.File]::WriteAllText((Join-Path $homeDir 'STATUS.md'), $statusText)
 }
@@ -29,6 +29,32 @@ function Next-PollUtc {
         return $anchor.AddMinutes(15 * $steps).ToString('o')
     }
     return [DateTime]::UtcNow.AddMinutes(15).ToString('o')
+}
+function Test-WorkerStopped {
+    return ((Test-Path (Join-Path $runtime 'PAUSE')) -or (Test-Path (Join-Path $runtime 'RETRY_REVIEW_REQUIRED.json')))
+}
+function Register-WorkFailure($item, [string]$reason, [string]$stage, [string]$runName) {
+    $item.phase='build'
+    $item.failures++
+    $item.note=$reason
+    $counterName=if ($stage -in @('reviewing','reviewing_confirm')) { 'artFailures' } else { 'technicalFailures' }
+    if (!$item.PSObject.Properties[$counterName]) { $item | Add-Member -NotePropertyName $counterName -NotePropertyValue 0 }
+    $item.$counterName++
+    if ($item.failures -gt 3) {
+        $item.status='needs_review'
+        $script:state.status='retry_review_required'
+        $script:state.nextAttemptUtc=''
+        $script:state.message="STOPPED: $($item.id) exceeded three failures. Diagnose $stage before any more asset work. $reason"
+        $flag=[ordered]@{asset=$item.id; failures=$item.failures; stage=$stage; run=$runName; reason=$reason; utc=[DateTime]::UtcNow.ToString('o'); checkout=$config.checkout; logs=$runtime; instruction='Keep the whole queue stopped. Inspect the evidence and shared pipeline, record diagnosis and correction, then explicitly clear this flag and PAUSE before any restart. Do not skip to another asset.'}
+        [IO.File]::WriteAllText((Join-Path $runtime 'RETRY_REVIEW_REQUIRED.json'),($flag | ConvertTo-Json -Depth 5))
+        [IO.File]::WriteAllText((Join-Path $runtime 'PAUSE'),'Retry review required; see RETRY_REVIEW_REQUIRED.json')
+    } else {
+        $item.status='pending'
+        $script:state.status='retry_pending'
+        $script:state.message=$reason
+        $script:state.nextAttemptUtc=Next-PollUtc
+    }
+    Save-State
 }
 function Run-Child([string]$exe, [string[]]$arguments, [string]$name, [string]$inputText = '', [int]$minutes = 45) {
     $info = New-Object Diagnostics.ProcessStartInfo
@@ -103,16 +129,16 @@ try {
         Save-State
     }
     if ($CheckOnly) { Write-Output "Configuration valid: $($queue.Count) assets; 15-minute retry; hidden children."; exit 0 }
-    if (Test-Path (Join-Path $runtime 'PAUSE')) { $script:state.status='paused'; Save-State; exit 0 }
+    if (Test-WorkerStopped) { if ($script:state.status -ne 'retry_review_required') { $script:state.status='paused' }; Save-State; exit 0 }
     # The scheduler supplies the cadence. Do not skip an entire poll because a previous
     # request finished a few seconds after the scheduled boundary.
     $script:state.nextAttemptUtc = ''
     $until = [DateTime]::UtcNow.AddMinutes(90)
     while ([DateTime]::UtcNow -lt $until) {
-        if (Test-Path (Join-Path $runtime 'PAUSE')) { $script:state.status='paused'; Save-State; break }
+        if (Test-WorkerStopped) { if ($script:state.status -ne 'retry_review_required') { $script:state.status='paused' }; Save-State; break }
         $item = $script:state.items | Where-Object { $_.status -in @('pending','working') } | Select-Object -First 1
         if (!$item) {
-            $script:state.status = if (@($script:state.items | Where-Object status -eq 'blocked').Count) { 'needs_attention' } else { 'complete' }
+            $script:state.status = if (@($script:state.items | Where-Object { $_.status -in @('blocked','needs_review') }).Count) { 'needs_attention' } else { 'complete' }
             $script:state.message = 'Queue exhausted; no further model calls until more work is added.'
             Save-State; break
         }
@@ -165,11 +191,13 @@ Review this Possession 3D asset using BOTH attached renders plus $folder/README.
             [IO.File]::WriteAllText((Join-Path $history 'review-1.json'), ($review | ConvertTo-Json))
             foreach ($evidence in @('README.md','preview.png','side.png','metrics.json')) { Copy-Item -LiteralPath (Join-Path $folder $evidence) -Destination (Join-Path $history "after-$evidence") }
             if ($review.status -ne 'ready') { throw "Visual review: $($review.summary)" }
+            $script:state.status='reviewing_confirm'; Save-State
             $review = Invoke-Agent ($reviewPrompt + "`nThis is the independent final approval round. Do not read previous review results. Challenge the construction, human scale and crude realism afresh; approve only if the current exported model meets that target.") 'gpt-5.6-sol' "$name-confirm" @((Join-Path $folder 'preview.png'),(Join-Path $folder 'side.png'))
             if ($null -eq $review) { break }
             [IO.File]::WriteAllText((Join-Path $history 'review-2.json'), ($review | ConvertTo-Json))
             if ($review.status -ne 'ready') { throw "Final visual review: $($review.summary)" }
             [IO.File]::WriteAllText((Join-Path $folder 'review.json'), ($review | ConvertTo-Json))
+            $script:state.status='committing'; Save-State
             $relative = "model-workshop/assets/$($spec.category)/$($spec.key)"
             $add = Run-Child 'git.exe' @('add','--',$relative,'model-workshop/lib') "$name-stage" '' 1
             if ($add.code -ne 0) { throw "Cannot stage asset; see $name-stage logs" }
@@ -182,14 +210,7 @@ Review this Possession 3D asset using BOTH attached renders plus $folder/README.
             $script:state.message="Completed $($item.id) using $model; visual review passed."
             Save-State
         } catch {
-            $item.phase='build'
-            $item.failures++
-            $item.note=$_.Exception.Message
-            $item.status=if ($item.failures -ge 6) { 'blocked' } else { 'pending' }
-            $script:state.status='retry_pending'
-            $script:state.message=$item.note
-            $script:state.nextAttemptUtc=Next-PollUtc
-            Save-State
+            Register-WorkFailure $item $_.Exception.Message $script:state.status $name
             break
         }
     }
