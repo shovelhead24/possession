@@ -1,5 +1,7 @@
 # FOB and sky study
 
+The newer [tactical valley](VALLEY.md) adds grounded walking, a ridge/gully approach and enterable compound buildings. Open Launch-valley.vbs for that scene; this original study remains available.
+
 This standalone Godot 4.5.1 greybox tests a physical planning table, two approach choices, relay connection and support acknowledgement. It also provides an outdoor material bench and a proposed slowly moving sky. It does not change the main game's renderer.
 
 Double-click **Launch-study.vbs** on this machine to open the study without a console wrapper. The launcher reports a missing Godot installation instead of silently disappearing.

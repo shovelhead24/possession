@@ -131,8 +131,8 @@ func build_landscape() -> void:
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	# World-anchored coarse ring. Rotated local axes relative to ring_vibes, same dimensions.
 	for i in range(1024):
-		var a := float(i)/1024.0*TAU
-		var b := float(i+1)/1024.0*TAU
+		var a := ring_gap() + float(i)/1024.0*(TAU-2.0*ring_gap())
+		var b := ring_gap() + float(i+1)/1024.0*(TAU-2.0*ring_gap())
 		for j in range(8):
 			var x0 := -25000.0 + float(j)*6250.0
 			var x1 := x0 + 6250.0
@@ -306,3 +306,7 @@ func capture_sequence() -> void:
 		if err!=OK: push_error("Capture failed");get_tree().quit(1);return
 	print("CAPTURE_PASS: seven views; baseline haze density retained; motion/altitude evidence saved")
 	get_tree().quit(0)
+
+
+func ring_gap() -> float:
+	return 0.0

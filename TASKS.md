@@ -18,3 +18,5 @@
 Existing exports remain in the isolated asset-production checkout. No assets are deleted or merged by this planning change. Holographic maps require runtime visuals and interaction; a GLB plus two screenshots cannot establish completion.
 
 Prototype progress (2026-09-12): physical route selection, relay states, support acknowledgement, material swatches and a proposed moving sky are available in prototypes/first-operation. The remaining unchecked items include integration and readability work; the sky and Blender review pipeline are not approved. Fourth-failure global stop installed and tested; unattended production remains disabled pending diagnosis and approved job contracts.
+
+Tactical fixture (2026-09-12): prototypes/first-operation/VALLEY.md now provides grounded walking, a ridge/gully route and enterable relay buildings. Collision and sightline checks pass. Existing asset integration, DEM/metadata integration and actual combat remain pending.
