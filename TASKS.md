@@ -2,6 +2,7 @@
 
 2026-09-12. The previous catalogue queue is archived at docs/archive/TASKS-before-first-operation.md. The Windows model worker is disabled and paused; it is not executing this list. See docs/brief.md and docs/first-operation.md.
 
+- [ ] Capture current in-game haze as the scale reference; assemble annotated E3 2000 references and an outdoor sky/world look-development scene with purple accents. Test a mostly static painterly sky with subtle motion and spatially correct ring landmarks before production art.
 - [ ] Audit and calibrate the common material/export/review-render pipeline using fixed reference objects before any further autonomous art production. Separate technical failures, art revisions and reviewer disagreement; retain comparable evidence.
 - [ ] Build a standalone Godot FOB/map/relay greybox harness, using existing project conventions without depending on the terrain demo.
 - [ ] Prototype a physical planning table/projector with two routes, relay coverage, selected-route feedback and legible unknown/offline states.

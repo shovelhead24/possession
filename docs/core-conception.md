@@ -33,3 +33,8 @@ Medieval-first progression, broad tech trees, survival ladders, full RPG simulat
 - Does Theatrics name the intended experience better than the existing titles?
 
 Resolve these through [one operation](first-operation.md), not a larger asset catalogue.
+
+
+## Art production authority — 2026-09-12
+
+See [art-production-brief.md](art-production-brief.md): E3 2000 Halo reference, purple accents, sky as a primary composition, and preservation of the current build's scale-giving haze. The first visual test is an outdoor sky/world reference scene plus calibrated material inspection. Static catalogue renders are insufficient for production approval. Worker remains paused.

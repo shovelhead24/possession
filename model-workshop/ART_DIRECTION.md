@@ -1,5 +1,8 @@
 # Art direction: crude realism
 
+> Production authority: docs/art-production-brief.md. E3 2000 purple accents, dramatic painterly sky and the current scale-giving haze are required context. Crude realism describes object construction, not a uniformly grey palette. The catalogue worker is disabled; this older object-only brief is insufficient to resume production. Capture and validate the shared world/reference scene and issue per-job contracts first.
+
+
 The user's correction is authoritative: crudely realistic, not cartoonish. Halo CE refers to economical early-2000s real-time representation of believable objects, not toy proportions or a decorative faceted style. Low polygon count is a production constraint, not the subject of the design.
 
 Use plausible manufactured or natural forms: thin cutting edges with credible spines, human-sized grips, modest guards, believable fasteners and joints, functional weight distribution, practical vehicle proportions, and natural animal anatomy. Keep broad surfaces where the real object has them. Avoid swollen silhouettes, chunky gold guards, bead-like grips, oversized bevels, candy colours, decorative spikes and gratuitous sci-fi assemblies. Primitive objects should remain simple, recognizable objects.
