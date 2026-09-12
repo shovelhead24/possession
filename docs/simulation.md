@@ -1,5 +1,8 @@
 # Possession — Simulation Architecture
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 The runtime half of the world: bake layers produce *space* (terrain.md), this stack produces *time*. Extracted from progression.md 2026-07-19. Sibling docs: [knowledge.md](knowledge.md) (the player's pyramid), [dialogue.md](dialogue.md) (baked voice), [operators.md](operators.md) (operator registry).
 
 ## Runtime Layer Stack — the player-POV sandbox (PROPOSED 2026-07-18)

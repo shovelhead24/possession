@@ -1,5 +1,8 @@
 # Possession — Vision
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 High-level and mostly-static. Changes rarely, and only deliberately. The working entry point for planning is [brief.md](brief.md); this doc holds what's *fixed*.
 
 ## Theme

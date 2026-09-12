@@ -1,54 +1,17 @@
-# Model production queue
+# Active queue — first operation
 
-46 catalogue assets. Each requires source, exported GLB, dimensions/pivots, geometry validation, Godot import and independent visual approval.
+2026-09-12. The previous catalogue queue is archived at docs/archive/TASKS-before-first-operation.md. The Windows model worker is disabled and paused; it is not executing this list. See docs/brief.md and docs/first-operation.md.
 
-The previous development queue is preserved in docs/archive/TASKS-before-model-production.md. The 30-second gameplay loop is deferred. See model-workshop/BRIEF.md for the art brief and scripts/model-worker/README.md for operation.
+- [ ] Audit and calibrate the common material/export/review-render pipeline using fixed reference objects before any further autonomous art production. Separate technical failures, art revisions and reviewer disagreement; retain comparable evidence.
+- [ ] Build a standalone Godot FOB/map/relay greybox harness, using existing project conventions without depending on the terrain demo.
+- [ ] Prototype a physical planning table/projector with two routes, relay coverage, selected-route feedback and legible unknown/offline states.
+- [ ] Prototype a modular FOB layout with planning, rearm and deployment locations at player scale.
+- [ ] Prototype relay/console states and communications-dependent support acknowledgement; avoid a circular support prerequisite.
+- [ ] Define and test two enemy behaviour roles and the minimal player movement/weapon/defence set in a two-approach courtyard. Catalogue reach and combat values are provisional.
+- [ ] Test one short authored aftermath and record the local changes it preserves; do not settle global campaign timing by accident.
+- [ ] Test companion acknowledgements, bounded translation and an optional stop-to-view local hologram against FOB-only map access.
+- [ ] Observe fresh-player readability, combat enjoyment, co-op use and target-hardware performance; record failures before expanding scope.
+- [ ] Once interactions are stable, specify and create the production FOB, relay and projector meshes/materials with calibrated review criteria.
+- [ ] Redesign the unattended queue for approved bounded work only; add phase-specific failures and an infrastructure-stop condition before considering re-enablement.
 
-Completed models live on the isolated asset-production branch; this checkout keeps the initial checklist. Runtime state is authoritative while a job is running.
-
-- [ ] weapons-spear
-- [ ] weapons-blade
-- [ ] weapons-club
-- [ ] weapons-improvised
-- [ ] weapons-rock
-- [ ] weapons-javelin
-- [ ] weapons-grenade
-- [ ] weapons-molotov
-- [ ] weapons-sticky
-- [ ] weapons-sling
-- [ ] weapons-bow
-- [ ] weapons-crossbow
-- [ ] weapons-speargun
-- [ ] weapons-musket
-- [ ] weapons-bolt_action
-- [ ] weapons-smg
-- [ ] weapons-lmg
-- [ ] weapons-autocannon
-- [ ] weapons-beam_rifle
-- [ ] weapons-cutter
-- [ ] weapons-mortar
-- [ ] weapons-rocket
-- [ ] weapons-mlrs
-- [ ] weapons-carbine
-- [ ] vehicles-box
-- [ ] vehicles-warthog
-- [ ] vehicles-sportscar
-- [ ] vehicles-sixby
-- [ ] vehicles-bike
-- [ ] vehicles-tractor
-- [ ] vehicles-hauler
-- [ ] vehicles-crawler
-- [ ] vehicles-skiff
-- [ ] vehicles-launch
-- [ ] vehicles-barge
-- [ ] vehicles-strider
-- [ ] vehicles-horse
-- [ ] vehicles-elephant
-- [ ] vehicles-mech_biped
-- [ ] vehicles-mech_quad
-- [ ] vehicles-suit
-- [ ] vehicles-duck
-- [ ] vehicles-sub
-- [ ] vehicles-rotor
-- [ ] vehicles-airplane
-- [ ] vehicles-lifter
+Existing exports remain in the isolated asset-production checkout. No assets are deleted or merged by this planning change. Holographic maps require runtime visuals and interaction; a GLB plus two screenshots cannot establish completion.
