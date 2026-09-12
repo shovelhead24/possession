@@ -103,6 +103,8 @@ func _ready() -> void:
 	shape.shape=capsule;shape.position.y=0.9
 	walker.add_child(shape);add_child(walker)
 	viewpoint(1)
+	support_status.text="E / CALL STRIKE ON RANGE"
+	relay_status.text="E / CONNECT RELAY"
 	help.text="TACTICAL VALLEY / GREYBOX\nWASD walk · Mouse look · Shift sprint · Space jump\n1 FOB · 2 ridge · 3 gully · 4 compound · V fly/walk\nE station · R route at table · F sky · Tab guide\nL interrupt link · B support availability"
 	if not OS.get_cmdline_user_args().has("--no-kit"): install_kit()
 
@@ -119,17 +121,44 @@ func viewpoint(index: int) -> void:
 
 func use_station() -> void:
 	if camera.position.distance_to(Vector3(0,2,-296.5))<5:
-		state.advance_relay();refresh()
+		state.relay=State.Relay.OPERATIONAL
+		state.report="RELAY CONNECTED"
+		refresh();relay_status.text="RELAY CONNECTED"
 	elif camera.position.distance_to(Vector3(4,2,-6))<5:
-		state.request_support();support_status.text=state.report
+		if strike_busy: return
+		if state.request_support(): strike()
+		support_status.text=state.report
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if kit and kit.driving and event is InputEventKey and event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_V]: return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_V:
 		flying=not flying
 		if not flying and is_instance_valid(walker):
 			walker.position=camera.position-Vector3.UP*EYE;walker.velocity=Vector3.ZERO
-	super._unhandled_input(event)
+	super._input(event)
+
+func strike() -> void:
+	if strike_busy: return
+	strike_busy=true
+	state.report="STRIKE INBOUND / MARKED RANGE"
+	await get_tree().create_timer(1.0).timeout
+	for x in [12.0,16.0,20.0]:
+		var point=Vector3(x,1,-18-(x-12)*1.5)
+		var ball=SphereMesh.new();ball.radius=1.0;ball.height=2.0
+		var flash=mesh_node(ball,point,material(Color(1,.45,.08),0,.7,true))
+		var tween=create_tween();tween.tween_property(flash,"scale",Vector3.ONE*4,.25);tween.tween_property(flash,"scale",Vector3.ONE*.01,.35);tween.tween_callback(flash.queue_free)
+		for target in get_children():
+			if target is Node3D and target.has_meta("target_hits") and target.position.distance_to(point)<5:
+				target.set_meta("target_hits",int(target.get_meta("target_hits"))+1)
+		await get_tree().create_timer(.25).timeout
+	state.report="STRIKE COMPLETE / RANGE HIT";support_status.text=state.report
+	strike_busy=false
+
+var strike_busy := false
+
+func refresh() -> void:
+	super.refresh()
+	relay_status.text="RELAY CONNECTED" if state.connected() else "E / CONNECT RELAY"
 
 func _process(delta: float) -> void:
 	if moving_clouds: elapsed+=delta

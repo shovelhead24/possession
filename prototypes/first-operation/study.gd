@@ -242,7 +242,7 @@ func use_station() -> void:
 		support_status.text=state.report
 	refresh()
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if shots_running: return
 	if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT:
 		if event.pressed: Input.mouse_mode=Input.MOUSE_MODE_CAPTURED

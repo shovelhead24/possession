@@ -2,7 +2,7 @@
 
 The standard launcher on this machine is the desktop shortcut **Possession Sandbox**. It opens this tactical scene directly without a command window. Alternatively, open **Launch-valley.vbs**. The original **Launch-study.vbs** still opens the earlier material/map study.
 
-Walk from the FOB to the relay compound roughly 300 metres away. The western ridge offers height; the eastern gully provides terrain concealment and a marked approach. Central low walls interrupt exposure. The compound has a broad front entrance, a side gap and two enterable buildings with open windows. E at the relay console advances the existing test connection sequence; this is not yet an enemy capture encounter.
+Walk from the FOB to the relay compound roughly 300 metres away. The western ridge offers height; the eastern gully provides terrain concealment and a marked approach. Central low walls interrupt exposure. The compound has a broad front entrance, a side gap and two enterable buildings with open windows. E at the relay console connects it immediately. E at the labelled FOB strike terminal calls a visible strike on the range when connected; this is not yet an enemy capture encounter.
 
 ## Controls
 

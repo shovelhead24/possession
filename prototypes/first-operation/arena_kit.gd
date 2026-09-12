@@ -86,7 +86,7 @@ func _ready() -> void:
 func build_viewmodel() -> void:
 	var layer=CanvasLayer.new();add_child(layer)
 	overlay=SubViewportContainer.new();overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);overlay.mouse_filter=Control.MOUSE_FILTER_IGNORE;overlay.stretch=true;layer.add_child(overlay)
-	view=SubViewport.new();view.size=get_viewport().get_visible_rect().size;view.transparent_bg=true;view.own_world_3d=true;view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;overlay.add_child(view)
+	view=SubViewport.new();view.size=get_viewport().get_visible_rect().size;view.gui_disable_input=true;view.transparent_bg=true;view.own_world_3d=true;view.render_target_update_mode=SubViewport.UPDATE_ALWAYS;overlay.add_child(view)
 	var camera=Camera3D.new();camera.near=0.01;camera.far=10;camera.fov=65;view.add_child(camera)
 	var env=WorldEnvironment.new();env.environment=arena.environment.duplicate();env.environment.background_mode=Environment.BG_CLEAR_COLOR;view.add_child(env)
 	var sun=DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-35,0);sun.light_energy=1.1;view.add_child(sun)
@@ -139,8 +139,8 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 	a=bounds(model)
 	model.scale*=length_m/maxf(a.size.z,0.01)
 	a=bounds(model);model.position-=Vector3(a.get_center().x,a.position.y,a.get_center().z)
-	var body=CharacterBody3D.new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.add_child(model)
-	var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*0.8,1.2,length_m*0.8);collision.shape=shape;collision.position.y=0.6;body.add_child(collision)
+	var body=CharacterBody3D.new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
+	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
 	arena.add_child(body);vehicles.append(body)
 	arena.label3(label+" / G",pos+Vector3(0,3.5,0),32)
 
@@ -163,7 +163,7 @@ func toggle_vehicle() -> void:
 			driving=body;speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · G exit";return
 	status.text="Move closer to a vehicle to enter"
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if arena.shots_running: return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_C: select_weapon(selected+1)
@@ -193,7 +193,7 @@ func _physics_process(delta: float) -> void:
 	for body in vehicles:
 		if body==driving:
 			var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))
-			speed=move_toward(speed,throttle*16,delta*(16 if Input.is_physical_key_pressed(KEY_SPACE) else 5))
+			speed=move_toward(speed,throttle*(16 if throttle>=0 else 7),delta*(16 if Input.is_physical_key_pressed(KEY_SPACE) else 5))
 			if Input.is_physical_key_pressed(KEY_SPACE): speed=move_toward(speed,0,delta*35)
 			var steer=float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D))
 			body.rotate_y(steer*delta*clampf(speed/6,-1,1))

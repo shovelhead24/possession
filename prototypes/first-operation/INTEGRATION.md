@@ -8,7 +8,7 @@ Imported sources: game/fp_arms with its existing finger controller; game/halo_-_
 
 These are existing reference assets and unfinished workshop outputs, not newly approved production art. The Warthog's old specular/gloss materials produce Godot conversion warnings; their appearance needs comparison with the original project. Arms reuse the old 49-bone controller and original firearm transforms. Melee hand sockets are provisional. No claim of complete animation, IK or correct grips for every weapon.
 
-The guns use a simple collision ray and recoil; the other five items use a short-range interaction ray. A rock is not yet thrown. No ammo, reload, damage model or enemy AI is integrated. Target hit counts establish interaction only. Both vehicles have basic capsule-player entry/checked exit, box collision, gravity, steering and braking. Suspension, slope alignment, moving wheels/tracks, original handling tables and vehicle weapons remain unintegrated. This fixture must not silently become the authoritative vehicle physics implementation.
+The guns use a simple collision ray and recoil; the other five items use a short-range interaction ray. A rock is not yet thrown. No ammo, reload, damage model or enemy AI is integrated. Target hit counts establish interaction only. Both vehicles have basic capsule-player entry/checked exit, rounded collision, gravity, steering and braking. Suspension, slope alignment, moving wheels/tracks, original handling tables and vehicle weapons remain unintegrated. This fixture must not silently become the authoritative vehicle physics implementation.
 
 ## Resolving terrain with real height data
 
@@ -34,3 +34,9 @@ The existing game/mocks/ring_clouds.gd is the next cloud baseline, with its clou
 - Preserve practical proportions and source dimensions; attack range is separate from mesh length. Imported branded/reference models establish comparison cases, not the final game's asset catalogue.
 - Establish measured triangle, material and texture budgets plus LODs after profiling the combined scene on the target hardware. Existing assets are not evidence that their cost is acceptable at scale.
 - Keep the autonomous worker paused; calibration and complete per-asset briefs remain prerequisites. Fourth-failure stop remains installed.
+
+## Installed usability fixes — 2026-09-13
+
+Vehicle collision now uses a rounded chassis proxy to traverse terrain without box-corner snagging; reverse speed is reduced. Both imported vehicles are tested for actual forward travel and safe exit. Steering, suspension, wheel animation and handling fidelity still need playtesting and integration with the original vehicle system.
+
+Gameplay input is handled before the UI; the weapon viewport does not receive input. The relay connects with one E press. The FOB terminal is labelled E / CALL STRIKE ON RANGE and produces a delayed sequence of visible orange impacts on the range targets, with incoming/completion messages. This is a fixed test strike, not arbitrary targeting or enemy damage simulation.
