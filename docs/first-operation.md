@@ -42,3 +42,8 @@ Record observations and unresolved failures; do not claim validation from screen
 ## Automation boundary
 
 The old model worker is paused and its Windows task disabled. It can generate Blender sources/GLB, render and review meshes, but cannot validate playable map interaction, mission states or combat enjoyment with its current checks. It must not be restarted merely by replacing catalogue IDs with “FOB” or “hologram”. First build the P0 interactive slice, identify stable asset contracts, then commission bounded art tasks with suitable checks.
+
+
+## Art production authority — 2026-09-12
+
+See [art-production-brief.md](art-production-brief.md): E3 2000 Halo reference, purple accents, sky as a primary composition, and preservation of the current build's scale-giving haze. The first visual test is an outdoor sky/world reference scene plus calibrated material inspection. Static catalogue renders are insufficient for production approval. Worker remains paused.

@@ -30,3 +30,8 @@ Deliberately ~2001 / Halo CE class (`.decisions/rendering.md#texture-fidelity-ba
 
 - Skybox geometry clipping at view-distance boundary produces artifacts indistinguishable from z-fighting — was actually manifold/clip errors. Stitching skybox edges nearly broke us. Re-verify whenever view distance or sky geometry changes.
 - `reload_current_scene()` leaves stale GDScript statics — reload is always full quit + relaunch (see `.decisions/engine.md`).
+
+
+## Art production authority — 2026-09-12
+
+See [art-production-brief.md](art-production-brief.md): E3 2000 Halo reference, purple accents, sky as a primary composition, and preservation of the current build's scale-giving haze. The first visual test is an outdoor sky/world reference scene plus calibrated material inspection. Static catalogue renders are insufficient for production approval. Worker remains paused.

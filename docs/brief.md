@@ -35,3 +35,8 @@ Use [.decisions/INDEX.md](../.decisions/INDEX.md) before reading relevant techni
 ## Decisions next
 
 Resolve the prototype's enemy behaviours and player movement/defence model; define a local-outcome contract for one authored beat; test FOB-only versus stationary local hologram access; establish companion access/translation limits; then agree production asset contracts and acceptance criteria. Campaign timing and Theatrics as a title remain open.
+
+
+## Art production authority — 2026-09-12
+
+See [art-production-brief.md](art-production-brief.md): E3 2000 Halo reference, purple accents, sky as a primary composition, and preservation of the current build's scale-giving haze. The first visual test is an outdoor sky/world reference scene plus calibrated material inspection. Static catalogue renders are insufficient for production approval. Worker remains paused.

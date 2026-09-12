@@ -1,5 +1,8 @@
 # Possession — Aesthetic & Directorial Philosophy
 
+> Art direction update 2026-09-12: [art-production-brief.md](art-production-brief.md) is the current production authority. The primary reference is the user's E3 2000 Halo memory: purple accents, dramatic sky, and the scale supplied by the current build's haze. The older retail-Level-2-only palette and unresolved painterly/realist wording below are superseded. Crude-realistic near objects and a painterly, mostly static but subtly moving sky coexist. Preserve current haze; do not confuse it with the separate overlit review-render defect. Earlier directorial and progression assumptions are governed by [core conception](core-conception.md).
+
+
 Area doc (2026-07-26). The felt, sensory identity of the game and how it's staged. Distinct from rendering.md (the *technical* fidelity baseline — GL Compat, ~2001 texel budget) — this doc is about *mood and craft*, the layer that carries authorial meaning since the design laws bar the systems from editorializing (intensity-not-valence). Cinematography here is environmental/playable, not editorial — see "Directorial Constraints" below.
 
 ## Ordering: theme → (aesthetic + direction), in parallel
@@ -29,7 +32,7 @@ External critique (a Gemini analysis of Halo CE Level 2) argued Halo's awe *come
 - **What's left is environmental/playable cinematography:** lighting, haze, composition through level geometry (draw the eye, never force it — the Half-Life discipline), sound design, camera *behavior* (drift/hold/idle) not camera *editing*.
 - **Style carries the authorial weight the systems can't.** Because intensity-not-valence bars the simulation from ever judging, craft (the shot, the silence, the song) is the *only* channel authorial meaning travels through. Where the world refuses to judge, style must show up and mean it — or it reads as a shrug (the Far Cry 2 failure, vision.md).
 
-## Palette — DECIDED 2026-07-26
+## Earlier palette — SUPERSEDED IN PRIMARY REFERENCE 2026-09-12
 
 **The target is Halo CE Level 2's cliff-overlook vista**, precisely — and this corrects a wrong assumption baked into the tone-reference list. It is *not* the cold 2001/T2 blue-grey. It's **serene, hazy, pastoral**: soft desaturated blue-greens on the hills, heavy atmospheric perspective fading distance to cyan/teal, warm gold sunlight cutting through, purple-grey far mountains, clean cool silver structures against the softness. The eeriness comes from *context* (this inviting place is a machine), not from a cold palette. Serene surface, uncanny meaning.
 
@@ -99,7 +102,7 @@ the same shape if the licence never happens. The shape is the decision; the trac
 
 ## Open Questions
 
-- Palette/era direction — the one thing still unspecified. Painterly vs. realist, colour identity, whether "The Riddle"'s 80s-optimism-with-melancholy is an *audio* reference or a *visual* one (it pushes the look somewhere specific if visual).
+- Historical open question, now addressed in art-production-brief.md: palette/era direction. Painterly vs. realist, colour identity, whether "The Riddle"'s 80s-optimism-with-melancholy is an *audio* reference or a *visual* one (it pushes the look somewhere specific if visual).
 - Does the emptiness→life density curve get authored per-region, or fall out of the recovery-band field (civilization.md)?
 - Craft specification remains design-brief level, not shot-list level — the gap flagged in TODO.md; needs the user's directorial sensibility leading, not more doc-writing.
 
