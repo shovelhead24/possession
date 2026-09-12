@@ -1,0 +1,22 @@
+{
+  "triangles": 472,
+  "materials": 6,
+  "mesh_objects": 9,
+  "dimensions_blender_m": [
+    2.119999885559082,
+    0.10199999809265137,
+    0.04945496842265129
+  ],
+  "nodes": [
+    "Butt_Shoe",
+    "Butt_Shoe_Rim",
+    "Grip_Binding_Front",
+    "Grip_Binding_Rear",
+    "Grip_Leather_Sleeve",
+    "Haft_Ash",
+    "Head_Rivet",
+    "Head_Socket",
+    "Spearhead_Blade"
+  ],
+  "passed": true
+}

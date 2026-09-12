@@ -1,26 +1,22 @@
 {
-  "triangles": 1280,
-  "materials": 7,
-  "mesh_objects": 13,
+  "triangles": 472,
+  "materials": 6,
+  "mesh_objects": 9,
   "dimensions_blender_m": [
-    2.6037099361419678,
-    0.30000001192092896,
-    0.22740782797336578
+    2.119999885559082,
+    0.10199999809265137,
+    0.04945496842265129
   ],
   "nodes": [
-    "Butt_Cap",
-    "Butt_Pommel",
-    "Grip_Core",
-    "Grip_Ferrule_Front",
-    "Grip_Ferrule_Rear",
-    "Grip_Wrap_Helix",
-    "Head_Collar",
-    "Head_Collar_Retainer",
-    "Head_Lug_L",
-    "Head_Lug_R",
-    "Shaft_Main",
-    "Shaft_Rear_Tang",
-    "Spearhead_Assembly"
+    "Butt_Shoe",
+    "Butt_Shoe_Rim",
+    "Grip_Binding_Front",
+    "Grip_Binding_Rear",
+    "Grip_Leather_Sleeve",
+    "Haft_Ash",
+    "Head_Rivet",
+    "Head_Socket",
+    "Spearhead_Blade"
   ],
   "passed": true
 }

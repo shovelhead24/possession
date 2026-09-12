@@ -1,0 +1,26 @@
+{
+  "triangles": 1280,
+  "materials": 7,
+  "mesh_objects": 13,
+  "dimensions_blender_m": [
+    2.6037099361419678,
+    0.30000001192092896,
+    0.22740782797336578
+  ],
+  "nodes": [
+    "Butt_Cap",
+    "Butt_Pommel",
+    "Grip_Core",
+    "Grip_Ferrule_Front",
+    "Grip_Ferrule_Rear",
+    "Grip_Wrap_Helix",
+    "Head_Collar",
+    "Head_Collar_Retainer",
+    "Head_Lug_L",
+    "Head_Lug_R",
+    "Shaft_Main",
+    "Shaft_Rear_Tang",
+    "Spearhead_Assembly"
+  ],
+  "passed": true
+}
