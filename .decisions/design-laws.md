@@ -10,7 +10,7 @@ Laws a future session could violate silently — the core reason this log exists
 
 ### principles-ratified — The six brainstorm principles are law
 **Date:** 2026-07-19
-**Status:** active
+**Status:** AMENDED 2026-09-12 by campaign.md#authored-theatre (see current scope there)
 **Decision:** Ratified as a set (closes brief D1): (1) simulate the player's relationship to the world, not the world; (2) we do not simulate detail — we acknowledge it; (3) the Fern Rule — interaction fidelity ≤ visual fidelity × system importance; (4) a low-fidelity cell is a promise of possibility, not a place; (5) encounters are not content — they are consequences; (6) the world never rewards the player directly — it reshapes opportunity gradients.
 **Why:** Proposed April 2026, they silently governed everything designed in the July restart (bake pipeline, realization, tempo, knowledge). Two days of building on them without strain is the ratification test passed.
 
@@ -52,7 +52,7 @@ Laws a future session could violate silently — the core reason this log exists
 
 ### no-authored-graphs — Content is precondition-tagged pools, never authored trees or graphs
 **Date:** 2026-07-29
-**Status:** active
+**Status:** AMENDED 2026-09-12 by campaign.md#authored-theatre (see current scope there)
 **Decision:** No dialogue trees, quest graphs, or behaviour trees-as-content. Content is authored as a **pool of fragments tagged with preconditions**, selected at runtime by a seeded pick against live facts. No nodes, no edges, no traversal.
 **Why:** Hand-authoring cost scales with branch count, and this project is bounded by what one person plus AI assistance can build — a branching structure large enough to feel alive is exactly the thing the budget cannot pay for, and the failure is silent (you find out late, having built half of it). The pool pattern is already established in two places rather than being new: the dialogue bake and the ending-vignette assembly both do precisely this. Pools also degrade gracefully — an under-populated pool yields repetition, whereas an under-populated tree yields dead ends.
 **Corollary:** consequence systems inherit this. "The world returns your actions to you" (`docs/draws.md` returning draws) must be pools + preconditions + provenance, never an authored consequence graph.
@@ -78,7 +78,7 @@ Laws a future session could violate silently — the core reason this log exists
 
 ### chosen-commitments — Independent world, voluntary commitments
 **Date:** 2026-09-10
-**Status:** active
+**Status:** AMENDED 2026-09-12 by campaign.md#authored-theatre (see current scope there)
 **Decision:** Supersedes the categorical `no-missions` ban. Judge an encounter by choice, causality and world independence, not whether it resembles a quest. NPCs may ask for help, make bargains and remember promises. Players may accept, refuse, abandon or record a commitment in their own journal. Other actors continue pursuing their needs; no mandatory assignment chain, automatic completion checklist or world waiting for the player. A promised payment or gift must come from an actor's means and motives, not an abstract reward dispenser. No general quest-system implementation is mandated by this amendment. Existing precondition-pool and no-authored-content-graph constraints remain.
 **Why:** Personal obligations create attachment without making the universe player-centred. The six principles' reward language concerns the world's directing machinery, not a ban on human reciprocity. Historical references to `no-missions` now mean this boundary unless explicitly marked superseded.
 

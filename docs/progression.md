@@ -1,5 +1,8 @@
 # Possession — Progression
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 Three tiers, from prey to power (docs/vision.md). Least-developed system — nothing in code yet; this doc is the planning surface. The runtime machinery that *delivers* progression (intentions, tempo, realization, arc director) lives in [simulation.md](simulation.md).
 
 ## What's Settled

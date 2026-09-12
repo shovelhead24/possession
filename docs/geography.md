@@ -1,5 +1,8 @@
 # Possession — Macro Geography Sketch
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 Area doc (2026-07-22 generation round, PROPOSED throughout — this is the "macro first" pass the interiors question was waiting on). Positions given as % of arc from the crash region (lon 0 by convention); all names deferred; all figures sketch-grade, not tuning values.
 
 ## The Arc, Walked Spinward
