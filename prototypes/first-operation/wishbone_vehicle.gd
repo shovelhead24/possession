@@ -10,6 +10,8 @@ var steer_rate := 1.8
 var engine_force := 1800.0
 var top_speed := 24.0
 var brake_strength := 950.0
+var front_power_percent := 50.0
+var front_brake_percent := 50.0
 var controlled := false
 var track_extension := 0.0
 var wheel_mount_raise := 0.0
@@ -122,6 +124,7 @@ func _physics_process(dt: float) -> void:
 		var ray=PhysicsRayQueryParameters3D.create(origin,origin-up*(bump.hub.y-droop.hub.y+radius+.18))
 		ray.exclude=[get_rid()]
 		var hit=space.intersect_ray(ray)
+		c.grounded=false
 		var compression:=0.0
 		if not hit.is_empty() and hit.normal.dot(up)>.25:
 			var target_y=to_local(hit.position+up*radius).y-anchor.y
@@ -137,12 +140,14 @@ func _physics_process(dt: float) -> void:
 			forward=forward.slide(hit.normal).normalized()
 			var right=forward.cross(hit.normal).normalized()
 			var lateral=-contact_v.dot(right)*mass*2.2
-			var longitudinal=throttle*engine_force if controlled else 0.0
-			longitudinal-=contact_v.dot(forward)*(brake_strength if braking or not controlled else 35)
+			var longitudinal=throttle*engine_force*2*(front_power_percent/100.0 if c.front else 1-front_power_percent/100.0) if controlled else 0.0
+			var brake=brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0) if braking and controlled else (brake_strength if not controlled else 35)
+			c.drive_allocation=longitudinal;c.brake_allocation=brake
+			longitudinal-=contact_v.dot(forward)*brake
 			if absf(contact_v.dot(forward))>top_speed and signf(longitudinal)==signf(contact_v.dot(forward)): longitudinal=0
 			var tyre=Vector2(lateral,longitudinal).limit_length(load*grip)
 			apply_force(right*tyre.x+forward*tyre.y,lever)
-			grounded_count+=1
+			grounded_count+=1;c.grounded=true;c.contact=hit.position
 			c.spin.rotate_x(-contact_v.dot(forward)*dt/radius)
 		else: geom=droop
 		c.travel=geom.lower.y;c.compression=compression

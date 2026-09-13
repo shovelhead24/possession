@@ -26,10 +26,13 @@ func reload_weapon() -> void:
 	if reloading or driving or names[selected] not in ammo: return
 	var key=names[selected];var capacity=24 if key=="Carbine" else 6
 	if ammo[key]==capacity: return
-	reloading=true;status.text=key+" / RELOADING"
+	reload_audio.play();reloading=true;status.text=key+" / RELOADING"
 	await get_tree().create_timer(1.5 if key=="Carbine" else 2.2).timeout
 	ammo[key]=capacity;reloading=false;status.text=key+" / %d ROUNDS" % ammo[key]
 var menu: CanvasLayer
+var warthog_menu: CanvasLayer
+var tank_menu: CanvasLayer
+var reload_audio: AudioStreamPlayer
 var driver_model: Node3D
 var driver_look := Vector2.ZERO
 var seat_position := Vector3(-.52,.92,-.08)
@@ -50,6 +53,13 @@ func handle_vehicle_input(event: InputEvent) -> bool:
 		if event.keycode==KEY_R and not driving and arena.camera.position.distance_to(Vector3(0,2,0))>=7:
 			reload_weapon();get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_F2 or (event.keycode==KEY_ESCAPE and menu.opened):
+			if not menu.opened:
+				var chosen=driving
+				if not chosen:
+					chosen=vehicles[0]
+					for v in vehicles:
+						if arena.walker.position.distance_to(v.position)<6: chosen=v
+				menu=tank_menu if chosen==vehicles[1] else warthog_menu
 			menu.set_open(not menu.opened);get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_C and driving:
 			menu.set_camera_mode(1-int(menu.settings.camera_mode));get_viewport().set_input_as_handled();return true
@@ -57,7 +67,7 @@ func handle_vehicle_input(event: InputEvent) -> bool:
 	if menu.opened: return true
 	if driving and event is InputEventMouseMotion:
 		if Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
-			driver_look.x=clampf(driver_look.x-event.relative.x*.003,-1.6,1.6)
+			driver_look.x=driver_look.x-event.relative.x*.003 if driving.has_method("fire_cannon") else clampf(driver_look.x-event.relative.x*.003,-1.6,1.6)
 			driver_look.y=clampf(driver_look.y-event.relative.y*.003,-.7,.5)
 		return true
 	return false
@@ -75,7 +85,9 @@ func update_vehicle_camera(delta: float) -> void:
 	else:
 		driver_model.visible=driving==vehicles[0]
 		var target: Vector3=driving.global_position+Vector3.UP*1.4
-		var wanted: Vector3=driving.global_position+driving.global_basis.z*cfg.camera_distance+Vector3.UP*cfg.camera_height
+		if driving.has_method("fire_cannon"):
+			target=driving.to_global(Vector3(0,1.75,1.1))-(driving.global_basis*Basis.from_euler(Vector3(driver_look.y,driver_look.x,0))).z*80
+		var wanted: Vector3=driving.global_position+(driving.global_basis*Basis(Vector3.UP,driver_look.x) if driving.has_method("fire_cannon") else driving.global_basis).z*cfg.camera_distance+Vector3.UP*cfg.camera_height
 		var ray=PhysicsRayQueryParameters3D.create(target,wanted);ray.exclude=[driving.get_rid(),arena.walker.get_rid()]
 		var hit=arena.get_world_3d().direct_space_state.intersect_ray(ray)
 		if not hit.is_empty(): wanted=hit.position+hit.normal*.25
@@ -133,6 +145,7 @@ func socket(root: Node3D, key: String) -> Vector3:
 
 func _ready() -> void:
 	arena=get_parent()
+	reload_audio=AudioStreamPlayer.new();reload_audio.stream=preload("res://mechanical_audio.gd").make_sound();reload_audio.volume_db=-15;add_child(reload_audio)
 	shot_audio=AudioStreamPlayer.new();shot_audio.volume_db=-17;add_child(shot_audio)
 	for pair in [["Carbine","plasma_rifle.mp3"],["Railgun","quake railgun sound effect.mp3"]]:
 		var stream=AudioStreamMP3.new();stream.data=FileAccess.get_file_as_bytes(GAME+pair[1]);gun_sounds[pair[0]]=stream
@@ -140,7 +153,8 @@ func _ready() -> void:
 	vehicle("Warthog",GAME+"halo_warthog/scene.gltf",Vector3(-17,1,9),4.8)
 	vehicle("Altay",GAME+"altay_main_battle_tank_fbx.glb",Vector3(-29,1,9),9.0)
 	build_driver()
-	menu=preload("res://vehicle_menu.gd").new();add_child(menu)
+	menu=preload("res://vehicle_menu.gd").new();add_child(menu);warthog_menu=menu
+	tank_menu=preload("res://vehicle_menu.gd").new();tank_menu.vehicle_index=1;add_child(tank_menu)
 	for i in range(3):
 		var target=StaticBody3D.new()
 		target.position=Vector3(12+i*4,1.25,-18-i*6)
@@ -217,11 +231,11 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 		body=preload("res://wishbone_vehicle.gd").new()
 		body.name=label;body.position=pos;body.add_child(model)
 		var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.6,.56,length_m*.68);collision.shape=shape;collision.position.y=.8;body.add_child(collision)
-		preload("res://warthog_finish.gd").finish(model,Callable(self,"bounds"));body.track_extension=.18;body.wheel_mount_raise=.14;arena.add_child(body);body.center_of_mass.y=.48;body.setup(model,Callable(self,"bounds"));body.add_child(preload("res://vehicle_audio.gd").new())
+		preload("res://warthog_finish.gd").finish(model,Callable(self,"bounds"));body.track_extension=.18;body.wheel_mount_raise=.14;arena.add_child(body);body.center_of_mass.y=.48;body.setup(model,Callable(self,"bounds"));body.add_child(preload("res://vehicle_audio.gd").new());body.add_child(preload("res://wheel_dirt.gd").new())
 	else:
-		body=CharacterBody3D.new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
+		body=preload("res://tank_controller.gd").new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
 		var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
-		arena.add_child(body)
+		arena.add_child(body);body.setup(model,self)
 	vehicles.append(body)
 	arena.label3(label+" / E",pos+Vector3(0,3.5,0),32)
 
@@ -241,7 +255,7 @@ func toggle_vehicle() -> void:
 		status.text="Exit obstructed";return
 	for body in vehicles:
 		if arena.walker.position.distance_to(body.position)<6:
-			driving=body;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup · C view";return
+			driving=body;menu=tank_menu if body==vehicles[1] else warthog_menu;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup · C view";return
 	status.text="Move closer to a vehicle to enter"
 
 func _input(event: InputEvent) -> void:
@@ -258,7 +272,8 @@ func _input(event: InputEvent) -> void:
 			for body in vehicles:
 				if body.has_method("toggle_inspection"): body.toggle_inspection()
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
-		use_weapon()
+		if driving and driving.has_method("fire_cannon"): driving.fire_cannon()
+		else: use_weapon()
 
 func use_weapon() -> void:
 	if cooldown>0 or driving or weapons.is_empty() or reloading: return
@@ -296,12 +311,14 @@ func _physics_process(delta: float) -> void:
 			continue
 		if body==driving and not menu.opened:
 			var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))
-			speed=move_toward(speed,throttle*(16 if throttle>=0 else 7),delta*(16 if Input.is_physical_key_pressed(KEY_SPACE) else 5))
-			if Input.is_physical_key_pressed(KEY_SPACE): speed=move_toward(speed,0,delta*35)
+			speed=move_toward(speed,throttle*(body.max_speed if throttle>=0 else body.reverse_speed),delta*(body.brake_strength if Input.is_physical_key_pressed(KEY_SPACE) else body.acceleration))
+			if Input.is_physical_key_pressed(KEY_SPACE): speed=move_toward(speed,0,delta*body.brake_strength)
 			var steer=float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D))
-			body.rotate_y(steer*delta*clampf(speed/6,-1,1))
+			body.rotate_y(steer*delta*body.turn_rate*(1 if speed>=0 else -1))
 			body.velocity.x=-body.basis.z.x*speed;body.velocity.z=-body.basis.z.z*speed
-		else: body.velocity.x=0;body.velocity.z=0
+		else:
+			body.velocity.x=0;body.velocity.z=0
+			if body==driving: speed=0
 		body.velocity.y-=22*delta;body.move_and_slide()
 		if body.position.y < -35: body.position=Vector3(-17,1,9);body.velocity=Vector3.ZERO;speed=0
 	if driving:

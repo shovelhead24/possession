@@ -36,7 +36,7 @@ func run():
 		menu.set_open(true)
 		await process_frame;await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://captures/vehicle-menu.png")
-		menu.panel.get_child(0).get_child(2).current_tab=3
+		menu.panel.get_child(0).get_child(2).current_tab=menu.panel.get_child(0).get_child(2).get_tab_count()-1
 		await process_frame;await RenderingServer.frame_post_draw
 		root.get_texture().get_image().save_png("res://captures/camera-buttons.png")
 		menu.set_open(false);menu.settings.camera_mode=1.0;kit.update_vehicle_camera(.016)

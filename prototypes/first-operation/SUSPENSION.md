@@ -46,3 +46,5 @@ Local terrain and path materials now receive real light and cast-object shadows,
 ## Warthog finish and lower stance
 
 The source's legacy specular/gloss materials are overridden locally with separate olive paint, rough non-metallic rubber, painted rims, exposed steel, glass and purple lamps. Rubber receives a restrained generated grain normal. Source art remains unchanged. The rear gun assembly is reduced to 75% around the bottom of its bounds. Suspension mounts rise 0.14 m relative to the chassis, lowering the body between the wheels without changing spring stiffness or available travel.
+
+See [vehicle effects and tank controls](VEHICLE_EFFECTS.md) for axle power/brake splits, wheel dirt, reload sound and the tank's independent tuning/turret/cannon pass.

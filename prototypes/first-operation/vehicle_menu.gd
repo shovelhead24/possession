@@ -7,32 +7,49 @@ var readout: Label
 var opened := false
 var loading := false
 var camera_buttons: Array[Button]=[]
-var car: RigidBody3D
-const PATH="user://vehicle_tuning.cfg"
+var car
+var vehicle_index := 0
+var config_path="user://vehicle_tuning.cfg"
 
 func _ready() -> void:
-	kit=get_parent();car=kit.vehicles[0];layer=20
+	kit=get_parent();car=kit.vehicles[vehicle_index];layer=20
+	if vehicle_index==1: config_path="user://tank_tuning.cfg"
 	panel=PanelContainer.new();panel.position=Vector2(24,24);panel.size=Vector2(540,620);add_child(panel)
 	var background=StyleBoxFlat.new();background.bg_color=Color(.055,.065,.075,1)
 	background.content_margin_left=16;background.content_margin_right=16;background.content_margin_top=12;background.content_margin_bottom=12
 	panel.add_theme_stylebox_override("panel",background)
 	var column=VBoxContainer.new();column.add_theme_constant_override("separation",10);panel.add_child(column)
-	var title=Label.new();title.text="WARTHOG / VEHICLE SETUP";title.add_theme_font_size_override("font_size",24);column.add_child(title)
+	var title=Label.new();title.text="ALTAY / VEHICLE SETUP" if vehicle_index==1 else "WARTHOG / VEHICLE SETUP";title.add_theme_font_size_override("font_size",24);column.add_child(title)
 	var hint=Label.new();hint.text="F2 or Esc closes · Changes apply immediately\nVehicle brakes while this menu is open.";column.add_child(hint)
 	var tabs=TabContainer.new();tabs.custom_minimum_size=Vector2(510,430);column.add_child(tabs)
-	var suspension=page(tabs,"Suspension")
-	slider(suspension,"spring_rate","Spring stiffness · N/m",10000,60000,1000,car.spring_rate)
-	slider(suspension,"damping","Damping · Ns/m",500,6000,100,car.damping)
-	slider(suspension,"travel_limit","Travel each way · m",.12,.28,.01,car.travel_limit)
-	slider(suspension,"grip","Tyre grip",.4,2,.05,car.grip)
-	var steering=page(tabs,"Steering")
-	slider(steering,"steer_max","Low-speed steering · degrees",10,50,1,car.steer_max)
-	slider(steering,"steer_fast","High-speed steering · degrees",5,25,1,car.steer_fast)
-	slider(steering,"steer_rate","Steering response · rad/s",.3,4,.1,car.steer_rate)
-	var engine=page(tabs,"Engine")
-	slider(engine,"engine_force","Drive force per wheel · N",500,4000,100,car.engine_force)
-	slider(engine,"top_speed","Speed limit · m/s",8,45,1,car.top_speed)
-	slider(engine,"brake_strength","Brake strength",300,2000,50,car.brake_strength)
+	if vehicle_index==1:
+		var mobility=page(tabs,"Mobility")
+		slider(mobility,"max_speed","Forward speed · m/s",5,25,1,car.max_speed)
+		slider(mobility,"reverse_speed","Reverse speed · m/s",2,12,1,car.reverse_speed)
+		slider(mobility,"acceleration","Acceleration · m/s²",1,10,.5,car.acceleration)
+		slider(mobility,"brake_strength","Braking · m/s²",10,60,2,car.brake_strength)
+		slider(mobility,"turn_rate","Hull turn · rad/s",.2,2,.1,car.turn_rate)
+		var turret=page(tabs,"Turret")
+		slider(turret,"turret_rate","Traverse · degrees/s",10,90,5,car.turret_rate)
+		slider(turret,"reload_time","Cannon reload · seconds",1,6,.25,car.reload_time)
+		slider(turret,"cannon_damage","Direct hit damage",25,200,5,car.cannon_damage)
+	else:
+		var suspension=page(tabs,"Suspension")
+		slider(suspension,"spring_rate","Spring stiffness · N/m",10000,60000,1000,car.spring_rate)
+		slider(suspension,"damping","Damping · Ns/m",500,6000,100,car.damping)
+		slider(suspension,"travel_limit","Travel each way · m",.12,.28,.01,car.travel_limit)
+		slider(suspension,"grip","Tyre grip",.4,2,.05,car.grip)
+		var steering=page(tabs,"Steering")
+		slider(steering,"steer_max","Low-speed steering · degrees",10,50,1,car.steer_max)
+		slider(steering,"steer_fast","High-speed steering · degrees",5,25,1,car.steer_fast)
+		slider(steering,"steer_rate","Steering response · rad/s",.3,4,.1,car.steer_rate)
+		var engine=page(tabs,"Engine")
+		slider(engine,"engine_force","Drive force per wheel · N",500,4000,100,car.engine_force)
+		slider(engine,"top_speed","Speed limit · m/s",8,45,1,car.top_speed)
+		slider(engine,"brake_strength","Brake strength",300,2000,50,car.brake_strength)
+		var axles=page(tabs,"Axles")
+		slider(axles,"front_power_percent","Power to front % (remainder to rear)",0,100,5,car.front_power_percent)
+		slider(axles,"front_brake_percent","Braking to front % (remainder to rear)",0,100,5,car.front_brake_percent)
 	var camera=page(tabs,"Camera")
 	# Keep the value control for settings serialization; expose two clear view buttons.
 	var mode=OptionButton.new();mode.add_item("Chase camera");mode.add_item("Driver seat");camera.add_child(mode);controls.camera_mode=mode;mode.hide()
@@ -77,13 +94,14 @@ func save_settings() -> void:
 	var config=ConfigFile.new()
 	for key in controls:
 		config.set_value("vehicle",key,settings[key] if key.begins_with("camera_") else car.get(key))
-	config.save(PATH)
+	config.save(config_path)
 
 func load_settings() -> void:
 	var config=ConfigFile.new()
-	if config.load(PATH)!=OK: return
+	if config.load(config_path)!=OK: return
 	loading=true
 	for key in controls:
+		if not config.has_section_key("vehicle",key): continue
 		var v=config.get_value("vehicle",key,null)
 		if v==null or not (v is float or v is int): continue
 		if key=="camera_mode":
@@ -102,4 +120,5 @@ func reset_defaults() -> void:
 
 func _process(_delta: float) -> void:
 	for i in range(camera_buttons.size()): camera_buttons[i].set_pressed_no_signal(int(settings.camera_mode)==i)
-	if opened: readout.text="%.0f km/h · %d wheels grounded · %.2f m compression" % [car.linear_velocity.length()*3.6,car.grounded_count,car.max_compression]
+	if opened and vehicle_index==1: readout.text="%.0f km/h · cannon ready in %.1f s" % [car.velocity.length()*3.6,car.cooldown]
+	elif opened: readout.text="%.0f km/h · %d wheels grounded · %.2f m compression" % [car.linear_velocity.length()*3.6,car.grounded_count,car.max_compression]
