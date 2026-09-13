@@ -11,6 +11,7 @@ var engine_force := 1800.0
 var top_speed := 24.0
 var brake_strength := 950.0
 var controlled := false
+var track_extension := 0.0
 var throttle := 0.0
 var turn := 0.0
 var braking := false
@@ -61,6 +62,7 @@ func setup(model: Node3D, source_bounds: Callable) -> void:
 		var radius := maxf(box.size.y,box.size.z)*.5
 		var side := signf(centre.x)
 		var anchor := Vector3(centre.x-side*rest_hub.x,centre.y-rest_hub.y,centre.z)
+		anchor.x+=side*track_extension
 		var hub=Node3D.new();add_child(hub);hub.position=centre
 		var spin=Node3D.new();hub.add_child(spin)
 		var old_parent=node.get_parent()

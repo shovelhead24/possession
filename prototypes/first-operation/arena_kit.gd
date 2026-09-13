@@ -20,7 +20,7 @@ var shot_count := 0
 var menu: CanvasLayer
 var driver_model: Node3D
 var driver_look := Vector2.ZERO
-var seat_position := Vector3(-.65,1.15,-.1)
+var seat_position := Vector3(-.52,.92,-.08)
 var foot_fov := 75.0
 
 func build_driver() -> void:
@@ -37,6 +37,8 @@ func handle_vehicle_input(event: InputEvent) -> bool:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_F2 or (event.keycode==KEY_ESCAPE and menu.opened):
 			menu.set_open(not menu.opened);get_viewport().set_input_as_handled();return true
+		if event.keycode==KEY_C and driving:
+			menu.set_camera_mode(1-int(menu.settings.camera_mode));get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_HOME and driving: driver_look=Vector2.ZERO;return true
 	if menu.opened: return true
 	if driving and event is InputEventMouseMotion:
@@ -118,7 +120,7 @@ func socket(root: Node3D, key: String) -> Vector3:
 func _ready() -> void:
 	arena=get_parent()
 	build_viewmodel()
-	vehicle("Warthog",GAME+"halo_warthog/scene.gltf",Vector3(-17,1,9),6.0)
+	vehicle("Warthog",GAME+"halo_warthog/scene.gltf",Vector3(-17,1,9),4.8)
 	vehicle("Altay",GAME+"altay_main_battle_tank_fbx.glb",Vector3(-29,1,9),9.0)
 	build_driver()
 	menu=preload("res://vehicle_menu.gd").new();add_child(menu)
@@ -130,7 +132,7 @@ func _ready() -> void:
 		target.add_child(shape);arena.add_child(target)
 		arena.box(Vector3.ZERO,cube.size,arena.material(Color(0.5,0.25,0.16)),target)
 	var layer=CanvasLayer.new();add_child(layer)
-	status=Label.new();status.position=Vector2(20,160);status.text="C weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course · F2 vehicle setup";layer.add_child(status)
+	status=Label.new();status.position=Vector2(20,160);status.text="Q weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course · F2 vehicle setup · C view";layer.add_child(status)
 	var reticle=Label.new();reticle.text="+";reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER);layer.add_child(reticle)
 	reticle.position=get_viewport().get_visible_rect().size*.5-Vector2(5,10)
 	if arena.shots_running: layer.hide()
@@ -180,7 +182,7 @@ func select_weapon(index: int) -> void:
 	selected=posmod(index,weapons.size())
 	for i in range(weapons.size()): weapons[i].visible=i==selected
 	if arms: arms.set_weapon_pose(names[selected].to_lower())
-	if status: status.text=names[selected]+" · C cycle · Left mouse use · E interact"
+	if status: status.text=names[selected]+" · Q cycle · Left mouse use · E interact"
 
 func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void:
 	var model=imported(path)
@@ -196,8 +198,8 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 	if label=="Warthog":
 		body=preload("res://wishbone_vehicle.gd").new()
 		body.name=label;body.position=pos;body.add_child(model)
-		var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.6,.7,length_m*.68);collision.shape=shape;collision.position.y=1.0;body.add_child(collision)
-		arena.add_child(body);body.setup(model,Callable(self,"bounds"))
+		var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.6,.56,length_m*.68);collision.shape=shape;collision.position.y=.8;body.add_child(collision)
+		body.track_extension=.18;arena.add_child(body);body.center_of_mass.y=.48;body.setup(model,Callable(self,"bounds"));body.add_child(preload("res://vehicle_audio.gd").new())
 	else:
 		body=CharacterBody3D.new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
 		var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
@@ -221,14 +223,14 @@ func toggle_vehicle() -> void:
 		status.text="Exit obstructed";return
 	for body in vehicles:
 		if arena.walker.position.distance_to(body.position)<6:
-			driving=body;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup";return
+			driving=body;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup · C view";return
 	status.text="Move closer to a vehicle to enter"
 
 func _input(event: InputEvent) -> void:
 	if arena.shots_running: return
 	if menu and menu.opened: return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode==KEY_C: select_weapon(selected+1)
+		if event.keycode==KEY_Q: select_weapon(selected+1)
 		if event.keycode==KEY_J:
 			for body in vehicles:
 				if body.has_method("set_controls"):

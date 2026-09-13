@@ -6,6 +6,7 @@ var controls: Dictionary={}
 var readout: Label
 var opened := false
 var loading := false
+var camera_buttons: Array[Button]=[]
 var car: RigidBody3D
 const PATH="user://vehicle_tuning.cfg"
 
@@ -33,13 +34,17 @@ func _ready() -> void:
 	slider(engine,"top_speed","Speed limit · m/s",8,45,1,car.top_speed)
 	slider(engine,"brake_strength","Brake strength",300,2000,50,car.brake_strength)
 	var camera=page(tabs,"Camera")
-	var mode=OptionButton.new();mode.add_item("Chase camera");mode.add_item("Driver seat");camera.add_child(mode);controls.camera_mode=mode
-	mode.item_selected.connect(func(i): settings.camera_mode=float(i);kit.driver_look=Vector2.ZERO;save_settings())
+	# Keep the value control for settings serialization; expose two clear view buttons.
+	var mode=OptionButton.new();mode.add_item("Chase camera");mode.add_item("Driver seat");camera.add_child(mode);controls.camera_mode=mode;mode.hide()
+	var views=HBoxContainer.new();camera.add_child(views)
+	for i in range(2):
+		var button=Button.new();button.text="Chase" if i==0 else "Driver seat";button.toggle_mode=true;button.custom_minimum_size=Vector2(220,42);views.add_child(button);camera_buttons.append(button)
+		button.pressed.connect(func(): set_camera_mode(i))
 	slider(camera,"camera_distance","Chase distance · m",3,14,.25,8)
 	slider(camera,"camera_height","Chase height · m",1,7,.1,4)
 	slider(camera,"camera_fov","Field of view · degrees",55,100,1,75)
 	slider(camera,"camera_smoothing","Chase response",1,20,.5,8)
-	var note=Label.new();note.text="Driver view: mouse looks around; Home centres view.\nChase camera pulls forward when scenery blocks it.";camera.add_child(note)
+	var note=Label.new();note.text="C switches view while driving · Home centres look.\nChase camera pulls forward when scenery blocks it.";camera.add_child(note)
 	readout=Label.new();column.add_child(readout)
 	var buttons=HBoxContainer.new();column.add_child(buttons)
 	var reset=Button.new();reset.text="Reset defaults";buttons.add_child(reset);reset.pressed.connect(reset_defaults)
@@ -63,6 +68,9 @@ func slider(box: VBoxContainer,key: String,label: String,low: float,high: float,
 func set_open(value: bool) -> void:
 	opened=value;panel.visible=value
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
+
+func set_camera_mode(index: int) -> void:
+	settings.camera_mode=float(index);controls.camera_mode.select(index);kit.driver_look=Vector2.ZERO;save_settings()
 
 func save_settings() -> void:
 	if loading: return
@@ -93,4 +101,5 @@ func reset_defaults() -> void:
 	save_settings()
 
 func _process(_delta: float) -> void:
+	for i in range(camera_buttons.size()): camera_buttons[i].set_pressed_no_signal(int(settings.camera_mode)==i)
 	if opened: readout.text="%.0f km/h · %d wheels grounded · %.2f m compression" % [car.linear_velocity.length()*3.6,car.grounded_count,car.max_compression]

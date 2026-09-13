@@ -2,7 +2,7 @@
 
 ## Playable kit
 
-Mouse look is captured on opening the valley. Escape releases it; right click recaptures it. C cycles seven local weapon exports, left click uses the selected weapon, and E enters/exits either nearby vehicle. WASD drives, Space brakes. The range targets are right of the FOB. Vehicles are parked left of it. Weapon aiming follows camera centre; the crosshair marks it.
+Mouse look is captured on opening the valley. Escape releases it; right click recaptures it. Q cycles seven local weapon exports, left click uses the selected weapon, and E enters/exits either nearby vehicle. WASD drives, Space brakes. The range targets are right of the FOB. Vehicles are parked left of it. Weapon aiming follows camera centre; the crosshair marks it.
 
 Imported sources: game/fp_arms with its existing finger controller; game/halo_-_carbine; game/halo_railgun_redesigned; game/halo_warthog; game/altay_main_battle_tank_fbx.glb; the isolated workshop's blade, spear, club, improvised and rock model.glb files. Sources are local dependencies, loaded by absolute path without copying binary art into this prototype's Git history. GLTF image/buffer bytes are embedded in memory to avoid the main project's texture-import remaps. Loading the full kit can take tens of seconds on this machine. Missing sources generate warnings; the rest remain usable.
 

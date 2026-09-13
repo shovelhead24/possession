@@ -32,7 +32,7 @@ func build_landscape() -> void:
 			for p in [Vector2(x,z),Vector2(x+2,z),Vector2(x+2,z+2),Vector2(x,z),Vector2(x+2,z+2),Vector2(x,z+2)]:
 				st.add_vertex(Vector3(p.x,height_at(p.x,p.y),p.y))
 	st.generate_normals()
-	var terrain := mesh_node(st.commit(),Vector3.ZERO,ground_material(Color(0.30,0.37,0.25)))
+	var terrain := mesh_node(st.commit(),Vector3.ZERO,local_ground(Color(0.30,0.37,0.25)))
 	terrain.name="TacticalGround"
 	terrain.create_trimesh_collision()
 
@@ -76,7 +76,7 @@ func build_fob() -> void:
 		for p in [Vector2(x-3,z),Vector2(x+3,z),Vector2(x+3,z+2),Vector2(x-3,z),Vector2(x+3,z+2),Vector2(x-3,z+2)]:
 			ribbon.add_vertex(Vector3(p.x,height_at(p.x,p.y)+0.035,p.y))
 		ribbon.generate_normals()
-		mesh_node(ribbon.commit(),Vector3.ZERO,ground_material(Color(0.38,0.33,0.25)))
+		mesh_node(ribbon.commit(),Vector3.ZERO,local_ground(Color(0.38,0.33,0.25)))
 	label3("RELAY COMPOUND",Vector3(0,5,-281),70)
 
 func building(origin: Vector3, wall: Material, roof: Material) -> void:
@@ -183,7 +183,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_A): dir-=camera.global_basis.x
 	if Input.is_physical_key_pressed(KEY_D): dir+=camera.global_basis.x
 	if flying:
-		if Input.is_physical_key_pressed(KEY_Q): dir+=Vector3.UP
+		if Input.is_physical_key_pressed(KEY_SPACE): dir+=Vector3.UP
 		if Input.is_physical_key_pressed(KEY_Z): dir-=Vector3.UP
 		camera.position+=dir.normalized()*delta*35.0
 		return
@@ -230,3 +230,6 @@ func capture_sequence() -> void:
 
 func ring_gap() -> float:
 	return 0.002
+
+func local_ground(color: Color) -> ShaderMaterial:
+	var mat=ShaderMaterial.new();mat.shader=preload("res://local_ground.gdshader");mat.set_shader_parameter("base_color",Vector3(color.r,color.g,color.b));return mat
