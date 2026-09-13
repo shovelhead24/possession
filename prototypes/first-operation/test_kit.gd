@@ -27,9 +27,9 @@ func run() -> void:
 		assert(kit.driving.position.distance_to(start)>5,"Vehicle cannot drive out of parking place")
 		kit.toggle_vehicle();assert(kit.driving==null and arena.walker.collision_mask==1,"Safe exit failed")
 	arena.set_physics_process(false)
-	arena.camera.position=Vector3(0,2,-296.5);arena.use_station();assert(arena.state.connected(),"Relay needs repeated presses")
+	arena.walker.position=Vector3(0,.2,-296.5);arena.camera.position=Vector3(0,2,-296.5);arena.use_station();assert(arena.state.connected(),"Relay needs repeated presses")
 	var previous=int(target.get_meta("target_hits"))
-	arena.camera.position=Vector3(4,2,-6);arena.use_station()
+	arena.walker.position=Vector3(4,.2,-6);arena.camera.position=Vector3(4,2,-6);arena.use_station()
 	assert(arena.strike_busy,"Strike did not start")
 	await create_timer(2.5).timeout
 	assert(not arena.strike_busy and int(target.get_meta("target_hits"))>previous,"Strike did not impact range")

@@ -12,8 +12,8 @@ var names: Array[String] = []
 var selected := 0
 var cooldown := 0.0
 var recoil := 0.0
-var vehicles: Array[CharacterBody3D] = []
-var driving: CharacterBody3D
+var vehicles: Array = []
+var driving
 var speed := 0.0
 var status: Label
 var shot_count := 0
@@ -77,7 +77,7 @@ func _ready() -> void:
 		target.add_child(shape);arena.add_child(target)
 		arena.box(Vector3.ZERO,cube.size,arena.material(Color(0.5,0.25,0.16)),target)
 	var layer=CanvasLayer.new();add_child(layer)
-	status=Label.new();status.position=Vector2(20,160);status.text="C weapon · Left mouse use · E enter/exit nearby vehicle\nRange targets stand to the right of the FOB";layer.add_child(status)
+	status=Label.new();status.position=Vector2(20,160);status.text="C weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course";layer.add_child(status)
 	var reticle=Label.new();reticle.text="+";reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER);layer.add_child(reticle)
 	reticle.position=get_viewport().get_visible_rect().size*.5-Vector2(5,10)
 	if arena.shots_running: layer.hide()
@@ -139,9 +139,17 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 	a=bounds(model)
 	model.scale*=length_m/maxf(a.size.z,0.01)
 	a=bounds(model);model.position-=Vector3(a.get_center().x,a.position.y,a.get_center().z)
-	var body=CharacterBody3D.new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
-	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
-	arena.add_child(body);vehicles.append(body)
+	var body
+	if label=="Warthog":
+		body=preload("res://wishbone_vehicle.gd").new()
+		body.name=label;body.position=pos;body.add_child(model)
+		var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.6,.7,length_m*.68);collision.shape=shape;collision.position.y=1.0;body.add_child(collision)
+		arena.add_child(body);body.setup(model,Callable(self,"bounds"))
+	else:
+		body=CharacterBody3D.new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
+		var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
+		arena.add_child(body)
+	vehicles.append(body)
 	arena.label3(label+" / E",pos+Vector3(0,3.5,0),32)
 
 func toggle_vehicle() -> void:
@@ -167,6 +175,14 @@ func _input(event: InputEvent) -> void:
 	if arena.shots_running: return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_C: select_weapon(selected+1)
+		if event.keycode==KEY_J:
+			for body in vehicles:
+				if body.has_method("set_controls"):
+					body.global_transform=Transform3D(Basis.IDENTITY,Vector3(-65,2,4));body.linear_velocity=Vector3.ZERO;body.angular_velocity=Vector3.ZERO
+					if not driving: arena.walker.position=Vector3(-61,1,4)
+		if event.keycode==KEY_H:
+			for body in vehicles:
+				if body.has_method("toggle_inspection"): body.toggle_inspection()
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
 		use_weapon()
 
@@ -190,6 +206,10 @@ func _process(delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if arena.shots_running: return
 	for body in vehicles:
+		if body.has_method("set_controls"):
+			body.controlled=body==driving
+			body.set_controls((float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))) if body==driving else 0.0,(float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D))) if body==driving else 0.0,Input.is_physical_key_pressed(KEY_SPACE) if body==driving else true)
+			continue
 		if body==driving:
 			var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))
 			speed=move_toward(speed,throttle*(16 if throttle>=0 else 7),delta*(16 if Input.is_physical_key_pressed(KEY_SPACE) else 5))

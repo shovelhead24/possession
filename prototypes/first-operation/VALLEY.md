@@ -12,7 +12,7 @@ Walk from the FOB to the relay compound roughly 300 metres away. The western rid
 - E: use a nearby station. R: select the approach at the FOB table.
 - F: compare skies. Tab: hide guide. L/B: debug link loss/support availability.
 
-C cycles weapons; left mouse uses them against the range targets. E enters/exits a nearby vehicle; WASD drives and Space brakes. See [asset integration and terrain plan](INTEGRATION.md) for source assets and current limitations.
+C cycles weapons; left mouse uses them against the range targets. E enters/exits a nearby vehicle; WASD drives and Space brakes. H exposes the Warthog suspension; J resets it at the test lane. See [wheel rig and suspension](SUSPENSION.md) and [asset integration and terrain plan](INTEGRATION.md) for source assets and current limitations.
 
 ## Terrain contract and scope
 

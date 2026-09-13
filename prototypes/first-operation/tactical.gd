@@ -14,7 +14,8 @@ func height_at(x: float, z: float) -> float:
 	var gully := -3.8*exp(-pow((x-25.0)/12.0,2.0))
 	var shoulders := 9.0*smoothstep(55.0,115.0,absf(x))
 	var folds := 1.4*sin(z*0.065)*exp(-pow(x/70.0,2.0))
-	return envelope*(ridge+gully+shoulders+folds)
+	var course=(1.0-smoothstep(8.0,14.0,absf(x+65.0)))*smoothstep(-170.0,-150.0,z)*(1.0-smoothstep(12.0,25.0,z))
+	return envelope*(ridge+gully+shoulders+folds)*(1.0-course)
 
 func build_landscape() -> void:
 	super.build_landscape()
@@ -106,6 +107,7 @@ func _ready() -> void:
 	support_status.text="E / CALL STRIKE ON RANGE"
 	relay_status.text="E / CONNECT RELAY"
 	help.text="TACTICAL VALLEY / GREYBOX\nWASD walk · Mouse look · Shift sprint · Space jump\n1 FOB · 2 ridge · 3 gully · 4 compound · V fly/walk\nE interact · R route at table · F sky · Tab guide\nL interrupt link · B support availability"
+	add_child(preload("res://suspension_course.gd").new())
 	if not OS.get_cmdline_user_args().has("--no-kit"): install_kit()
 
 func install_kit() -> void:
@@ -199,8 +201,14 @@ func capture_sequence() -> void:
 	var folder := args[args.find("--capture")+1]
 	DirAccess.make_dir_recursive_absolute(folder)
 	help.hide()
-	for shot in ["fob-route","ridge","gully","compound","interior","overview","Railgun","Blade","Spear","Club","Improvised","Rock","vehicle-yard"]:
+	for shot in ["fob-route","ridge","gully","compound","interior","overview","Railgun","Blade","Spear","Club","Improvised","Rock","vehicle-yard","wishbone-rig","wishbone-steer"]:
 		if kit and shot in kit.names: kit.select_weapon(kit.names.find(shot));viewpoint(1)
+		if shot in ["wishbone-rig","wishbone-steer"]:
+			var car=kit.vehicles[0];car.freeze=true;car.set_physics_process(false);car.global_transform=Transform3D(Basis.IDENTITY,Vector3(-17,.25,9))
+			if not car.inspection: car.toggle_inspection()
+			car.controlled=true;car.set_controls(0,1 if shot=="wishbone-steer" else 0,true)
+			for step in range(30): car._physics_process(1.0/60.0)
+			kit.overlay.hide();camera.position=Vector3(-12,2.8,5);camera.look_at(Vector3(-17,1.0,9))
 		if shot=="vehicle-yard":
 			kit.overlay.hide();camera.position=Vector3(-24,5,24);camera.look_at(Vector3(-24,1.5,9))
 		match shot:
