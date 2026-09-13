@@ -138,6 +138,7 @@ func use_station() -> void:
 		support_status.text=state.report
 
 func _input(event: InputEvent) -> void:
+	if kit and kit.handle_vehicle_input(event): return
 	if kit and kit.driving and event is InputEventKey and event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_V]: return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_V:
 		flying=not flying
@@ -175,6 +176,7 @@ func _process(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	if shots_running or not is_instance_valid(walker): return
+	if kit and kit.menu and kit.menu.opened: return
 	var dir := Vector3.ZERO
 	if Input.is_physical_key_pressed(KEY_W): dir-=camera.global_basis.z
 	if Input.is_physical_key_pressed(KEY_S): dir+=camera.global_basis.z

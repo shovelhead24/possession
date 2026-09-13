@@ -26,3 +26,11 @@ This is a constrained kinematic suspension with ray-based tyres, not a full mult
 - Exposed straight/steered rig captures inspect the original wheel placement and replacement linkage. These checks establish a functioning prototype, not final handling quality.
 
 Use the existing Godot console with `--headless --path` pointing to this directory and `--script res://test_wishbone.gd` (or either other test). Normal Godot user-cache access is required. The autonomous asset worker remains paused.
+
+## Vehicle setup menu
+
+F2 opens four tabs for live Warthog suspension, steering, engine and camera tuning. Sliders use bounded ranges; travel remains within the linkage solver's valid geometry. Values persist in Godot's user data as vehicle_tuning.cfg. Reset defaults restores the baseline. Opening the menu releases the pointer, blocks walking/interactions and applies vehicle brakes; the world continues simulating. F2, Escape or Return to game resumes captured input.
+
+Camera options include chase distance/height/response, field of view and a driver-seat view with mouse look (Home centres it). Chase camera checks scenery obstruction. The player collision body follows the seat while driving and returns to a checked exit on E. The existing soldier FBX supplies a baked seated reference body, visible in chase view and hidden in driver view to prevent head clipping. It is a fixed seated pose, without steering-hand or pedal animation yet. build_driver.py reproduces the GLB using Blender, reducing textures to 1024 pixels; the source FBX is unchanged.
+
+The tuning menu targets the Warthog; tank engine/suspension tuning is not implemented. test_vehicle_setup.gd checks live property changes, settings reload, blocked throttle/braking and both camera modes. Optional --pictures captures the driver and menu.

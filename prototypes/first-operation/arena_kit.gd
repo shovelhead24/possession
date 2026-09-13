@@ -17,6 +17,57 @@ var driving
 var speed := 0.0
 var status: Label
 var shot_count := 0
+var menu: CanvasLayer
+var driver_model: Node3D
+var driver_look := Vector2.ZERO
+var seat_position := Vector3(-.65,1.15,-.1)
+var foot_fov := 75.0
+
+func build_driver() -> void:
+	driver_model=imported("res://seated_driver.glb")
+	if not driver_model: driver_model=Node3D.new()
+	vehicles[0].add_child(driver_model)
+	# The reference soldier faces +Z. Place its hip at the left-hand seat.
+	driver_model.rotation.y=PI
+	driver_model.position=seat_position-Vector3(0,.98,0)
+	driver_model.hide()
+
+func handle_vehicle_input(event: InputEvent) -> bool:
+	if not menu: return false
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode==KEY_F2 or (event.keycode==KEY_ESCAPE and menu.opened):
+			menu.set_open(not menu.opened);get_viewport().set_input_as_handled();return true
+		if event.keycode==KEY_HOME and driving: driver_look=Vector2.ZERO;return true
+	if menu.opened: return true
+	if driving and event is InputEventMouseMotion:
+		if Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
+			driver_look.x=clampf(driver_look.x-event.relative.x*.003,-1.6,1.6)
+			driver_look.y=clampf(driver_look.y-event.relative.y*.003,-.7,.5)
+		return true
+	return false
+
+func update_vehicle_camera(delta: float) -> void:
+	var cfg: Dictionary=menu.settings
+	arena.walker.global_position=driving.to_global(seat_position)
+	arena.camera.fov=cfg.camera_fov
+	if int(cfg.camera_mode)==1:
+		var eye=seat_position+Vector3(0,.68,-.03)
+		if driving!=vehicles[0]: eye=Vector3(0,2.8,0)
+		arena.camera.global_transform=driving.global_transform*Transform3D(Basis.from_euler(Vector3(driver_look.y,driver_look.x,0)),eye)
+		# Hide the body in first person to prevent the head intersecting the lens.
+		driver_model.hide()
+	else:
+		driver_model.visible=driving==vehicles[0]
+		var target: Vector3=driving.global_position+Vector3.UP*1.4
+		var wanted: Vector3=driving.global_position+driving.global_basis.z*cfg.camera_distance+Vector3.UP*cfg.camera_height
+		var ray=PhysicsRayQueryParameters3D.create(target,wanted);ray.exclude=[driving.get_rid(),arena.walker.get_rid()]
+		var hit=arena.get_world_3d().direct_space_state.intersect_ray(ray)
+		if not hit.is_empty(): wanted=hit.position+hit.normal*.25
+		var next: Vector3=arena.camera.global_position.lerp(wanted,1-exp(-cfg.camera_smoothing*delta))
+		# Also check the smoothed location: smoothing must not leave the lens behind a wall.
+		ray.to=next;hit=arena.get_world_3d().direct_space_state.intersect_ray(ray)
+		arena.camera.global_position=hit.position+hit.normal*.25 if not hit.is_empty() else next
+		arena.camera.look_at(target)
 
 func imported(path: String) -> Node3D:
 	if not FileAccess.file_exists(path):
@@ -69,6 +120,8 @@ func _ready() -> void:
 	build_viewmodel()
 	vehicle("Warthog",GAME+"halo_warthog/scene.gltf",Vector3(-17,1,9),6.0)
 	vehicle("Altay",GAME+"altay_main_battle_tank_fbx.glb",Vector3(-29,1,9),9.0)
+	build_driver()
+	menu=preload("res://vehicle_menu.gd").new();add_child(menu)
 	for i in range(3):
 		var target=StaticBody3D.new()
 		target.position=Vector3(12+i*4,1.25,-18-i*6)
@@ -77,7 +130,7 @@ func _ready() -> void:
 		target.add_child(shape);arena.add_child(target)
 		arena.box(Vector3.ZERO,cube.size,arena.material(Color(0.5,0.25,0.16)),target)
 	var layer=CanvasLayer.new();add_child(layer)
-	status=Label.new();status.position=Vector2(20,160);status.text="C weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course";layer.add_child(status)
+	status=Label.new();status.position=Vector2(20,160);status.text="C weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course · F2 vehicle setup";layer.add_child(status)
 	var reticle=Label.new();reticle.text="+";reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER);layer.add_child(reticle)
 	reticle.position=get_viewport().get_visible_rect().size*.5-Vector2(5,10)
 	if arena.shots_running: layer.hide()
@@ -164,15 +217,16 @@ func toggle_vehicle() -> void:
 			p=hit.position+Vector3.UP*0.1
 			var query=PhysicsShapeQueryParameters3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.34;capsule.height=1.8;query.shape=capsule;query.transform.origin=p+Vector3.UP*.9;query.exclude=[arena.walker.get_rid()]
 			if not space.intersect_shape(query).is_empty(): continue
-			arena.walker.position=p;arena.walker.velocity=Vector3.ZERO;arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.set_physics_process(true);driving=null;overlay.show();return
+			arena.walker.position=p;arena.walker.velocity=Vector3.ZERO;arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.set_physics_process(true);driving=null;driver_model.hide();arena.camera.fov=foot_fov;overlay.show();return
 		status.text="Exit obstructed";return
 	for body in vehicles:
 		if arena.walker.position.distance_to(body.position)<6:
-			driving=body;speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit";return
+			driving=body;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup";return
 	status.text="Move closer to a vehicle to enter"
 
 func _input(event: InputEvent) -> void:
 	if arena.shots_running: return
+	if menu and menu.opened: return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_C: select_weapon(selected+1)
 		if event.keycode==KEY_J:
@@ -207,10 +261,10 @@ func _physics_process(delta: float) -> void:
 	if arena.shots_running: return
 	for body in vehicles:
 		if body.has_method("set_controls"):
-			body.controlled=body==driving
-			body.set_controls((float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))) if body==driving else 0.0,(float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D))) if body==driving else 0.0,Input.is_physical_key_pressed(KEY_SPACE) if body==driving else true)
+			body.controlled=body==driving and not menu.opened
+			body.set_controls((float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))) if body==driving and not menu.opened else 0.0,(float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D))) if body==driving and not menu.opened else 0.0,Input.is_physical_key_pressed(KEY_SPACE) if body==driving and not menu.opened else true)
 			continue
-		if body==driving:
+		if body==driving and not menu.opened:
 			var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))
 			speed=move_toward(speed,throttle*(16 if throttle>=0 else 7),delta*(16 if Input.is_physical_key_pressed(KEY_SPACE) else 5))
 			if Input.is_physical_key_pressed(KEY_SPACE): speed=move_toward(speed,0,delta*35)
@@ -221,5 +275,4 @@ func _physics_process(delta: float) -> void:
 		body.velocity.y-=22*delta;body.move_and_slide()
 		if body.position.y < -35: body.position=Vector3(-17,1,9);body.velocity=Vector3.ZERO;speed=0
 	if driving:
-		arena.camera.position=driving.position+driving.basis.z*8+Vector3.UP*4
-		arena.camera.look_at(driving.position+Vector3.UP*1.4)
+		update_vehicle_camera(delta)

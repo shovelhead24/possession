@@ -1,5 +1,15 @@
 extends RigidBody3D
 const Linkage=preload("res://wishbone.gd")
+var spring_rate := 28000.0
+var damping := 2300.0
+var travel_limit := .28
+var grip := 1.15
+var steer_max := 31.5127
+var steer_fast := 11.4592
+var steer_rate := 1.8
+var engine_force := 1800.0
+var top_speed := 24.0
+var brake_strength := 950.0
 var controlled := false
 var throttle := 0.0
 var turn := 0.0
@@ -86,16 +96,16 @@ func point(anchor: Vector3, xy: Vector2, side: float) -> Vector3:
 func _physics_process(dt: float) -> void:
 	if corners.is_empty(): return
 	var up=global_basis.y.normalized()
-	var steer_limit=lerpf(.55,.20,clampf(linear_velocity.length()/25,0,1))
-	steering=move_toward(steering,turn*steer_limit,dt*1.8)
+	var steer_limit=deg_to_rad(lerpf(steer_max,minf(steer_fast,steer_max),clampf(linear_velocity.length()/25,0,1)))
+	steering=move_toward(steering,turn*steer_limit,dt*steer_rate)
 	grounded_count=0;max_compression=0
 	var space=get_world_3d().direct_space_state
 	for c in corners:
 		var anchor: Vector3=c.anchor
 		var side: float=c.side
 		var radius: float=c.radius
-		var droop: Dictionary=Linkage.solve(Linkage.MIN_TRAVEL)
-		var bump: Dictionary=Linkage.solve(Linkage.MAX_TRAVEL)
+		var droop: Dictionary=Linkage.solve(-travel_limit)
+		var bump: Dictionary=Linkage.solve(travel_limit)
 		var geom: Dictionary=Linkage.solve(c.travel)
 		var origin=to_global(point(anchor,Vector2(geom.hub.x,bump.hub.y+.12),side))
 		var ray=PhysicsRayQueryParameters3D.create(origin,origin-up*(bump.hub.y-droop.hub.y+radius+.18))
@@ -104,11 +114,11 @@ func _physics_process(dt: float) -> void:
 		var compression:=0.0
 		if not hit.is_empty() and hit.normal.dot(up)>.25:
 			var target_y=to_local(hit.position+up*radius).y-anchor.y
-			geom=Linkage.at_height(target_y)
+			geom=Linkage.at_height(clampf(target_y,droop.hub.y,bump.hub.y))
 			compression=maxf(0,geom.hub.y-droop.hub.y)
 			var lever: Vector3=hit.position-global_position
 			var contact_v=linear_velocity+angular_velocity.cross(lever-global_basis*center_of_mass)
-			var load=clampf(compression*28000-contact_v.dot(up)*2300,0,18000)
+			var load=clampf(compression*spring_rate-contact_v.dot(up)*damping,0,18000)
 			if target_y>bump.hub.y: load+=minf((target_y-bump.hub.y)*60000,12000)
 			apply_force(up*load,lever)
 			var forward=-global_basis.z
@@ -116,10 +126,10 @@ func _physics_process(dt: float) -> void:
 			forward=forward.slide(hit.normal).normalized()
 			var right=forward.cross(hit.normal).normalized()
 			var lateral=-contact_v.dot(right)*mass*2.2
-			var longitudinal=throttle*1800 if controlled else 0.0
-			longitudinal-=contact_v.dot(forward)*(950 if braking or not controlled else 35)
-			if absf(contact_v.dot(forward))>24 and signf(longitudinal)==signf(contact_v.dot(forward)): longitudinal=0
-			var tyre=Vector2(lateral,longitudinal).limit_length(load*1.15)
+			var longitudinal=throttle*engine_force if controlled else 0.0
+			longitudinal-=contact_v.dot(forward)*(brake_strength if braking or not controlled else 35)
+			if absf(contact_v.dot(forward))>top_speed and signf(longitudinal)==signf(contact_v.dot(forward)): longitudinal=0
+			var tyre=Vector2(lateral,longitudinal).limit_length(load*grip)
 			apply_force(right*tyre.x+forward*tyre.y,lever)
 			grounded_count+=1
 			c.spin.rotate_x(-contact_v.dot(forward)*dt/radius)
