@@ -40,3 +40,5 @@ The existing game/mocks/ring_clouds.gd is the next cloud baseline, with its clou
 The Warthog now uses a solid chassis collider and four spring/tyre contacts. H exposes its articulated wheel rig; J resets it at the suspension test lane. The tank retains its rounded collision proxy. Both vehicles pass forward-travel and safe-exit checks; handling quality still needs playtesting.
 
 Gameplay input is handled before the UI; the weapon viewport does not receive input. The relay connects with one E press. The FOB terminal is labelled E / CALL STRIKE ON RANGE and produces a delayed sequence of visible orange impacts on the range targets, with incoming/completion messages. This is a fixed test strike, not arbitrary targeting or enemy damage simulation.
+
+The latest [forest and practice pass](PRACTICE.md) supersedes the earlier missing-ammo/enemy statements: it adds local trees and provisional combat rigs, magazines, reload timing and firearm sounds. Character animation and final enemy designs remain unfinished.

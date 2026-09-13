@@ -112,6 +112,8 @@ func _ready() -> void:
 
 func install_kit() -> void:
 	kit=preload("res://arena_kit.gd").new();add_child(kit)
+	var trees=preload("res://arena_trees.gd").new();trees.name="ArenaTrees";add_child(trees)
+	add_child(preload("res://practice_range.gd").new())
 
 func viewpoint(index: int) -> void:
 	var points := [Vector3(3.5,0.2,4.5),Vector3(-32,0,-140),Vector3(25,0,-140),Vector3(0,0,-274)]
@@ -122,6 +124,8 @@ func viewpoint(index: int) -> void:
 	camera.look_at(Vector3(0,2,-300) if index>1 else Vector3(0,1.2,0))
 
 func use_station() -> void:
+	if kit and not kit.driving and walker.position.distance_to(Vector3(10,0,-10))<3:
+		get_node("PracticeRange").reset();kit.status.text="PRACTICE RESET / FIRE TO BEGIN / EYES FLASH BEFORE SHOTS";return
 	if kit:
 		if kit.driving:
 			kit.toggle_vehicle();return

@@ -17,6 +17,18 @@ var driving
 var speed := 0.0
 var status: Label
 var shot_count := 0
+var ammo := {"Carbine":24,"Railgun":6}
+var reloading := false
+var shot_audio: AudioStreamPlayer
+var gun_sounds: Dictionary={}
+
+func reload_weapon() -> void:
+	if reloading or driving or names[selected] not in ammo: return
+	var key=names[selected];var capacity=24 if key=="Carbine" else 6
+	if ammo[key]==capacity: return
+	reloading=true;status.text=key+" / RELOADING"
+	await get_tree().create_timer(1.5 if key=="Carbine" else 2.2).timeout
+	ammo[key]=capacity;reloading=false;status.text=key+" / %d ROUNDS" % ammo[key]
 var menu: CanvasLayer
 var driver_model: Node3D
 var driver_look := Vector2.ZERO
@@ -35,6 +47,8 @@ func build_driver() -> void:
 func handle_vehicle_input(event: InputEvent) -> bool:
 	if not menu: return false
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode==KEY_R and not driving and arena.camera.position.distance_to(Vector3(0,2,0))>=7:
+			reload_weapon();get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_F2 or (event.keycode==KEY_ESCAPE and menu.opened):
 			menu.set_open(not menu.opened);get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_C and driving:
@@ -119,6 +133,9 @@ func socket(root: Node3D, key: String) -> Vector3:
 
 func _ready() -> void:
 	arena=get_parent()
+	shot_audio=AudioStreamPlayer.new();shot_audio.volume_db=-17;add_child(shot_audio)
+	for pair in [["Carbine","plasma_rifle.mp3"],["Railgun","quake railgun sound effect.mp3"]]:
+		var stream=AudioStreamMP3.new();stream.data=FileAccess.get_file_as_bytes(GAME+pair[1]);gun_sounds[pair[0]]=stream
 	build_viewmodel()
 	vehicle("Warthog",GAME+"halo_warthog/scene.gltf",Vector3(-17,1,9),4.8)
 	vehicle("Altay",GAME+"altay_main_battle_tank_fbx.glb",Vector3(-29,1,9),9.0)
@@ -178,6 +195,7 @@ func add_weapon(model: Node3D, label: String) -> void:
 	holder.add_child(model);weapons.append(model);names.append(label)
 
 func select_weapon(index: int) -> void:
+	if reloading: return
 	if weapons.is_empty(): return
 	selected=posmod(index,weapons.size())
 	for i in range(weapons.size()): weapons[i].visible=i==selected
@@ -243,21 +261,31 @@ func _input(event: InputEvent) -> void:
 		use_weapon()
 
 func use_weapon() -> void:
-	if cooldown>0 or driving or weapons.is_empty(): return
+	if cooldown>0 or driving or weapons.is_empty() or reloading: return
+	var key=names[selected]
+	if key in ammo:
+		if ammo[key]<=0: status.text=key+" / EMPTY / R RELOAD";return
+		ammo[key]-=1;shot_audio.stream=gun_sounds[key];shot_audio.play()
 	var melee=names[selected] not in ["Carbine","Railgun"]
-	cooldown=.5 if melee else .2;recoil=.06;shot_count+=1
+	cooldown=.55 if melee else (.16 if key=="Carbine" else .85);recoil=.04 if key=="Carbine" else .09;shot_count+=1
 	var camera=arena.camera
-	var ray=PhysicsRayQueryParameters3D.create(camera.position,camera.position-camera.global_basis.z*(2.2 if melee else 250.0));ray.exclude=[arena.walker.get_rid()]
+	var reach=3.0 if key=="Spear" else 2.0
+	var ray=PhysicsRayQueryParameters3D.create(camera.position,camera.position-camera.global_basis.z*(reach if melee else 250.0));ray.exclude=[arena.walker.get_rid()]
 	var hit=arena.get_world_3d().direct_space_state.intersect_ray(ray)
 	if not hit.is_empty():
-		if hit.collider.has_meta("target_hits"):
+		if hit.collider.has_method("take_hit"):
+			var damage=25.0 if key=="Carbine" else (90.0 if key=="Railgun" else (70.0 if key=="Club" else 50.0))
+			status.text=key+" / "+hit.collider.take_hit(damage,camera.global_position,hit.position)
+		elif hit.collider.has_meta("target_hits"):
 			var count=int(hit.collider.get_meta("target_hits"))+1;hit.collider.set_meta("target_hits",count);status.text=names[selected]+" / TARGET HIT "+str(count)
 		else: status.text=names[selected]+" / surface hit"
 	else: status.text=names[selected]+" / miss"
+	if key in ammo: status.text+=" / %d / R reload" % ammo[key]
 
 func _process(delta: float) -> void:
 	cooldown=maxf(0,cooldown-delta);recoil=move_toward(recoil,0,delta*.3)
 	if holder: holder.position.z=-.5+recoil
+	if not names.is_empty() and names[selected]=="Carbine" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and not (menu and menu.opened): use_weapon()
 
 func _physics_process(delta: float) -> void:
 	if arena.shots_running: return

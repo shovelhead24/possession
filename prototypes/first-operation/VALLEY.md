@@ -27,3 +27,5 @@ Initial local arms, seven weapons and two drivable vehicles are now present. Nex
 Run Godot headless with `--path` pointing here and `--script res://test_tactical.gd`. Checks cover route collision/height agreement, open doorway and solid adjacent wall, ridge/gully height separation, a blocked cross-valley sightline, and the player settling on the ground. Existing mission-state tests remain in `test_state.gd`.
 
 Six rendered views cover the route, ridge, gully, compound, interior and overview. These establish geometry visibility, not fresh-player navigation or combat quality. Material fidelity and encounter pacing remain review questions.
+
+See [forest and combat practice](PRACTICE.md): Q changes weapons, R reloads away from the planning table, and E at the range reset console restores the practice group.

@@ -79,6 +79,12 @@ func setup(model: Node3D, source_bounds: Callable) -> void:
 			var t=k/120.0;helix.surface_add_vertex(Vector3(cos(t*TAU*10)*.095,t-.5,sin(t*TAU*10)*.095))
 		helix.surface_end();coil.mesh=helix;coil.material_override=spring_mat;add_child(coil);links.append(coil)
 		corners.append({"anchor":anchor,"side":side,"radius":radius,"hub":hub,"spin":spin,"links":links,"front":centre.z<0,"travel":0.0,"compression":0.0})
+		# Render a substantial chassis bracket and crossmember around the unchanged hardpoints.
+		for pair in [[Vector3(0,anchor.y,anchor.z),anchor], [anchor,Vector3(side*.60,.8,anchor.z)]]:
+			var brace=MeshInstance3D.new();var shape=CylinderMesh.new();shape.top_radius=.09;shape.bottom_radius=.09;shape.height=1;shape.radial_segments=6;brace.mesh=shape;brace.material_override=metal;add_child(brace);rod(brace,pair[0],pair[1])
+		for i in range(4): links[i].mesh.top_radius=.075;links[i].mesh.bottom_radius=.075
+		links[5].material_override=metal;links[6].material_override=metal
+		coil.visible=inspection
 	print("WISHBONE_READY: %d original wheels attached" % corners.size())
 	assert(corners.size()==4,"Expected exactly four source wheel assemblies")
 
@@ -88,6 +94,7 @@ func set_controls(gas: float, steer: float, stop: bool) -> void:
 func toggle_inspection() -> void:
 	inspection=not inspection
 	if shell: shell.visible=not inspection
+	for c in corners: c.links[7].visible=inspection
 
 func rod(mesh: MeshInstance3D, a: Vector3, b: Vector3) -> void:
 	var delta=b-a
