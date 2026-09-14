@@ -10,6 +10,7 @@ func _ready() -> void:
 	reset()
 
 func reset() -> void:
+	for bolt in get_tree().get_nodes_in_group("plasma_bolts"): bolt.queue_free()
 	for enemy in enemies: enemy.queue_free()
 	enemies.clear();health=100;active=false
 	for i in range(3):
@@ -24,3 +25,10 @@ func tracer(a: Vector3,b: Vector3) -> void:
 	var mesh=CylinderMesh.new();mesh.top_radius=.025;mesh.bottom_radius=.025;mesh.height=a.distance_to(b)
 	var node=MeshInstance3D.new();node.mesh=mesh;node.material_override=arena.material(Color(1,.3,.08),0,.5,true);add_child(node);node.position=(a+b)*.5;node.basis=Basis(Quaternion(Vector3.UP,(b-a).normalized()))
 	get_tree().create_timer(.12).timeout.connect(node.queue_free)
+
+func plasma(start: Vector3,direction: Vector3,damage: float,enemy_shot: bool,owner_rid: RID) -> Node3D:
+	var bolt=preload("res://plasma_bolt.gd").new()
+	bolt.position=start;bolt.source=start;bolt.damage=damage;bolt.enemy_shot=enemy_shot;bolt.manager=self;bolt.excluded.append(owner_rid)
+	bolt.velocity=direction.normalized()*(arena.kit.combat_menu.enemy_speed if enemy_shot else arena.kit.combat_menu.player_speed)
+	arena.add_child(bolt)
+	return bolt

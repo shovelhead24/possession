@@ -31,6 +31,7 @@ func reload_weapon() -> void:
 	ammo[key]=capacity;reloading=false;status.text=key+" / %d ROUNDS" % ammo[key]
 var menu: CanvasLayer
 var warthog_menu: CanvasLayer
+var combat_menu: CanvasLayer
 var tank_menu: CanvasLayer
 var reload_audio: AudioStreamPlayer
 var driver_model: Node3D
@@ -50,10 +51,16 @@ func build_driver() -> void:
 func handle_vehicle_input(event: InputEvent) -> bool:
 	if not menu: return false
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode==KEY_F3:
+			var was_open=menu==combat_menu and menu.opened
+			menu.set_open(false);menu=combat_menu;menu.set_open(not was_open);get_viewport().set_input_as_handled();return true
+		if event.keycode==KEY_ESCAPE and menu.opened:
+			menu.set_open(false);get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_R and not driving and arena.camera.position.distance_to(Vector3(0,2,0))>=7:
 			reload_weapon();get_viewport().set_input_as_handled();return true
-		if event.keycode==KEY_F2 or (event.keycode==KEY_ESCAPE and menu.opened):
-			if not menu.opened:
+		if event.keycode==KEY_F2:
+			if not menu.opened or menu==combat_menu:
+				menu.set_open(false)
 				var chosen=driving
 				if not chosen:
 					chosen=vehicles[0]
@@ -62,7 +69,7 @@ func handle_vehicle_input(event: InputEvent) -> bool:
 				menu=tank_menu if chosen==vehicles[1] else warthog_menu
 			menu.set_open(not menu.opened);get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_C and driving:
-			menu.set_camera_mode(1-int(menu.settings.camera_mode));get_viewport().set_input_as_handled();return true
+			(tank_menu if driving==vehicles[1] else warthog_menu).set_camera_mode(1-int((tank_menu if driving==vehicles[1] else warthog_menu).settings.camera_mode));get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_HOME and driving: driver_look=Vector2.ZERO;return true
 	if menu.opened: return true
 	if driving and event is InputEventMouseMotion:
@@ -73,7 +80,7 @@ func handle_vehicle_input(event: InputEvent) -> bool:
 	return false
 
 func update_vehicle_camera(delta: float) -> void:
-	var cfg: Dictionary=menu.settings
+	var cfg: Dictionary=(tank_menu if driving==vehicles[1] else warthog_menu).settings
 	arena.walker.global_position=driving.to_global(seat_position)
 	arena.camera.fov=cfg.camera_fov
 	if int(cfg.camera_mode)==1:
@@ -155,6 +162,8 @@ func _ready() -> void:
 	build_driver()
 	menu=preload("res://vehicle_menu.gd").new();add_child(menu);warthog_menu=menu
 	tank_menu=preload("res://vehicle_menu.gd").new();tank_menu.vehicle_index=1;add_child(tank_menu)
+	combat_menu=preload("res://combat_menu.gd").new();add_child(combat_menu)
+	arena.help.text+="\nF3 plasma speed · F2 vehicle setup"
 	for i in range(3):
 		var target=StaticBody3D.new()
 		target.position=Vector3(12+i*4,1.25,-18-i*6)
@@ -163,7 +172,7 @@ func _ready() -> void:
 		target.add_child(shape);arena.add_child(target)
 		arena.box(Vector3.ZERO,cube.size,arena.material(Color(0.5,0.25,0.16)),target)
 	var layer=CanvasLayer.new();add_child(layer)
-	status=Label.new();status.position=Vector2(20,160);status.text="Q weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course · F2 vehicle setup · C view";layer.add_child(status)
+	status=Label.new();status.position=Vector2(20,190);status.text="Q weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course · F2 vehicle setup · C view";layer.add_child(status)
 	var reticle=Label.new();reticle.text="+";reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER);layer.add_child(reticle)
 	reticle.position=get_viewport().get_visible_rect().size*.5-Vector2(5,10)
 	if arena.shots_running: layer.hide()
@@ -281,6 +290,12 @@ func use_weapon() -> void:
 	if key in ammo:
 		if ammo[key]<=0: status.text=key+" / EMPTY / R RELOAD";return
 		ammo[key]-=1;shot_audio.stream=gun_sounds[key];shot_audio.play()
+	if key=="Carbine":
+		cooldown=.16;recoil=.04;shot_count+=1
+		var range_node=arena.get_node("PracticeRange")
+		range_node.plasma(arena.camera.global_position,-arena.camera.global_basis.z,25.0,false,arena.walker.get_rid())
+		status.text="PLASMA / %d / R reload" % ammo[key]
+		return
 	var melee=names[selected] not in ["Carbine","Railgun"]
 	cooldown=.55 if melee else (.16 if key=="Carbine" else .85);recoil=.04 if key=="Carbine" else .09;shot_count+=1
 	var camera=arena.camera
@@ -324,4 +339,7 @@ func _physics_process(delta: float) -> void:
 		if body.position.y < -35: body.position=Vector3(-17,1,9);body.velocity=Vector3.ZERO;speed=0
 	if driving:
 		update_vehicle_camera(delta)
+
+
+
 

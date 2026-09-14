@@ -10,12 +10,12 @@ func run() -> void:
 		if child.has_meta("target_hits"): target=child;break
 	arena.set_physics_process(false)
 	arena.camera.position=target.position+Vector3(0,0,8);arena.camera.look_at(target.position)
-	kit.use_weapon();assert(target.get_meta("target_hits")==1,"Gun failed to hit target")
+	kit.use_weapon();await create_timer(8.0/kit.combat_menu.player_speed+.2).timeout;assert(target.get_meta("target_hits")==1,"Plasma failed to hit target")
 	kit.select_weapon(kit.names.find("Blade"));kit.cooldown=0;kit.use_weapon();assert(target.get_meta("target_hits")==1,"Melee hit beyond short test reach")
 	kit.select_weapon(0);kit.cooldown=0
 	arena.solid(target.position+Vector3(0,0,4),Vector3(3,3,.5),arena.inactive)
 	await physics_frame;await physics_frame
-	kit.use_weapon();assert(target.get_meta("target_hits")==1,"Shot passed through wall")
+	kit.use_weapon();await create_timer(8.0/kit.combat_menu.player_speed+.2).timeout;assert(target.get_meta("target_hits")==1,"Shot passed through wall")
 	for i in range(60): await physics_frame
 	for vehicle in kit.vehicles:
 		arena.walker.position=vehicle.position+Vector3(4,0,0)
@@ -35,3 +35,4 @@ func run() -> void:
 	assert(not arena.strike_busy and int(target.get_meta("target_hits"))>previous,"Strike did not impact range")
 	print("PASS: seven weapons/two vehicles/arms loaded; target hit; melee range limited; wall blocks shot; both vehicles travel over 5 m and exit safely; one-press relay; strike impacts")
 	quit()
+
