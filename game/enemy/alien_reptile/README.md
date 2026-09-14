@@ -1,0 +1,13 @@
+# Alien reptile
+
+Installed from the user's Downloads on 2026-09-14. The downloaded FBX, OBJ, DAE, X3D, 3DS and Blender files are alternative formats, not separate characters. Originals remain in Downloads.
+
+Godot-ready GLBs embed diffuse and tangent-space normal textures. Authoring scenery is excluded. Standing height is provisionally normalized to 2.4 metres with feet at the origin; final enemy size remains a design choice.
+
+- alien_reptile_high.glb: 5,937 triangles
+- alien_reptile_med.glb: 3,563 triangles
+- alien_reptile_low.glb: 1,147 triangles
+
+No skeleton or animation clips were supplied in the Blender file. These are static assets, not yet wired into combat enemies. Rigging, animation, visual review and final material tuning remain necessary. The source includes an additional 118,771-triangle render mesh, excluded from runtime exports.
+
+prepare.py records the conversion and expects the original Blender file in Downloads and extracted PNG textures beside the script. Source provenance/license has not been supplied.
