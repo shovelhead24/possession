@@ -16,6 +16,7 @@ var cannon_audio: AudioStreamPlayer3D
 
 func setup(model: Node3D, owner_kit: Node) -> void:
 	kit=owner_kit
+	preload("res://tank_finish.gd").apply(model)
 	turret=Node3D.new();turret.name="TurretYaw";add_child(turret);turret.position=Vector3(0,1.5,1.1)
 	barrel=Node3D.new();turret.add_child(barrel);barrel.position=Vector3(0,.247,-2)
 	muzzle=Node3D.new();barrel.add_child(muzzle);muzzle.position=Vector3(0,0,-3.6)
@@ -52,6 +53,7 @@ func fire_cannon() -> bool:
 	var point: Vector3=hit.position if not hit.is_empty() else end
 	kit.arena.get_node("PracticeRange").tracer(start,point)
 	if not hit.is_empty():
+		var impact=AudioStreamPlayer3D.new();impact.stream=cannon_audio.stream;impact.pitch_scale=.7;impact.volume_db=-8;impact.unit_size=20;impact.max_distance=300;kit.arena.add_child(impact);impact.global_position=point;impact.finished.connect(impact.queue_free);impact.play()
 		if hit.collider.has_method("take_hit"): hit.collider.take_hit(cannon_damage,start,point)
 		elif hit.collider.has_meta("target_hits"): hit.collider.set_meta("target_hits",int(hit.collider.get_meta("target_hits"))+1)
 		var blast=kit.arena.box(point,Vector3.ONE*.7,kit.arena.material(Color(1,.5,.1),0,.5,true))

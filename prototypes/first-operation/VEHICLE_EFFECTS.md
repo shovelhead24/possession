@@ -11,3 +11,8 @@ The tank's original upper meshes are reparented to a yaw pivot; the cannon and m
 test_vehicle_effects.gd checks extreme axle splits, dirt stopping while airborne, sound samples, turret movement, direct hits, reload blocking and nearby-cover obstruction. Visual captures check the tank articulation/menu and moving wheel dirt. Existing driving/exit checks remain in test_kit.gd.
 
 The user-selected [enemy pulsed-plasma reference](PLASMA_REFERENCE.md) is recorded separately. Enemy character design awaits the user's next references.
+
+## Wheel lock and tank follow-up (2026-09-14)
+Space applies the configured front/rear brake bias. S brakes all four wheels evenly until their angular speeds approach zero, then engages reverse with the configured fixed-total power split. Wheel angular dynamics permit locking and spinning independently of chassis speed. Slip audio combines grounded wheel slip with a capped volume; airborne wheels emit neither dirt nor skid sound.
+Tank chase obstruction rays start near the hull instead of the distant aim point. Tank paint, rubber and metal now use distinct materials; cannon impacts spawn positional audio at the hit point. Audio remains synthesized placeholder sound.
+

@@ -46,7 +46,7 @@ func _ready() -> void:
 		var engine=page(tabs,"Engine")
 		slider(engine,"engine_force","Drive force per wheel · N",500,4000,100,car.engine_force)
 		slider(engine,"top_speed","Speed limit · m/s",8,45,1,car.top_speed)
-		slider(engine,"brake_strength","Brake strength",300,2000,50,car.brake_strength)
+		slider(engine,"brake_strength","Brake torque per wheel · Nm",300,2000,50,car.brake_strength)
 		var axles=page(tabs,"Axles")
 		slider(axles,"front_power_percent","Power to front % (remainder to rear)",0,100,5,car.front_power_percent)
 		slider(axles,"front_brake_percent","Braking to front % (remainder to rear)",0,100,5,car.front_brake_percent)
@@ -122,3 +122,5 @@ func _process(_delta: float) -> void:
 	for i in range(camera_buttons.size()): camera_buttons[i].set_pressed_no_signal(int(settings.camera_mode)==i)
 	if opened and vehicle_index==1: readout.text="%.0f km/h · cannon ready in %.1f s" % [car.velocity.length()*3.6,car.cooldown]
 	elif opened: readout.text="%.0f km/h · %d wheels grounded · %.2f m compression" % [car.linear_velocity.length()*3.6,car.grounded_count,car.max_compression]
+
+

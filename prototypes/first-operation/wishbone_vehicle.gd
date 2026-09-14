@@ -13,6 +13,18 @@ var brake_strength := 950.0
 var front_power_percent := 50.0
 var front_brake_percent := 50.0
 var controlled := false
+var balanced_braking := false
+var reverse_engaged := false
+
+func driver_controls(gas: bool, stop_reverse: bool, biased_stop: bool, steer: float) -> void:
+	if gas: reverse_engaged=false
+	if stop_reverse and not reverse_engaged:
+		var stopped=true
+		for c in corners:
+			if absf(c.get("omega",0.0))>.2: stopped=false
+		if stopped: reverse_engaged=true
+	balanced_braking=stop_reverse and not reverse_engaged
+	set_controls(1.0 if gas else (-1.0 if stop_reverse and reverse_engaged else 0.0),steer,biased_stop or balanced_braking)
 var track_extension := 0.0
 var wheel_mount_raise := 0.0
 var throttle := 0.0
@@ -139,17 +151,24 @@ func _physics_process(dt: float) -> void:
 			if c.front: forward=forward.rotated(up,steering)
 			forward=forward.slide(hit.normal).normalized()
 			var right=forward.cross(hit.normal).normalized()
-			var lateral=-contact_v.dot(right)*mass*2.2
-			var longitudinal=throttle*engine_force*2*(front_power_percent/100.0 if c.front else 1-front_power_percent/100.0) if controlled else 0.0
-			var brake=brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0) if braking and controlled else (brake_strength if not controlled else 35)
-			c.drive_allocation=longitudinal;c.brake_allocation=brake
-			longitudinal-=contact_v.dot(forward)*brake
-			if absf(contact_v.dot(forward))>top_speed and signf(longitudinal)==signf(contact_v.dot(forward)): longitudinal=0
-			var tyre=Vector2(lateral,longitudinal).limit_length(load*grip)
-			apply_force(right*tyre.x+forward*tyre.y,lever)
+			var drive=throttle*engine_force*2*(front_power_percent/100.0 if c.front else 1-front_power_percent/100.0) if controlled else 0.0
+			if absf(c.get("omega",0.0)*radius)>top_speed and signf(drive)==signf(c.get("omega",0.0)): drive=0
+			var brake=0.0
+			if not controlled or balanced_braking: brake=brake_strength
+			elif braking: brake=brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0)
+			c.drive_allocation=drive;c.brake_allocation=brake
+			var dynamics=preload("res://tyre_dynamics.gd").step(c.get("omega",0.0),contact_v.dot(forward),contact_v.dot(right),radius,load,grip,drive*radius,brake,dt)
+			c.omega=dynamics.omega;c.slip=dynamics.slip
+			apply_force(right*dynamics.force.x+forward*dynamics.force.y,lever)
 			grounded_count+=1;c.grounded=true;c.contact=hit.position
-			c.spin.rotate_x(-contact_v.dot(forward)*dt/radius)
-		else: geom=droop
+		else:
+			geom=droop;c.slip=0.0
+			var share=2*(front_power_percent/100.0 if c.front else 1-front_power_percent/100.0)
+			var drive=throttle*engine_force*radius*share if controlled else 0.0
+			var brake=brake_strength if not controlled or balanced_braking else (brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0) if braking else 0.0)
+			var dynamics=preload("res://tyre_dynamics.gd").step(c.get("omega",0.0),0,0,radius,0,grip,drive,brake,dt)
+			c.omega=dynamics.omega
+		c.spin.rotate_x(-c.omega*dt)
 		c.travel=geom.lower.y;c.compression=compression
 		max_compression=maxf(max_compression,compression)
 		var lower=point(anchor,geom.lower,side)
@@ -169,3 +188,4 @@ func _physics_process(dt: float) -> void:
 		rod(c.links[7],mount,seat)
 	if global_position.y < -35:
 		global_transform=Transform3D(Basis.IDENTITY,Vector3(-17,2,9));linear_velocity=Vector3.ZERO;angular_velocity=Vector3.ZERO
+

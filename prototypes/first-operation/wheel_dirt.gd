@@ -18,8 +18,9 @@ func _process(_delta: float) -> void:
 	var car=get_parent();var speed=Vector2(car.linear_velocity.x,car.linear_velocity.z).length()
 	for i in range(emitters.size()):
 		var corner=car.corners[i];var p=emitters[i]
-		p.emitting=corner.get("grounded",false) and speed>2
+		p.emitting=corner.get("grounded",false) and (speed>2 or absf(corner.get("omega",0.0)*corner.radius)>2)
 		if p.emitting:
 			p.global_position=corner.contact+Vector3.UP*.08
 			p.direction=car.global_basis.z*.5+Vector3.UP
 			p.initial_velocity_max=minf(3,speed*.15+1)
+

@@ -25,7 +25,16 @@ func run():
 	var target=StaticBody3D.new();target.set_meta("target_hits",0);var shape=CollisionShape3D.new();var box=BoxShape3D.new();box.size=Vector3(2,2,1);shape.shape=box;target.add_child(shape);arena.add_child(target)
 	target.position=tank.barrel.global_position-Vector3(0,0,15)
 	await physics_frame;await physics_frame
+	kit.driver_look=Vector2.ZERO
+	var saved_mode=kit.menu.settings.camera_mode;kit.menu.settings.camera_mode=0
+	arena.camera.position=tank.position+Vector3(0,4,8);kit.update_vehicle_camera(1)
+	assert(arena.camera.position.distance_to(tank.position)<14,"Distant target must not pull chase camera forward")
+	kit.menu.settings.camera_mode=saved_mode
 	assert(tank.fire_cannon());assert(target.get_meta("target_hits")==1);assert(not tank.fire_cannon(),"Cannon reload must block repeats")
+	var found_impact=false
+	for child in arena.get_children():
+		if child is AudioStreamPlayer3D and child != tank.cannon_audio and child.playing and child.global_position.distance_to(target.position)<2: found_impact=true
+	assert(found_impact,"Impact audio must play at the target")
 	var wall=StaticBody3D.new();var wall_shape=CollisionShape3D.new();wall_shape.shape=box;wall.add_child(wall_shape);arena.add_child(wall);wall.position=tank.barrel.global_position-Vector3(0,0,2)
 	await physics_frame;await physics_frame
 	tank.cooldown=0;tank.fire_cannon();assert(target.get_meta("target_hits")==1,"Breech ray must stop at nearby cover")
@@ -45,3 +54,4 @@ func run():
 		root.get_texture().get_image().save_png("res://captures/wheel-dirt.png")
 	print("PASS: axle splits, dust contact gating, reload audio, tank aiming, cannon hit/reload/cover")
 	quit()
+

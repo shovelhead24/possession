@@ -88,7 +88,7 @@ func update_vehicle_camera(delta: float) -> void:
 		if driving.has_method("fire_cannon"):
 			target=driving.to_global(Vector3(0,1.75,1.1))-(driving.global_basis*Basis.from_euler(Vector3(driver_look.y,driver_look.x,0))).z*80
 		var wanted: Vector3=driving.global_position+(driving.global_basis*Basis(Vector3.UP,driver_look.x) if driving.has_method("fire_cannon") else driving.global_basis).z*cfg.camera_distance+Vector3.UP*cfg.camera_height
-		var ray=PhysicsRayQueryParameters3D.create(target,wanted);ray.exclude=[driving.get_rid(),arena.walker.get_rid()]
+		var ray=PhysicsRayQueryParameters3D.create(driving.global_position+Vector3.UP*1.4,wanted);ray.exclude=[driving.get_rid(),arena.walker.get_rid()]
 		var hit=arena.get_world_3d().direct_space_state.intersect_ray(ray)
 		if not hit.is_empty(): wanted=hit.position+hit.normal*.25
 		var next: Vector3=arena.camera.global_position.lerp(wanted,1-exp(-cfg.camera_smoothing*delta))
@@ -307,7 +307,8 @@ func _physics_process(delta: float) -> void:
 	for body in vehicles:
 		if body.has_method("set_controls"):
 			body.controlled=body==driving and not menu.opened
-			body.set_controls((float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))) if body==driving and not menu.opened else 0.0,(float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D))) if body==driving and not menu.opened else 0.0,Input.is_physical_key_pressed(KEY_SPACE) if body==driving and not menu.opened else true)
+			if body==driving and not menu.opened: body.driver_controls(Input.is_physical_key_pressed(KEY_W),Input.is_physical_key_pressed(KEY_S),Input.is_physical_key_pressed(KEY_SPACE),float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)))
+			else: body.balanced_braking=false;body.set_controls(0,0,true)
 			continue
 		if body==driving and not menu.opened:
 			var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))
@@ -323,3 +324,4 @@ func _physics_process(delta: float) -> void:
 		if body.position.y < -35: body.position=Vector3(-17,1,9);body.velocity=Vector3.ZERO;speed=0
 	if driving:
 		update_vehicle_camera(delta)
+
