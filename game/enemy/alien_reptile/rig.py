@@ -90,21 +90,69 @@ def ready_pose():
  aim_bone('UpperArm.L',(-.28,-.1,1.43));aim_bone('Forearm.L',(.15,-.65,1.42));aim_bone('Hand.L',(.26,-.75,1.42))
 ready_pose();base={b.name:b.matrix_basis.copy() for b in rig.pose.bones}
 rig.animation_data_create();clips={}
-for clip,length in [('Idle',60),('Run',24),('Fire',12),('Death',30)]:
+for clip,length in [('Idle',60),('Run',24),('Fire',12),('Death',30),('Flee',24),('Walk',48),('Strafe',32),('Jump',24),('Crouch',48),('Dive',32),('Check',64),('Scratch',64),('Look',80),('Talk',64)]:
  act=bpy.data.actions.new(clip);rig.animation_data.action=act
  for f in range(1,length+1):
   t=(f-1)/(length-1);phase=t*math.tau
   for b in rig.pose.bones:b.matrix_basis=base[b.name].copy()
-  if clip=='Run':
+  if clip in ['Run','Flee','Walk','Strafe']:
    for side,s in [('R',1),('L',-1)]:
-    rig.pose.bones['Thigh.'+side].rotation_euler.x+=math.sin(phase)*.55*s
+    rig.pose.bones['Thigh.'+side].rotation_euler.x+=math.sin(phase)*(.28 if clip=='Walk' else .55)*s
     rig.pose.bones['Shin.'+side].rotation_euler.x+=max(0,-math.sin(phase)*s)*.7
    rig.pose.bones['Pelvis'].location.y=abs(math.sin(phase))*.035
   elif clip=='Idle':rig.pose.bones['Spine'].rotation_euler.x+=math.sin(phase)*.018
   elif clip=='Fire':
    kick=math.sin(t*math.pi)*.13;rig.pose.bones['Spine'].rotation_euler.x-=kick;rig.pose.bones['Rifle'].location.y-=kick*.2
-  else:
+  elif clip=='Death':
    rig.pose.bones['Root'].rotation_euler.z=min(1,t*1.5)*1.5
+  if clip=='Flee':
+   for side,s in [('R',1),('L',-1)]:
+    aim_bone('UpperArm.'+side,(s*.4,0,2.2));aim_bone('Forearm.'+side,(s*.5,.04,2.65));aim_bone('Hand.'+side,(s*.5,-.08,2.9))
+    rig.pose.bones['Forearm.'+side].rotation_euler.z+=math.sin(phase)*.15
+  elif clip=='Strafe':
+   for side,s in [('R',1),('L',-1)]:rig.pose.bones['Thigh.'+side].rotation_euler.z+=math.sin(phase)*.3*s
+  elif clip in ['Crouch','Jump']:
+   fold=1 if clip=='Crouch' else math.sin(t*math.pi)
+   rig.pose.bones['Pelvis'].location.y=(-.62 if clip=='Crouch' else -.42)*fold
+   rig.pose.bones['Spine'].rotation_euler.x+=.2*fold
+   for side in ['R','L']:
+    rig.pose.bones['Thigh.'+side].rotation_euler.x-=.7*fold;rig.pose.bones['Shin.'+side].rotation_euler.x+=1.1*fold
+  elif clip=='Dive':
+   def smooth(a,b,v):
+    u=max(0,min(1,(v-a)/(b-a)));return u*u*(3-2*u)
+   extension=smooth(.10,.30,t)*(1-smooth(.62,1,t))
+   coil=math.sin(min(1,t/.14)*math.pi)*.25 if t<.14 else 0
+   rig.pose.bones['Pelvis'].location.y=-coil
+   # Reach forward with both arms and the rifle as the body leaves the ground.
+   for side,s in [('R',1),('L',-1)]:
+    aim_bone('UpperArm.'+side,(s*.3,0,2.15));aim_bone('Forearm.'+side,(s*.25,-.12,2.48));aim_bone('Hand.'+side,(s*.25,-.1,2.7))
+   weapon=rig.pose.bones['Rifle'];mat=Vector((0,0,1)).to_track_quat('Y','Z').to_matrix().to_4x4();mat.translation=Vector((.25,-.12,2.38));weapon.matrix=mat
+   bpy.context.view_layer.update()
+   for name in ['UpperArm.R','UpperArm.L','Forearm.R','Forearm.L','Hand.R','Hand.L','Rifle']:
+    rig.pose.bones[name].matrix_basis=base[name].lerp(rig.pose.bones[name].matrix_basis,extension)
+   rig.pose.bones['Root'].rotation_euler.x=extension*1.4
+   rig.pose.bones['Root'].location.y=.12*extension
+   for side in ['R','L']:rig.pose.bones['Shin.'+side].rotation_euler.x+=.25*extension
+  elif clip=='Check':
+   rig.pose.bones['Head'].rotation_euler.x+=.3*math.sin(t*math.pi)
+   aim_bone('Forearm.L',(.18,-.4,1.5));rig.pose.bones['Hand.L'].rotation_euler.y+=math.sin(phase*2)*.15
+  elif clip=='Scratch':
+   aim_bone('UpperArm.L',(-.4,0,2.05));aim_bone('Forearm.L',(-.1,-.05,2.28));aim_bone('Hand.L',(-.05,-.06,2.38))
+   rig.pose.bones['Hand.L'].rotation_euler.x+=math.sin(phase*3)*.25
+  elif clip=='Look':rig.pose.bones['Head'].rotation_euler.y+=math.sin(phase)*.65
+  elif clip=='Talk':
+   rig.pose.bones['Head'].rotation_euler.y+=math.sin(phase)*.25
+   aim_bone('Forearm.L',(-.35,-.6,1.65));rig.pose.bones['Forearm.L'].rotation_euler.z+=math.sin(phase*2)*.15
+  if clip=='Crouch':
+   # Solve each knee around a planted ankle, instead of pulling the feet underground.
+   bpy.context.view_layer.update()
+   for side,s in [('R',1),('L',-1)]:
+    thigh=rig.pose.bones['Thigh.'+side];shin=rig.pose.bones['Shin.'+side]
+    hip=thigh.head.copy();ankle=p(s*.4,-.64,.28);axis=(ankle-hip).normalized();d=(ankle-hip).length
+    l1=arm.bones['Thigh.'+side].length;l2=arm.bones['Shin.'+side].length
+    along=(l1*l1-l2*l2+d*d)/(2*d);bend=Vector((0,-1,0));bend=(bend-axis*bend.dot(axis)).normalized()
+    knee=hip+axis*along+bend*math.sqrt(max(0,l1*l1-along*along))
+    aim_bone('Thigh.'+side,knee);aim_bone('Shin.'+side,ankle);aim_bone('Foot.'+side,p(s*.4,-.88,.07))
   for n in ['Tail1','Tail2','Tail3']:rig.pose.bones[n].rotation_euler.z+=math.sin(phase+len(n))*.09
   if clip=='Death':
    # Keep the collapsed skin above the ground throughout the fall.
@@ -123,5 +171,8 @@ rig.scale=(1.3/2.4,)*3
 bpy.ops.wm.save_as_mainfile(filepath=str(r/'lizard_rig.blend'))
 bpy.ops.export_scene.gltf(filepath=str(r/'lizard_rig.glb'),export_format='GLB',export_animations=True,export_animation_mode='ACTIONS')
 (r/'rig-report.json').write_text(json.dumps({'bones':len(arm.bones),'clips':list(clips),'height':1.3,'vertices':len(mesh.data.vertices)},indent=2))
+
+
+
 
 

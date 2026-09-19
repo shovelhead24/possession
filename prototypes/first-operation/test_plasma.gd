@@ -2,12 +2,13 @@ extends SceneTree
 func _initialize(): call_deferred("run")
 func run():
 	var arena=load("res://tactical.tscn").instantiate();root.add_child(arena);await process_frame
-	var kit=arena.kit;var range_node=arena.get_node("PracticeRange");var scout=range_node.enemies[0]
+	var kit=arena.kit;var range_node=arena.get_node("PracticeRange");var scout=range_node.enemies[1]
 	assert(scout.lizard.skeleton.get_bone_count()>=20)
-	assert(scout.lizard.clips.size()==4,"All four animation clips must import")
+	assert(scout.lizard.clips.size()==14,"All animation clips must import")
 	assert(scout.lizard.skeleton.find_bone("Muzzle")>=0)
 	assert(scout.lizard.muzzle_position().distance_to(scout.position)<1.5)
 	for enemy in range_node.enemies: enemy.set_physics_process(false)
+	for squad in range_node.squads: squad.set_physics_process(false)
 	kit.set_physics_process(false);arena.set_physics_process(false)
 	var target=StaticBody3D.new();var shape=CollisionShape3D.new();var box=BoxShape3D.new();box.size=Vector3(2,2,.05);shape.shape=box;target.add_child(shape);target.set_meta("target_hits",0);arena.add_child(target);target.position=Vector3(-110,20,20)
 	await physics_frame;await physics_frame
@@ -52,3 +53,4 @@ func run():
 	range_node.reset();await process_frame;assert(get_nodes_in_group("plasma_bolts").is_empty())
 	print("PASS: skinned lizard, four clips, muzzle socket, timed plasma travel, thin cover, single hit, enemy damage, menu keys, reset cleanup")
 	quit()
+

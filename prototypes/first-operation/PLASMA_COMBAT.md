@@ -1,5 +1,7 @@
 # Lizard scout and travelling plasma
 
+The current encounter uses four elite-led squads; see SQUADS.md for morale, grenades, search behaviour and the expanded fourteen-clip animation set. The original standalone scout/guard/heavy arrangement described below has been superseded.
+
 F3 opens combat setup. Player and enemy projectile speeds have separate persistent sliders (5–150 m/s); defaults are 45 and 22 m/s. Changes affect new shots. F3 or Escape closes it; F2 still opens vehicle tuning. Q retains weapon cycling. The existing player Carbine is now the plasma rifle mechanically; Railgun retains instant-hit behavior.
 
 Plasma bolts visibly travel and sweep a collision ray over each movement step so they cannot tunnel through thin walls at high speeds. Each bolt deals damage once, on impact, and expires after 250 metres. Player bolts deal 25 damage, scout bolts 8. The scout retains 50 HP, so two plasma hits kill it. Resetting practice clears projectiles and respawns the targets.

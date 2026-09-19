@@ -56,6 +56,8 @@ func handle_vehicle_input(event: InputEvent) -> bool:
 			menu.set_open(false);menu=combat_menu;menu.set_open(not was_open);get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_ESCAPE and menu.opened:
 			menu.set_open(false);get_viewport().set_input_as_handled();return true
+		if event.keycode==KEY_G:
+			arena.get_node("PracticeRange").throw_grenade();get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_R and not driving and arena.camera.position.distance_to(Vector3(0,2,0))>=7:
 			reload_weapon();get_viewport().set_input_as_handled();return true
 		if event.keycode==KEY_F2:
@@ -163,7 +165,7 @@ func _ready() -> void:
 	menu=preload("res://vehicle_menu.gd").new();add_child(menu);warthog_menu=menu
 	tank_menu=preload("res://vehicle_menu.gd").new();tank_menu.vehicle_index=1;add_child(tank_menu)
 	combat_menu=preload("res://combat_menu.gd").new();add_child(combat_menu)
-	arena.help.text+="\nF3 plasma speed · F2 vehicle setup"
+	arena.help.text+="\nF3 plasma speed · F2 vehicle setup · G frag"
 	for i in range(3):
 		var target=StaticBody3D.new()
 		target.position=Vector3(12+i*4,1.25,-18-i*6)
@@ -287,6 +289,7 @@ func _input(event: InputEvent) -> void:
 func use_weapon() -> void:
 	if cooldown>0 or driving or weapons.is_empty() or reloading: return
 	var key=names[selected]
+	arena.get_node("PracticeRange").alert_shot(arena.camera.global_position)
 	if key in ammo:
 		if ammo[key]<=0: status.text=key+" / EMPTY / R RELOAD";return
 		ammo[key]-=1;shot_audio.stream=gun_sounds[key];shot_audio.play()
@@ -339,6 +342,7 @@ func _physics_process(delta: float) -> void:
 		if body.position.y < -35: body.position=Vector3(-17,1,9);body.velocity=Vector3.ZERO;speed=0
 	if driving:
 		update_vehicle_camera(delta)
+
 
 
 

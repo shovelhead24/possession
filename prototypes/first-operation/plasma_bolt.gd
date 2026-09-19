@@ -7,10 +7,11 @@ var enemy_shot := false
 var manager: Node
 var remaining := 250.0
 var spent := false
+var tint := Color.TRANSPARENT
 
 func _ready() -> void:
 	add_to_group("plasma_bolts")
-	var color=Color(.12,1,.65) if enemy_shot else Color(.5,.25,1)
+	var color=tint if tint.a>0 else (Color(.12,1,.65) if enemy_shot else Color(.5,.25,1))
 	for outer in [true,false]:
 		var mesh=MeshInstance3D.new();var capsule=CapsuleMesh.new();capsule.radius=.05 if outer else .018;capsule.height=.38 if outer else .28;capsule.radial_segments=8;capsule.rings=3;mesh.mesh=capsule;mesh.rotation.x=PI/2;mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		var mat=StandardMaterial3D.new();mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;mat.albedo_color=color if outer else Color(.9,1,.95);mat.emission_enabled=true;mat.emission=mat.albedo_color;mat.emission_energy_multiplier=2

@@ -15,7 +15,9 @@ func height_at(x: float, z: float) -> float:
 	var shoulders := 9.0*smoothstep(55.0,115.0,absf(x))
 	var folds := 1.4*sin(z*0.065)*exp(-pow(x/70.0,2.0))
 	var course=(1.0-smoothstep(8.0,14.0,absf(x+65.0)))*smoothstep(-170.0,-150.0,z)*(1.0-smoothstep(12.0,25.0,z))
-	return envelope*(ridge+gully+shoulders+folds)*(1.0-course)
+	var outer=smoothstep(115.0,180.0,absf(x))+smoothstep(330.0,400.0,-z)
+	var rolling=(6.0+4.0*sin(x*.027)*cos(z*.021)+2.5*sin(z*.05+x*.016))*minf(outer,1.0)
+	return envelope*(ridge+gully+shoulders+folds)*(1.0-course)+rolling
 
 func build_landscape() -> void:
 	super.build_landscape()
@@ -27,11 +29,11 @@ func build_landscape() -> void:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for iz in range(230):
 		for ix in range(180):
-			var x := -180.0+ix*2.0
-			var z := -380.0+iz*2.0
-			for p in [Vector2(x,z),Vector2(x+2,z),Vector2(x+2,z+2),Vector2(x,z),Vector2(x+2,z+2),Vector2(x,z+2)]:
+			var x := -270.0+ix*3.0
+			var z := -580.0+iz*3.0
+			for p in [Vector2(x,z),Vector2(x+3,z),Vector2(x+3,z+3),Vector2(x,z),Vector2(x+3,z+3),Vector2(x,z+3)]:
 				st.add_vertex(Vector3(p.x,height_at(p.x,p.y),p.y))
-	st.generate_normals()
+	st.index();st.generate_normals()
 	var terrain := mesh_node(st.commit(),Vector3.ZERO,local_ground(Color(0.30,0.37,0.25)))
 	terrain.name="TacticalGround"
 	terrain.create_trimesh_collision()
@@ -125,7 +127,7 @@ func viewpoint(index: int) -> void:
 
 func use_station() -> void:
 	if kit and not kit.driving and walker.position.distance_to(Vector3(10,0,-10))<3:
-		get_node("PracticeRange").reset();kit.status.text="PRACTICE RESET / FIRE TO BEGIN / EYES FLASH BEFORE SHOTS";return
+		get_node("PracticeRange").reset();kit.status.text="SQUADS RESET / G frag / F3 plasma speed";return
 	if kit:
 		if kit.driving:
 			kit.toggle_vehicle();return
@@ -237,3 +239,5 @@ func ring_gap() -> float:
 
 func local_ground(color: Color) -> ShaderMaterial:
 	var mat=ShaderMaterial.new();mat.shader=preload("res://local_ground.gdshader");mat.set_shader_parameter("base_color",Vector3(color.r,color.g,color.b));return mat
+
+

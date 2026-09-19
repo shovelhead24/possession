@@ -9,7 +9,12 @@ void fragment(){
  float distance_m=length(world_position-CAMERA_POSITION_WORLD);
  float detail=1.0-smoothstep(18.0,75.0,distance_m);
  float grain=(noise(world_position.xz*9.0)-.5)*.12*detail;
- float patches=(noise(world_position.xz*.8)-.5)*.14;
- ALBEDO=base_color*(1.0+patches+grain);
+ float patches=(noise(world_position.xz*.22)-.5)*.08;
+ float meadow=noise(world_position.xz*.045);
+ float dry=smoothstep(.48,.73,noise(world_position.xz*.13+vec2(40,70)));
+ vec3 grass=mix(base_color*vec3(.78,1.02,.73),base_color*vec3(1.17,1.08,.83),meadow);
+ grass=mix(grass,base_color*vec3(1.22,1.07,.78),dry*.38);
+ ALBEDO=grass*(1.0+patches+grain);
  ROUGHNESS=.95;
 }
+

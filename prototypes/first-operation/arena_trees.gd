@@ -25,9 +25,9 @@ func _ready() -> void:
 		buckets.append(levels)
 	assert(not buckets.is_empty(),"Tree pack has no usable LODs")
 	var rng=RandomNumberGenerator.new();rng.seed=852
-	for attempt in range(900):
-		if trees.size()>=150: break
-		var x=rng.randf_range(-145,145);var z=rng.randf_range(-260,-42)
+	for attempt in range(1800):
+		if trees.size()>=230: break
+		var x=rng.randf_range(-230,230);var z=rng.randf_range(-500,-42)
 		if absf(x+65)<13 or absf(x-25)<10 or absf(x)<10: continue
 		if x>10 and x<55 and z>-95: continue
 		if absf(sin(x*.04)+cos(z*.045))<.55: continue
@@ -57,3 +57,4 @@ func update_lods() -> void:
 		for l in range(4):
 			var mm=buckets[v][l].multimesh;mm.instance_count=lists[v][l].size()
 			for i in range(mm.instance_count): mm.set_instance_transform(i,lists[v][l][i])
+
