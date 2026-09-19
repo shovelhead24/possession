@@ -4,6 +4,8 @@ Stand behind the Warthog and press E to use its turret. Side entry still selects
 
 Yaw is unrestricted through 360 degrees; elevation and depression are both 30 degrees. The pedestal stays planted while the upper gun elevates. A skinned gunner samples the GunnerCrouch animation continuously forward or backward with elevation, with planted feet and authored two-bone arm poses tracking the grips. The first-person eye remains behind the receiver, independently positioned to avoid passing through the gun, with the gunner body hidden only in that view.
 
+The first-person eye is centred on the barrel axis, above and behind the receiver, and follows barrel elevation. It no longer uses a sideways camera offset.
+
 Both mounted roles remain visible to squad perception and retain player damage. Enemy plasma striking the occupied vehicle also damages the player; separate armour and vehicle health are not implemented here. Mounted defeat restores the on-foot state before respawning.
 
 The cold mechanism spins for one second before the first round. Fire rate then rises from 300 to 900 RPM over 1.5 seconds and stays there indefinitely: no overheating or ammunition limit in this sandbox. Releasing the trigger spins down at 1.5 spool units per second, allowing warm bursts to restart faster. Motor and firing audio, tracers and muzzle flashes provide feedback.

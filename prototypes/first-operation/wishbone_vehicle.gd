@@ -13,6 +13,7 @@ var brake_strength := 950.0
 var front_power_percent := 50.0
 var front_brake_percent := 50.0
 var controlled := false
+var suspension_exclusions: Array[RID]=[]
 var balanced_braking := false
 var reverse_engaged := false
 
@@ -135,6 +136,8 @@ func _physics_process(dt: float) -> void:
 		var origin=to_global(point(anchor,Vector2(geom.hub.x,bump.hub.y+.12),side))
 		var ray=PhysicsRayQueryParameters3D.create(origin,origin-up*(bump.hub.y-droop.hub.y+radius+.18))
 		ray.exclude=[get_rid()]
+		ray.exclude+=suspension_exclusions
+		ray.collision_mask=1|4
 		var hit=space.intersect_ray(ray)
 		c.grounded=false
 		var compression:=0.0
@@ -188,4 +191,3 @@ func _physics_process(dt: float) -> void:
 		rod(c.links[7],mount,seat)
 	if global_position.y < -35:
 		global_transform=Transform3D(Basis.IDENTITY,Vector3(-17,2,9));linear_velocity=Vector3.ZERO;angular_velocity=Vector3.ZERO
-

@@ -244,8 +244,10 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 	var body
 	if label=="Warthog":
 		body=preload("res://wishbone_vehicle.gd").new()
+		body.suspension_exclusions.append(arena.walker.get_rid())
 		body.name=label;body.position=pos;body.add_child(model)
-		var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.6,.56,length_m*.68);collision.shape=shape;collision.position.y=.8;body.add_child(collision)
+		# Cover the visible hull and bumpers, leaving clearance for the ray suspension.
+		var collision=CollisionShape3D.new();collision.name="ChassisCollision";var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.82,.76,length_m*.92);collision.shape=shape;collision.position.y=.85;body.add_child(collision)
 		preload("res://warthog_finish.gd").finish(model,Callable(self,"bounds"));body.track_extension=.18;body.wheel_mount_raise=.14;arena.add_child(body);body.center_of_mass.y=.48;body.setup(model,Callable(self,"bounds"));body.add_child(preload("res://vehicle_audio.gd").new());body.add_child(preload("res://wheel_dirt.gd").new())
 		warthog_turret=preload("res://warthog_turret.gd").new();body.add_child(warthog_turret);warthog_turret.setup(self,body,model)
 	else:
@@ -253,6 +255,8 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 		var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
 		arena.add_child(body);body.setup(model,self)
 	vehicles.append(body)
+	body.collision_mask|=4
+	var impacts=preload("res://vehicle_impacts.gd").new();impacts.kit=self;body.add_child(impacts)
 	arena.label3(label+(" / E sides: drive / rear: turret" if label=="Warthog" else " / E"),pos+Vector3(0,3.5,0),32)
 
 func toggle_vehicle() -> void:
@@ -267,14 +271,25 @@ func toggle_vehicle() -> void:
 			p=hit.position+Vector3.UP*0.1
 			var query=PhysicsShapeQueryParameters3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.34;capsule.height=1.8;query.shape=capsule;query.transform.origin=p+Vector3.UP*.9;query.exclude=[arena.walker.get_rid()]
 			if not space.intersect_shape(query).is_empty(): continue
-			arena.walker.position=p;arena.walker.velocity=Vector3.ZERO;arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.set_physics_process(true);driving=null;gunning=false;arena.walker.get_child(0).shape.height=1.8;arena.walker.get_child(0).position.y=.9;driver_model.hide();arena.camera.fov=foot_fov;overlay.show();return
+			var exited=driving
+			arena.walker.position=p;arena.walker.velocity=Vector3.ZERO;arena.walker.get_child(0).shape.height=1.8;arena.walker.get_child(0).position.y=.9
+			arena.walker.force_update_transform();arena.walker.reset_physics_interpolation()
+			arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.set_physics_process(true);driving=null;gunning=false;driver_model.hide();arena.camera.fov=foot_fov;overlay.show();restore_vehicle_collision(exited);return
 		status.text="Exit obstructed";return
 	for body in vehicles:
 		if arena.walker.position.distance_to(body.position)<6:
+			body.add_collision_exception_with(arena.walker);arena.walker.add_collision_exception_with(body)
 			var local=body.to_local(arena.walker.global_position)
 			gunning=body==vehicles[0] and local.z>1.3 and absf(local.x)<1.8
 			driving=body;menu=tank_menu if body==vehicles[1] else warthog_menu;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=2;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup · C view";return
 	status.text="Move closer to a vehicle to enter"
+
+func restore_vehicle_collision(body: PhysicsBody3D) -> void:
+	# Allow the teleported capsule's new transform to reach the physics server first.
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	if is_instance_valid(body) and driving!=body:
+		body.remove_collision_exception_with(arena.walker);arena.walker.remove_collision_exception_with(body)
 
 func _input(event: InputEvent) -> void:
 	if arena.shots_running: return
@@ -349,8 +364,3 @@ func _physics_process(delta: float) -> void:
 		if body.position.y < -35: body.position=Vector3(-17,1,9);body.velocity=Vector3.ZERO;speed=0
 	if driving:
 		update_vehicle_camera(delta)
-
-
-
-
-

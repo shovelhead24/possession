@@ -8,13 +8,15 @@ var dying := false
 var elite := false
 var ragdoll: PhysicalBoneSimulator3D
 var weapons: Array[MeshInstance3D]=[]
-static var cached_scene: PackedScene
+static var cached_scenes: Dictionary={}
 func _ready() -> void:
-	if cached_scene==null:
+	var size_factor=scale.x
+	if not cached_scenes.has(size_factor):
 		var doc=GLTFDocument.new();var state=GLTFState.new()
 		if doc.append_from_file(ProjectSettings.globalize_path("res://lizard_rig.glb"),state)!=OK: push_error("Lizard model unavailable");return
-		var source=doc.generate_scene(state);cached_scene=PackedScene.new();cached_scene.pack(source);source.free()
-	var model=cached_scene.instantiate();model.rotation.y=PI;add_child(model)
+		var source=doc.generate_scene(state);preload("res://rig_scale_bake.gd").apply(source,size_factor)
+		var packed=PackedScene.new();packed.pack(source);cached_scenes[size_factor]=packed;source.free()
+	var model=cached_scenes[size_factor].instantiate();model.rotation.y=PI;model.scale=Vector3.ONE/size_factor;add_child(model)
 	var stack=[model]
 	while not stack.is_empty():
 		var n=stack.pop_back()

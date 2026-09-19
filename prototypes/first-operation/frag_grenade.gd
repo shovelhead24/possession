@@ -3,7 +3,7 @@ var manager: Node
 var resting := 0.0
 var exploded := false
 var stopped := false
-const STOP_SPEED := .65
+const STOP_SPEED := .85
 const BLAST_RADIUS := 9.0
 func _ready() -> void:
 	add_to_group("frag_grenades");mass=.4;contact_monitor=true;max_contacts_reported=8;linear_damp=.25;angular_damp=1.2

@@ -5,7 +5,7 @@ Four squads occupy separate positions across the valley. Each has one purple eli
 ## Controls
 
 - G throws a frag grenade on foot. Practice grenades are unlimited with a short throw cooldown.
-- A frag is stopped completely when its ground-contact speed drops below 0.65 m/s, then detonates two seconds later. Its spin is also stopped so slow rolling cannot postpone the explosion indefinitely. There is no timer from the throw, and no midair detonation at the apex. Elites react to visible grenades inside roughly 11 m and physically dive along a checked escape direction.
+- A frag is stopped completely when its ground-contact speed drops below 0.85 m/s, then detonates two seconds later. Its spin is also stopped so slow rolling cannot postpone the explosion indefinitely. There is no timer from the throw, and no midair detonation at the apex. Elites react to visible grenades inside roughly 11 m and physically dive along a checked escape direction.
 - Frags have a 9 m blast radius with damage falloff. Solid cover blocks blast damage, including damage to the player. Grenades can hurt the thrower after leaving their hand.
 - E at the existing practice console resets all squads, grenades and plasma bolts.
 
@@ -23,6 +23,6 @@ The skinned rig has fourteen clips: Idle, Run, Walk, Strafe, Jump, Crouch, Dive,
 
 Flee raises both hands; crouching plants the feet using a two-bone solve in the authored pose. The dive has a short crouched launch, forward body/arm extension, airborne movement, a prone collision shape, a tucked forward roll and recovery to standing. The complete sequence lasts about two seconds. Social idles are selected at patrol stops; nearby stationary squadmates turn toward one another and talk. Jumping is used for low obstacles when the upper path is clear. These remain authored prototype loops, without dynamic foot IK or a full animation blend tree.
 
-The local terrain spans 540 by 690 m, with rolling outer hills, broad grass colour variation, 41 colliding boulders and 230 trees. The original FOB, relay route and suspension course remain in place. All twenty characters share imported mesh and animation resources; only elite skin materials differ.
+The local terrain spans 540 by 690 m, with rolling outer hills, broad grass colour variation, 41 colliding boulders and 230 trees. The original FOB, relay route and suspension course remain in place. Characters share imported mesh and animation resources within each size. Import scale is baked into each size variant so the physics skeleton has unit world scale. A post-physics skeleton modifier preserves rigid limb lengths and joint scales during death.
 
 Tests cover squad composition, size and health differences, animation import, morale, exact memory thresholds, alternate hunting teams, grenade fuse reset, physical resting detonation, blast occlusion, navigation, live target acquisition, red shots and automatic evasive movement. Visual captures review scale, purple skin, hands-up flight, crouching and dives.

@@ -132,7 +132,8 @@ func update_camera() -> void:
 	var basis=body.global_basis*Basis.from_euler(Vector3(kit.driver_look.y,kit.driver_look.x,0))
 	# Eye remains behind the receiver throughout pitch travel; never orbit it into the gun.
 	var chase=int(kit.warthog_menu.settings.camera_mode)==0
-	var eye=yaw.to_global(Vector3(0 if chase else .38,1.82-.35*crouch,.95))
+	# Centre the sight line above the receiver and rotate it with the barrel.
+	var eye=yaw.to_global(Vector3(0,1.82-.35*crouch,.95)) if chase else pitch.to_global(Vector3(0,.62,1.15))
 	var wanted=eye+yaw.global_basis.z*3.8+body.global_basis.y*.9 if chase else eye
 	gunner.visible=chase
 	var ray=PhysicsRayQueryParameters3D.create(eye,wanted);ray.exclude=[body.get_rid(),kit.arena.walker.get_rid()]
