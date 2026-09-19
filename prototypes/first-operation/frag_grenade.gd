@@ -2,6 +2,8 @@ extends RigidBody3D
 var manager: Node
 var resting := 0.0
 var exploded := false
+var stopped := false
+const STOP_SPEED := .65
 const BLAST_RADIUS := 9.0
 func _ready() -> void:
 	add_to_group("frag_grenades");mass=.4;contact_monitor=true;max_contacts_reported=8;linear_damp=.25;angular_damp=1.2
@@ -11,12 +13,14 @@ func _ready() -> void:
 	var mat=StandardMaterial3D.new();mat.albedo_color=Color(.16,.22,.09);mat.metallic=.5;mat.roughness=.5;visual.material_override=mat;add_child(visual)
 	var band=MeshInstance3D.new();var ring=CylinderMesh.new();ring.top_radius=.125;ring.bottom_radius=.125;ring.height=.04;band.mesh=ring;var glow=StandardMaterial3D.new();glow.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;glow.albedo_color=Color(1,.65,.1);band.material_override=glow;add_child(band)
 func update_fuse(delta: float,contact: bool,speed: float,spin: float) -> bool:
-	# A continuous second of supported rest, never a fuse measured from the throw.
+	# Two seconds after stopping, never a fuse measured from the throw.
 	resting=resting+delta if contact and speed<.12 and spin<.7 else 0.0
-	return resting>=1.0
+	return resting>=2.0
 func _physics_process(delta: float) -> void:
 	if exploded: return
-	if update_fuse(delta,get_contact_count()>0 or sleeping,linear_velocity.length(),angular_velocity.length()): detonate()
+	if not stopped and (get_contact_count()>0 or sleeping) and linear_velocity.length()<STOP_SPEED:
+		stopped=true;linear_velocity=Vector3.ZERO;angular_velocity=Vector3.ZERO;freeze=true;resting=0
+	if stopped and update_fuse(delta,true,0,0): detonate()
 	if global_position.y< -60: queue_free()
 func detonate() -> void:
 	if exploded: return

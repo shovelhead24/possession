@@ -27,7 +27,7 @@ func run():
 	var frag=preload("res://frag_grenade.gd").new()
 	assert(not frag.update_fuse(2,false,0,0),"Apex in midair is not rest")
 	assert(not frag.update_fuse(.6,true,0,0));assert(not frag.update_fuse(.2,true,1,0));assert(frag.resting==0)
-	assert(not frag.update_fuse(.99,true,0,0));assert(frag.update_fuse(.02,true,0,0));frag.free()
+	assert(not frag.update_fuse(1.99,true,0,0));assert(frag.update_fuse(.02,true,0,0));frag.free()
 	var diver=manager.squads[1].captain;diver.position=Vector3(-200,arena.height_at(-200,0),0)
 	await physics_frame;await physics_frame
 	assert(diver.begin_dive(diver.position+Vector3.RIGHT*4));assert(diver.dive_direction.x<0)
@@ -42,7 +42,12 @@ func run():
 	frag=preload("res://frag_grenade.gd").new();frag.manager=manager;arena.add_child(frag);frag.position=Vector3(200,60,78);frag.freeze=true;frag.detonate();assert(victim.health<hp)
 	# Let a real thrown rigid body settle; this exercises contact reporting and sleeping.
 	frag=preload("res://frag_grenade.gd").new();frag.manager=manager;arena.add_child(frag);frag.position=Vector3(-65,1,15)
-	await create_timer(5).timeout;assert(not is_instance_valid(frag),"Resting physical grenade must detonate")
+	for step in range(60):
+		await create_timer(.05).timeout
+		if frag.stopped: break
+	assert(frag.stopped and frag.freeze and frag.linear_velocity==Vector3.ZERO,"Slow grenade must be stopped")
+	await create_timer(1.7).timeout;assert(is_instance_valid(frag),"Stopped grenade must wait two seconds")
+	await create_timer(.4).timeout;assert(not is_instance_valid(frag),"Stopped grenade must detonate after two seconds")
 	if OS.get_cmdline_user_args().has("--pictures"):
 		kit.overlay.hide();var leader=manager.squads[3].captain;var small=manager.squads[3].members[1]
 		leader.position=Vector3(90,arena.height_at(90,-120),-120);small.position=leader.position+Vector3(2,0,0);small.position.y=arena.height_at(small.position.x,small.position.z)

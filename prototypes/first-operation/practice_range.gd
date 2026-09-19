@@ -63,4 +63,4 @@ func throw_grenade() -> void:
 	grenade.add_collision_exception_with(arena.walker)
 	get_tree().create_timer(.3).timeout.connect(func():
 		if is_instance_valid(grenade): grenade.remove_collision_exception_with(arena.walker))
-	arena.kit.status.text="FRAG / detonates after one continuous second at rest"
+	arena.kit.status.text="FRAG / detonates after two seconds after stopping"

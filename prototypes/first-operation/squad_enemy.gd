@@ -72,7 +72,7 @@ func begin_dive(threat: Vector3) -> bool:
 		var safety=(global_position+direction*5).distance_to(threat)
 		if safety>score: best=direction;score=safety
 	if best==Vector3.ZERO: return false
-	dive_direction=best;dive_time=1.3;dive_launched=false;dive_cooldown=2.0;charge=0;rotation.y=atan2(-best.x,-best.z);lizard.play("Dive");return true
+	dive_direction=best;dive_time=2.0;dive_launched=false;dive_cooldown=2.7;charge=0;rotation.y=atan2(-best.x,-best.z);lizard.play("Dive");return true
 func _physics_process(delta: float) -> void:
 	if dead or arena.kit.menu.opened: return
 	cooldown-=delta;dive_cooldown-=delta;jump_cooldown-=delta;repath-=delta;idle_time-=delta
@@ -85,8 +85,8 @@ func _physics_process(delta: float) -> void:
 	var movement=Vector3.ZERO
 	if dive_time>0:
 		dive_time-=delta
-		if not dive_launched and dive_time<=1.12: velocity.y=4.3;dive_launched=true
-		movement=dive_direction*(7.5 if dive_time>.4 else 2.0) if dive_launched else Vector3.ZERO
+		if not dive_launched and dive_time<=1.85: velocity.y=4.3;dive_launched=true
+		movement=dive_direction*(7.5 if dive_time>1.35 else (2.5 if dive_time>.3 else .5)) if dive_launched else Vector3.ZERO
 		if dive_launched and dive_time>.35:
 			shape.rotation.x=PI/2;shape.shape.height=1.95;shape.position=Vector3(0,.5,-.7)
 		else:
@@ -146,4 +146,3 @@ func attack(delta: float) -> void:
 			if not get_world_3d().direct_space_state.intersect_ray(ray).is_empty(): cooldown=.4;return
 			var bolt=manager.plasma(start,aim-start,12 if elite else 8,true,get_rid(),Color(1,.07,.035) if elite else Color(.12,1,.65));bolt.excluded=friendly_rids();lizard.fire();audio.play();cooldown=.4 if elite else 1.9
 	elif cooldown<=0 and sees_player(): aim=arena.walker.global_position+Vector3.UP;charge=.2 if elite else .65
-

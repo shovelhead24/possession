@@ -28,6 +28,8 @@ func run():
 			arena.camera.position=captain.position+Vector3(0,2,-5);arena.camera.look_at(captain.position+Vector3.UP*.7)
 			await RenderingServer.frame_post_draw;root.get_texture().get_image().save_png("res://captures/dive-"+stage+".png")
 		assert(captain.position.distance_to(start)>3,"Dive must translate through the world")
+	await create_timer(2.1).timeout
+	assert(captain.dive_time<=0 and captain.is_on_floor(),"Complete dive-roll must recover on the ground")
 	captain.take_hit(1000,arena.walker.position,captain.position)
 	var grunt=squad.members[1];var before=grunt.position
 	await create_timer(1).timeout;assert(grunt.routed and grunt.position.distance_to(before)>1,"Routed grunts must actually move")
