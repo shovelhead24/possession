@@ -14,6 +14,8 @@ var cooldown := 0.0
 var recoil := 0.0
 var vehicles: Array = []
 var driving
+var gunning := false
+var warthog_turret: Node3D
 var speed := 0.0
 var status: Label
 var shot_count := 0
@@ -76,12 +78,14 @@ func handle_vehicle_input(event: InputEvent) -> bool:
 	if menu.opened: return true
 	if driving and event is InputEventMouseMotion:
 		if Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
-			driver_look.x=driver_look.x-event.relative.x*.003 if driving.has_method("fire_cannon") else clampf(driver_look.x-event.relative.x*.003,-1.6,1.6)
-			driver_look.y=clampf(driver_look.y-event.relative.y*.003,-.7,.5)
+			driver_look.x=driver_look.x-event.relative.x*.003 if gunning or driving.has_method("fire_cannon") else clampf(driver_look.x-event.relative.x*.003,-1.6,1.6)
+			driver_look.y=clampf(driver_look.y-event.relative.y*.003,-PI/6 if gunning else -.7,PI/6 if gunning else .5)
 		return true
 	return false
 
 func update_vehicle_camera(delta: float) -> void:
+	if gunning:
+		warthog_turret.update_camera();driver_model.hide();return
 	var cfg: Dictionary=(tank_menu if driving==vehicles[1] else warthog_menu).settings
 	arena.walker.global_position=driving.to_global(seat_position)
 	arena.camera.fov=cfg.camera_fov
@@ -243,12 +247,13 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 		body.name=label;body.position=pos;body.add_child(model)
 		var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.6,.56,length_m*.68);collision.shape=shape;collision.position.y=.8;body.add_child(collision)
 		preload("res://warthog_finish.gd").finish(model,Callable(self,"bounds"));body.track_extension=.18;body.wheel_mount_raise=.14;arena.add_child(body);body.center_of_mass.y=.48;body.setup(model,Callable(self,"bounds"));body.add_child(preload("res://vehicle_audio.gd").new());body.add_child(preload("res://wheel_dirt.gd").new())
+		warthog_turret=preload("res://warthog_turret.gd").new();body.add_child(warthog_turret);warthog_turret.setup(self,body,model)
 	else:
 		body=preload("res://tank_controller.gd").new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
 		var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
 		arena.add_child(body);body.setup(model,self)
 	vehicles.append(body)
-	arena.label3(label+" / E",pos+Vector3(0,3.5,0),32)
+	arena.label3(label+(" / E sides: drive / rear: turret" if label=="Warthog" else " / E"),pos+Vector3(0,3.5,0),32)
 
 func toggle_vehicle() -> void:
 	if driving:
@@ -262,18 +267,20 @@ func toggle_vehicle() -> void:
 			p=hit.position+Vector3.UP*0.1
 			var query=PhysicsShapeQueryParameters3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.34;capsule.height=1.8;query.shape=capsule;query.transform.origin=p+Vector3.UP*.9;query.exclude=[arena.walker.get_rid()]
 			if not space.intersect_shape(query).is_empty(): continue
-			arena.walker.position=p;arena.walker.velocity=Vector3.ZERO;arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.set_physics_process(true);driving=null;driver_model.hide();arena.camera.fov=foot_fov;overlay.show();return
+			arena.walker.position=p;arena.walker.velocity=Vector3.ZERO;arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.set_physics_process(true);driving=null;gunning=false;arena.walker.get_child(0).shape.height=1.8;arena.walker.get_child(0).position.y=.9;driver_model.hide();arena.camera.fov=foot_fov;overlay.show();return
 		status.text="Exit obstructed";return
 	for body in vehicles:
 		if arena.walker.position.distance_to(body.position)<6:
-			driving=body;menu=tank_menu if body==vehicles[1] else warthog_menu;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=0;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup · C view";return
+			var local=body.to_local(arena.walker.global_position)
+			gunning=body==vehicles[0] and local.z>1.3 and absf(local.x)<1.8
+			driving=body;menu=tank_menu if body==vehicles[1] else warthog_menu;driver_look=Vector2.ZERO;foot_fov=arena.camera.fov;driver_model.visible=body==vehicles[0];speed=0;arena.flying=false;arena.set_physics_process(false);arena.walker.collision_layer=2;arena.walker.collision_mask=0;overlay.hide();status.text=body.name+" · WASD drive · Space brake · E exit · F2 setup · C view";return
 	status.text="Move closer to a vehicle to enter"
 
 func _input(event: InputEvent) -> void:
 	if arena.shots_running: return
 	if menu and menu.opened: return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode==KEY_Q: select_weapon(selected+1)
+		if event.keycode==KEY_Q and not driving: select_weapon(selected+1)
 		if event.keycode==KEY_J:
 			for body in vehicles:
 				if body.has_method("set_controls"):
@@ -324,8 +331,8 @@ func _physics_process(delta: float) -> void:
 	if arena.shots_running: return
 	for body in vehicles:
 		if body.has_method("set_controls"):
-			body.controlled=body==driving and not menu.opened
-			if body==driving and not menu.opened: body.driver_controls(Input.is_physical_key_pressed(KEY_W),Input.is_physical_key_pressed(KEY_S),Input.is_physical_key_pressed(KEY_SPACE),float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)))
+			body.controlled=body==driving and not gunning and not menu.opened
+			if body==driving and not gunning and not menu.opened: body.driver_controls(Input.is_physical_key_pressed(KEY_W),Input.is_physical_key_pressed(KEY_S),Input.is_physical_key_pressed(KEY_SPACE),float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)))
 			else: body.balanced_braking=false;body.set_controls(0,0,true)
 			continue
 		if body==driving and not menu.opened:

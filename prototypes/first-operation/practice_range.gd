@@ -34,6 +34,9 @@ func reset() -> void:
 func hurt(amount: int) -> void:
 	health-=amount;arena.kit.status.text="%d HEALTH / G frag / F3 plasma speed" % maxi(health,0)
 	if health<=0:
+		if arena.kit.driving:
+			arena.kit.driving=null;arena.kit.gunning=false;arena.kit.driver_model.hide();arena.kit.overlay.show();arena.set_physics_process(true)
+			arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.walker.get_child(0).shape.height=1.8;arena.walker.get_child(0).position.y=.9;arena.camera.fov=arena.kit.foot_fov
 		active=false;arena.viewpoint(1);health=100;arena.kit.status.text="PRACTICE DEFEAT / E at range console to reset"
 
 func tracer(a: Vector3,b: Vector3) -> void:
