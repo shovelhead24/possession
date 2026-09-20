@@ -45,7 +45,7 @@ func begin_bite(prey: Node3D) -> void:
 	# made the mouth appear to clamp on indefinitely, and let target selection
 	# silently swap victims before damage was delivered.
 	bite_number+=1;bite_target=prey;bite_time=.34;bite_applied=false;cooldown=1.15
-	bite_event("START #%d target=%s distance=%.2f" % [bite_number,prey.name,global_position.distance_to(prey.global_position)])
+	bite_event("START #%d target=%s distance=%.2f" % [bite_number,prey.name,position.distance_to(prey.position)])
 	if animator:
 		animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
 func apply_bite(victim: Node3D) -> void:
@@ -59,7 +59,7 @@ func apply_bite(victim: Node3D) -> void:
 		bite_event("DONE #%d player health_after=%s" % [bite_number,str(manager.health)])
 	elif victim.has_method("take_hit"):
 		bite_event("HIT #%d enemy=%s" % [bite_number,victim.name])
-		var result=victim.take_hit(360,global_position,victim.global_position+Vector3.UP)
+		var result=victim.take_hit(360,position,victim.position+Vector3.UP)
 		bite_event("DONE #%d enemy result=%s health_after=%s dead=%s" % [bite_number,result,str(victim.get("health")),str(victim.get("dead"))])
 	else:
 		bite_event("MISS #%d target=%s has no damage route" % [bite_number,victim.name])

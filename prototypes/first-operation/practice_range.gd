@@ -8,6 +8,7 @@ var cover: Node
 var navigation: RefCounted
 var grenade_cooldown := 0.0
 var trex: Node3D
+var defeated := false
 func _ready() -> void:
 	arena=get_parent();name="PracticeRange"
 	arena.box(Vector3(10,.7,-10),Vector3(1,1.4,1),arena.material(Color(.15,.25,.3)))
@@ -23,7 +24,7 @@ func reset() -> void:
 	if is_instance_valid(trex): trex.queue_free()
 	for squad in squads: squad.queue_free()
 	squads.clear();grenade_cooldown=0
-	enemies.clear();health=100;active=false
+	enemies.clear();health=100;active=false;defeated=false
 	trex=preload("res://trex.gd").new();trex.arena=arena;trex.manager=self;add_child(trex)
 	for home in [Vector3(48,0,-95),Vector3(112,0,-180),Vector3(-118,0,-230),Vector3(145,0,-370)]:
 		var squad=preload("res://reptile_squad.gd").new();squad.manager=self;squad.home=home;squad.home.y=arena.height_at(home.x,home.z);squad.last_known=squad.home;add_child(squad);squads.append(squad)
@@ -35,17 +36,21 @@ func reset() -> void:
 		squad.issue_orders()
 
 func hurt(amount: int,source: String="PLASMA") -> void:
+	if defeated: return
 	var before=health;health-=amount
 	var file=FileAccess.open("user://damage-events.log",FileAccess.READ_WRITE if FileAccess.file_exists("user://damage-events.log") else FileAccess.WRITE_READ)
 	if file:
 		file.seek_end();file.store_line("%.3f source=%s amount=%d health=%d->%d" % [Time.get_ticks_msec()*.001,source,amount,before,health])
 	arena.kit.status.text="%d HEALTH / %s" % [maxi(health,0),source]
 	if health<=0:
+		defeated=true
 		if arena.kit.driving:
 			arena.kit.restore_vehicle_collision(arena.kit.driving)
 			arena.kit.driving=null;arena.kit.gunning=false;arena.kit.driver_model.hide();arena.kit.overlay.show();arena.set_physics_process(true)
 			arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.walker.get_child(0).shape.height=1.8;arena.walker.get_child(0).position.y=.9;arena.camera.fov=arena.kit.foot_fov
-		active=false;arena.viewpoint(1);health=100;arena.kit.status.text="PRACTICE DEFEAT: "+source+" / E at range console to reset"
+		active=false;arena.set_physics_process(false);arena.kit.status.text="PRACTICE DEFEAT: "+source
+		await get_tree().create_timer(1.4).timeout
+		arena.viewpoint(1);reset();arena.kit.status.text="RESPAWNED AT FOB / RANGE RESET";arena.set_physics_process(true)
 
 func tracer(a: Vector3,b: Vector3) -> void:
 	var mesh=CylinderMesh.new();mesh.top_radius=.025;mesh.bottom_radius=.025;mesh.height=a.distance_to(b)
