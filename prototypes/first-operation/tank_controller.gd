@@ -23,11 +23,12 @@ var suspension_rest_length := 1.65
 var suspension_spring := 130.0
 var suspension_damping := 18.0
 var suspension_force := 0.0
+var suspension_contacts := 0
 
 func probe_traction() -> void:
 	contact_counts=Vector2i.ZERO;ground_normal=Vector3.UP
 	var space=get_world_3d().direct_space_state
-	var side_points: Array=[[],[]];var front_points: Array=[];var rear_points: Array=[];var spring_total=0.0;var spring_count=0
+	var side_points: Array=[[],[]];var front_points: Array=[];var rear_points: Array=[];var spring_total=0.0
 	var middle=tracks.probe_z[tracks.probe_z.size()/2]
 	for side in range(2):
 		for z in tracks.probe_z:
@@ -40,13 +41,16 @@ func probe_traction() -> void:
 				contact_counts[side]+=1;side_points[side].append(hit.position)
 				var compression=maxf(0,suspension_rest_length-origin.distance_to(hit.position))
 				# Hooke's law at each road-wheel probe. Damping opposes the
-				# chassis's vertical motion, then the physical hull collider
-				# resolves the final terrain contact.
-				spring_total+=maxf(0,compression*suspension_spring-velocity.y*suspension_damping);spring_count+=1
+				# chassis's vertical motion. Every probe is one share of the
+				# tank's nominal support, even when only a few can reach ground.
+				spring_total+=maxf(0,compression*suspension_spring-velocity.y*suspension_damping)
 				if z<middle: front_points.append(hit.position)
 				else: rear_points.append(hit.position)
 	traction=Vector2(contact_counts)/float(tracks.probe_z.size())
-	suspension_force=spring_total/maxi(1,spring_count)
+	suspension_contacts=contact_counts.x+contact_counts.y
+	# Do not divide by the number that happened to touch. With four contacts,
+	# each needs more compression to carry the chassis than with sixteen.
+	suspension_force=spring_total/float(tracks.probe_z.size()*2)
 	# Four averaged support lines give a stable chassis plane. The physics hull
 	# still blocks and climbs terrain; this only supplies its intended orientation.
 	if not side_points[0].is_empty() and not side_points[1].is_empty() and not front_points.is_empty() and not rear_points.is_empty():
@@ -93,7 +97,10 @@ func drive_step(delta: float, left_command: float, right_command: float, braking
 		planar=hull_forward*settled_forward+hull_right*settled_lateral
 		velocity.x=planar.x;velocity.z=planar.z
 	if stopping: velocity.x=0;velocity.z=0
-	velocity.y+=(suspension_force-22.0)*delta;move_and_slide()
+	# The box hull is the hard, physical resting constraint. Springs catch the
+	# falling chassis but never keep a floor-supported hull hovering above it.
+	var lift=0.0 if is_on_floor() else suspension_force
+	velocity.y+=(lift-22.0)*delta;move_and_slide()
 	tracks.animate(delta,track_speeds.x,track_speeds.y)
 	if position.y< -35: position=Vector3(-29,1,9);velocity=Vector3.ZERO;track_speeds=Vector2.ZERO
 

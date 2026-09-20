@@ -45,6 +45,7 @@ func run():
 	# Put only the left track above a narrow strip of ground.
 	box.size=Vector3(1,1,100);floor_body.position.x=-1.235;tank.transform=Transform3D.IDENTITY;tank.velocity=Vector3.ZERO
 	await physics_frame;tank.probe_traction();assert(tank.contact_counts==Vector2i(8,0),"Independent left/right contact")
+	assert(tank.suspension_contacts==8,"Each partial support must retain its own probe load")
 	if OS.get_cmdline_user_args().has("--pictures"):
 		var light=DirectionalLight3D.new();world.add_child(light);light.rotation_degrees=Vector3(-45,-40,0)
 		var env=WorldEnvironment.new();env.environment=Environment.new();env.environment.background_mode=Environment.BG_COLOR;env.environment.background_color=Color(.25,.3,.35);env.environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;env.environment.ambient_light_color=Color.WHITE;env.environment.ambient_light_energy=.6;world.add_child(env)
