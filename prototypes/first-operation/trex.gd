@@ -13,7 +13,7 @@ var telemetry_clock := 0.0
 func _ready():
 	floor_snap_length=.9;floor_max_angle=deg_to_rad(48)
 	model=arena.kit.imported("C:/Games/possession/assets/rigged-t-rex-fabulous/source/rigged_t-rex_fabulous.glb");add_child(model)
-	var a=arena.kit.bounds(model);model.scale*=6.0/maxf(a.size.y,.01);a=arena.kit.bounds(model);model.position-=Vector3(a.get_center().x,a.position.y,a.get_center().z)
+	var a=arena.kit.bounds(model);model.scale*=6.0/maxf(a.size.y,.01);a=arena.kit.bounds(model);model.position.x-=a.get_center().x;model.position.z-=a.get_center().z
 	# The asset faces +Z; gameplay movement and the bite point face -Z.
 	model.rotate_y(PI)
 	animator=model.find_child("AnimationPlayer",true,false) as AnimationPlayer
@@ -22,14 +22,9 @@ func _ready():
 	if animator:
 		animator.get_animation("CINEMA_4D_Main").loop_mode=Animation.LOOP_LINEAR
 		animator.play("CINEMA_4D_Main")
-	call_deferred("ground_render")
 	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.25;shape.height=4.5;collision.shape=shape;collision.position.y=2.2;add_child(collision)
 	var label=Label3D.new();label.text="TYRANT / INDISCRIMINATE";label.position.y=5;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.pixel_size=.004;add_child(label)
 	position=patrol[0];position.y=arena.height_at(position.x,position.z)+.1
-func ground_render():
-	# Re-evaluate after the imported pose is applied, then place the lowest
-	# rendered point on the character body's ground plane.
-	var a=arena.kit.bounds(model);model.position.y-=a.position.y
 func take_hit(damage: float,_source: Vector3,_point: Vector3) -> String:
 	health-=damage
 	if health<=0: queue_free();return "TYRANT DOWN"
@@ -67,6 +62,9 @@ func _process(_delta):
 	# but remove that vertical root motion, because world position is terrain-led.
 	if skeleton and root_bone>=0:
 		var pose=skeleton.get_bone_pose_position(root_bone);pose.y=0;skeleton.set_bone_pose_position(root_bone,pose)
+	# Run after the animation player: terrain owns the actor root, while the
+	# mesh stays at its native vertical origin instead of inheriting a 3.8m lift.
+	global_position.y=arena.height_at(global_position.x,global_position.z)+.05
 	telemetry_clock-=_delta
 	if telemetry_clock<=0:
 		telemetry_clock=.5;append_telemetry()
