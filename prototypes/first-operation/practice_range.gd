@@ -34,14 +34,18 @@ func reset() -> void:
 			if i==0: squad.captain=enemy
 		squad.issue_orders()
 
-func hurt(amount: int) -> void:
-	health-=amount;arena.kit.status.text="%d HEALTH / G frag / F3 plasma speed" % maxi(health,0)
+func hurt(amount: int,source: String="PLASMA") -> void:
+	var before=health;health-=amount
+	var file=FileAccess.open("user://damage-events.log",FileAccess.READ_WRITE if FileAccess.file_exists("user://damage-events.log") else FileAccess.WRITE_READ)
+	if file:
+		file.seek_end();file.store_line("%.3f source=%s amount=%d health=%d->%d" % [Time.get_ticks_msec()*.001,source,amount,before,health])
+	arena.kit.status.text="%d HEALTH / %s" % [maxi(health,0),source]
 	if health<=0:
 		if arena.kit.driving:
 			arena.kit.restore_vehicle_collision(arena.kit.driving)
 			arena.kit.driving=null;arena.kit.gunning=false;arena.kit.driver_model.hide();arena.kit.overlay.show();arena.set_physics_process(true)
 			arena.walker.collision_layer=1;arena.walker.collision_mask=1;arena.walker.get_child(0).shape.height=1.8;arena.walker.get_child(0).position.y=.9;arena.camera.fov=arena.kit.foot_fov
-		active=false;arena.viewpoint(1);health=100;arena.kit.status.text="PRACTICE DEFEAT / E at range console to reset"
+		active=false;arena.viewpoint(1);health=100;arena.kit.status.text="PRACTICE DEFEAT: "+source+" / E at range console to reset"
 
 func tracer(a: Vector3,b: Vector3) -> void:
 	var mesh=CylinderMesh.new();mesh.top_radius=.025;mesh.bottom_radius=.025;mesh.height=a.distance_to(b)

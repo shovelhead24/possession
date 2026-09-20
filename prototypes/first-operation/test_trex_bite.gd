@@ -7,7 +7,7 @@ func height_at(_x: float,_z: float) -> float: return 0.0
 class TestRange extends Node:
 	var health := 1000
 	var damage_taken := 0
-func hurt(amount: int) -> void: damage_taken+=amount;health-=amount
+func hurt(amount: int,_source: String="") -> void: damage_taken+=amount;health-=amount
 
 func _init() -> void:
 	var arena=TestArena.new()

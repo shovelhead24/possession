@@ -55,11 +55,12 @@ func apply_bite(victim: Node3D) -> void:
 	# Check it first so a player seated in a vehicle still takes the bite.
 	if victim==arena.walker:
 		bite_event("HIT #%d player=%s health_before=%s" % [bite_number,victim.name,str(manager.health)])
-		manager.hurt(140)
+		manager.hurt(140,"T-REX BITE")
 		bite_event("DONE #%d player health_after=%s" % [bite_number,str(manager.health)])
 	elif victim.has_method("take_hit"):
 		bite_event("HIT #%d enemy=%s" % [bite_number,victim.name])
-		victim.take_hit(360,global_position,victim.global_position+Vector3.UP)
+		var result=victim.take_hit(360,global_position,victim.global_position+Vector3.UP)
+		bite_event("DONE #%d enemy result=%s health_after=%s dead=%s" % [bite_number,result,str(victim.get("health")),str(victim.get("dead"))])
 	else:
 		bite_event("MISS #%d target=%s has no damage route" % [bite_number,victim.name])
 func _physics_process(delta):
