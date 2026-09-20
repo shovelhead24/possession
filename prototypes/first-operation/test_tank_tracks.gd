@@ -35,21 +35,21 @@ func run():
 		if load.z<0: front_load+=load.weight
 		else: rear_load+=load.weight
 	assert(rear_load>front_load,"Climbing must transfer suspension load to rear patches")
-	for step in range(90): await physics_frame;tank.drive_step(1.0/60,1,1,false)
+	for step in range(90): await physics_frame;tank.drive_step(1.0/60,1,0,false)
 	assert(tank.position.z< -3 and tank.track_speeds.x>5,"Forward drive")
 	await physics_frame;tank.drive_step(1.0/60,0,0,false)
 	assert(Vector2(tank.velocity.x,tank.velocity.z).length()<.01 and tank.track_speeds==Vector2.ZERO,"Neutral input must stop the hull")
-	for step in range(90): await physics_frame;tank.drive_step(1.0/60,1,1,false)
+	for step in range(90): await physics_frame;tank.drive_step(1.0/60,1,0,false)
 	for step in range(2): await physics_frame;tank.drive_step(1.0/60,0,0,true)
 	assert(tank.track_speeds.length()<.01 and Vector2(tank.velocity.x,tank.velocity.z).length()<.01,"Braking")
 	var heading=tank.heading
-	for step in range(90): await physics_frame;tank.drive_step(1.0/60,-1,1,false)
+	for step in range(90): await physics_frame;tank.drive_step(1.0/60,0,1,false)
 	assert(tank.track_speeds.x<0 and tank.track_speeds.y>0 and tank.heading>heading+.5,"Opposed tracks must pivot")
 	# Camera/turret aim cannot rotate the locomotion frame, and contact impulses
 	# cannot turn a commanded hull turn into a persistent lateral slide.
 	tank.track_speeds=Vector2.ZERO
 	var aim_before=tank.heading;var sideways=Vector3(12,0,0);tank.velocity=sideways
-	for step in range(60): await physics_frame;tank.drive_step(1.0/60,1,1,false)
+	for step in range(60): await physics_frame;tank.drive_step(1.0/60,1,0,false)
 	var hull_forward=Vector3(-sin(tank.heading),0,-cos(tank.heading));var hull_right=Vector3(cos(tank.heading),0,-sin(tank.heading))
 	assert(abs(Vector3(tank.velocity.x,0,tank.velocity.z).dot(hull_right))<.1,"Hull must shed lateral slide")
 	assert(absf(tank.heading-aim_before)<.01,"Forward motion must not follow camera aim")
@@ -57,7 +57,7 @@ func run():
 	for step in range(60): await physics_frame;tank.drive_step(1.0/60,-1,0,false)
 	assert(tank.position.z>1,"Reverse drive")
 	tank.transform=Transform3D(Basis.IDENTITY,Vector3(0,10,0));tank.heading=0;tank.velocity=Vector3.ZERO
-	await physics_frame;tank.drive_step(1.0/60,1,-1,false)
+	await physics_frame;tank.drive_step(1.0/60,0,-1,false)
 	assert(tank.traction==Vector2.ZERO and absf(tank.velocity.x)+absf(tank.velocity.z)<.001 and tank.heading==0,"No propulsion or steering airborne")
 	# Put only the left track above a narrow strip of ground.
 	box.size=Vector3(1,1,100);floor_body.position.x=-1.235;tank.transform=Transform3D.IDENTITY;tank.velocity=Vector3.ZERO

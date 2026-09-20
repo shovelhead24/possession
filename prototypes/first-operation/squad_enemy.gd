@@ -30,6 +30,7 @@ var idle_clip := "Idle"
 var idle_partner: Node3D
 var distance_moved := 0.0
 var last_position := Vector3.ZERO
+var combat_target: Node3D
 func _ready() -> void:
 	health=175 if elite else 50;floor_snap_length=.6;floor_max_angle=deg_to_rad(48)
 	shape=CollisionShape3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.4 if elite else .28;capsule.height=1.95 if elite else 1.3;shape.shape=capsule;shape.position.y=capsule.height*.5;add_child(shape)
@@ -50,12 +51,14 @@ func take_hit(damage: float,source: Vector3,_point: Vector3) -> String:
 		return "CAPTAIN DOWN / GRUNTS ROUTED" if elite else "GRUNT DOWN"
 	return "%s / %d HP" % ["ELITE" if elite else "GRUNT",int(health)]
 func sees_player() -> bool:
-	var target=arena.walker.global_position+Vector3.UP
+	combat_target=arena.walker
+	if is_instance_valid(manager.trex) and global_position.distance_to(manager.trex.global_position)<global_position.distance_to(arena.walker.global_position): combat_target=manager.trex
+	var target=combat_target.global_position+Vector3.UP*(2.0 if combat_target==manager.trex else 1.0)
 	if global_position.distance_to(target)>85: return false
 	var origin=global_position+Vector3.UP*(1.7 if elite else 1.05)
 	var ray=PhysicsRayQueryParameters3D.create(origin,target);ray.exclude=friendly_rids()
 	var hit=get_world_3d().direct_space_state.intersect_ray(ray)
-	return not hit.is_empty() and (hit.collider==arena.walker or hit.collider==arena.kit.driving)
+	return not hit.is_empty() and (hit.collider==combat_target or hit.collider==arena.kit.driving)
 func friendly_rids() -> Array[RID]:
 	var ids: Array[RID]=[]
 	for member in squad.members: ids.append(member.get_rid())
@@ -145,4 +148,4 @@ func attack(delta: float) -> void:
 			var start=lizard.muzzle_position();var ray=PhysicsRayQueryParameters3D.create(global_position+Vector3.UP*.8,start);ray.exclude=friendly_rids()
 			if not get_world_3d().direct_space_state.intersect_ray(ray).is_empty(): cooldown=.4;return
 			var bolt=manager.plasma(start,aim-start,12 if elite else 8,true,get_rid(),Color(1,.07,.035) if elite else Color(.12,1,.65));bolt.excluded=friendly_rids();lizard.fire();audio.play();cooldown=.4 if elite else 1.9
-	elif cooldown<=0 and sees_player(): aim=arena.walker.global_position+Vector3.UP;charge=.2 if elite else .65
+	elif cooldown<=0 and sees_player(): aim=combat_target.global_position+Vector3.UP*(2.0 if combat_target==manager.trex else 1.0);charge=.2 if elite else .65

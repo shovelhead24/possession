@@ -7,6 +7,7 @@ var squads: Array=[]
 var cover: Node
 var navigation: RefCounted
 var grenade_cooldown := 0.0
+var trex: Node3D
 func _ready() -> void:
 	arena=get_parent();name="PracticeRange"
 	arena.box(Vector3(10,.7,-10),Vector3(1,1.4,1),arena.material(Color(.15,.25,.3)))
@@ -19,9 +20,11 @@ func reset() -> void:
 	for bolt in get_tree().get_nodes_in_group("plasma_bolts"): bolt.queue_free()
 	for grenade in get_tree().get_nodes_in_group("frag_grenades"): grenade.queue_free()
 	for enemy in enemies: enemy.queue_free()
+	if is_instance_valid(trex): trex.queue_free()
 	for squad in squads: squad.queue_free()
 	squads.clear();grenade_cooldown=0
 	enemies.clear();health=100;active=false
+	trex=preload("res://trex.gd").new();trex.arena=arena;trex.manager=self;add_child(trex)
 	for home in [Vector3(48,0,-95),Vector3(112,0,-180),Vector3(-118,0,-230),Vector3(145,0,-370)]:
 		var squad=preload("res://reptile_squad.gd").new();squad.manager=self;squad.home=home;squad.home.y=arena.height_at(home.x,home.z);squad.last_known=squad.home;add_child(squad);squads.append(squad)
 		for i in range(5):

@@ -26,6 +26,8 @@ var suspension_force := 0.0
 var suspension_contacts := 0
 var support_points: Array=[]
 var patch_loads: Array=[]
+var road_turn_rate_30kph := deg_to_rad(15.0)
+var road_turn_speed := 30.0/3.6
 
 func probe_traction() -> void:
 	contact_counts=Vector2i.ZERO;ground_normal=Vector3.UP;support_points=[];patch_loads=[]
@@ -97,13 +99,28 @@ func average_point(points: Array) -> Vector3:
 	for point in points: total+=point
 	return total/points.size()
 
-func drive_step(delta: float, left_command: float, right_command: float, braking: bool) -> void:
+func drive_step(delta: float, throttle: float, turn: float, braking: bool) -> void:
 	probe_traction()
-	var commands=Vector2(left_command,right_command)
-	var desired=Vector2(commands.x*(max_speed if commands.x>=0 else reverse_speed),commands.y*(max_speed if commands.y>=0 else reverse_speed))
-	# Inputs command the belts directly. There is no camera-derived steering or
-	# throttle/turn blending: W=(+,+), S=(-,-), A=(-,+), D=(+,-).
-	var stopping=braking or commands==Vector2.ZERO
+	var hull_forward=Vector3(-sin(heading),0,-cos(heading))
+	var speed=absf(Vector3(velocity.x,0,velocity.z).dot(hull_forward))
+	var rate=road_turn_limit(speed)
+	var difference=rate*tracks.half_width*2.0*absf(turn)
+	var desired=Vector2.ZERO
+	if absf(throttle)<.01:
+		# A/D alone is the full opposing-track pivot.
+		desired=Vector2(-turn*reverse_speed,turn*reverse_speed)
+	elif throttle>0:
+		# Under W, slow only the inside track; the outside remains at drive speed.
+		desired=Vector2(max_speed,max_speed)
+		if turn>0: desired.x=maxf(0,desired.x-difference)
+		elif turn<0: desired.y=maxf(0,desired.y-difference)
+	else:
+		desired=Vector2(-reverse_speed,-reverse_speed)
+		if turn>0: desired.y=minf(0,desired.y+difference)
+		elif turn<0: desired.x=minf(0,desired.x+difference)
+	# Combined steering is tank-relative. At 30 km/h the differential gives
+	# 15 degrees/s; at rest A/D remains a full pivot.
+	var stopping=braking or (absf(throttle)<.01 and absf(turn)<.01)
 	track_speeds=Vector2.ZERO if stopping else desired
 	var support=(traction.x+traction.y)*.5
 	var effective=track_speeds*traction
@@ -117,7 +134,7 @@ func drive_step(delta: float, left_command: float, right_command: float, braking
 		# Locomotion lives in the hull's frame, never in the camera's frame. A
 		# tracked vehicle has very high lateral grip: collision impulses may nudge
 		# it, but cannot turn A/D into an accidental side-slide.
-		var hull_forward=Vector3(-sin(heading),0,-cos(heading))
+		hull_forward=Vector3(-sin(heading),0,-cos(heading))
 		var hull_right=Vector3(cos(heading),0,-sin(heading))
 		var planar=Vector3(velocity.x,0,velocity.z)
 		var current_forward=planar.dot(hull_forward);var current_lateral=planar.dot(hull_right)
@@ -135,6 +152,11 @@ func drive_step(delta: float, left_command: float, right_command: float, braking
 	velocity.y+=(lift-22.0)*delta;move_and_slide()
 	tracks.animate(delta,track_speeds.x,track_speeds.y)
 	if position.y< -35: position=Vector3(-29,1,9);velocity=Vector3.ZERO;track_speeds=Vector2.ZERO
+
+func road_turn_limit(speed: float) -> float:
+	if speed<=road_turn_speed:
+		return lerpf(turn_rate,road_turn_rate_30kph,speed/road_turn_speed)
+	return road_turn_rate_30kph*road_turn_speed/speed
 
 func setup(model: Node3D, owner_kit: Node) -> void:
 	kit=owner_kit

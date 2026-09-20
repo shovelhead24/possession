@@ -353,13 +353,9 @@ func _physics_process(delta: float) -> void:
 			else: body.balanced_braking=false;body.set_controls(0,0,true)
 			continue
 		var active=body==driving and not menu.opened
-		var tracks=Vector2.ZERO
-		if active:
-			if Input.is_physical_key_pressed(KEY_W): tracks=Vector2(1,1)
-			elif Input.is_physical_key_pressed(KEY_S): tracks=Vector2(-1,-1)
-			elif Input.is_physical_key_pressed(KEY_A): tracks=Vector2(-1,1)
-			elif Input.is_physical_key_pressed(KEY_D): tracks=Vector2(1,-1)
-		body.drive_step(delta,tracks.x,tracks.y,not active or Input.is_physical_key_pressed(KEY_SPACE))
+		var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S)) if active else 0.0
+		var turn=float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)) if active else 0.0
+		body.drive_step(delta,throttle,turn,not active or Input.is_physical_key_pressed(KEY_SPACE))
 		if body==driving: speed=body.velocity.dot(-body.global_basis.z)
 	if driving:
 		update_vehicle_camera(delta)
