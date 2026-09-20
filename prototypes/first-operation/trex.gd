@@ -11,6 +11,7 @@ var cooldown := 0.0
 var bite_target: Node3D
 var bite_time := 0.0
 var bite_applied := false
+var bite_number := 0
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
 var root_bone := -1
@@ -43,24 +44,32 @@ func begin_bite(prey: Node3D) -> void:
 	# Lock one victim for a short attack.  Chasing while the timeline is playing
 	# made the mouth appear to clamp on indefinitely, and let target selection
 	# silently swap victims before damage was delivered.
-	bite_target=prey;bite_time=.34;bite_applied=false;cooldown=1.15
+	bite_number+=1;bite_target=prey;bite_time=.34;bite_applied=false;cooldown=1.15
+	bite_event("START #%d target=%s distance=%.2f" % [bite_number,prey.name,global_position.distance_to(prey.global_position)])
 	if animator:
 		animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
 func apply_bite(victim: Node3D) -> void:
-	if not is_instance_valid(victim): return
+	if not is_instance_valid(victim):
+		bite_event("MISS #%d invalid target" % bite_number);return
 	# The player has no take_hit method: its health lives on PracticeRange.
 	# Check it first so a player seated in a vehicle still takes the bite.
 	if victim==arena.walker:
+		bite_event("HIT #%d player=%s health_before=%s" % [bite_number,victim.name,str(manager.health)])
 		manager.hurt(140)
+		bite_event("DONE #%d player health_after=%s" % [bite_number,str(manager.health)])
 	elif victim.has_method("take_hit"):
+		bite_event("HIT #%d enemy=%s" % [bite_number,victim.name])
 		victim.take_hit(360,global_position,victim.global_position+Vector3.UP)
+	else:
+		bite_event("MISS #%d target=%s has no damage route" % [bite_number,victim.name])
 func _physics_process(delta):
 	cooldown-=delta
 	if bite_time>0:
 		bite_time-=delta
 		if not bite_applied and bite_time<=.16:
 			bite_applied=true;apply_bite(bite_target)
-		if bite_time<=0: bite_target=null
+		if bite_time<=0:
+			bite_event("RELEASE #%d applied=%s" % [bite_number,str(bite_applied)]);bite_target=null
 		position.y=arena.height_at(position.x,position.z)+.05
 		velocity=Vector3.ZERO
 		return
@@ -102,3 +111,7 @@ func append_telemetry():
 	file.seek_end()
 	var a=arena.kit.bounds(model);var terrain=arena.height_at(position.x,position.z)
 	file.store_line("body=%s terrain=%.3f model_global=%s model_local=%s bounds=%s bottom=%.3f anim=%.3f root_pose=%s" % [global_position,terrain,model.global_position,model.position,a,model.global_position.y+a.position.y,animator.current_animation_position if animator else -1.0,skeleton.get_bone_pose_position(root_bone) if skeleton and root_bone>=0 else Vector3.ZERO])
+func bite_event(message: String) -> void:
+	var file=FileAccess.open("user://trex-bite.log",FileAccess.READ_WRITE if FileAccess.file_exists("user://trex-bite.log") else FileAccess.WRITE_READ)
+	if not file: return
+	file.seek_end();file.store_line("%.3f %s" % [Time.get_ticks_msec()*.001,message])
