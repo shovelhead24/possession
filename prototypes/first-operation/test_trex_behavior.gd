@@ -59,6 +59,6 @@ func run() -> void:
 	assert(arena.walker.global_position.distance_to(predator.mouth_point())<.01,"Grab did not clamp player to the mouth")
 	predator._physics_process(.70)
 	assert(predator.bite_target==null and range.hits.size()==1,"Grab did not release cleanly")
-	assert(arena.last_toss.length()>0 and (arena.last_toss.y<=5 or arena.last_toss.y>=10),"Toss did not use the expected low-or-rare-high arc")
+	assert(arena.last_toss.length()>0 and (arena.last_toss.y<=2.6 or arena.last_toss.y>=6),"Toss did not use the expected low-or-rare-high arc")
 	print("PASS: real T-rex animation, stationary timed grab, damage, and toss")
 	root.remove_child(range);range.free();root.remove_child(arena);arena.free();quit()

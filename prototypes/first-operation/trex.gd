@@ -53,7 +53,9 @@ func begin_bite(prey: Node3D) -> void:
 	# gameplay state only; restarting the one available timeline looked like a stutter.
 	bite_lift_origin=prey.global_position
 func mouth_point() -> Vector3:
-	return global_position-global_basis.z*6.0+Vector3.UP*14.0
+	# Keep the held actor beyond the capsule's rounded upper hull. The earlier
+	# point was too close to the body, letting the solver perch victims on top.
+	return global_position-global_basis.z*9.0+Vector3.UP*12.0
 func clamp_to_mouth(victim: Node3D) -> void:
 	if not is_instance_valid(victim): return
 	victim.global_position=mouth_point()
@@ -63,15 +65,15 @@ func toss(victim: Node3D) -> void:
 	var direction=victim.global_position-global_position;direction.y=0
 	if direction.length()<.1: direction=-global_basis.z
 	direction=(direction.normalized()+global_basis.x*randf_range(-.35,.35)).normalized()
-	var vertical=randf_range(2.5,5.0) if randf()>.1 else randf_range(10.0,14.0)
-	var impulse=direction*randf_range(8.0,13.0)+Vector3.UP*vertical
+	var vertical=randf_range(.8,2.6) if randf()>.05 else randf_range(6.0,9.0)
+	var impulse=direction*randf_range(13.0,18.0)+Vector3.UP*vertical
 	if victim==arena.walker and arena.has_method("toss_player"):
 		arena.toss_player(impulse)
 	elif victim.has_method("toss_from_trex"):
 		victim.toss_from_trex(impulse)
 	elif victim is CharacterBody3D:
 		victim.velocity=impulse
-	bite_event("TOSS #%d impulse=%s" % [bite_number,impulse])
+	bite_event("TOSS #%d victim=%s point=%s impulse=%s" % [bite_number,victim.name,victim.global_position,impulse])
 func apply_bite(victim: Node3D) -> void:
 	if not is_instance_valid(victim):
 		bite_event("MISS #%d invalid target" % bite_number);return
@@ -97,7 +99,7 @@ func _physics_process(delta):
 			var lift=clampf((.75-bite_time)/.15,0.0,1.0)
 			bite_target.global_position=bite_lift_origin.lerp(mouth_point(),lift)
 		if not bite_grabbed and bite_time<=.6:
-			bite_grabbed=true;clamp_to_mouth(bite_target);bite_applied=true;apply_bite(bite_target)
+			bite_grabbed=true;clamp_to_mouth(bite_target);bite_event("CLAMP #%d victim=%s point=%s" % [bite_number,bite_target.name,bite_target.global_position]);bite_applied=true;apply_bite(bite_target)
 		if bite_grabbed: clamp_to_mouth(bite_target)
 		if bite_time<=0:
 			toss(bite_target);bite_event("RELEASE #%d applied=%s" % [bite_number,str(bite_applied)]);bite_target=null;bite_grabbed=false
@@ -146,3 +148,4 @@ func bite_event(message: String) -> void:
 	var file=FileAccess.open("user://trex-bite.log",FileAccess.READ_WRITE if FileAccess.file_exists("user://trex-bite.log") else FileAccess.WRITE_READ)
 	if not file: return
 	file.seek_end();file.store_line("%.3f %s" % [Time.get_ticks_msec()*.001,message])
+	file.flush()
