@@ -43,6 +43,11 @@ func _physics_process(delta):
 	else: velocity.x=0;velocity.z=0
 	if not is_on_floor(): velocity.y-=20*delta
 	move_and_slide()
+	# The arena terrain is a height field. Pin the predator's root to it after
+	# horizontal movement so an animation or a missed floor frame cannot leave
+	# the whole creature suspended above the ground.
+	position.y=arena.height_at(position.x,position.z)+.05
+	velocity.y=0
 	if position.distance_to(prey.position)<4 and cooldown<=0:
 		cooldown=.8
 		if animator: animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
