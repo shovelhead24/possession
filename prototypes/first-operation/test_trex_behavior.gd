@@ -43,6 +43,8 @@ func run() -> void:
 	predator.set_physics_process(false)
 	assert(predator.animator!=null and predator.animator.is_playing(),"Real T-rex animation did not start")
 	assert(predator.animator.current_animation=="CINEMA_4D_Main","Unexpected T-rex animation")
+	predator.take_hit(250,Vector3.ZERO,Vector3.ZERO)
+	assert(predator.health==750 and "750" in predator.health_label.text,"Gunfire did not reduce the 1,000-HP T-rex health bar")
 	arena.walker.global_position=predator.global_position+Vector3(0,0,40)
 	var before=predator.global_position
 	predator._physics_process(1.0)
@@ -60,5 +62,6 @@ func run() -> void:
 	predator._physics_process(.70)
 	assert(predator.bite_target==null and range.hits.size()==1,"Grab did not release cleanly")
 	assert(arena.last_toss.length()>0 and (arena.last_toss.y<=2.6 or arena.last_toss.y>=6),"Toss did not use the expected low-or-rare-high arc")
+	assert(predator.target()==null,"T-rex immediately reacquired the tossed target")
 	print("PASS: real T-rex animation, stationary timed grab, damage, and toss")
 	root.remove_child(range);range.free();root.remove_child(arena);arena.free();quit()
