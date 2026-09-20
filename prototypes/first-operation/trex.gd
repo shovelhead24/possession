@@ -65,7 +65,7 @@ func toss(victim: Node3D) -> void:
 	var direction=victim.global_position-global_position;direction.y=0
 	if direction.length()<.1: direction=-global_basis.z
 	direction=(direction.normalized()+global_basis.x*randf_range(-.35,.35)).normalized()
-	var vertical=randf_range(.8,2.6) if randf()>.05 else randf_range(6.0,9.0)
+	var vertical=randf_range(.8,2.6) if randf()>.30 else randf_range(6.0,9.0)
 	var impulse=direction*randf_range(13.0,18.0)+Vector3.UP*vertical
 	if victim==arena.walker and arena.has_method("toss_player"):
 		arena.toss_player(impulse)
