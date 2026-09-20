@@ -83,7 +83,7 @@ func _physics_process(delta):
 		# Keep patrol independent of the large collision capsule; the terrain
 		# height field supplies grounding, so trees and ramp seams cannot freeze it.
 		position+=move.normalized()*9.0*delta
-		if animator: animator.speed_scale=1.35 if position.distance_to(prey)<150 else .8
+		if animator: animator.speed_scale=1.35 if position.distance_to(prey.position)<150 else .8
 	else: velocity=Vector3.ZERO
 	# The arena terrain is a height field. Pin the predator's root to it after
 	# horizontal movement so an animation or a missed floor frame cannot leave
