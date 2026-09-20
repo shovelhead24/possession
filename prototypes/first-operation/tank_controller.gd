@@ -67,7 +67,8 @@ func probe_traction() -> void:
 		var front=average_point(front_points);var rear=average_point(rear_points)
 		var normal=(rear-front).cross(right-left).normalized()
 		if normal.dot(Vector3.UP)<0: normal=-normal
-		if normal.dot(Vector3.UP)>.57: ground_normal=normal
+		# Broken geometry must not instantaneously flip the requested hull plane.
+		if normal.dot(Vector3.UP)>.57: ground_normal=ground_normal.slerp(normal,.16).normalized()
 	traction=Vector2(contact_counts)/float(tracks.probe_z.size())
 	suspension_contacts=contact_counts.x+contact_counts.y
 	patch_loads=distribute_patch_loads(patch_contacts,ground_normal)
@@ -158,6 +159,12 @@ func drive_step(delta: float, throttle: float, turn: float, braking: bool) -> vo
 	# falling chassis but never keep a floor-supported hull hovering above it.
 	var lift=0.0 if is_on_floor() else suspension_force
 	velocity.y+=(lift-22.0)*delta;move_and_slide()
+	# Contact patches are the terrain authority. Never allow a transient hull
+	# collision response to pull the tank below its highest supported segment.
+	if not support_points.is_empty():
+		var support_y=-INF
+		for point in support_points: support_y=maxf(support_y,point.y)
+		position.y=maxf(position.y,support_y+.04)
 	record_telemetry(delta,throttle,turn,braking)
 	tracks.animate(delta,track_speeds.x,track_speeds.y)
 	if position.y< -35: position=Vector3(-29,1,9);velocity=Vector3.ZERO;track_speeds=Vector2.ZERO

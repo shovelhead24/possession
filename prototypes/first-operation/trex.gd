@@ -7,6 +7,8 @@ var patrol=[Vector3(-40,0,-60),Vector3(90,0,-130),Vector3(120,0,-290),Vector3(-1
 var waypoint := 0
 var cooldown := 0.0
 var animator: AnimationPlayer
+var skeleton: Skeleton3D
+var root_bone := -1
 func _ready():
 	floor_snap_length=.9;floor_max_angle=deg_to_rad(48)
 	model=arena.kit.imported("C:/Games/possession/assets/rigged-t-rex-fabulous/source/rigged_t-rex_fabulous.glb");add_child(model)
@@ -14,6 +16,8 @@ func _ready():
 	# The asset faces +Z; gameplay movement and the bite point face -Z.
 	model.rotate_y(PI)
 	animator=model.find_child("AnimationPlayer",true,false) as AnimationPlayer
+	skeleton=model.find_child("Skeleton3D",true,false) as Skeleton3D
+	if skeleton: root_bone=skeleton.find_bone("ScarfaceGiant_01")
 	if animator:
 		animator.get_animation("CINEMA_4D_Main").loop_mode=Animation.LOOP_LINEAR
 		animator.play("CINEMA_4D_Main")
@@ -56,3 +60,9 @@ func _physics_process(delta):
 		if animator: animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
 		if prey.has_method("take_hit"): prey.take_hit(90,position,prey.position+Vector3.UP)
 		elif prey==arena.walker: manager.hurt(35)
+
+func _process(_delta):
+	# The single imported timeline contains root-bone lift. Keep its limb work
+	# but remove that vertical root motion, because world position is terrain-led.
+	if skeleton and root_bone>=0:
+		var pose=skeleton.get_bone_pose_position(root_bone);pose.y=0;skeleton.set_bone_pose_position(root_bone,pose)
