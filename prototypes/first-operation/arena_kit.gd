@@ -252,10 +252,12 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 		warthog_turret=preload("res://warthog_turret.gd").new();body.add_child(warthog_turret);warthog_turret.setup(self,body,model)
 	else:
 		body=preload("res://tank_controller.gd").new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
-		# Keep collision to the raised central belly. A long, low hull box acted
-		# as a plough blade and stopped the tank before its tracks could climb
-		# small square obstacles or ramp lips.
-		var collision=CollisionShape3D.new();collision.name="HullCollision";var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.62,.5,length_m*.55);collision.shape=shape;collision.position.y=.75;body.add_child(collision)
+		# Raised central belly with a ramped front underside. The approach face
+		# climbs small obstacles instead of behaving as a vertical plough blade.
+		var collision=CollisionShape3D.new();collision.name="HullCollision";var shape=ConvexPolygonShape3D.new()
+		var half_width=a.size.x*.31;var front=-length_m*.275;var rear=length_m*.275
+		shape.points=PackedVector3Array([Vector3(-half_width,.38,front),Vector3(half_width,.38,front),Vector3(-half_width,0,rear),Vector3(half_width,0,rear),Vector3(-half_width,.72,front),Vector3(half_width,.72,front),Vector3(-half_width,.72,rear),Vector3(half_width,.72,rear)])
+		collision.shape=shape;collision.position.y=.45;body.add_child(collision)
 		arena.add_child(body);body.setup(model,self)
 	vehicles.append(body)
 	body.collision_mask|=4
