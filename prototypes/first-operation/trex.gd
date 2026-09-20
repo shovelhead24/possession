@@ -11,6 +11,8 @@ var cooldown := 0.0
 var bite_target: Node3D
 var bite_time := 0.0
 var bite_applied := false
+var bite_grabbed := false
+var bite_damage := 0.0
 var bite_number := 0
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
@@ -44,10 +46,30 @@ func begin_bite(prey: Node3D) -> void:
 	# Lock one victim for a short attack.  Chasing while the timeline is playing
 	# made the mouth appear to clamp on indefinitely, and let target selection
 	# silently swap victims before damage was delivered.
-	bite_number+=1;bite_target=prey;bite_time=.34;bite_applied=false;cooldown=1.15
+	bite_number+=1;bite_target=prey;bite_time=1.2;bite_applied=false;bite_grabbed=false;bite_damage=randf_range(20.0,80.0);cooldown=2.0
 	bite_event("START #%d target=%s distance=%.2f" % [bite_number,prey.name,position.distance_to(prey.position)])
 	if animator:
-		animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
+		animator.play("CINEMA_4D_Main");animator.speed_scale=1.15
+func mouth_point() -> Vector3:
+	return global_position-global_basis.z*6.0+Vector3.UP*14.0
+func clamp_to_mouth(victim: Node3D) -> void:
+	if not is_instance_valid(victim): return
+	victim.global_position=mouth_point()
+	if victim is CharacterBody3D: victim.velocity=Vector3.ZERO
+func toss(victim: Node3D) -> void:
+	if not is_instance_valid(victim): return
+	var direction=victim.global_position-global_position;direction.y=0
+	if direction.length()<.1: direction=-global_basis.z
+	direction=(direction.normalized()+global_basis.x*randf_range(-.35,.35)).normalized()
+	var vertical=randf_range(2.5,5.0) if randf()>.1 else randf_range(10.0,14.0)
+	var impulse=direction*randf_range(8.0,13.0)+Vector3.UP*vertical
+	if victim==arena.walker and arena.has_method("toss_player"):
+		arena.toss_player(impulse)
+	elif victim.has_method("toss_from_trex"):
+		victim.toss_from_trex(impulse)
+	elif victim is CharacterBody3D:
+		victim.velocity=impulse
+	bite_event("TOSS #%d impulse=%s" % [bite_number,impulse])
 func apply_bite(victim: Node3D) -> void:
 	if not is_instance_valid(victim):
 		bite_event("MISS #%d invalid target" % bite_number);return
@@ -55,11 +77,11 @@ func apply_bite(victim: Node3D) -> void:
 	# Check it first so a player seated in a vehicle still takes the bite.
 	if victim==arena.walker:
 		bite_event("HIT #%d player=%s health_before=%s" % [bite_number,victim.name,str(manager.health)])
-		manager.hurt(140,"T-REX BITE")
+		manager.hurt(int(bite_damage),"T-REX BITE")
 		bite_event("DONE #%d player health_after=%s" % [bite_number,str(manager.health)])
 	elif victim.has_method("take_hit"):
 		bite_event("HIT #%d enemy=%s" % [bite_number,victim.name])
-		var result=victim.take_hit(360,position,victim.position+Vector3.UP)
+		var result=victim.take_hit(bite_damage,position,victim.position+Vector3.UP)
 		bite_event("DONE #%d enemy result=%s health_after=%s dead=%s" % [bite_number,result,str(victim.get("health")),str(victim.get("dead"))])
 	else:
 		bite_event("MISS #%d target=%s has no damage route" % [bite_number,victim.name])
@@ -67,10 +89,13 @@ func _physics_process(delta):
 	cooldown-=delta
 	if bite_time>0:
 		bite_time-=delta
-		if not bite_applied and bite_time<=.16:
-			bite_applied=true;apply_bite(bite_target)
+		# The T-rex does not translate during its attack. At the halfway frame the
+		# victim is clamped to the mouth and takes one modest bite of damage.
+		if not bite_grabbed and bite_time<=.6:
+			bite_grabbed=true;clamp_to_mouth(bite_target);bite_applied=true;apply_bite(bite_target)
+		if bite_grabbed: clamp_to_mouth(bite_target)
 		if bite_time<=0:
-			bite_event("RELEASE #%d applied=%s" % [bite_number,str(bite_applied)]);bite_target=null
+			toss(bite_target);bite_event("RELEASE #%d applied=%s" % [bite_number,str(bite_applied)]);bite_target=null;bite_grabbed=false
 		position.y=arena.height_at(position.x,position.z)+.05
 		velocity=Vector3.ZERO
 		return

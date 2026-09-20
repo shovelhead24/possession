@@ -31,6 +31,10 @@ var idle_partner: Node3D
 var distance_moved := 0.0
 var last_position := Vector3.ZERO
 var combat_target: Node3D
+var trex_toss_velocity := Vector3.ZERO
+var trex_toss_time := 0.0
+func toss_from_trex(impulse: Vector3) -> void:
+	trex_toss_velocity=impulse;trex_toss_time=.75;velocity.y=impulse.y
 func _ready() -> void:
 	health=175 if elite else 50;floor_snap_length=.6;floor_max_angle=deg_to_rad(48)
 	shape=CollisionShape3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.4 if elite else .28;capsule.height=1.95 if elite else 1.3;shape.shape=capsule;shape.position.y=capsule.height*.5;add_child(shape)
@@ -78,6 +82,10 @@ func begin_dive(threat: Vector3) -> bool:
 	dive_direction=best;dive_time=2.0;dive_launched=false;dive_cooldown=2.7;charge=0;rotation.y=atan2(-best.x,-best.z);lizard.play("Dive");return true
 func _physics_process(delta: float) -> void:
 	if dead or arena.kit.menu.opened: return
+	if trex_toss_time>0:
+		trex_toss_time-=delta;velocity.x=trex_toss_velocity.x;velocity.z=trex_toss_velocity.z;trex_toss_velocity.x=move_toward(trex_toss_velocity.x,0.0,delta*8);trex_toss_velocity.z=move_toward(trex_toss_velocity.z,0.0,delta*8)
+		if not is_on_floor(): velocity.y-=20*delta
+		move_and_slide();return
 	cooldown-=delta;dive_cooldown-=delta;jump_cooldown-=delta;repath-=delta;idle_time-=delta
 	if elite and dive_cooldown<=0:
 		for grenade in get_tree().get_nodes_in_group("frag_grenades"):

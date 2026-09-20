@@ -1,6 +1,8 @@
 extends "res://study.gd"
 
 var walker: CharacterBody3D
+var trex_toss_velocity := Vector3.ZERO
+var trex_toss_time := 0.0
 var flying := false
 var jump_held := false
 var kit: Node
@@ -195,7 +197,9 @@ func _physics_process(delta: float) -> void:
 		return
 	dir.y=0;dir=dir.normalized()
 	var speed := 9.0 if Input.is_physical_key_pressed(KEY_SHIFT) else 5.0
-	walker.velocity.x=dir.x*speed;walker.velocity.z=dir.z*speed
+	if trex_toss_time>0:
+		trex_toss_time-=delta;walker.velocity.x=trex_toss_velocity.x;walker.velocity.z=trex_toss_velocity.z;trex_toss_velocity.x=move_toward(trex_toss_velocity.x,0.0,delta*8);trex_toss_velocity.z=move_toward(trex_toss_velocity.z,0.0,delta*8)
+	else: walker.velocity.x=dir.x*speed;walker.velocity.z=dir.z*speed
 	if not walker.is_on_floor(): walker.velocity.y-=22.0*delta
 	var jump := Input.is_physical_key_pressed(KEY_SPACE)
 	if jump and not jump_held and walker.is_on_floor(): walker.velocity.y=7.0
@@ -203,6 +207,9 @@ func _physics_process(delta: float) -> void:
 	walker.move_and_slide()
 	if walker.position.y < -40: viewpoint(1)
 	camera.position=walker.position+Vector3.UP*EYE
+
+func toss_player(impulse: Vector3) -> void:
+	trex_toss_velocity=impulse;trex_toss_time=.75;walker.velocity.y=impulse.y
 
 func capture_sequence() -> void:
 	var args := OS.get_cmdline_user_args()

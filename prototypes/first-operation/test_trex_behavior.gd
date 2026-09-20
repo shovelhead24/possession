@@ -21,7 +21,9 @@ class TestKit extends Node:
 class TestArena extends Node3D:
 	var walker: CharacterBody3D
 	var kit: TestKit
+	var last_toss := Vector3.ZERO
 	func height_at(_x: float,_z: float) -> float: return 0.0
+	func toss_player(impulse: Vector3) -> void: last_toss=impulse
 
 class TestRange extends Node:
 	var health := 100
@@ -49,9 +51,14 @@ func run() -> void:
 	predator.cooldown=0
 	predator._physics_process(.01)
 	assert(predator.bite_target==arena.walker,"T-rex did not start a player grab")
-	predator._physics_process(.20)
-	assert(range.hits==["T-REX BITE"] and range.health==-40,"Grab did not apply lethal player damage")
+	var attack_origin=predator.global_position
 	predator._physics_process(.40)
+	assert(predator.global_position.distance_to(attack_origin)<.01 and range.hits.is_empty(),"T-rex moved or damaged before the bite midpoint")
+	predator._physics_process(.20)
+	assert(range.hits==["T-REX BITE"] and range.health>=20 and range.health<=80,"Midpoint grab did not apply 20-80 player damage")
+	assert(arena.walker.global_position.distance_to(predator.mouth_point())<.01,"Grab did not clamp player to the mouth")
+	predator._physics_process(.70)
 	assert(predator.bite_target==null and range.hits.size()==1,"Grab did not release cleanly")
-	print("PASS: real T-rex animation, approach, timed grab, and player health path")
+	assert(arena.last_toss.length()>0 and (arena.last_toss.y<=5 or arena.last_toss.y>=10),"Toss did not use the expected low-or-rare-high arc")
+	print("PASS: real T-rex animation, stationary timed grab, damage, and toss")
 	root.remove_child(range);range.free();root.remove_child(arena);arena.free();quit()
