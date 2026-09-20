@@ -9,6 +9,7 @@ var cooldown := 0.0
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
 var root_bone := -1
+var telemetry_clock := 0.0
 func _ready():
 	floor_snap_length=.9;floor_max_angle=deg_to_rad(48)
 	model=arena.kit.imported("C:/Games/possession/assets/rigged-t-rex-fabulous/source/rigged_t-rex_fabulous.glb");add_child(model)
@@ -66,3 +67,14 @@ func _process(_delta):
 	# but remove that vertical root motion, because world position is terrain-led.
 	if skeleton and root_bone>=0:
 		var pose=skeleton.get_bone_pose_position(root_bone);pose.y=0;skeleton.set_bone_pose_position(root_bone,pose)
+	telemetry_clock-=_delta
+	if telemetry_clock<=0:
+		telemetry_clock=.5;append_telemetry()
+
+func append_telemetry():
+	var path="user://trex-diagnostics.log"
+	var file=FileAccess.open(path,FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE_READ)
+	if not file: return
+	file.seek_end()
+	var a=arena.kit.bounds(model);var terrain=arena.height_at(position.x,position.z)
+	file.store_line("body=%s terrain=%.3f model_global=%s model_local=%s bounds=%s bottom=%.3f anim=%.3f root_pose=%s" % [global_position,terrain,model.global_position,model.position,a,model.global_position.y+a.position.y,animator.current_animation_position if animator else -1.0,skeleton.get_bone_pose_position(root_bone) if skeleton and root_bone>=0 else Vector3.ZERO])
