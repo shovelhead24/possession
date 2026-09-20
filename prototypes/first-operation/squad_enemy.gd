@@ -34,7 +34,7 @@ var combat_target: Node3D
 var trex_toss_velocity := Vector3.ZERO
 var trex_toss_time := 0.0
 func toss_from_trex(impulse: Vector3) -> void:
-	trex_toss_velocity=impulse;trex_toss_time=.75;velocity.y=impulse.y
+	trex_toss_velocity=impulse;trex_toss_time=.8;velocity.y=impulse.y;lizard.toss(velocity,impulse)
 func _ready() -> void:
 	health=175 if elite else 50;floor_snap_length=.6;floor_max_angle=deg_to_rad(48)
 	shape=CollisionShape3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.4 if elite else .28;capsule.height=1.95 if elite else 1.3;shape.shape=capsule;shape.position.y=capsule.height*.5;add_child(shape)

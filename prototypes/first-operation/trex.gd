@@ -13,6 +13,7 @@ var bite_time := 0.0
 var bite_applied := false
 var bite_grabbed := false
 var bite_damage := 0.0
+var bite_lift_origin := Vector3.ZERO
 var bite_number := 0
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
@@ -48,8 +49,9 @@ func begin_bite(prey: Node3D) -> void:
 	# silently swap victims before damage was delivered.
 	bite_number+=1;bite_target=prey;bite_time=1.2;bite_applied=false;bite_grabbed=false;bite_damage=randf_range(20.0,80.0);cooldown=2.0
 	bite_event("START #%d target=%s distance=%.2f" % [bite_number,prey.name,position.distance_to(prey.position)])
-	if animator:
-		animator.play("CINEMA_4D_Main");animator.speed_scale=1.15
+	# Leave the imported animation running continuously. The attack timing is
+	# gameplay state only; restarting the one available timeline looked like a stutter.
+	bite_lift_origin=prey.global_position
 func mouth_point() -> Vector3:
 	return global_position-global_basis.z*6.0+Vector3.UP*14.0
 func clamp_to_mouth(victim: Node3D) -> void:
@@ -89,8 +91,11 @@ func _physics_process(delta):
 	cooldown-=delta
 	if bite_time>0:
 		bite_time-=delta
-		# The T-rex does not translate during its attack. At the halfway frame the
-		# victim is clamped to the mouth and takes one modest bite of damage.
+		# Lift during the short lead-in, then clamp and damage at the bite midpoint.
+		# This makes the grab visible instead of teleporting a victim into the air.
+		if not bite_grabbed and bite_time<=.75:
+			var lift=clampf((.75-bite_time)/.15,0.0,1.0)
+			bite_target.global_position=bite_lift_origin.lerp(mouth_point(),lift)
 		if not bite_grabbed and bite_time<=.6:
 			bite_grabbed=true;clamp_to_mouth(bite_target);bite_applied=true;apply_bite(bite_target)
 		if bite_grabbed: clamp_to_mouth(bite_target)

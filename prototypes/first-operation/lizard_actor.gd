@@ -58,5 +58,18 @@ func die(velocity: Vector3=Vector3.ZERO,impulse: Vector3=Vector3.FORWARD*2) -> v
 	if player: player.pause()
 	set_fleeing(true)
 	if skeleton: ragdoll=preload("res://lizard_ragdoll.gd").start(skeleton,velocity,impulse)
+func toss(velocity: Vector3,impulse: Vector3) -> void:
+	if dying or not skeleton: return
+	dying=true
+	if player: player.pause()
+	ragdoll=preload("res://lizard_ragdoll.gd").start(skeleton,velocity,impulse)
+	get_tree().create_timer(.8).timeout.connect(recover_from_toss)
+func recover_from_toss() -> void:
+	if not is_instance_valid(self) or not ragdoll: return
+	ragdoll.physical_bones_stop_simulation();ragdoll.queue_free();ragdoll=null
+	for node in skeleton.get_children():
+		if node.name=="RagdollProportions": node.queue_free()
+	skeleton.reset_bone_poses();dying=false
+	if player: player.play(clips.get("Idle","") as String)
 func muzzle_position() -> Vector3:
 	return muzzle.global_position if muzzle else global_position+Vector3.UP*.8
