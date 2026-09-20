@@ -350,17 +350,11 @@ func _physics_process(delta: float) -> void:
 			if body==driving and not gunning and not menu.opened: body.driver_controls(Input.is_physical_key_pressed(KEY_W),Input.is_physical_key_pressed(KEY_S),Input.is_physical_key_pressed(KEY_SPACE),float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)))
 			else: body.balanced_braking=false;body.set_controls(0,0,true)
 			continue
-		if body==driving and not menu.opened:
-			var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S))
-			speed=move_toward(speed,throttle*(body.max_speed if throttle>=0 else body.reverse_speed),delta*(body.brake_strength if Input.is_physical_key_pressed(KEY_SPACE) else body.acceleration))
-			if Input.is_physical_key_pressed(KEY_SPACE): speed=move_toward(speed,0,delta*body.brake_strength)
-			var steer=float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D))
-			body.rotate_y(steer*delta*body.turn_rate*(1 if speed>=0 else -1))
-			body.velocity.x=-body.basis.z.x*speed;body.velocity.z=-body.basis.z.z*speed
-		else:
-			body.velocity.x=0;body.velocity.z=0
-			if body==driving: speed=0
-		body.velocity.y-=22*delta;body.move_and_slide()
-		if body.position.y < -35: body.position=Vector3(-17,1,9);body.velocity=Vector3.ZERO;speed=0
+		var active=body==driving and not menu.opened
+		var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S)) if active else 0.0
+		var steer=float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)) if active else 0.0
+		body.drive_step(delta,throttle,steer,not active or Input.is_physical_key_pressed(KEY_SPACE))
+		if body==driving: speed=body.velocity.dot(-body.global_basis.z)
 	if driving:
 		update_vehicle_camera(delta)
+

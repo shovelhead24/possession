@@ -13,6 +13,47 @@ var muzzle: Node3D
 var kit: Node
 var cooldown := 0.0
 var cannon_audio: AudioStreamPlayer3D
+var tracks: Node3D
+var track_speeds := Vector2.ZERO
+var traction := Vector2.ZERO
+var contact_counts := Vector2i.ZERO
+var ground_normal := Vector3.UP
+var heading := 0.0
+
+func probe_traction() -> void:
+	contact_counts=Vector2i.ZERO;ground_normal=Vector3.ZERO
+	var up=global_basis.y.normalized();var space=get_world_3d().direct_space_state
+	for side in range(2):
+		for z in tracks.probe_z:
+			var origin=to_global(Vector3(-tracks.half_width if side==0 else tracks.half_width,.65,z))
+			var ray=PhysicsRayQueryParameters3D.create(origin,origin-up*1.05);ray.exclude=[get_rid(),kit.arena.walker.get_rid()];ray.collision_mask=1
+			var hit=space.intersect_ray(ray)
+			if not hit.is_empty() and not hit.collider is CharacterBody3D and hit.normal.dot(Vector3.UP)>.57:
+				contact_counts[side]+=1;ground_normal+=hit.normal
+	traction=Vector2(contact_counts)/float(tracks.probe_z.size())
+	ground_normal=ground_normal.normalized() if ground_normal.length()>.01 else Vector3.UP
+
+func drive_step(delta: float, throttle: float, steer: float, braking: bool) -> void:
+	probe_traction()
+	var target=throttle*(max_speed if throttle>=0 else reverse_speed)
+	var turn_speed=steer*turn_rate*tracks.half_width
+	var desired=Vector2(target-turn_speed,target+turn_speed) if not braking else Vector2.ZERO
+	for i in range(2): track_speeds[i]=move_toward(track_speeds[i],desired[i],delta*(brake_strength if braking else acceleration))
+	var support=(traction.x+traction.y)*.5
+	var effective=track_speeds*traction
+	var forward_speed=(effective.x+effective.y)*.5
+	var yaw_speed=(effective.y-effective.x)/(tracks.half_width*2)
+	if support>.01:
+		heading+=yaw_speed*delta
+		var forward=Vector3(-sin(heading),0,-cos(heading)).slide(ground_normal).normalized()
+		var right=forward.cross(ground_normal).normalized();var wanted=Basis(right,ground_normal,-forward)
+		global_basis=global_basis.orthonormalized().slerp(wanted,1-exp(-5*delta)).orthonormalized()
+		var desired_velocity=-global_basis.z*forward_speed
+		var response=(brake_strength if braking else acceleration)*support*delta
+		velocity.x=move_toward(velocity.x,desired_velocity.x,response);velocity.z=move_toward(velocity.z,desired_velocity.z,response)
+	velocity.y-=22*delta;move_and_slide()
+	tracks.animate(delta,track_speeds.x,track_speeds.y)
+	if position.y< -35: position=Vector3(-29,1,9);velocity=Vector3.ZERO;track_speeds=Vector2.ZERO
 
 func setup(model: Node3D, owner_kit: Node) -> void:
 	kit=owner_kit
@@ -35,6 +76,7 @@ func setup(model: Node3D, owner_kit: Node) -> void:
 			node.reparent(turret,true);count+=1
 	cannon_audio=AudioStreamPlayer3D.new();cannon_audio.stream=preload("res://mechanical_audio.gd").make_sound(true);cannon_audio.volume_db=-12;cannon_audio.unit_size=12;add_child(cannon_audio)
 	print("TANK_RIG_READY: ",count," turret/barrel meshes")
+	tracks=preload("res://tank_tracks.gd").new();add_child(tracks);tracks.setup(model,self);heading=rotation.y
 
 func _process(delta: float) -> void:
 	cooldown=maxf(0,cooldown-delta)
