@@ -252,7 +252,9 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 		warthog_turret=preload("res://warthog_turret.gd").new();body.add_child(warthog_turret);warthog_turret.setup(self,body,model)
 	else:
 		body=preload("res://tank_controller.gd").new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
-		var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.0;shape.height=maxf(2.1,length_m*.75);collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1.0;body.add_child(collision)
+		# The chassis itself is a broad physical obstacle. Track probes report
+		# traction and attitude; this collider takes ridges, banks and walls.
+		var collision=CollisionShape3D.new();collision.name="HullCollision";var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.82,.9,length_m*.74);collision.shape=shape;collision.position.y=.82;body.add_child(collision)
 		arena.add_child(body);body.setup(model,self)
 	vehicles.append(body)
 	body.collision_mask|=4

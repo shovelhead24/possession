@@ -13,7 +13,7 @@ func run():
 	if a.size.x>a.size.z: model.rotation.y=-PI*.5
 	model.rotate_y(PI);a=importer.bounds(model);model.scale*=9.0/a.size.z;a=importer.bounds(model);model.position-=Vector3(a.get_center().x,a.position.y,a.get_center().z)
 	var tank=preload("res://tank_controller.gd").new();world.add_child(tank);model.reparent(tank,true)
-	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1;shape.height=6.75;collision.shape=shape;collision.rotation.x=PI*.5;collision.position.y=1;tank.add_child(collision);tank.floor_snap_length=1;tank.setup(model,kit)
+	var collision=CollisionShape3D.new();var shape=BoxShape3D.new();shape.size=Vector3(2.84,.9,6.66);collision.shape=shape;collision.position.y=.82;tank.add_child(collision);tank.floor_snap_length=1;tank.setup(model,kit)
 	var floor_body=StaticBody3D.new();var floor_shape=CollisionShape3D.new();var box=BoxShape3D.new();box.size=Vector3(100,1,100);floor_shape.shape=box;floor_body.add_child(floor_shape);world.add_child(floor_body);floor_body.position.y=-.5
 	await physics_frame
 	assert(tank.tracks.sides.size()==2 and tank.tracks.sides[0].mesh.instance_count==62 and tank.tracks.sides[1].mesh.instance_count==62)
@@ -25,6 +25,14 @@ func run():
 	var heading=tank.heading
 	for step in range(90): await physics_frame;tank.drive_step(1.0/60,0,1,false)
 	assert(tank.track_speeds.x<0 and tank.track_speeds.y>0 and tank.heading>heading+.5,"Opposed tracks must pivot")
+	# Camera/turret aim cannot rotate the locomotion frame, and contact impulses
+	# cannot turn a commanded hull turn into a persistent lateral slide.
+	tank.track_speeds=Vector2.ZERO
+	var aim_before=tank.heading;var sideways=Vector3(12,0,0);tank.velocity=sideways
+	for step in range(60): await physics_frame;tank.drive_step(1.0/60,1,0,false)
+	var hull_forward=Vector3(-sin(tank.heading),0,-cos(tank.heading));var hull_right=Vector3(cos(tank.heading),0,-sin(tank.heading))
+	assert(abs(Vector3(tank.velocity.x,0,tank.velocity.z).dot(hull_right))<.1,"Hull must shed lateral slide")
+	assert(absf(tank.heading-aim_before)<.01,"Forward motion must not follow camera aim")
 	tank.transform=Transform3D.IDENTITY;tank.heading=0;tank.velocity=Vector3.ZERO;tank.track_speeds=Vector2.ZERO
 	for step in range(60): await physics_frame;tank.drive_step(1.0/60,-1,0,false)
 	assert(tank.position.z>1,"Reverse drive")

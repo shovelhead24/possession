@@ -21,17 +21,35 @@ var ground_normal := Vector3.UP
 var heading := 0.0
 
 func probe_traction() -> void:
-	contact_counts=Vector2i.ZERO;ground_normal=Vector3.ZERO
-	var up=global_basis.y.normalized();var space=get_world_3d().direct_space_state
+	contact_counts=Vector2i.ZERO;ground_normal=Vector3.UP
+	var space=get_world_3d().direct_space_state
+	var side_points: Array=[[],[]];var front_points: Array=[];var rear_points: Array=[]
+	var middle=tracks.probe_z[tracks.probe_z.size()/2]
 	for side in range(2):
 		for z in tracks.probe_z:
-			var origin=to_global(Vector3(-tracks.half_width if side==0 else tracks.half_width,.65,z))
-			var ray=PhysicsRayQueryParameters3D.create(origin,origin-up*1.05);ray.exclude=[get_rid(),kit.arena.walker.get_rid()];ray.collision_mask=1
+			# Support is measured vertically in the world. Casting along the old hull
+			# normal feeds a previous tilt back into the next frame on broken ground.
+			var origin=to_global(Vector3(-tracks.half_width if side==0 else tracks.half_width,.8,z))+Vector3.UP*.65
+			var ray=PhysicsRayQueryParameters3D.create(origin,origin+Vector3.DOWN*2.4);ray.exclude=[get_rid(),kit.arena.walker.get_rid()];ray.collision_mask=1
 			var hit=space.intersect_ray(ray)
 			if not hit.is_empty() and not hit.collider is CharacterBody3D and hit.normal.dot(Vector3.UP)>.57:
-				contact_counts[side]+=1;ground_normal+=hit.normal
+				contact_counts[side]+=1;side_points[side].append(hit.position)
+				if z<middle: front_points.append(hit.position)
+				else: rear_points.append(hit.position)
 	traction=Vector2(contact_counts)/float(tracks.probe_z.size())
-	ground_normal=ground_normal.normalized() if ground_normal.length()>.01 else Vector3.UP
+	# Four averaged support lines give a stable chassis plane. The physics hull
+	# still blocks and climbs terrain; this only supplies its intended orientation.
+	if not side_points[0].is_empty() and not side_points[1].is_empty() and not front_points.is_empty() and not rear_points.is_empty():
+		var left=average_point(side_points[0]);var right=average_point(side_points[1])
+		var front=average_point(front_points);var rear=average_point(rear_points)
+		var normal=(rear-front).cross(right-left).normalized()
+		if normal.dot(Vector3.UP)<0: normal=-normal
+		if normal.dot(Vector3.UP)>.57: ground_normal=normal
+
+func average_point(points: Array) -> Vector3:
+	var total=Vector3.ZERO
+	for point in points: total+=point
+	return total/points.size()
 
 func drive_step(delta: float, throttle: float, steer: float, braking: bool) -> void:
 	probe_traction()
@@ -48,9 +66,18 @@ func drive_step(delta: float, throttle: float, steer: float, braking: bool) -> v
 		var forward=Vector3(-sin(heading),0,-cos(heading)).slide(ground_normal).normalized()
 		var right=forward.cross(ground_normal).normalized();var wanted=Basis(right,ground_normal,-forward)
 		global_basis=global_basis.orthonormalized().slerp(wanted,1-exp(-5*delta)).orthonormalized()
-		var desired_velocity=-global_basis.z*forward_speed
+		# Locomotion lives in the hull's frame, never in the camera's frame. A
+		# tracked vehicle has very high lateral grip: collision impulses may nudge
+		# it, but cannot turn A/D into an accidental side-slide.
+		var hull_forward=Vector3(-sin(heading),0,-cos(heading))
+		var hull_right=Vector3(cos(heading),0,-sin(heading))
 		var response=(brake_strength if braking else acceleration)*support*delta
-		velocity.x=move_toward(velocity.x,desired_velocity.x,response);velocity.z=move_toward(velocity.z,desired_velocity.z,response)
+		var planar=Vector3(velocity.x,0,velocity.z)
+		var current_forward=planar.dot(hull_forward);var current_lateral=planar.dot(hull_right)
+		var settled_forward=move_toward(current_forward,forward_speed,response)
+		var settled_lateral=move_toward(current_lateral,0,delta*(brake_strength if braking else acceleration*5.0)*support)
+		planar=hull_forward*settled_forward+hull_right*settled_lateral
+		velocity.x=planar.x;velocity.z=planar.z
 	velocity.y-=22*delta;move_and_slide()
 	tracks.animate(delta,track_speeds.x,track_speeds.y)
 	if position.y< -35: position=Vector3(-29,1,9);velocity=Vector3.ZERO;track_speeds=Vector2.ZERO
