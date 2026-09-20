@@ -148,8 +148,11 @@ func drive_step(delta: float, throttle: float, turn: float, braking: bool) -> vo
 		var lateral_grip=lerpf(60,5,skid)*support*delta
 		var settled_forward=0.0 if stopping else move_toward(current_forward,forward_speed,forward_grip)
 		var settled_lateral=0.0 if stopping else move_toward(current_lateral,0,lateral_grip)
-		planar=hull_forward*settled_forward+hull_right*settled_lateral
-		velocity.x=planar.x;velocity.z=planar.z
+		# Preserve the vertical part of the terrain tangent. Flattening this to
+		# X/Z was what made a 45-degree climb turn into a blocked wall.
+		var surface_motion=forward*settled_forward+right*settled_lateral
+		velocity.x=surface_motion.x;velocity.z=surface_motion.z
+		if not stopping: velocity.y=surface_motion.y
 	if stopping: velocity.x=0;velocity.z=0
 	# The box hull is the hard, physical resting constraint. Springs catch the
 	# falling chassis but never keep a floor-supported hull hovering above it.

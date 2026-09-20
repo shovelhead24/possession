@@ -14,7 +14,9 @@ func _ready():
 	# The asset faces +Z; gameplay movement and the bite point face -Z.
 	model.rotate_y(PI)
 	animator=model.find_child("AnimationPlayer",true,false) as AnimationPlayer
-	if animator: animator.play("CINEMA_4D_Main")
+	if animator:
+		animator.get_animation("CINEMA_4D_Main").loop_mode=Animation.LOOP_LINEAR
+		animator.play("CINEMA_4D_Main")
 	call_deferred("ground_render")
 	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=1.25;shape.height=4.5;collision.shape=shape;collision.position.y=2.2;add_child(collision)
 	var label=Label3D.new();label.text="TYRANT / INDISCRIMINATE";label.position.y=5;label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.pixel_size=.004;add_child(label)
@@ -38,16 +40,17 @@ func _physics_process(delta):
 	var move=target_point-position;move.y=0
 	if move.length()<3 and position.distance_to(prey.position)>45: waypoint=(waypoint+1)%patrol.size()
 	if move.length()>.1:
-		rotation.y=lerp_angle(rotation.y,atan2(-move.x,-move.z),minf(1,delta*4));velocity.x=move.normalized().x*5;velocity.z=move.normalized().z*5
+		rotation.y=lerp_angle(rotation.y,atan2(-move.x,-move.z),minf(1,delta*4))
+		# Keep patrol independent of the large collision capsule; the terrain
+		# height field supplies grounding, so trees and ramp seams cannot freeze it.
+		position+=move.normalized()*5.0*delta
 		if animator: animator.speed_scale=1.35 if position.distance_to(prey)<45 else .8
-	else: velocity.x=0;velocity.z=0
-	if not is_on_floor(): velocity.y-=20*delta
-	move_and_slide()
+	else: velocity=Vector3.ZERO
 	# The arena terrain is a height field. Pin the predator's root to it after
 	# horizontal movement so an animation or a missed floor frame cannot leave
 	# the whole creature suspended above the ground.
 	position.y=arena.height_at(position.x,position.z)+.05
-	velocity.y=0
+	velocity=Vector3.ZERO
 	if position.distance_to(prey.position)<4 and cooldown<=0:
 		cooldown=.8
 		if animator: animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
