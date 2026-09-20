@@ -6,6 +6,14 @@ var half_width := 1.235
 # Eight suspension points per side: seven road wheels plus the leading run.
 var probe_z: Array[float]=[-1.72,-1.249,-.540,.160,.861,1.562,2.281,3.0]
 
+func probe_patch(index: int) -> Dictionary:
+	# Each road-wheel station owns the belt from the midpoint before it to the
+	# midpoint after it. The end stations extend by half their nearest spacing.
+	var z=probe_z[index]
+	var before=(probe_z[index-1]+z)*.5 if index>0 else z-(probe_z[1]-z)*.5
+	var after=(z+probe_z[index+1])*.5 if index<probe_z.size()-1 else z+(z-probe_z[index-1])*.5
+	return {"from":before,"center":z,"to":after}
+
 func setup(model: Node3D, tank: Node3D) -> void:
 	var links: Array=[[],[]];var stack=[model]
 	while not stack.is_empty():

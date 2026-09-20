@@ -24,33 +24,36 @@ var suspension_spring := 130.0
 var suspension_damping := 18.0
 var suspension_force := 0.0
 var suspension_contacts := 0
+var support_points: Array=[]
+var patch_loads: Array=[]
 
 func probe_traction() -> void:
-	contact_counts=Vector2i.ZERO;ground_normal=Vector3.UP
+	contact_counts=Vector2i.ZERO;ground_normal=Vector3.UP;support_points=[];patch_loads=[]
 	var space=get_world_3d().direct_space_state
-	var side_points: Array=[[],[]];var front_points: Array=[];var rear_points: Array=[];var spring_total=0.0
+	var side_points: Array=[[],[]];var front_points: Array=[];var rear_points: Array=[];var patch_contacts: Array=[]
 	var middle=tracks.probe_z[tracks.probe_z.size()/2]
 	for side in range(2):
-		for z in tracks.probe_z:
+		for index in range(tracks.probe_z.size()):
+			var patch=tracks.probe_patch(index);var z=float(patch.center)
+			# Five rays form a short, track-width contact patch. Select the
+			# highest hit: a belt segment rides a ramp lip instead of threading
+			# through the gap to a lower surface.
+			var samples=[Vector2(0,z),Vector2(-.24,float(patch.from)),Vector2(.24,float(patch.from)),Vector2(-.24,float(patch.to)),Vector2(.24,float(patch.to))]
+			var best: Dictionary={}
+			for sample in samples:
 			# Support is measured vertically in the world. Casting along the old hull
 			# normal feeds a previous tilt back into the next frame on broken ground.
-			var origin=to_global(Vector3(-tracks.half_width if side==0 else tracks.half_width,.8,z))+Vector3.UP*.65
-			var ray=PhysicsRayQueryParameters3D.create(origin,origin+Vector3.DOWN*2.4);ray.exclude=[get_rid(),kit.arena.walker.get_rid()];ray.collision_mask=1
-			var hit=space.intersect_ray(ray)
-			if not hit.is_empty() and not hit.collider is CharacterBody3D and hit.normal.dot(Vector3.UP)>.57:
-				contact_counts[side]+=1;side_points[side].append(hit.position)
-				var compression=maxf(0,suspension_rest_length-origin.distance_to(hit.position))
-				# Hooke's law at each road-wheel probe. Damping opposes the
-				# chassis's vertical motion. Every probe is one share of the
-				# tank's nominal support, even when only a few can reach ground.
-				spring_total+=maxf(0,compression*suspension_spring-velocity.y*suspension_damping)
-				if z<middle: front_points.append(hit.position)
-				else: rear_points.append(hit.position)
-	traction=Vector2(contact_counts)/float(tracks.probe_z.size())
-	suspension_contacts=contact_counts.x+contact_counts.y
-	# Do not divide by the number that happened to touch. With four contacts,
-	# each needs more compression to carry the chassis than with sixteen.
-	suspension_force=spring_total/float(tracks.probe_z.size()*2)
+				var origin=to_global(Vector3((-tracks.half_width if side==0 else tracks.half_width)+sample.x,.8,sample.y))+Vector3.UP*.65
+				var ray=PhysicsRayQueryParameters3D.create(origin,origin+Vector3.DOWN*2.4);ray.exclude=[get_rid(),kit.arena.walker.get_rid()];ray.collision_mask=1
+				var hit=space.intersect_ray(ray)
+				if not hit.is_empty() and not hit.collider is CharacterBody3D and hit.normal.dot(Vector3.UP)>.57 and (best.is_empty() or hit.position.y>best.point.y):
+					best={"point":hit.position,"origin":origin}
+			if not best.is_empty():
+				contact_counts[side]+=1;side_points[side].append(best.point)
+				support_points.append(best.point)
+				patch_contacts.append({"side":side,"z":z,"origin":best.origin,"point":best.point})
+				if z<middle: front_points.append(best.point)
+				else: rear_points.append(best.point)
 	# Four averaged support lines give a stable chassis plane. The physics hull
 	# still blocks and climbs terrain; this only supplies its intended orientation.
 	if not side_points[0].is_empty() and not side_points[1].is_empty() and not front_points.is_empty() and not rear_points.is_empty():
@@ -59,6 +62,35 @@ func probe_traction() -> void:
 		var normal=(rear-front).cross(right-left).normalized()
 		if normal.dot(Vector3.UP)<0: normal=-normal
 		if normal.dot(Vector3.UP)>.57: ground_normal=normal
+	traction=Vector2(contact_counts)/float(tracks.probe_z.size())
+	suspension_contacts=contact_counts.x+contact_counts.y
+	patch_loads=distribute_patch_loads(patch_contacts,ground_normal)
+	var spring_total=0.0
+	for load in patch_loads:
+		var compression=maxf(0,suspension_rest_length-load.origin.distance_to(load.point))
+		spring_total+=maxf(0,compression*suspension_spring-velocity.y*suspension_damping)*load.weight
+	# Do not divide by the number that happened to touch. With four contacts,
+	# each needs more compression to carry the chassis than with sixteen.
+	suspension_force=spring_total/float(tracks.probe_z.size()*2)
+
+func distribute_patch_loads(contacts: Array, normal: Vector3) -> Array:
+	if contacts.is_empty(): return []
+	var forward=Vector3(-sin(heading),0,-cos(heading));var right=Vector3(cos(heading),0,-sin(heading))
+	var downhill=Vector3.DOWN.slide(normal)
+	var uphill=clampf(-downhill.dot(forward),-.8,.8)
+	var side_slope=clampf(downhill.dot(right),-.8,.8)
+	var z_min=tracks.probe_z[0];var z_max=tracks.probe_z[-1];var raw: Array=[];var total=0.0
+	for contact in contacts:
+		var along=remap(float(contact.z),z_min,z_max,-1,1)
+		var side=-1.0 if int(contact.side)==0 else 1.0
+		# Uphill adds rear load; downhill adds front load. Cross-slope load
+		# transfers to the downhill side. Keep every valid patch contributing.
+		var weight=maxf(.15,1.0+along*uphill*1.4+side*side_slope*.8)
+		raw.append(weight);total+=weight
+	var result: Array=[]
+	for index in range(contacts.size()):
+		var loaded=contacts[index].duplicate();loaded.weight=raw[index]*contacts.size()/total;result.append(loaded)
+	return result
 
 func average_point(points: Array) -> Vector3:
 	var total=Vector3.ZERO

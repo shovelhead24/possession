@@ -17,7 +17,24 @@ func run():
 	var floor_body=StaticBody3D.new();var floor_shape=CollisionShape3D.new();var box=BoxShape3D.new();box.size=Vector3(100,1,100);floor_shape.shape=box;floor_body.add_child(floor_shape);world.add_child(floor_body);floor_body.position.y=-.5
 	await physics_frame
 	assert(tank.tracks.sides.size()==2 and tank.tracks.sides[0].mesh.instance_count==62 and tank.tracks.sides[1].mesh.instance_count==62)
+	for index in range(tank.tracks.probe_z.size()-1):
+		assert(is_equal_approx(tank.tracks.probe_patch(index).to,tank.tracks.probe_patch(index+1).from),"Track contact patches must meet without gaps")
 	tank.probe_traction();assert(tank.contact_counts==Vector2i(8,8),"Eight probes on both tracks must contact flat ground")
+	# A narrow raised lip at a segment edge must win over the lower ground.
+	var lip=StaticBody3D.new();var lip_collision=CollisionShape3D.new();var lip_shape=BoxShape3D.new();lip_shape.size=Vector3(.64,.6,.12);lip_collision.shape=lip_shape;lip.add_child(lip_collision);world.add_child(lip)
+	lip.global_position=tank.to_global(Vector3(-tank.tracks.half_width,.3,tank.tracks.probe_patch(1).to))
+	await physics_frame
+	tank.probe_traction();assert(tank.support_points.any(func(point): return point.y>.5),"A track patch must select its highest terrain hit")
+	lip.queue_free()
+	var load_contacts=[]
+	for side in range(2):
+		for z in tank.tracks.probe_z: load_contacts.append({"side":side,"z":z,"origin":Vector3.ZERO,"point":Vector3.ZERO})
+	var slope_loads=tank.distribute_patch_loads(load_contacts,Vector3(0,.866,.5))
+	var front_load=0.0;var rear_load=0.0
+	for load in slope_loads:
+		if load.z<0: front_load+=load.weight
+		else: rear_load+=load.weight
+	assert(rear_load>front_load,"Climbing must transfer suspension load to rear patches")
 	for step in range(90): await physics_frame;tank.drive_step(1.0/60,1,1,false)
 	assert(tank.position.z< -3 and tank.track_speeds.x>5,"Forward drive")
 	await physics_frame;tank.drive_step(1.0/60,0,0,false)
