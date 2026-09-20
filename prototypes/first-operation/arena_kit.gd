@@ -254,7 +254,7 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 		body=preload("res://tank_controller.gd").new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
 		# The chassis itself is a broad physical obstacle. Track probes report
 		# traction and attitude; this collider takes ridges, banks and walls.
-		var collision=CollisionShape3D.new();collision.name="HullCollision";var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.82,.9,length_m*.74);collision.shape=shape;collision.position.y=.82;body.add_child(collision)
+		var collision=CollisionShape3D.new();collision.name="HullCollision";var shape=BoxShape3D.new();shape.size=Vector3(a.size.x*.82,.9,length_m*.74);collision.shape=shape;collision.position.y=.45;body.add_child(collision)
 		arena.add_child(body);body.setup(model,self)
 	vehicles.append(body)
 	body.collision_mask|=4
@@ -353,9 +353,13 @@ func _physics_process(delta: float) -> void:
 			else: body.balanced_braking=false;body.set_controls(0,0,true)
 			continue
 		var active=body==driving and not menu.opened
-		var throttle=float(Input.is_physical_key_pressed(KEY_W))-float(Input.is_physical_key_pressed(KEY_S)) if active else 0.0
-		var steer=float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)) if active else 0.0
-		body.drive_step(delta,throttle,steer,not active or Input.is_physical_key_pressed(KEY_SPACE))
+		var tracks=Vector2.ZERO
+		if active:
+			if Input.is_physical_key_pressed(KEY_W): tracks=Vector2(1,1)
+			elif Input.is_physical_key_pressed(KEY_S): tracks=Vector2(-1,-1)
+			elif Input.is_physical_key_pressed(KEY_A): tracks=Vector2(-1,1)
+			elif Input.is_physical_key_pressed(KEY_D): tracks=Vector2(1,-1)
+		body.drive_step(delta,tracks.x,tracks.y,not active or Input.is_physical_key_pressed(KEY_SPACE))
 		if body==driving: speed=body.velocity.dot(-body.global_basis.z)
 	if driving:
 		update_vehicle_camera(delta)

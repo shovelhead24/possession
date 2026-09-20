@@ -3,7 +3,8 @@ var sides: Array=[]
 var wheels: Array=[]
 var phase := Vector2.ZERO
 var half_width := 1.235
-var probe_z: Array[float]=[-1.249,-.540,.160,.861,1.562,2.281,3.0]
+# Eight suspension points per side: seven road wheels plus the leading run.
+var probe_z: Array[float]=[-1.72,-1.249,-.540,.160,.861,1.562,2.281,3.0]
 
 func setup(model: Node3D, tank: Node3D) -> void:
 	var links: Array=[[],[]];var stack=[model]

@@ -19,11 +19,15 @@ var traction := Vector2.ZERO
 var contact_counts := Vector2i.ZERO
 var ground_normal := Vector3.UP
 var heading := 0.0
+var suspension_rest_length := 1.65
+var suspension_spring := 130.0
+var suspension_damping := 18.0
+var suspension_force := 0.0
 
 func probe_traction() -> void:
 	contact_counts=Vector2i.ZERO;ground_normal=Vector3.UP
 	var space=get_world_3d().direct_space_state
-	var side_points: Array=[[],[]];var front_points: Array=[];var rear_points: Array=[]
+	var side_points: Array=[[],[]];var front_points: Array=[];var rear_points: Array=[];var spring_total=0.0;var spring_count=0
 	var middle=tracks.probe_z[tracks.probe_z.size()/2]
 	for side in range(2):
 		for z in tracks.probe_z:
@@ -34,9 +38,15 @@ func probe_traction() -> void:
 			var hit=space.intersect_ray(ray)
 			if not hit.is_empty() and not hit.collider is CharacterBody3D and hit.normal.dot(Vector3.UP)>.57:
 				contact_counts[side]+=1;side_points[side].append(hit.position)
+				var compression=maxf(0,suspension_rest_length-origin.distance_to(hit.position))
+				# Hooke's law at each road-wheel probe. Damping opposes the
+				# chassis's vertical motion, then the physical hull collider
+				# resolves the final terrain contact.
+				spring_total+=maxf(0,compression*suspension_spring-velocity.y*suspension_damping);spring_count+=1
 				if z<middle: front_points.append(hit.position)
 				else: rear_points.append(hit.position)
 	traction=Vector2(contact_counts)/float(tracks.probe_z.size())
+	suspension_force=spring_total/maxi(1,spring_count)
 	# Four averaged support lines give a stable chassis plane. The physics hull
 	# still blocks and climbs terrain; this only supplies its intended orientation.
 	if not side_points[0].is_empty() and not side_points[1].is_empty() and not front_points.is_empty() and not rear_points.is_empty():
@@ -51,16 +61,18 @@ func average_point(points: Array) -> Vector3:
 	for point in points: total+=point
 	return total/points.size()
 
-func drive_step(delta: float, throttle: float, steer: float, braking: bool) -> void:
+func drive_step(delta: float, left_command: float, right_command: float, braking: bool) -> void:
 	probe_traction()
-	var target=throttle*(max_speed if throttle>=0 else reverse_speed)
-	var turn_speed=steer*turn_rate*tracks.half_width
-	var desired=Vector2(target-turn_speed,target+turn_speed) if not braking else Vector2.ZERO
-	for i in range(2): track_speeds[i]=move_toward(track_speeds[i],desired[i],delta*(brake_strength if braking else acceleration))
+	var commands=Vector2(left_command,right_command)
+	var desired=Vector2(commands.x*(max_speed if commands.x>=0 else reverse_speed),commands.y*(max_speed if commands.y>=0 else reverse_speed))
+	# Inputs command the belts directly. There is no camera-derived steering or
+	# throttle/turn blending: W=(+,+), S=(-,-), A=(-,+), D=(+,-).
+	var stopping=braking or commands==Vector2.ZERO
+	track_speeds=Vector2.ZERO if stopping else desired
 	var support=(traction.x+traction.y)*.5
 	var effective=track_speeds*traction
 	var forward_speed=(effective.x+effective.y)*.5
-	var yaw_speed=(effective.y-effective.x)/(tracks.half_width*2)
+	var yaw_speed=clampf((effective.y-effective.x)/(tracks.half_width*2),-turn_rate,turn_rate)
 	if support>.01:
 		heading+=yaw_speed*delta
 		var forward=Vector3(-sin(heading),0,-cos(heading)).slide(ground_normal).normalized()
@@ -71,14 +83,17 @@ func drive_step(delta: float, throttle: float, steer: float, braking: bool) -> v
 		# it, but cannot turn A/D into an accidental side-slide.
 		var hull_forward=Vector3(-sin(heading),0,-cos(heading))
 		var hull_right=Vector3(cos(heading),0,-sin(heading))
-		var response=(brake_strength if braking else acceleration)*support*delta
 		var planar=Vector3(velocity.x,0,velocity.z)
 		var current_forward=planar.dot(hull_forward);var current_lateral=planar.dot(hull_right)
-		var settled_forward=move_toward(current_forward,forward_speed,response)
-		var settled_lateral=move_toward(current_lateral,0,delta*(brake_strength if braking else acceleration*5.0)*support)
+		var skid=clampf((absf(current_forward)-max_speed*.55)/(max_speed*.45),0,1)
+		var forward_grip=lerpf(24,7,skid)*support*delta
+		var lateral_grip=lerpf(60,5,skid)*support*delta
+		var settled_forward=0.0 if stopping else move_toward(current_forward,forward_speed,forward_grip)
+		var settled_lateral=0.0 if stopping else move_toward(current_lateral,0,lateral_grip)
 		planar=hull_forward*settled_forward+hull_right*settled_lateral
 		velocity.x=planar.x;velocity.z=planar.z
-	velocity.y-=22*delta;move_and_slide()
+	if stopping: velocity.x=0;velocity.z=0
+	velocity.y+=(suspension_force-22.0)*delta;move_and_slide()
 	tracks.animate(delta,track_speeds.x,track_speeds.y)
 	if position.y< -35: position=Vector3(-29,1,9);velocity=Vector3.ZERO;track_speeds=Vector2.ZERO
 
