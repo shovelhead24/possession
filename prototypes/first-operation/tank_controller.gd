@@ -177,7 +177,8 @@ func record_telemetry(delta: float, throttle: float, turn: float, braking: bool)
 		telemetry_clock=.5;append_telemetry("STATE")
 
 func append_telemetry(tag: String) -> void:
-	var file=FileAccess.open("user://tank-diagnostics.log",FileAccess.READ_WRITE)
+	var path="user://tank-diagnostics.log"
+	var file=FileAccess.open(path,FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE_READ)
 	if not file: return
 	file.seek_end()
 	file.store_line("%s pos=%s vel=%s input=%s tracks=%s contacts=%s force=%.2f floor=%s slides=%d normal=%s supports=%s" % [tag,global_position,velocity,last_input,track_speeds,contact_counts,suspension_force,is_on_floor(),get_slide_collision_count(),ground_normal,support_points])
