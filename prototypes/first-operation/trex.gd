@@ -8,6 +8,9 @@ const BITE_REACH := 16.0
 var patrol=[Vector3(-40,0,-60),Vector3(90,0,-130),Vector3(120,0,-290),Vector3(-100,0,-250)]
 var waypoint := 0
 var cooldown := 0.0
+var bite_target: Node3D
+var bite_time := 0.0
+var bite_applied := false
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
 var root_bone := -1
@@ -36,8 +39,32 @@ func target() -> Node3D:
 	for enemy in manager.enemies:
 		if not enemy.dead and position.distance_to(enemy.position)<best_distance: best=enemy;best_distance=position.distance_to(enemy.position)
 	return best
+func begin_bite(prey: Node3D) -> void:
+	# Lock one victim for a short attack.  Chasing while the timeline is playing
+	# made the mouth appear to clamp on indefinitely, and let target selection
+	# silently swap victims before damage was delivered.
+	bite_target=prey;bite_time=.34;bite_applied=false;cooldown=1.15
+	if animator:
+		animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
+func apply_bite(victim: Node3D) -> void:
+	if not is_instance_valid(victim): return
+	# The player has no take_hit method: its health lives on PracticeRange.
+	# Check it first so a player seated in a vehicle still takes the bite.
+	if victim==arena.walker:
+		manager.hurt(140)
+	elif victim.has_method("take_hit"):
+		victim.take_hit(360,global_position,victim.global_position+Vector3.UP)
 func _physics_process(delta):
-	cooldown-=delta;var prey=target();var target_point=prey.position
+	cooldown-=delta
+	if bite_time>0:
+		bite_time-=delta
+		if not bite_applied and bite_time<=.16:
+			bite_applied=true;apply_bite(bite_target)
+		if bite_time<=0: bite_target=null
+		position.y=arena.height_at(position.x,position.z)+.05
+		velocity=Vector3.ZERO
+		return
+	var prey=target();var target_point=prey.position
 	if position.distance_to(prey.position)>150: target_point=patrol[waypoint]
 	var move=target_point-position;move.y=0
 	if move.length()<8 and position.distance_to(prey.position)>150: waypoint=(waypoint+1)%patrol.size()
@@ -54,10 +81,7 @@ func _physics_process(delta):
 	position.y=arena.height_at(position.x,position.z)+.05
 	velocity=Vector3.ZERO
 	if position.distance_to(prey.position)<BITE_REACH and cooldown<=0:
-		cooldown=.8
-		if animator: animator.play("CINEMA_4D_Main");animator.speed_scale=2.2
-		if prey.has_method("take_hit"): prey.take_hit(360,position,prey.position+Vector3.UP)
-		elif prey==arena.walker: manager.hurt(140)
+		begin_bite(prey)
 
 func _process(_delta):
 	# The single imported timeline contains root-bone lift. Keep its limb work
