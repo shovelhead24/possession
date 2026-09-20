@@ -28,6 +28,10 @@ var support_points: Array=[]
 var patch_loads: Array=[]
 var road_turn_rate_30kph := deg_to_rad(15.0)
 var road_turn_speed := 30.0/3.6
+var telemetry_clock := 0.0
+var stall_clock := 0.0
+var stuck_reported := false
+var last_input := Vector2.ZERO
 
 func probe_traction() -> void:
 	contact_counts=Vector2i.ZERO;ground_normal=Vector3.UP;support_points=[];patch_loads=[]
@@ -100,6 +104,7 @@ func average_point(points: Array) -> Vector3:
 	return total/points.size()
 
 func drive_step(delta: float, throttle: float, turn: float, braking: bool) -> void:
+	last_input=Vector2(throttle,turn)
 	probe_traction()
 	var hull_forward=Vector3(-sin(heading),0,-cos(heading))
 	var speed=absf(Vector3(velocity.x,0,velocity.z).dot(hull_forward))
@@ -150,6 +155,7 @@ func drive_step(delta: float, throttle: float, turn: float, braking: bool) -> vo
 	# falling chassis but never keep a floor-supported hull hovering above it.
 	var lift=0.0 if is_on_floor() else suspension_force
 	velocity.y+=(lift-22.0)*delta;move_and_slide()
+	record_telemetry(delta,throttle,turn,braking)
 	tracks.animate(delta,track_speeds.x,track_speeds.y)
 	if position.y< -35: position=Vector3(-29,1,9);velocity=Vector3.ZERO;track_speeds=Vector2.ZERO
 
@@ -157,6 +163,24 @@ func road_turn_limit(speed: float) -> float:
 	if speed<=road_turn_speed:
 		return lerpf(turn_rate,road_turn_rate_30kph,speed/road_turn_speed)
 	return road_turn_rate_30kph*road_turn_speed/speed
+
+func record_telemetry(delta: float, throttle: float, turn: float, braking: bool) -> void:
+	telemetry_clock-=delta
+	var planar=Vector2(velocity.x,velocity.z).length()
+	var commanded=not braking and (absf(throttle)>.01 or absf(turn)>.01)
+	if commanded and traction.length()>.15 and planar<.35: stall_clock+=delta
+	else: stall_clock=0;stuck_reported=false
+	if stall_clock>1.0 and not stuck_reported:
+		stuck_reported=true;append_telemetry("STUCK")
+		if kit and kit.get("status"): kit.status.text="ALTAY STUCK / telemetry saved / F2 setup"
+	if telemetry_clock<=0:
+		telemetry_clock=.5;append_telemetry("STATE")
+
+func append_telemetry(tag: String) -> void:
+	var file=FileAccess.open("user://tank-diagnostics.log",FileAccess.READ_WRITE)
+	if not file: return
+	file.seek_end()
+	file.store_line("%s pos=%s vel=%s input=%s tracks=%s contacts=%s force=%.2f floor=%s slides=%d normal=%s supports=%s" % [tag,global_position,velocity,last_input,track_speeds,contact_counts,suspension_force,is_on_floor(),get_slide_collision_count(),ground_normal,support_points])
 
 func setup(model: Node3D, owner_kit: Node) -> void:
 	kit=owner_kit
