@@ -30,6 +30,9 @@ func _physics_process(delta: float) -> void:
 		spent=true;global_position=hit.position
 		if enemy_shot:
 			if is_instance_valid(manager) and (hit.collider==manager.arena.walker or hit.collider==manager.arena.kit.driving): manager.hurt(int(damage))
+			elif hit.collider.has_method("take_hit"):
+				var result=hit.collider.take_hit(damage,source,hit.position)
+				if is_instance_valid(manager): manager.arena.kit.status.text="HOSTILE PLASMA / "+result
 		elif hit.collider.has_method("take_hit"):
 			var result=hit.collider.take_hit(damage,source,hit.position)
 			if is_instance_valid(manager): manager.arena.kit.status.text="PLASMA / "+result

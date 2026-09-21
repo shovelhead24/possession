@@ -23,6 +23,8 @@ func _ready() -> void:
 			arrays[Mesh.ARRAY_VERTEX]=vertices;var raw=ArrayMesh.new();raw.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 			var tool=SurfaceTool.new();tool.create_from(raw,0);tool.generate_normals();var mesh=tool.commit()
 			var visual=MeshInstance3D.new();visual.mesh=mesh;visual.material_override=arena.material(Color(.28,.30,.26)*rng.randf_range(.85,1.15),0,.94);add_child(visual);visual.position=center;visual.create_convex_collision()
+			for child in visual.get_children():
+				if child is StaticBody3D: child.add_to_group("trex_passable_rock")
 			rocks.append({"position":center,"radius":radius,"height":height})
 			for side in range(8):
 				var pos=center+Vector3(cos(side*PI/4),0,sin(side*PI/4))*(radius+1.5);pos.y=arena.height_at(pos.x,pos.z);slots.append(pos)

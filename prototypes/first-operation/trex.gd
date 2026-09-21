@@ -39,6 +39,7 @@ func _ready():
 		animator.play("CINEMA_4D_Main")
 	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=5.0;shape.height=18.0;collision.shape=shape;collision.position.y=9.0;add_child(collision)
 	for tree in get_tree().get_nodes_in_group("trex_passable_tree"): add_collision_exception_with(tree)
+	for rock in get_tree().get_nodes_in_group("trex_passable_rock"): add_collision_exception_with(rock)
 	health_label=Label3D.new();health_label.position.y=20;health_label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;health_label.pixel_size=.01;add_child(health_label);update_health_label()
 	position=patrol[0];position.y=arena.height_at(position.x,position.z)+.1
 func take_hit(damage: float,_source: Vector3,_point: Vector3) -> String:
@@ -168,7 +169,9 @@ func _process(_delta):
 	# The single imported timeline contains root-bone lift. Keep its limb work
 	# but remove that vertical root motion, because world position is terrain-led.
 	if skeleton and root_bone>=0:
-		var pose=skeleton.get_bone_pose_position(root_bone);pose.y=0;skeleton.set_bone_pose_position(root_bone,pose)
+		# The imported timeline contains metres of root translation that reads as
+		# recoil and snapping. Keep limb animation but pin the root in place.
+		skeleton.set_bone_pose_position(root_bone,Vector3.ZERO)
 	# Run after the animation player: terrain owns the actor root, while the
 	# mesh stays at its native vertical origin instead of inheriting a 3.8m lift.
 	global_position.y=arena.height_at(global_position.x,global_position.z)+.05
