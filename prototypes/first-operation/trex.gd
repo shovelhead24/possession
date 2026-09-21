@@ -141,6 +141,11 @@ func _physics_process(delta):
 			var slide=step.slide(contact.get_normal())
 			if slide.length()>.01: move_and_collide(slide)
 			if slide.length()<step.length()*.15:
+				# A trunk hit head-on has almost no slide component. Step sideways
+				# around its circumference, retaining a real collision body.
+				var tangent=Vector3(-contact.get_normal().z,0,contact.get_normal().x).normalized()
+				if tangent.dot(global_basis.x)<0: tangent=-tangent
+				move_and_collide(tangent*6.0*delta)
 				stalled_time+=delta
 				if stalled_time>.75 and not prey: waypoint=(waypoint+1)%patrol.size();stalled_time=0
 			else: stalled_time=0
