@@ -9,6 +9,7 @@ const SCALE_HEIGHT := 24.0
 const BITE_REACH := 16.0
 var patrol=[Vector3(-40,0,-60),Vector3(90,0,-130),Vector3(120,0,-290),Vector3(-100,0,-250)]
 var waypoint := 0
+var stalled_time := 0.0
 var cooldown := 0.0
 var bite_target: Node3D
 var bite_time := 0.0
@@ -132,7 +133,18 @@ func _physics_process(delta):
 		rotation.y=lerp_angle(rotation.y,atan2(-move.x,-move.z),minf(1,delta*4))
 		# Keep patrol independent of the large collision capsule; the terrain
 		# height field supplies grounding, so trees and ramp seams cannot freeze it.
-		move_and_collide(move.normalized()*9.0*delta)
+		var step=move.normalized()*9.0*delta
+		var contact=move_and_collide(step)
+		if contact:
+			# A large capsule must glide past cover rather than continually pressing
+			# into it. If it still cannot move, abandon this patrol leg.
+			var slide=step.slide(contact.get_normal())
+			if slide.length()>.01: move_and_collide(slide)
+			if slide.length()<step.length()*.15:
+				stalled_time+=delta
+				if stalled_time>.75 and not prey: waypoint=(waypoint+1)%patrol.size();stalled_time=0
+			else: stalled_time=0
+		else: stalled_time=0
 		if animator: animator.speed_scale=1.35 if prey else .8
 	else: velocity=Vector3.ZERO
 	# The arena terrain is a height field. Pin the predator's root to it after
