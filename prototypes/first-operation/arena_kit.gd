@@ -5,6 +5,7 @@ const WORKSHOP := "C:/Users/Bran the builder/Documents/Codex/Possession-models/m
 var arena: Node3D
 var view: SubViewport
 var overlay: SubViewportContainer
+var context_hint: Label
 var holder: Node3D
 var arms: Node3D
 var weapons: Array[Node3D] = []
@@ -169,7 +170,6 @@ func _ready() -> void:
 	menu=preload("res://vehicle_menu.gd").new();add_child(menu);warthog_menu=menu
 	tank_menu=preload("res://vehicle_menu.gd").new();tank_menu.vehicle_index=1;add_child(tank_menu)
 	combat_menu=preload("res://combat_menu.gd").new();add_child(combat_menu)
-	arena.help.text+="\nF3 plasma speed · F2 vehicle setup · G frag"
 	for i in range(3):
 		var target=StaticBody3D.new()
 		target.position=Vector3(12+i*4,1.25,-18-i*6)
@@ -178,7 +178,8 @@ func _ready() -> void:
 		target.add_child(shape);arena.add_child(target)
 		arena.box(Vector3.ZERO,cube.size,arena.material(Color(0.5,0.25,0.16)),target)
 	var layer=CanvasLayer.new();add_child(layer)
-	status=Label.new();status.position=Vector2(20,190);status.text="Q weapon · Left mouse use · E enter/exit nearby vehicle\nH expose suspension · J reset Warthog at test course · F2 vehicle setup · C view";layer.add_child(status)
+	status=Label.new();status.position=Vector2(20,190);status.text="";layer.add_child(status)
+	context_hint=Label.new();context_hint.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;context_hint.position=Vector2(-230,-86);context_hint.size=Vector2(460,34);context_hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM);context_hint.add_theme_font_size_override("font_size",18);layer.add_child(context_hint)
 	var reticle=Label.new();reticle.text="+";reticle.set_anchors_and_offsets_preset(Control.PRESET_CENTER);layer.add_child(reticle)
 	reticle.position=get_viewport().get_visible_rect().size*.5-Vector2(5,10)
 	if arena.shots_running: layer.hide()
@@ -362,4 +363,19 @@ func _physics_process(delta: float) -> void:
 		if body==driving: speed=body.velocity.dot(-body.global_basis.z)
 	if driving:
 		update_vehicle_camera(delta)
+	update_context_hint()
+
+func update_context_hint() -> void:
+	if not context_hint: return
+	if gunning: context_hint.text="E  Leave turret    ·    C  Change view";return
+	if driving: context_hint.text="E  Exit %s    ·    C  Change view    ·    F2  Tune" % driving.name;return
+	var prompt="Q  Change weapon    ·    Mouse  Fire    ·    Tab  Controls"
+	if arena.walker.position.distance_to(Vector3(10,0,-10))<3: prompt="E  Reset practice range"
+	else:
+		for body in vehicles:
+			if arena.walker.position.distance_to(body.position)<6:
+				prompt="E  Enter %s    ·    F2  Tune" % body.name;break
+	if arena.camera.position.distance_to(Vector3(0,2,-296.5))<5: prompt="E  Connect relay"
+	elif arena.camera.position.distance_to(Vector3(4,2,-6))<5: prompt="E  Call support strike"
+	context_hint.text=prompt
 

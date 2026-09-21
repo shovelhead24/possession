@@ -110,7 +110,8 @@ func _ready() -> void:
 	viewpoint(1)
 	support_status.text="E / CALL STRIKE ON RANGE"
 	relay_status.text="E / CONNECT RELAY"
-	help.text="TACTICAL VALLEY / GREYBOX\nWASD walk · Mouse look · Shift sprint · Space jump\n1 FOB · 2 ridge · 3 gully · 4 compound · V fly/walk\nE interact · R route at table · F sky · Tab guide\nL interrupt link · B support availability"
+	help.text="WASD walk · Mouse look · Tab controls"
+	help.hide()
 	add_child(preload("res://suspension_course.gd").new())
 	if not OS.get_cmdline_user_args().has("--no-kit"): install_kit()
 
