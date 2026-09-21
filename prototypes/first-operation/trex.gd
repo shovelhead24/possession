@@ -38,6 +38,7 @@ func _ready():
 		animator.get_animation("CINEMA_4D_Main").loop_mode=Animation.LOOP_LINEAR
 		animator.play("CINEMA_4D_Main")
 	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=5.0;shape.height=18.0;collision.shape=shape;collision.position.y=9.0;add_child(collision)
+	for tree in get_tree().get_nodes_in_group("trex_passable_tree"): add_collision_exception_with(tree)
 	health_label=Label3D.new();health_label.position.y=20;health_label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;health_label.pixel_size=.01;add_child(health_label);update_health_label()
 	position=patrol[0];position.y=arena.height_at(position.x,position.z)+.1
 func take_hit(damage: float,_source: Vector3,_point: Vector3) -> String:
@@ -74,6 +75,9 @@ func mouth_point() -> Vector3:
 	# Keep the held actor beyond the capsule's rounded upper hull. The earlier
 	# point was too close to the body, letting the solver perch victims on top.
 	return global_position-global_basis.z*9.0+Vector3.UP*12.0
+func bite_can_reach(prey: Node3D) -> bool:
+	var mouth=mouth_point();var delta=prey.global_position-mouth;delta.y=0
+	return delta.length()<4.0
 func clamp_to_mouth(victim: Node3D) -> void:
 	if not is_instance_valid(victim): return
 	victim.global_position=mouth_point()
@@ -157,7 +161,7 @@ func _physics_process(delta):
 	# the whole creature suspended above the ground.
 	position.y=arena.height_at(position.x,position.z)+.05
 	velocity=Vector3.ZERO
-	if prey and position.distance_to(prey.position)<BITE_REACH and cooldown<=0:
+	if prey and bite_can_reach(prey) and cooldown<=0:
 		begin_bite(prey)
 
 func _process(_delta):

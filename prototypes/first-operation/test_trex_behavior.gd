@@ -49,7 +49,7 @@ func run() -> void:
 	var before=predator.global_position
 	predator._physics_process(1.0)
 	assert(predator.global_position.distance_to(before)>8.5,"T-rex did not approach its player target")
-	arena.walker.global_position=predator.global_position+Vector3(0,0,2)
+	var mouth=predator.mouth_point();arena.walker.global_position=Vector3(mouth.x,0,mouth.z)
 	predator.cooldown=0
 	predator._physics_process(.01)
 	assert(predator.bite_target==arena.walker,"T-rex did not start a player grab")

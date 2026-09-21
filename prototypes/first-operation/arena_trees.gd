@@ -39,7 +39,7 @@ func _ready() -> void:
 		var height=rng.randf_range(7,12)
 		var basis=Basis(Vector3.UP,rng.randf()*TAU).scaled(Vector3.ONE*height)
 		trees.append({"position":pos,"transform":Transform3D(basis,pos),"variant":rng.randi_range(0,buckets.size()-1)})
-		var body=StaticBody3D.new();body.position=pos;var collision=CollisionShape3D.new();var shape=CylinderShape3D.new();shape.radius=height*.023;shape.height=height*.55;collision.shape=shape;collision.position.y=shape.height*.5;body.add_child(collision);add_child(body)
+		var body=StaticBody3D.new();body.add_to_group("trex_passable_tree");body.position=pos;var collision=CollisionShape3D.new();var shape=CylinderShape3D.new();shape.radius=height*.023;shape.height=height*.55;collision.shape=shape;collision.position.y=shape.height*.5;body.add_child(collision);add_child(body)
 	update_lods();print("TREES_READY: ",trees.size()," trees / ",buckets.size()," variants / four LODs")
 
 func _process(delta: float) -> void:
