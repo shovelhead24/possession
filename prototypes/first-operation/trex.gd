@@ -38,7 +38,11 @@ func _ready():
 	if animator:
 		animator.get_animation("CINEMA_4D_Main").loop_mode=Animation.LOOP_LINEAR
 		animator.play("CINEMA_4D_Main")
-	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=5.0;shape.height=18.0;collision.shape=shape;collision.position.y=9.0;add_child(collision)
+	# A single huge capsule trapped actors under an invisible belly. These simple
+	# overlapping volumes follow the torso and skull without claiming empty space.
+	add_collision_shape(CapsuleShape3D.new(),Vector3(0,2.6,0),2.15,5.2)
+	add_collision_shape(SphereShape3D.new(),Vector3(.1,2.4,2.0),1.85)
+	add_collision_shape(SphereShape3D.new(),Vector3(-.25,3.5,-4.5),1.15)
 	for tree in get_tree().get_nodes_in_group("trex_passable_tree"): add_collision_exception_with(tree)
 	for rock in get_tree().get_nodes_in_group("trex_passable_rock"): add_collision_exception_with(rock)
 	bite_debug=MeshInstance3D.new();var bite_box=BoxMesh.new();bite_box.size=Vector3(5,3,5);bite_debug.mesh=bite_box;bite_debug.position=Vector3(-.25,3.6,-4.8);bite_debug.material_override=debug_material(Color(1,.3,.03,.18));bite_debug.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;bite_debug.hide();add_child(bite_debug)
@@ -56,6 +60,10 @@ func update_health_label() -> void:
 	health_label.text="TYRANT  %d / %d HP\n[%s%s]" % [maxi(0,int(health)),int(MAX_HEALTH),"█".repeat(filled),"·".repeat(10-filled)]
 func debug_material(tint: Color) -> StandardMaterial3D:
 	var material=StandardMaterial3D.new();material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;material.albedo_color=tint;material.emission_enabled=true;material.emission=tint;material.emission_energy_multiplier=.5;material.cull_mode=BaseMaterial3D.CULL_DISABLED;return material
+func add_collision_shape(shape: Shape3D,offset: Vector3,radius: float=0.0,height: float=0.0) -> void:
+	if shape is CapsuleShape3D: shape.radius=radius;shape.height=height
+	elif shape is SphereShape3D: shape.radius=radius
+	var collision=CollisionShape3D.new();collision.shape=shape;collision.position=offset;add_child(collision)
 func can_see(candidate: Node3D) -> bool:
 	if not is_instance_valid(candidate) or global_position.distance_to(candidate.global_position)>SIGHT_RANGE: return false
 	var ray=PhysicsRayQueryParameters3D.create(global_position+Vector3.UP*12,candidate.global_position+Vector3.UP*.8);ray.exclude=[get_rid()]
@@ -96,10 +104,15 @@ func toss(victim: Node3D) -> void:
 	direction=(direction.normalized()+global_basis.x*randf_range(-.35,.35)).normalized()
 	var vertical=randf_range(.8,2.6) if randf()>.30 else randf_range(6.0,9.0)
 	var impulse=direction*randf_range(13.0,18.0)+Vector3.UP*vertical
+	if victim is PhysicsBody3D:
+		add_collision_exception_with(victim);victim.add_collision_exception_with(self)
+		get_tree().create_timer(1.2).timeout.connect(func():
+			if is_instance_valid(victim):
+				remove_collision_exception_with(victim);victim.remove_collision_exception_with(self))
 	if victim==arena.walker and arena.has_method("toss_player"):
 		arena.toss_player(impulse)
 	elif victim.has_method("toss_from_trex"):
-		victim.toss_from_trex(impulse)
+		victim.toss_from_trex(impulse,self)
 	elif victim is CharacterBody3D:
 		victim.velocity=impulse
 	bite_event("TOSS #%d victim=%s point=%s impulse=%s" % [bite_number,victim.name,victim.global_position,impulse])
