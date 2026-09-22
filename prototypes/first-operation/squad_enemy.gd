@@ -33,13 +33,16 @@ var last_position := Vector3.ZERO
 var combat_target: Node3D
 var trex_toss_velocity := Vector3.ZERO
 var trex_toss_time := 0.0
+var sight_timer := 0.0
+var cached_visible := false
+var cached_target: Node3D
 func toss_from_trex(impulse: Vector3,source: PhysicsBody3D) -> void:
 	trex_toss_velocity=impulse;trex_toss_time=.8;velocity.y=impulse.y;lizard.toss(velocity,impulse,source)
 func _ready() -> void:
 	health=175 if elite else 50;floor_snap_length=.6;floor_max_angle=deg_to_rad(48)
 	shape=CollisionShape3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.4 if elite else .28;capsule.height=1.95 if elite else 1.3;shape.shape=capsule;shape.position.y=capsule.height*.5;add_child(shape)
 	lizard=preload("res://lizard_actor.gd").new();lizard.elite=elite;lizard.scale=Vector3.ONE*(1.5 if elite else 1.0);add_child(lizard)
-	var sight=preload("res://vision_debug.gd").new();sight.setup(45,70,Color(.85,.08,.15) if elite else Color(1,.75,.08),1.25 if elite else .85);add_child(sight)
+	var sight=preload("res://vision_debug.gd").new();sight.setup(65 if elite else 55,95 if elite else 80,Color(.85,.08,.15) if elite else Color(1,.75,.08),1.25 if elite else .85);add_child(sight)
 	label=Label3D.new();label.text="ELITE / CAPTAIN" if elite else "GRUNT";label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.font_size=22;label.pixel_size=.003;label.position.y=capsule.height+.3;label.visibility_range_end=45;add_child(label)
 	audio=AudioStreamPlayer3D.new();audio.stream=arena.kit.gun_sounds.Carbine;audio.volume_db=-19;audio.unit_size=8;add_child(audio)
 	destination=position;last_position=position;repath=randf();cooldown=randf_range(.5,2)
@@ -58,12 +61,18 @@ func take_hit(damage: float,source: Vector3,_point: Vector3) -> String:
 func sees_player() -> bool:
 	combat_target=arena.walker
 	if is_instance_valid(manager.trex) and global_position.distance_to(manager.trex.global_position)<global_position.distance_to(arena.walker.global_position): combat_target=manager.trex
+	if combat_target==cached_target and sight_timer>0: return cached_visible
+	cached_target=combat_target;sight_timer=.25
+	var range=65.0 if elite else 55.0;var fov=95.0 if elite else 80.0
 	var target=combat_target.global_position+Vector3.UP*(2.0 if combat_target==manager.trex else 1.0)
-	if global_position.distance_to(target)>85: return false
+	var planar=target-global_position;planar.y=0
+	if planar.length()>range: cached_visible=false;return false
+	if planar.length()>.01 and (-global_basis.z).dot(planar.normalized())<cos(deg_to_rad(fov*.5)): cached_visible=false;return false
 	var origin=global_position+Vector3.UP*(1.7 if elite else 1.05)
 	var ray=PhysicsRayQueryParameters3D.create(origin,target);ray.exclude=friendly_rids()
 	var hit=get_world_3d().direct_space_state.intersect_ray(ray)
-	return not hit.is_empty() and (hit.collider==combat_target or hit.collider==arena.kit.driving)
+	cached_visible=not hit.is_empty() and (hit.collider==combat_target or hit.collider==arena.kit.driving)
+	return cached_visible
 func friendly_rids() -> Array[RID]:
 	var ids: Array[RID]=[]
 	for member in squad.members: ids.append(member.get_rid())
@@ -83,6 +92,7 @@ func begin_dive(threat: Vector3) -> bool:
 	dive_direction=best;dive_time=2.0;dive_launched=false;dive_cooldown=2.7;charge=0;rotation.y=atan2(-best.x,-best.z);lizard.play("Dive");return true
 func _physics_process(delta: float) -> void:
 	if dead or arena.kit.menu.opened: return
+	sight_timer=maxf(0.0,sight_timer-delta)
 	if trex_toss_time>0:
 		trex_toss_time-=delta;velocity.x=trex_toss_velocity.x;velocity.z=trex_toss_velocity.z;trex_toss_velocity.x=move_toward(trex_toss_velocity.x,0.0,delta*8);trex_toss_velocity.z=move_toward(trex_toss_velocity.z,0.0,delta*8)
 		if not is_on_floor(): velocity.y-=20*delta

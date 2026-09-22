@@ -3,7 +3,8 @@ var arena: Node
 var manager: Node
 var model: Node3D
 const MAX_HEALTH := 1000.0
-const SIGHT_RANGE := 70.0
+const SIGHT_RANGE := 90.0
+const SIGHT_FOV := 110.0
 var health := MAX_HEALTH
 const SCALE_HEIGHT := 24.0
 const BITE_REACH := 16.0
@@ -22,6 +23,7 @@ var excluded_target: Node3D
 var exclude_target_time := 0.0
 var health_label: Label3D
 var bite_debug: MeshInstance3D
+var sight: MeshInstance3D
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
 var root_bone := -1
@@ -46,7 +48,7 @@ func _ready():
 	for tree in get_tree().get_nodes_in_group("trex_passable_tree"): add_collision_exception_with(tree)
 	for rock in get_tree().get_nodes_in_group("trex_passable_rock"): add_collision_exception_with(rock)
 	bite_debug=MeshInstance3D.new();var bite_box=BoxMesh.new();bite_box.size=Vector3(5,3,5);bite_debug.mesh=bite_box;bite_debug.position=Vector3(-.25,3.6,-4.8);bite_debug.material_override=debug_material(Color(1,.3,.03,.18));bite_debug.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;bite_debug.hide();add_child(bite_debug)
-	var sight=preload("res://vision_debug.gd").new();sight.setup(SIGHT_RANGE,55,Color(1,.22,.04),14);add_child(sight)
+	sight=preload("res://vision_debug.gd").new();sight.setup(SIGHT_RANGE,SIGHT_FOV,Color(1,.22,.04),0);add_child(sight)
 	health_label=Label3D.new();health_label.position.y=20;health_label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;health_label.pixel_size=.01;add_child(health_label);update_health_label()
 	position=patrol[0];position.y=arena.height_at(position.x,position.z)+.1
 func take_hit(damage: float,_source: Vector3,_point: Vector3) -> String:
@@ -64,11 +66,26 @@ func add_collision_shape(shape: Shape3D,offset: Vector3,radius: float=0.0,height
 	if shape is CapsuleShape3D: shape.radius=radius;shape.height=height
 	elif shape is SphereShape3D: shape.radius=radius
 	var collision=CollisionShape3D.new();collision.shape=shape;collision.position=offset;add_child(collision)
+func vision_origin() -> Vector3:
+	# The skeleton's animated head is the real origin, rather than an arbitrary
+	# point over the capsule. This keeps both sensing and its debug outline honest.
+	if skeleton:
+		var head=skeleton.find_bone("jt_Head_C_08")
+		if head>=0: return skeleton.to_global(skeleton.get_bone_global_pose(head).origin)
+	return to_global(Vector3(-.25,4.5,-4.5))
 func can_see(candidate: Node3D) -> bool:
-	if not is_instance_valid(candidate) or global_position.distance_to(candidate.global_position)>SIGHT_RANGE: return false
-	var ray=PhysicsRayQueryParameters3D.create(global_position+Vector3.UP*12,candidate.global_position+Vector3.UP*.8);ray.exclude=[get_rid()]
-	var hit=get_world_3d().direct_space_state.intersect_ray(ray)
-	return hit.is_empty() or hit.collider==candidate
+	if not is_instance_valid(candidate): return false
+	var origin=vision_origin();var offset=candidate.global_position-origin;offset.y=0
+	if offset.length()>SIGHT_RANGE: return false
+	# A 110 degree cone makes the large predator alert, without the old 360-degree sight.
+	if offset.length()>.01 and (-global_basis.z).dot(offset.normalized())<cos(deg_to_rad(SIGHT_FOV*.5)): return false
+	# A tall creature can see a standing target over shallow cover: check the head
+	# first, then its torso. Solid cover must block both rays.
+	for height in [1.6, .7]:
+		var ray=PhysicsRayQueryParameters3D.create(origin,candidate.global_position+Vector3.UP*height);ray.exclude=[get_rid()]
+		var hit=get_world_3d().direct_space_state.intersect_ray(ray)
+		if hit.is_empty() or hit.collider==candidate or hit.collider==arena.kit.driving: return true
+	return false
 func target() -> Node3D:
 	var best: Node3D
 	var best_distance=INF
@@ -191,6 +208,8 @@ func _process(_delta):
 		# The imported timeline contains metres of root translation that reads as
 		# recoil and snapping. Keep limb animation but pin the root in place.
 		skeleton.set_bone_pose_position(root_bone,Vector3.ZERO)
+	if sight:
+		sight.global_position=vision_origin();sight.global_basis=global_basis
 	# Run after the animation player: terrain owns the actor root, while the
 	# mesh stays at its native vertical origin instead of inheriting a 3.8m lift.
 	global_position.y=arena.height_at(global_position.x,global_position.z)+.05
