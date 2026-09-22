@@ -27,7 +27,13 @@ var sight: MeshInstance3D
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
 var root_bone := -1
-var telemetry_clock := 0.0
+var head_bone := -1
+var vision_frame := Transform3D.IDENTITY
+var target_scan_timer := 0.0
+var cached_prey: Node3D
+var path_timer := 0.0
+var path_goal := Vector3.INF
+var path: Array[Vector3]=[]
 func _ready():
 	floor_snap_length=.9;floor_max_angle=deg_to_rad(48)
 	model=arena.kit.imported("C:/Games/possession/assets/rigged-t-rex-fabulous/source/rigged_t-rex_fabulous.glb");add_child(model)
@@ -36,10 +42,13 @@ func _ready():
 	model.rotate_y(PI)
 	animator=model.find_child("AnimationPlayer",true,false) as AnimationPlayer
 	skeleton=model.find_child("Skeleton3D",true,false) as Skeleton3D
-	if skeleton: root_bone=skeleton.find_bone("ScarfaceGiant_01")
+	if skeleton:
+		root_bone=skeleton.find_bone("ScarfaceGiant_01")
+		head_bone=skeleton.find_bone("jt_Head_C_08")
 	if animator:
 		animator.get_animation("CINEMA_4D_Main").loop_mode=Animation.LOOP_LINEAR
 		animator.play("CINEMA_4D_Main")
+	vision_frame=Transform3D(global_basis,to_global(Vector3(-.25,4.5,-4.5)))
 	# A single huge capsule trapped actors under an invisible belly. These simple
 	# overlapping volumes follow the torso and skull without claiming empty space.
 	add_collision_shape(CapsuleShape3D.new(),Vector3(0,2.6,0),2.15,5.2)
@@ -51,6 +60,9 @@ func _ready():
 	sight=preload("res://vision_debug.gd").new();sight.setup(SIGHT_RANGE,SIGHT_FOV,Color(1,.22,.04),0);add_child(sight)
 	health_label=Label3D.new();health_label.position.y=20;health_label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;health_label.pixel_size=.01;add_child(health_label);update_health_label()
 	position=patrol[0];position.y=arena.height_at(position.x,position.z)+.1
+	# Position is assigned after the model is built; refresh the fallback frame so
+	# the first physics tick does not cast sight from the world origin.
+	vision_frame=Transform3D(global_basis.orthonormalized(),to_global(Vector3(-.25,4.5,-4.5)))
 func take_hit(damage: float,_source: Vector3,_point: Vector3) -> String:
 	health-=damage
 	update_health_label()
@@ -69,15 +81,15 @@ func add_collision_shape(shape: Shape3D,offset: Vector3,radius: float=0.0,height
 func vision_origin() -> Vector3:
 	# The skeleton's animated head is the real origin, rather than an arbitrary
 	# point over the capsule. This keeps both sensing and its debug outline honest.
-	if skeleton:
-		var head=skeleton.find_bone("jt_Head_C_08")
-		if head>=0: return skeleton.to_global(skeleton.get_bone_global_pose(head).origin)
-	return to_global(Vector3(-.25,4.5,-4.5))
+	return vision_frame.origin
 func can_see(candidate: Node3D) -> bool:
 	if not is_instance_valid(candidate): return false
 	var origin=vision_origin();var offset=candidate.global_position-origin;offset.y=0
 	if offset.length()>SIGHT_RANGE: return false
 	# A 110 degree cone makes the large predator alert, without the old 360-degree sight.
+	# The GLB's head bone has a nonstandard forward axis. Its transform is safe
+	# for positioning the debug aid, while the actor's facing remains the stable
+	# basis for the actual sensing cone.
 	if offset.length()>.01 and (-global_basis.z).dot(offset.normalized())<cos(deg_to_rad(SIGHT_FOV*.5)): return false
 	# A tall creature can see a standing target over shallow cover: check the head
 	# first, then its torso. Solid cover must block both rays.
@@ -87,12 +99,17 @@ func can_see(candidate: Node3D) -> bool:
 		if hit.is_empty() or hit.collider==candidate or hit.collider==arena.kit.driving: return true
 	return false
 func target() -> Node3D:
+	# Target acquisition used to run two physics rays against every lizard on
+	# every tick. A predator can make a decisive choice four times a second.
+	if target_scan_timer>0 and is_instance_valid(cached_prey): return cached_prey
+	target_scan_timer=.25;cached_prey=null
 	var best: Node3D
 	var best_distance=INF
 	if arena.walker!=excluded_target and can_see(arena.walker): best=arena.walker;best_distance=position.distance_to(best.position)
 	for enemy in manager.enemies:
 		if enemy!=excluded_target and not enemy.dead and can_see(enemy) and position.distance_to(enemy.position)<best_distance: best=enemy;best_distance=position.distance_to(enemy.position)
-	return best
+	cached_prey=best
+	return cached_prey
 func begin_bite(prey: Node3D) -> void:
 	# Lock one victim for a short attack.  Chasing while the timeline is playing
 	# made the mouth appear to clamp on indefinitely, and let target selection
@@ -151,6 +168,7 @@ func apply_bite(victim: Node3D) -> void:
 		bite_event("MISS #%d target=%s has no damage route" % [bite_number,victim.name])
 func _physics_process(delta):
 	cooldown-=delta;exclude_target_time-=delta
+	target_scan_timer=maxf(0.0,target_scan_timer-delta);path_timer=maxf(0.0,path_timer-delta)
 	if exclude_target_time<=0: excluded_target=null
 	if bite_time>0:
 		bite_time-=delta
@@ -169,7 +187,17 @@ func _physics_process(delta):
 		return
 	var prey=target();var target_point=prey.position if prey else patrol[waypoint]
 	var move=target_point-position;move.y=0
-	if move.length()<8 and not prey: waypoint=(waypoint+1)%patrol.size()
+	if move.length()<8 and not prey:
+		waypoint=(waypoint+1)%patrol.size();path_timer=0
+	# The compound and steep terrain are already represented in the squad grid.
+	# Follow its coarse path instead of steering a huge collision body directly
+	# into a wall, while still retaining physical contact against real geometry.
+	var navigation=manager.get("navigation")
+	if navigation and (path_timer<=0 or path_goal.distance_to(target_point)>6):
+		path_timer=.75;path_goal=target_point;path=navigation.path(global_position,target_point)
+	while not path.is_empty() and Vector2(path[0].x-position.x,path[0].z-position.z).length()<4.0: path.pop_front()
+	if not path.is_empty():
+		target_point=path[0];move=target_point-position;move.y=0
 	if move.length()>.1:
 		rotation.y=lerp_angle(rotation.y,atan2(-move.x,-move.z),minf(1,delta*4))
 		# Keep patrol independent of the large collision capsule; the terrain
@@ -192,7 +220,11 @@ func _physics_process(delta):
 			else: stalled_time=0
 		else: stalled_time=0
 		if animator: animator.speed_scale=1.35 if prey else .8
-	else: velocity=Vector3.ZERO
+	else:
+		velocity=Vector3.ZERO
+		# This imported asset has no separate idle clip. Do not leave its walk
+		# animation running against a stationary collision body.
+		if animator and not prey: animator.speed_scale=0
 	# The arena terrain is a height field. Pin the predator's root to it after
 	# horizontal movement so an animation or a missed floor frame cannot leave
 	# the whole creature suspended above the ground.
@@ -208,22 +240,19 @@ func _process(_delta):
 		# The imported timeline contains metres of root translation that reads as
 		# recoil and snapping. Keep limb animation but pin the root in place.
 		skeleton.set_bone_pose_position(root_bone,Vector3.ZERO)
+	if skeleton and head_bone>=0:
+		# Preserve the animated head's position *and orientation*, but remove the
+		# imported model scale so the debug frustum remains its requested size.
+		var head_pose=skeleton.get_bone_global_pose(head_bone)
+		# This GLB exports the head bone with its forward axis reversed.
+		vision_frame=Transform3D(((skeleton.global_transform.basis*head_pose.basis)*Basis(Vector3.UP,PI)).orthonormalized(),skeleton.to_global(head_pose.origin))
+	else:
+		vision_frame=Transform3D(global_basis.orthonormalized(),to_global(Vector3(-.25,4.5,-4.5)))
 	if sight:
-		sight.global_position=vision_origin();sight.global_basis=global_basis
+		sight.global_transform=vision_frame
 	# Run after the animation player: terrain owns the actor root, while the
 	# mesh stays at its native vertical origin instead of inheriting a 3.8m lift.
 	global_position.y=arena.height_at(global_position.x,global_position.z)+.05
-	telemetry_clock-=_delta
-	if telemetry_clock<=0:
-		telemetry_clock=.5;append_telemetry()
-
-func append_telemetry():
-	var path="user://trex-diagnostics.log"
-	var file=FileAccess.open(path,FileAccess.READ_WRITE if FileAccess.file_exists(path) else FileAccess.WRITE_READ)
-	if not file: return
-	file.seek_end()
-	var a=arena.kit.bounds(model);var terrain=arena.height_at(position.x,position.z)
-	file.store_line("body=%s terrain=%.3f model_global=%s model_local=%s bounds=%s bottom=%.3f anim=%.3f root_pose=%s" % [global_position,terrain,model.global_position,model.position,a,model.global_position.y+a.position.y,animator.current_animation_position if animator else -1.0,skeleton.get_bone_pose_position(root_bone) if skeleton and root_bone>=0 else Vector3.ZERO])
 func bite_event(message: String) -> void:
 	var file=FileAccess.open("user://trex-bite.log",FileAccess.READ_WRITE if FileAccess.file_exists("user://trex-bite.log") else FileAccess.WRITE_READ)
 	if not file: return
