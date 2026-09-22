@@ -39,6 +39,7 @@ func _ready() -> void:
 	health=175 if elite else 50;floor_snap_length=.6;floor_max_angle=deg_to_rad(48)
 	shape=CollisionShape3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.4 if elite else .28;capsule.height=1.95 if elite else 1.3;shape.shape=capsule;shape.position.y=capsule.height*.5;add_child(shape)
 	lizard=preload("res://lizard_actor.gd").new();lizard.elite=elite;lizard.scale=Vector3.ONE*(1.5 if elite else 1.0);add_child(lizard)
+	var sight=preload("res://vision_debug.gd").new();sight.setup(45,70,Color(.85,.08,.15) if elite else Color(1,.75,.08),1.25 if elite else .85);add_child(sight)
 	label=Label3D.new();label.text="ELITE / CAPTAIN" if elite else "GRUNT";label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.font_size=22;label.pixel_size=.003;label.position.y=capsule.height+.3;label.visibility_range_end=45;add_child(label)
 	audio=AudioStreamPlayer3D.new();audio.stream=arena.kit.gun_sounds.Carbine;audio.volume_db=-19;audio.unit_size=8;add_child(audio)
 	destination=position;last_position=position;repath=randf();cooldown=randf_range(.5,2)

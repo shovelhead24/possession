@@ -40,6 +40,8 @@ func _ready():
 	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=5.0;shape.height=18.0;collision.shape=shape;collision.position.y=9.0;add_child(collision)
 	for tree in get_tree().get_nodes_in_group("trex_passable_tree"): add_collision_exception_with(tree)
 	for rock in get_tree().get_nodes_in_group("trex_passable_rock"): add_collision_exception_with(rock)
+	var bite_debug=MeshInstance3D.new();var bite_box=BoxMesh.new();bite_box.size=Vector3(8,4,8);bite_debug.mesh=bite_box;bite_debug.position=Vector3(0,12,-9);bite_debug.material_override=debug_material(Color(1,.3,.03,.18));bite_debug.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(bite_debug)
+	var sight=preload("res://vision_debug.gd").new();sight.setup(SIGHT_RANGE,55,Color(1,.22,.04),14);add_child(sight)
 	health_label=Label3D.new();health_label.position.y=20;health_label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;health_label.pixel_size=.01;add_child(health_label);update_health_label()
 	position=patrol[0];position.y=arena.height_at(position.x,position.z)+.1
 func take_hit(damage: float,_source: Vector3,_point: Vector3) -> String:
@@ -51,6 +53,8 @@ func update_health_label() -> void:
 	if not health_label: return
 	var filled=roundi(clampf(health/MAX_HEALTH,0.0,1.0)*10.0)
 	health_label.text="TYRANT  %d / %d HP\n[%s%s]" % [maxi(0,int(health)),int(MAX_HEALTH),"█".repeat(filled),"·".repeat(10-filled)]
+func debug_material(tint: Color) -> StandardMaterial3D:
+	var material=StandardMaterial3D.new();material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;material.albedo_color=tint;material.emission_enabled=true;material.emission=tint;material.emission_energy_multiplier=.5;material.cull_mode=BaseMaterial3D.CULL_DISABLED;return material
 func can_see(candidate: Node3D) -> bool:
 	if not is_instance_valid(candidate) or global_position.distance_to(candidate.global_position)>SIGHT_RANGE: return false
 	var ray=PhysicsRayQueryParameters3D.create(global_position+Vector3.UP*12,candidate.global_position+Vector3.UP*.8);ray.exclude=[get_rid()]
