@@ -107,7 +107,6 @@ func _ready() -> void:
 	capsule.radius=0.32;capsule.height=1.8
 	shape.shape=capsule;shape.position.y=0.9
 	walker.add_child(shape);add_child(walker)
-	var player_sight=preload("res://vision_debug.gd").new();player_sight.setup(55,78,Color(.08,.55,1),EYE);walker.add_child(player_sight)
 	viewpoint(1)
 	support_status.text="E / CALL STRIKE ON RANGE"
 	relay_status.text="E / CONNECT RELAY"

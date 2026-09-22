@@ -21,6 +21,7 @@ var bite_number := 0
 var excluded_target: Node3D
 var exclude_target_time := 0.0
 var health_label: Label3D
+var bite_debug: MeshInstance3D
 var animator: AnimationPlayer
 var skeleton: Skeleton3D
 var root_bone := -1
@@ -40,7 +41,7 @@ func _ready():
 	var collision=CollisionShape3D.new();var shape=CapsuleShape3D.new();shape.radius=5.0;shape.height=18.0;collision.shape=shape;collision.position.y=9.0;add_child(collision)
 	for tree in get_tree().get_nodes_in_group("trex_passable_tree"): add_collision_exception_with(tree)
 	for rock in get_tree().get_nodes_in_group("trex_passable_rock"): add_collision_exception_with(rock)
-	var bite_debug=MeshInstance3D.new();var bite_box=BoxMesh.new();bite_box.size=Vector3(8,4,8);bite_debug.mesh=bite_box;bite_debug.position=Vector3(0,12,-9);bite_debug.material_override=debug_material(Color(1,.3,.03,.18));bite_debug.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(bite_debug)
+	bite_debug=MeshInstance3D.new();var bite_box=BoxMesh.new();bite_box.size=Vector3(5,3,5);bite_debug.mesh=bite_box;bite_debug.position=Vector3(-.25,3.6,-4.8);bite_debug.material_override=debug_material(Color(1,.3,.03,.18));bite_debug.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;bite_debug.hide();add_child(bite_debug)
 	var sight=preload("res://vision_debug.gd").new();sight.setup(SIGHT_RANGE,55,Color(1,.22,.04),14);add_child(sight)
 	health_label=Label3D.new();health_label.position.y=20;health_label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;health_label.pixel_size=.01;add_child(health_label);update_health_label()
 	position=patrol[0];position.y=arena.height_at(position.x,position.z)+.1
@@ -72,6 +73,7 @@ func begin_bite(prey: Node3D) -> void:
 	# made the mouth appear to clamp on indefinitely, and let target selection
 	# silently swap victims before damage was delivered.
 	bite_number+=1;bite_target=prey;bite_time=1.2;bite_applied=false;bite_grabbed=false;bite_damage=randf_range(20.0,80.0);cooldown=2.0
+	bite_debug.show()
 	bite_event("START #%d target=%s distance=%.2f" % [bite_number,prey.name,position.distance_to(prey.position)])
 	# Leave the imported animation running continuously. The attack timing is
 	# gameplay state only; restarting the one available timeline looked like a stutter.
@@ -131,7 +133,7 @@ func _physics_process(delta):
 			bite_grabbed=true;clamp_to_mouth(bite_target);bite_event("CLAMP #%d victim=%s point=%s" % [bite_number,bite_target.name,bite_target.global_position]);bite_applied=true;apply_bite(bite_target)
 		if bite_grabbed: clamp_to_mouth(bite_target)
 		if bite_time<=0:
-			toss(bite_target);bite_event("RELEASE #%d applied=%s" % [bite_number,str(bite_applied)]);bite_target=null;bite_grabbed=false
+			toss(bite_target);bite_event("RELEASE #%d applied=%s" % [bite_number,str(bite_applied)]);bite_target=null;bite_grabbed=false;bite_debug.hide()
 		position.y=arena.height_at(position.x,position.z)+.05
 		velocity=Vector3.ZERO
 		return
