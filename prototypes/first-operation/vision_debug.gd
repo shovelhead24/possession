@@ -2,6 +2,7 @@ extends MeshInstance3D
 
 # Render-only vision frustum. It has no collision, gameplay query, or shadow.
 func setup(range_m: float,fov_degrees: float,tint: Color,eye_height: float) -> void:
+	add_to_group("combat_viewcones")
 	# Outlines communicate the cone without translucent full-screen overdraw.
 	var half=tan(deg_to_rad(fov_degrees*.5))*range_m
 	var points=[Vector3.ZERO,Vector3(-half,0,-range_m),Vector3.ZERO,Vector3(half,0,-range_m),Vector3.ZERO,Vector3(0,half,-range_m),Vector3.ZERO,Vector3(0,-half,-range_m)]

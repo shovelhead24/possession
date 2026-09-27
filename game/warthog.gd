@@ -10,7 +10,7 @@ class_name Warthog
 @export var brake_force: float = 20.0
 @export var turn_speed: float = 2.2
 @export var gunner_damage: float = 12.0
-@export var gunner_fire_interval: float = 0.9
+@export var gunner_fire_interval: float = 3.0
 @export var gunner_range: float = 60.0
 
 # Faction tint colours matching soldier markers

@@ -6,10 +6,16 @@ var trex_toss_time := 0.0
 var flying := false
 var jump_held := false
 var kit: Node
+var rex_menu: CanvasLayer
+var world_data: Resource
+var terrain_editor: Node3D
 const EYE := 1.65
 const RELAY_SHIFT := Vector3(0,0,-268)
 
 func height_at(x: float, z: float) -> float:
+	return world_data.height_at(x,z) if world_data else authored_height(x,z)
+
+func authored_height(x: float, z: float) -> float:
 	# Authored landform envelope: quiet ground at both sites, ridge west, gully east.
 	var envelope := smoothstep(15.0,65.0,-z)*(1.0-smoothstep(235.0,280.0,-z))
 	var ridge := 11.0*exp(-pow((x+32.0)/19.0,2.0))
@@ -26,19 +32,11 @@ func build_landscape() -> void:
 	# Replace the flat foreground; keep the distant ring as the study's scale proxy.
 	for child in get_children():
 		if child is MeshInstance3D and child.mesh is BoxMesh and child.mesh.size.x==9000:
-			child.position.y=-12.0
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for iz in range(230):
-		for ix in range(180):
-			var x := -270.0+ix*3.0
-			var z := -580.0+iz*3.0
-			for p in [Vector2(x,z),Vector2(x+3,z),Vector2(x+3,z+3),Vector2(x,z),Vector2(x+3,z+3),Vector2(x,z+3)]:
-				st.add_vertex(Vector3(p.x,height_at(p.x,p.y),p.y))
-	st.index();st.generate_normals()
-	var terrain := mesh_node(st.commit(),Vector3.ZERO,local_ground(Color(0.30,0.37,0.25)))
-	terrain.name="TacticalGround"
-	terrain.create_trimesh_collision()
+			child.position.y=-80.0 # Below the canyon floors, not through them.
+	if world_data: add_child(world_data.terrain.instantiate())
+	if world_data and world_data.outposts:
+		var outposts=world_data.outposts.instantiate();add_child(outposts)
+		for mesh in outposts.find_children("*","MeshInstance3D",true,false): mesh.visibility_range_end=650
 
 func solid(pos: Vector3, size: Vector3, mat: Material) -> void:
 	var n := box(pos,size,mat)
@@ -80,7 +78,8 @@ func build_fob() -> void:
 		for p in [Vector2(x-3,z),Vector2(x+3,z),Vector2(x+3,z+2),Vector2(x-3,z),Vector2(x+3,z+2),Vector2(x-3,z+2)]:
 			ribbon.add_vertex(Vector3(p.x,height_at(p.x,p.y)+0.035,p.y))
 		ribbon.generate_normals()
-		mesh_node(ribbon.commit(),Vector3.ZERO,local_ground(Color(0.38,0.33,0.25)))
+		var track=mesh_node(ribbon.commit(),Vector3.ZERO,local_ground(Color(0.38,0.33,0.25)))
+		track.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	label3("RELAY COMPOUND",Vector3(0,5,-281),70)
 
 func building(origin: Vector3, wall: Material, roof: Material) -> void:
@@ -96,6 +95,23 @@ func building(origin: Vector3, wall: Material, roof: Material) -> void:
 		for z in [-5.5,0.0,5.5]: solid(origin+Vector3(x,1.7,z),Vector3(0.4,1.4,3),wall)
 
 func _ready() -> void:
+	var bake=preload("res://arena_bake_data.gd")
+	if not ResourceLoader.exists(bake.FILE):
+		push_error("Arena bake missing: run --headless --script res://bake_arena.gd once");get_tree().quit(1);return
+	world_data=load(bake.EDITED_FILE if ResourceLoader.exists(bake.EDITED_FILE) else bake.FILE)
+	print("ARENA_BAKED_READY: 16 sectors / disk terrain, heightfield, trees, cover and navigation")
+	# The desktop shortcut runs source directly. Stamp its loaded gameplay
+	# files so an old running instance is distinguishable from a fresh launch.
+	var build_source=""
+	for source in ["res://tactical.gd","res://trex.gd","res://trex_menu.gd","res://trex_grounding.gd","res://trex_audio.gd","res://squad_enemy.gd","res://squad_navigation.gd","res://tank_controller.gd","res://warthog_turret.gd","res://turret_audio.gd","res://vision_debug.gd"]:
+		build_source+=FileAccess.get_file_as_string(source)
+	for source in ["res://practice_range.gd","res://arena_bake_data.gd","res://arena_trees.gd","res://arena_cover.gd","res://reptile_squad.gd","res://lizard_actor.gd","res://rig_scale_bake.gd"]: build_source+=FileAccess.get_file_as_string(source)
+	build_source+=str(FileAccess.get_modified_time(bake.FILE))
+	for source in ["res://terrain_editor.gd","res://patrol_debug.gd"]: build_source+=FileAccess.get_file_as_string(source)
+	build_source+=str(FileAccess.get_modified_time(bake.EDITED_FILE))
+	var build_id=build_source.sha256_text().left(8)
+	DisplayServer.window_set_title("Possession — Tactical / build "+build_id)
+	print("TACTICAL_BUILD ",build_id," project=",ProjectSettings.globalize_path("res://"))
 	super._ready()
 	if not shots_running: Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 	walker=CharacterBody3D.new()
@@ -114,6 +130,9 @@ func _ready() -> void:
 	help.hide()
 	add_child(preload("res://suspension_course.gd").new())
 	if not OS.get_cmdline_user_args().has("--no-kit"): install_kit()
+	rex_menu=preload("res://trex_menu.gd").new();add_child(rex_menu)
+	terrain_editor=preload("res://terrain_editor.gd").new();add_child(terrain_editor)
+	add_child(preload("res://patrol_debug.gd").new())
 
 func install_kit() -> void:
 	kit=preload("res://arena_kit.gd").new();add_child(kit)
@@ -147,6 +166,7 @@ func use_station() -> void:
 		support_status.text=state.report
 
 func _input(event: InputEvent) -> void:
+	if rex_menu and rex_menu.blocks_player(): return
 	if kit and kit.handle_vehicle_input(event): return
 	if kit and kit.driving and event is InputEventKey and event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4,KEY_V]: return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_V:
@@ -185,7 +205,10 @@ func _process(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	if shots_running or not is_instance_valid(walker): return
+	if rex_menu and rex_menu.blocks_player(): return
 	if kit and kit.menu and kit.menu.opened: return
+	if walker.has_meta("trex_held"):
+		walker.velocity=Vector3.ZERO;camera.position=walker.position+Vector3.UP*EYE;return
 	var dir := Vector3.ZERO
 	if Input.is_physical_key_pressed(KEY_W): dir-=camera.global_basis.z
 	if Input.is_physical_key_pressed(KEY_S): dir+=camera.global_basis.z
@@ -243,9 +266,7 @@ func capture_sequence() -> void:
 
 
 func ring_gap() -> float:
-	return 0.002
+	return 0.0075 # Backdrop begins ~3.58 km away, beyond the 2.65 km arena edge.
 
 func local_ground(color: Color) -> ShaderMaterial:
 	var mat=ShaderMaterial.new();mat.shader=preload("res://local_ground.gdshader");mat.set_shader_parameter("base_color",Vector3(color.r,color.g,color.b));return mat
-
-

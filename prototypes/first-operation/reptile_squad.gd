@@ -30,7 +30,7 @@ func _physics_process(delta: float) -> void:
 	if sense_timer<=0:
 		sense_timer=.3;var contact=false
 		for unit in members:
-			if not unit.dead and unit.sees_player(): contact=true;last_known=manager.arena.walker.global_position;break
+			if not unit.dead and unit.sees_player(): contact=true;last_known=unit.combat_target.global_position;break
 		advance_memory(sense_elapsed,contact);sense_elapsed=0
 		if contact: manager.active=true
 	if order_timer<=0:

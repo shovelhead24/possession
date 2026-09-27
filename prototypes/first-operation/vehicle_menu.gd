@@ -13,7 +13,7 @@ var config_path="user://vehicle_tuning.cfg"
 
 func _ready() -> void:
 	kit=get_parent();car=kit.vehicles[vehicle_index];layer=20
-	if vehicle_index==1: config_path="user://tank_tuning.cfg"
+	if vehicle_index==1: config_path="user://tank_wheel_tuning.cfg"
 	panel=PanelContainer.new();panel.position=Vector2(24,24);panel.size=Vector2(540,620);add_child(panel)
 	var background=StyleBoxFlat.new();background.bg_color=Color(.055,.065,.075,1)
 	background.content_margin_left=16;background.content_margin_right=16;background.content_margin_top=12;background.content_margin_bottom=12
@@ -24,13 +24,13 @@ func _ready() -> void:
 	var tabs=TabContainer.new();tabs.custom_minimum_size=Vector2(510,430);column.add_child(tabs)
 	if vehicle_index==1:
 		var mobility=page(tabs,"Mobility")
-		slider(mobility,"max_speed","Forward speed · m/s",5,25,1,car.max_speed)
-		slider(mobility,"reverse_speed","Reverse speed · m/s",2,12,1,car.reverse_speed)
-		slider(mobility,"turn_rate","Hull turn · rad/s",.2,2,.1,car.turn_rate)
+		slider(mobility,"top_speed","Speed limit · m/s",5,18,1,car.top_speed)
+		slider(mobility,"engine_force","Drive force per wheel · N",500,4000,100,car.engine_force)
+		slider(mobility,"steer_max","Steering · degrees",10,40,1,car.steer_max)
 		var suspension=page(tabs,"Suspension")
-		slider(suspension,"suspension_spring","Track spring · N/m",40,260,10,car.suspension_spring)
-		slider(suspension,"suspension_damping","Track damping · Ns/m",4,40,2,car.suspension_damping)
-		slider(suspension,"suspension_rest_length","Suspension ride height · m",1.35,1.9,.05,car.suspension_rest_length)
+		slider(suspension,"spring_rate","Wheel spring · N/m",10000,60000,1000,car.spring_rate)
+		slider(suspension,"damping","Wheel damping · Ns/m",500,6000,100,car.damping)
+		slider(suspension,"travel_limit","Travel each way · m",.12,.28,.01,car.travel_limit)
 		var turret=page(tabs,"Turret")
 		slider(turret,"turret_rate","Traverse · degrees/s",10,90,5,car.turret_rate)
 		slider(turret,"reload_time","Cannon reload · seconds",1,6,.25,car.reload_time)

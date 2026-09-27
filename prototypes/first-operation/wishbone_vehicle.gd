@@ -179,6 +179,7 @@ func _physics_process(dt: float) -> void:
 		var upper_in=anchor+Vector3(Linkage.UPPER_IN.x*side,Linkage.UPPER_IN.y,0)
 		c.hub.position=(lower+upper)*.5
 		c.hub.basis=Basis((upper-lower).normalized(),steering if c.front else 0.0)*Basis(Vector3.FORWARD,geom.camber*side)
+		if c.links.is_empty(): continue
 		rod(c.links[0],anchor+Vector3(0,0,-.27),lower)
 		rod(c.links[1],anchor+Vector3(0,0,.27),lower)
 		rod(c.links[2],upper_in+Vector3(0,0,-.22),upper)

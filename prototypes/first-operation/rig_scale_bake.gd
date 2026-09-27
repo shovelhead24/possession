@@ -19,7 +19,12 @@ static func apply(root: Node3D, factor: float) -> void:
 				var arrays=node.mesh.surface_get_arrays(i);var vertices: PackedVector3Array=arrays[Mesh.ARRAY_VERTEX]
 				for j in range(vertices.size()): vertices[j]*=scale
 				arrays[Mesh.ARRAY_VERTEX]=vertices;mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays);mesh.surface_set_material(i,node.mesh.surface_get_material(i))
-			node.mesh=mesh
+			# Scaling rebuilt the ArrayMesh and discarded imported distance LODs.
+			# Regenerate index-only LODs once per cached rig; skinning/binds stay intact.
+			var lod_mesh=ImporterMesh.new()
+			for surface in mesh.get_surface_count(): lod_mesh.add_surface(Mesh.PRIMITIVE_TRIANGLES,mesh.surface_get_arrays(surface),[],{},mesh.surface_get_material(surface))
+			lod_mesh.generate_lods(25,60,[])
+			node.mesh=lod_mesh.get_mesh()
 			if node.skin:
 				node.skin=node.skin.duplicate()
 				for i in range(node.skin.get_bind_count()):

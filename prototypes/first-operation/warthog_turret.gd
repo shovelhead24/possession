@@ -25,6 +25,7 @@ var pose_player: AnimationPlayer
 var crouch_clip: StringName
 var crouch := .5
 var rotor: Node3D
+var samples: Node3D
 
 func setup(owner_kit: Node, vehicle: Node3D, model: Node3D) -> void:
 	kit=owner_kit;body=vehicle;rng.randomize()
@@ -52,19 +53,8 @@ func setup(owner_kit: Node, vehicle: Node3D, model: Node3D) -> void:
 	gunner.hide()
 	flash=MeshInstance3D.new();var mesh=SphereMesh.new();mesh.radius=.07;mesh.height=.14;flash.mesh=mesh
 	flash.material_override=kit.arena.material(Color(1,.8,.25),0,.5,true);muzzle.add_child(flash);flash.hide()
-	audio=AudioStreamPlayer3D.new();audio.stream=sound(false);audio.max_polyphony=8;audio.unit_size=15;audio.volume_db=-7;muzzle.add_child(audio)
-	motor=AudioStreamPlayer3D.new();motor.stream=sound(true);motor.unit_size=5;motor.volume_db=-22;add_child(motor)
-
-func sound(loop: bool) -> AudioStreamWAV:
-	var rate=22050;var count=rate if loop else int(rate*.13);var bytes=PackedByteArray();bytes.resize(count*2)
-	var noise=RandomNumberGenerator.new();noise.seed=904
-	for i in range(count):
-		var t=float(i)/rate
-		var value=(sin(TAU*90*t)*.3+sin(TAU*180*t)*.1) if loop else (noise.randf_range(-1,1)*.7+sin(TAU*100*t)*.3)*exp(-t*38)*minf(t*900,1)
-		bytes.encode_s16(i*2,int(value*25000))
-	var stream=AudioStreamWAV.new();stream.format=AudioStreamWAV.FORMAT_16_BITS;stream.mix_rate=rate;stream.data=bytes
-	if loop: stream.loop_mode=AudioStreamWAV.LOOP_FORWARD;stream.loop_end=count
-	return stream
+	samples=preload("res://turret_audio.gd").new();muzzle.add_child(samples)
+	audio=samples.firing;motor=samples.motor
 
 func spread_degrees() -> float: return lerpf(MIN_SPREAD,MAX_SPREAD,bloom)
 func fire_rate() -> float: return lerpf(MIN_RATE,MAX_RATE,clampf((spin-COLD_DELAY)/RAMP_TIME,0,1))
@@ -102,13 +92,16 @@ func fire_round() -> void:
 	if not hit.is_empty():
 		if hit.collider.has_method("take_hit"): hit.collider.take_hit(14.0,start,end)
 		elif hit.collider.has_meta("target_hits"): hit.collider.set_meta("target_hits",int(hit.collider.get_meta("target_hits"))+1)
-	shots+=1;bloom=minf(1,bloom+.045);audio.pitch_scale=rng.randf_range(.93,1.07);audio.play();flash_time=.035;flash.show()
+	shots+=1;bloom=minf(1,bloom+.045);flash_time=.035;flash.show()
 
 func _physics_process(delta: float) -> void:
 	if not yaw: return
 	var occupied=kit.gunning and kit.driving==body
-	var active=occupied and not kit.menu.opened and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
-	var rounds=advance_trigger(delta,active and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT))
+	var debug_menu=kit.arena.get("rex_menu")
+	var active=occupied and not kit.menu.opened and not (debug_menu and debug_menu.blocks_player()) and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
+	var held=active and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	var rounds=advance_trigger(delta,held)
+	samples.update(delta,held,held and spin>=COLD_DELAY,spin,COLD_DELAY)
 	if active:
 		yaw.rotation.y=kit.driver_look.x;pitch.rotation.x=kit.driver_look.y
 		for i in range(rounds): fire_round()
@@ -117,9 +110,6 @@ func _physics_process(delta: float) -> void:
 	gunner.visible=occupied and int(kit.warthog_menu.settings.camera_mode)==0
 	if spin>.01:
 		rotor.rotation.z-=spin*delta*35
-		motor.pitch_scale=.45+spin*.6
-		if not motor.playing: motor.play()
-	else: motor.stop()
 	flash_time-=delta
 	if flash_time<=0: flash.hide()
 	if occupied and not kit.menu.opened:

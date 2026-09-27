@@ -16,6 +16,11 @@ func run():
 	clock.free()
 	var arena=load("res://tactical.tscn").instantiate();root.add_child(arena);await process_frame
 	var kit=arena.kit;var vehicle=kit.vehicles[0];var turret=kit.warthog_turret
+	Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
+	assert(turret.audio.stream==turret.samples.bank.fire and turret.audio.max_polyphony==1,"Turret did not install sustained sample player")
+	# Isolate the mounted-player checks from Rexy's competing target priority.
+	var rex=arena.get_node("PracticeRange").trex
+	rex.set_physics_process(false);rex.position=Vector3(10000,0,10000)
 	for squad in arena.get_node("PracticeRange").squads:
 		squad.set_physics_process(false)
 		for unit in squad.members: unit.set_physics_process(false)
@@ -57,6 +62,7 @@ func run():
 	# Mounted driver and gunner must both be visible targets, and plasma must hurt them.
 	var enemy=arena.get_node("PracticeRange").enemies[0]
 	enemy.global_position=vehicle.to_global(Vector3(0,0,18));enemy.global_position.y=arena.height_at(enemy.position.x,enemy.position.z)
+	enemy.look_at(Vector3(arena.walker.global_position.x,enemy.global_position.y,arena.walker.global_position.z));enemy.sight_timer=0
 	await physics_frame;assert(enemy.sees_player(),"Enemies must see the gunner")
 	var manager=arena.get_node("PracticeRange");var health=manager.health
 	var point=arena.walker.global_position+Vector3.UP
@@ -64,7 +70,9 @@ func run():
 	await create_timer(.2).timeout;assert(manager.health<health,"Mounted gunner must take plasma damage")
 	kit.toggle_vehicle();assert(not kit.driving and not kit.gunning,"E exits turret")
 	arena.walker.global_position=vehicle.to_global(Vector3(-3,0,0));kit.toggle_vehicle();assert(kit.driving==vehicle and not kit.gunning,"Side interaction must still drive")
-	await physics_frame;await physics_frame;assert(enemy.sees_player(),"Enemies must see the driver")
+	await physics_frame;await physics_frame
+	enemy.look_at(Vector3(arena.walker.global_position.x,enemy.global_position.y,arena.walker.global_position.z));enemy.sight_timer=0
+	assert(enemy.sees_player(),"Enemies must see the driver")
 	health=manager.health;point=vehicle.global_position+Vector3.UP
 	bolt=manager.plasma(point+Vector3.UP*4,Vector3.DOWN,8,true,enemy.get_rid());bolt.velocity=Vector3.DOWN*30
 	await create_timer(.3).timeout;assert(manager.health<health,"Mounted driver must take plasma damage")

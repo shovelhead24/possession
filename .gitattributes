@@ -1,3 +1,6 @@
 *.fbx filter=lfs diff=lfs merge=lfs -text
 *.mb filter=lfs diff=lfs merge=lfs -text
 *.glb filter=lfs diff=lfs merge=lfs -text
+logs/terrain_test_saved.res filter=lfs diff=lfs merge=lfs -text
+prototypes/first-operation/baked/arena.res filter=lfs diff=lfs merge=lfs -text
+logs/terrain_test_previous.res filter=lfs diff=lfs merge=lfs -text

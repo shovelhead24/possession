@@ -1,6 +1,6 @@
-STATE=running
-DETAIL=Read ring_vibes.gd
-ITEM=- [ ] **Deployable** ? mines, sensors, a tripod turret. Placed, then persistent.
+STATE=idle
+DETAIL=no item completed
+ITEM=- [ ] **Where weapons come from** ? found, salvaged, traded, taken. Same hook as the vehicles;
 BRANCH=semi-attended
-STARTED=2026-08-16 21:51:15
-UPDATED=2026-08-16 21:52:04
+STARTED=2026-09-07 22:31:15
+UPDATED=2026-09-07 22:31:35

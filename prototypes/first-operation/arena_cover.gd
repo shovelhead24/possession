@@ -4,6 +4,11 @@ var slots: Array[Vector3]=[]
 var arena: Node
 func _ready() -> void:
 	name="ArenaCover";arena=get_parent()
+	if arena.get("world_data"):
+		rocks=arena.world_data.rocks;slots=arena.world_data.slots
+		var visuals=arena.world_data.rock_scene.instantiate();add_child(visuals)
+		for mesh in visuals.find_children("*","MeshInstance3D",true,false): mesh.visibility_range_end=350
+		return
 	var rng=RandomNumberGenerator.new();rng.seed=6104
 	# Cover near the squad positions, plus quieter outlying clusters.
 	for cluster in [Vector2(48,-90),Vector2(112,-180),Vector2(-118,-230),Vector2(145,-370),Vector2(190,-450),Vector2(-170,-410)]:

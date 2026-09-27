@@ -1,0 +1,131 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x3840  sat_tex: yes
+ring_vibes: DEM texture 1920x1920, mpp=46.9
+ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
+ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
+ring_vibes: tree pack — 3 variants x 4 LODs loaded
+ring_vibes: far band rebuilt around arc 0 km (972 ms)
+ring_vibes: containment field 1500-4000m on lat -25000
+ring_vibes: containment field 1500-4000m on lat 25000
+ring_vibes: texture compression — s3tc true, bptc true, etc2 true
+ring_vibes: grass pack loaded (1 surfaces)
+ring_vibes: 13674 road centrelines loaded (home + none)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: hedge texture 1024x1024 loaded
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: millstreet — 39008 of 59992 buildings kept (16545 outside the 50km ring width, 4439 on cliffs)
+ring_vibes: big_sur — 10899 of 11348 buildings kept (0 outside the 50km ring width, 449 on cliffs)
+ring_vibes: cape_peninsula — 8019 of 8118 buildings kept (8 outside the 50km ring width, 91 on cliffs)
+ring_vibes: palawan — 6128 of 6215 buildings kept (3 outside the 50km ring width, 84 on cliffs)
+ring_vibes: java_majapahit — 59076 of 59996 buildings kept (38 outside the 50km ring width, 882 on cliffs)
+ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring width, 65 on cliffs)
+ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
+ring_vibes: 143141 OSM buildings loaded (2 styles)
+ring_vibes: warthog model loaded (5.2m long, scale 0.967)
+
+PROVING GROUND — identical course, every vehicle
+
+vehicle    phase     top m/s   dist m   turn r   jolt m    grade   susp   air
+ring_vibes: 24471 trees placed (3 variants x 4 LODs) — 1330 standards, 5049 off-road, 30004 hedge quads
+box        accel        22.0    265.0      0.0     0.01     0.0    0.15     2
+box        brake         6.0     34.4      0.0     0.00     0.0    0.19     0
+box        circle       22.0     18.5     14.6     0.00     0.0    0.22     4
+box        rough         9.8    107.5      0.0     0.00     0.0    0.24     4
+box        climb         9.8    127.1      0.0     0.00     0.8    0.19     0
+ring_vibes: far band rebuilt around arc 852 km (518 ms)
+ring_vibes: 70388 road centrelines loaded (home + schwarzwald)
+ring_vibes: 59905 junction cells, 2663105 road cells from 70388 centrelines
+ring_vibes: buildings in range at arc 900095 lat -0 -> style0=0, style1=0
+ring_vibes: streamed schwarzwald @ 1536^2 — re-placed objects onto the new tier
+ring_vibes: 13985 road centrelines loaded (home + salar_uyuni)
+ring_vibes: 13471 junction cells, 1327373 road cells from 13985 centrelines
+ring_vibes: buildings in range at arc 900224 lat -0 -> style0=0, style1=0
+ring_vibes: streamed salar_uyuni @ 1536^2 — re-placed objects onto the new tier
+box        bumps        22.0    746.9      0.0     1.87     0.0    0.34     4
+ring_vibes: tree species -> scrub
+ring_vibes: 125 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8688 hedge quads
+ring_vibes: buildings in range at arc 588000 lat 0 -> style0=0, style1=0
+ring_vibes: warped to mizen_head (19.6% arc)
+ring_vibes: 13674 road centrelines loaded (home + mizen_head)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: buildings in range at arc 900831 lat 0 -> style0=0, style1=0
+ring_vibes: streamed mizen_head @ 1536^2 — re-placed objects onto the new tier
+  water: mizen_head, 1000m offshore, depth 24.6m
+ring_vibes: far band rebuilt around arc 524 km (632 ms)
+ring_vibes: tree species -> scrub
+ring_vibes: 2972 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 6976 hedge quads
+ring_vibes: 13985 road centrelines loaded (home + salar_uyuni)
+ring_vibes: 13471 junction cells, 1327373 road cells from 13985 centrelines
+ring_vibes: 486 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 6976 hedge quads
+ring_vibes: buildings in range at arc 588509 lat -888 -> style0=0, style1=0
+ring_vibes: streamed salar_uyuni @ 1536^2 — re-placed objects onto the new tier
+ring_vibes: 13674 road centrelines loaded (home + mizen_head)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 2972 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8560 hedge quads
+ring_vibes: buildings in range at arc 588538 lat -957 -> style0=0, style1=0
+ring_vibes: streamed mizen_head @ 1536^2 — re-placed objects onto the new tier
+box        water         9.3    165.3      0.0     0.00     0.0    0.34     4
+ring_vibes: far band rebuilt around arc 0 km (638 ms)
+ring_vibes: 24200 trees placed (3 variants x 4 LODs) — 1398 standards, 5064 off-road, 30008 hedge quads
+ring_vibes: 19118 road centrelines loaded (home + vermont)
+ring_vibes: 18702 junction cells, 1811179 road cells from 19118 centrelines
+ring_vibes: 24200 trees placed (3 variants x 4 LODs) — 1398 standards, 5064 off-road, 30004 hedge quads
+ring_vibes: buildings in range at arc 38259 lat -15134 -> style0=1574, style1=0
+ring_vibes: streamed vermont @ 1536^2 — re-placed objects onto the new tier
+warthog    accel        27.0    335.6      0.0     0.10     0.0    0.22     4
+warthog    brake         7.0     40.2      0.0     0.00     0.0    0.25     0
+warthog    circle       27.0     21.7     20.7     0.00     0.0    0.26     4
+warthog    rough        18.4    193.6      0.0     0.01     0.0    0.11     0
+warthog    climb        18.4    230.5      0.0     0.01     1.2    0.25     0
+ring_vibes: far band rebuilt around arc 852 km (609 ms)
+ring_vibes: 70388 road centrelines loaded (home + schwarzwald)
+ring_vibes: 59905 junction cells, 2663105 road cells from 70388 centrelines
+ring_vibes: buildings in range at arc 900143 lat -0 -> style0=0, style1=0
+ring_vibes: streamed schwarzwald @ 1536^2 — re-placed objects onto the new tier
+ring_vibes: 13985 road centrelines loaded (home + salar_uyuni)
+ring_vibes: 13471 junction cells, 1327373 road cells from 13985 centrelines
+ring_vibes: buildings in range at arc 900302 lat -0 -> style0=0, style1=0
+ring_vibes: streamed salar_uyuni @ 1536^2 — re-placed objects onto the new tier
+warthog    bumps        27.0   1021.5      0.0     1.86     0.0    0.46     4
+ring_vibes: tree species -> scrub
+ring_vibes: 125 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8688 hedge quads
+ring_vibes: buildings in range at arc 588000 lat 0 -> style0=0, style1=0
+ring_vibes: warped to mizen_head (19.6% arc)
+ring_vibes: 13674 road centrelines loaded (home + mizen_head)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: buildings in range at arc 901159 lat 0 -> style0=0, style1=0
+ring_vibes: streamed mizen_head @ 1536^2 — re-placed objects onto the new tier
+  water: mizen_head, 1000m offshore, depth 24.6m
+ring_vibes: far band rebuilt around arc 524 km (708 ms)
+ring_vibes: tree species -> scrub
+ring_vibes: 2933 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 6968 hedge quads
+ring_vibes: 13985 road centrelines loaded (home + salar_uyuni)
+ring_vibes: 13471 junction cells, 1327373 road cells from 13985 centrelines
+ring_vibes: 507 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 6976 hedge quads
+ring_vibes: buildings in range at arc 588520 lat -914 -> style0=0, style1=0
+ring_vibes: streamed salar_uyuni @ 1536^2 — re-placed objects onto the new tier
+ring_vibes: 13674 road centrelines loaded (home + mizen_head)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 2933 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8584 hedge quads
+ring_vibes: buildings in range at arc 588574 lat -1044 -> style0=0, style1=0
+ring_vibes: streamed mizen_head @ 1536^2 — re-placed objects onto the new tier
+warthog    water        17.2    304.3      0.0     0.00     0.0    0.46     4
+ring_vibes: far band rebuilt around arc 0 km (504 ms)
+ring_vibes: 24155 trees placed (3 variants x 4 LODs) — 1480 standards, 5108 off-road, 30008 hedge quads
+ring_vibes: 19118 road centrelines loaded (home + vermont)
+ring_vibes: 18702 junction cells, 1811179 road cells from 19118 centrelines
+ring_vibes: 24155 trees placed (3 variants x 4 LODs) — 1480 standards, 5108 off-road, 30004 hedge quads
+ring_vibes: buildings in range at arc 38272 lat -15134 -> style0=1573, style1=0
+ring_vibes: streamed vermont @ 1536^2 — re-placed objects onto the new tier
+sportscar  accel        42.0    516.9      0.0     0.16     0.0    0.18     4
+sportscar  brake         6.0     35.0      0.0     0.00     0.0    0.18     4
+sportscar  circle       42.0     24.8     23.3     0.01     0.0    0.18     4
+sportscar  rough        13.5    150.2      0.0     0.01     0.0    0.07     0
+sportscar  climb        13.5    176.9      0.0     0.00     0.9    0.09     0
+ring_vibes: far band rebuilt around arc 852 km (514 ms)
+ring_vibes: 70388 road centrelines loaded (home + schwarzwald)
+ring_vibes: 59905 junction cells, 2663105 road cells from 70388 centrelines
+ring_vibes: buildings in range at arc 900211 lat -0 -> style0=0, style1=0
+ring_vibes: streamed schwarzwald @ 1536^2 — re-placed objects onto the new tier

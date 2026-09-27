@@ -1,0 +1,148 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x3840  sat_tex: yes
+ring_vibes: DEM texture 1920x1920, mpp=46.9
+ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
+ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
+ring_vibes: tree pack — 3 variants x 4 LODs loaded
+ring_vibes: far band rebuilt around arc 0 km (755 ms)
+ring_vibes: containment field 1500-4000m on lat -25000
+ring_vibes: containment field 1500-4000m on lat 25000
+ring_vibes: texture compression — s3tc true, bptc true, etc2 true
+ring_vibes: grass pack loaded (1 surfaces)
+ring_vibes: 13674 road centrelines loaded (home + none)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: hedge texture 1024x1024 loaded
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: millstreet — 39008 of 59992 buildings kept (16545 outside the 50km ring width, 4439 on cliffs)
+ring_vibes: big_sur — 10899 of 11348 buildings kept (0 outside the 50km ring width, 449 on cliffs)
+ring_vibes: cape_peninsula — 8019 of 8118 buildings kept (8 outside the 50km ring width, 91 on cliffs)
+ring_vibes: palawan — 6128 of 6215 buildings kept (3 outside the 50km ring width, 84 on cliffs)
+ring_vibes: java_majapahit — 59076 of 59996 buildings kept (38 outside the 50km ring width, 882 on cliffs)
+ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring width, 65 on cliffs)
+ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
+ring_vibes: 143141 OSM buildings loaded (2 styles)
+RANGE  ring R=477465m  omega=0.004342 rad/s  surface 2073 m/s
+weapon     range      cold% burst%   group    drop   flight spin-dif     ttk rd/kill kill/mag
+spear       melee   reach 2.6m  arc  25deg  windup 0.42s  committed 1.12s  dps  50.0  ttk 2.62s
+spear       spar    win 100%  hp left  57.9  exchange 2.7s
+blade       melee   reach 1.3m  arc  70deg  windup 0.22s  committed 0.50s  dps  69.1  ttk 1.87s
+blade       spar    win 100%  hp left  34.5  exchange 3.3s
+club        melee   reach 1.5m  arc 120deg  windup 0.58s  committed 1.43s  dps  45.9  ttk 3.28s
+club        spar    win 100%  hp left  34.5  exchange 3.4s
+improvised  melee   reach 1.0m  arc  50deg  windup 0.30s  committed 0.75s  dps  25.7  ttk 4.50s
+improvised  spar    win   0%  hp left   0.0  exchange 3.9s
+rock       thrown   spinward    54m (3.52s)  antispin    56m (3.63s)  diff +2m  blast 0.0m  impact
+javelin    thrown   spinward    85m (3.50s)  antispin    90m (3.66s)  diff +5m  blast 0.0m  impact
+grenade    thrown   spinward    49m (3.53s)  antispin    51m (3.62s)  diff +2m  blast 6.0m  4.0s fuse
+molotov    thrown   spinward    42m (3.54s)  antispin    43m (3.62s)  diff +2m  blast 4.5m  impact
+sticky     thrown   spinward    23m (1.90s)  antispin    24m (1.95s)  diff +1m  blast 3.5m  2.5s fuse
+sling      tension  draw 1.6s  steady 0.6s then +9 mrad/s  (drop below is the real cost)
+sling            5m   100%   100%   0.06m   0.05m   0.125s    0.00m  11.13s     5.0    --   
+sling           10m   100%   100%   0.13m   0.27m   0.251s    0.00m  11.25s     5.0    --   
+sling           25m    50%    42%   0.97m   1.86m   0.633s   -0.19m  27.03s    12.0    --   
+sling           50m    17%     8%   2.39m   7.61m   1.278s   -0.88m 133.28s    60.0    --   
+sling          100m     0%     8%  10.34m  31.83m   2.613s   -4.78m 134.61s    60.0    --   
+sling          200m     0%     0%  51.51m 140.96m   5.500s  -33.88m    --      --      --   
+sling          400m     0%     0% 498.99m 760.68m  12.800s -351.53m    --      --      --   
+bow        tension  draw 0.9s  steady 1.8s then +4 mrad/s  (drop below is the real cost)
+bow              5m   100%   100%   0.04m   0.02m   0.081s    0.00m   5.18s     3.0    --   
+bow             10m   100%   100%   0.09m   0.11m   0.162s   -0.03m   5.26s     3.0    --   
+bow             25m   100%   100%   0.32m   0.77m   0.406s   -0.09m   5.51s     3.0    --   
+bow             50m    67%    42%   1.24m   3.18m   0.819s   -0.44m  13.06s     7.2    --   
+bow            100m     8%     8%   4.26m  13.08m   1.657s   -2.09m  62.86s    36.0    --   
+bow            200m     8%     0%  22.80m  55.11m   3.403s  -11.06m    --      --      --   
+bow            400m     0%     0%  91.58m 249.93m   7.258s  -76.34m    --      --      --   
+crossbow   tension  draw 3.4s  holds indefinitely  (drop below is the real cost)
+crossbow         5m   100%   100%   0.01m  -0.01m   0.054s    0.00m   8.05s     2.0    --   
+crossbow        10m   100%   100%   0.03m   0.05m   0.109s    0.00m   8.11s     2.0    --   
+crossbow        25m   100%   100%   0.17m   0.33m   0.273s   -0.03m   8.27s     2.0    --   
+crossbow        50m    75%    83%   0.53m   1.49m   0.550s   -0.28m  10.15s     2.4    --   
+crossbow       100m    17%     0%   2.48m   6.05m   1.111s   -1.22m    --      --      --   
+crossbow       200m     8%     0%  10.52m  25.11m   2.266s   -5.72m    --      --      --   
+crossbow       400m     0%     0%  43.97m 109.46m   4.739s  -31.78m    --      --      --   
+speargun   tension  draw 2.8s  holds indefinitely  (drop below is the real cost)
+speargun         5m   100%   100%   0.06m   0.08m   0.147s    0.00m   7.35s     2.0    --   
+speargun        10m   100%   100%   0.18m   0.40m   0.296s   -0.03m   7.50s     2.0    --   
+speargun        25m    67%    58%   0.78m   2.55m   0.743s   -0.22m  13.09s     3.4    --   
+speargun        50m     8%    25%   3.84m  10.40m   1.496s   -1.00m  30.30s     8.0    --   
+speargun       100m     0%     0%  15.95m  43.02m   3.044s   -5.56m    --      --      --   
+speargun       200m     0%     0%  86.58m 188.96m   6.382s  -41.34m    --      --      --   
+speargun       400m     0%     0% 834.06m 1048.68m  15.059s -496.59m    --      --      --   
+musket           5m   100%   100%   0.03m  -0.01m   0.011s    0.00m  31.81s     2.0      0.5
+musket          10m   100%   100%   0.07m  -0.01m   0.022s    0.00m  31.82s     2.0      0.5
+musket          25m   100%   100%   0.17m  -0.01m   0.056s    0.00m  31.86s     2.0      0.5
+musket          50m   100%   100%   0.27m   0.08m   0.114s   -0.06m  31.91s     2.0      0.5
+musket         100m    75%    75%   0.72m   0.33m   0.233s   -0.22m  32.63s     2.7      0.4
+musket         200m    17%     0%   1.23m   1.52m   0.488s   -1.00m    --      --      --   
+musket         400m     0%     0%   2.77m   7.18m   1.071s   -5.00m    --      --      --   
+bolt_action       5m   100%   100%   0.00m  -0.01m   0.006s    0.00m   3.01s     2.0      2.5
+bolt_action      10m   100%   100%   0.00m  -0.01m   0.012s    0.00m   3.01s     2.0      2.5
+bolt_action      25m   100%   100%   0.01m  -0.01m   0.031s    0.00m   3.03s     2.0      2.5
+bolt_action      50m   100%   100%   0.04m   0.02m   0.062s   -0.03m   3.06s     2.0      2.5
+bolt_action     100m   100%   100%   0.07m   0.11m   0.124s   -0.13m   3.12s     2.0      2.5
+bolt_action     200m   100%   100%   0.24m   0.52m   0.252s   -0.44m   3.25s     2.0      2.5
+bolt_action     400m    75%    50%   0.96m   2.27m   0.520s   -1.91m   6.52s     4.0      1.3
+smg              5m   100%   100%   0.07m  -0.01m   0.013s    0.00m   0.35s     5.0      6.4
+smg             10m   100%   100%   0.18m  -0.01m   0.026s    0.00m   0.36s     5.0      6.4
+smg             25m   100%   100%   0.28m   0.02m   0.067s   -0.03m   0.40s     5.0      6.4
+smg             50m   100%    33%   1.00m   0.11m   0.135s   -0.06m   1.13s    15.0      2.1
+smg            100m    92%    50%   2.40m   0.46m   0.274s   -0.28m   0.94s    10.0      3.2
+smg            200m    25%     8%   2.82m   1.99m   0.571s   -1.16m   6.57s    60.0      0.5
+smg            400m     0%    17%  11.05m   9.24m   1.242s   -5.94m   3.24s    30.0      1.1
+lmg              5m   100%   100%   0.05m  -0.01m   0.006s    0.00m   0.28s     3.0     33.3
+lmg             10m   100%   100%   0.11m  -0.01m   0.012s    0.00m   0.29s     3.0     33.3
+lmg             25m   100%   100%   0.38m  -0.01m   0.030s    0.00m   0.31s     3.0     33.3
+lmg             50m   100%    83%   0.64m   0.02m   0.060s   -0.03m   0.39s     3.6     27.8
+lmg            100m   100%    50%   1.19m   0.11m   0.121s   -0.13m   0.67s     6.0     16.7
+lmg            200m    92%     0%   2.80m   0.52m   0.246s   -0.44m    --      --      --   
+lmg            400m    25%     0%   2.53m   2.21m   0.508s   -1.88m    --      --      --   
+autocannon       5m   100%   100%   0.04m  -0.01m   0.005s    0.00m   0.28s     1.0     20.0
+autocannon      10m   100%   100%   0.15m  -0.01m   0.010s    0.00m   0.28s     1.0     20.0
+autocannon      25m   100%    75%   0.20m  -0.01m   0.025s    0.00m   0.39s     1.3     15.0
+autocannon      50m   100%     8%   0.77m  -0.01m   0.049s    0.00m   3.32s    12.0      1.7
+autocannon     100m   100%     0%   1.54m   0.08m   0.099s   -0.09m    --      --      --   
+autocannon     200m    92%     0%   2.40m   0.36m   0.200s   -0.31m    --      --      --   
+autocannon     400m    83%     0%   7.91m   1.65m   0.411s   -1.50m    --      --      --   
+beam_rifle energy   NO DROP, NO LEAD, no flight time  charge 0.9s  falloff 600m  pulsed 8.8s before overheat (64% duty)  dps 26
+cutter     energy   NO DROP, NO LEAD, no flight time  charge 0.0s  falloff 14m  beam 8.3s before overheat (70% duty)  dps 140
+mortar     guided   fire-and-forget  arm 60m  bulk 9  salvo 1  blast 9.0m
+mortar              spinward  1227m (30.1s)  antispin  1373m (32.6s)  ASYMMETRY +146m (12%)
+rocket     guided   fire-and-forget  arm 25m  bulk 6  salvo 1  blast 6.5m
+rocket              spinward   296m (1.7s)  antispin   435m (2.3s)  ASYMMETRY +140m (47%)
+mlrs       guided   steered  arm 90m  bulk 14  salvo 12  blast 5.0m
+mlrs                spinward  1955m (27.6s)  antispin  3263m (32.6s)  ASYMMETRY +1308m (67%)
+carbine          5m   100%   100%   0.06m  -0.01m   0.006s    0.00m   0.26s     3.0     10.0
+carbine         10m   100%   100%   0.09m  -0.01m   0.011s    0.00m   0.27s     3.0     10.0
+carbine         25m   100%   100%   0.31m  -0.01m   0.028s    0.00m   0.29s     3.0     10.0
+carbine         50m   100%    83%   0.41m   0.02m   0.056s   -0.03m   0.36s     3.6      8.3
+carbine        100m   100%    67%   0.93m   0.11m   0.113s   -0.13m   0.50s     4.5      6.7
+carbine        200m   100%     0%   1.80m   0.46m   0.231s   -0.41m    --      --      --   
+carbine        400m    58%     0%   3.66m   2.02m   0.478s   -1.75m    --      --      --   
+RANGE spear: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE blade: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE club: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE improvised: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE rock: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE javelin: straight up -> back down 7s later, 2m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE grenade: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE molotov: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE sticky: straight up -> back down 3s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE sling: straight up -> back down 10s later, 7m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE bow: straight up -> back down 14s later, 18m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE crossbow: straight up -> back down 21s later, 57m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE speargun: straight up -> back down 7s later, 2m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE musket: straight up -> back down 96s later, 3350m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE bolt_action: straight up -> back down 166s later, 15612m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE smg: straight up -> back down 82s later, 2381m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE lmg: straight up -> back down 169s later, 16038m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE autocannon: straight up -> back down 198s later, 25946m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE beam_rifle: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE cutter: straight up -> back down 1s later, 0m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE mortar: straight up -> back down 35s later, 265m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE rocket: straight up -> back down 41s later, 469m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE mlrs: straight up -> back down 38s later, 358m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE carbine: straight up -> back down 180s later, 18167m along the arc (never sideways: omega is along the spin axis, so there is no width-wise deflection at all)
+RANGE selfcheck: reference drop 2.021m at 400m, live integrator 2.021m (delta 0.000m)
+RANGE done

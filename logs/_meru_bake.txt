@@ -1,0 +1,700 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+OpenGL API 3.3.0 - Build 31.0.101.2137 - Compatibility - Using Device: Intel - Intel(R) UHD Graphics
+
+ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x3840  sat_tex: yes
+ring_vibes: DEM texture 1920x1920, mpp=46.9
+ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
+ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
+ring_vibes: tree pack — 3 variants x 4 LODs loaded
+ring_vibes: far band rebuilt around arc 0 km (517 ms)
+ring_vibes: containment field 1500-4000m on lat -25000
+ring_vibes: containment field 1500-4000m on lat 25000
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [6] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [7] _ready (res://mocks/ring_vibes.gd:637)
+ERROR: Index p_idx = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_set_material (scene/resources/mesh.cpp:1946)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:34)
+       [1] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [2] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [3] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [4] _ready (res://mocks/ring_vibes.gd:637)
+ERROR: Index p_surface = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_get_arrays (scene/resources/mesh.cpp:1841)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [2] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [3] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [4] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array')
+   at: bake (res://pipeline/mesh_baker.gd:36)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [2] _build_walls (res://mocks/ring_vibes.gd:3700)
+       [3] _rebuild (res://mocks/ring_vibes.gd:3555)
+       [4] _ready (res://mocks/ring_vibes.gd:637)
+ring_vibes: texture compression — s3tc true, bptc true, etc2 false
+ring_vibes: grass pack loaded (1 surfaces)
+ring_vibes: 13674 road centrelines loaded (home + none)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: hedge texture 1024x1024 loaded
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: millstreet — 39008 of 59992 buildings kept (16545 outside the 50km ring width, 4439 on cliffs)
+ring_vibes: big_sur — 10899 of 11348 buildings kept (0 outside the 50km ring width, 449 on cliffs)
+ring_vibes: cape_peninsula — 8019 of 8118 buildings kept (8 outside the 50km ring width, 91 on cliffs)
+ring_vibes: palawan — 6128 of 6215 buildings kept (3 outside the 50km ring width, 84 on cliffs)
+ring_vibes: java_majapahit — 59076 of 59996 buildings kept (38 outside the 50km ring width, 882 on cliffs)
+ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring width, 65 on cliffs)
+ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [6] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [7] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [8] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [6] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [7] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [8] _ready (res://mocks/ring_vibes.gd:637)
+BAKE DBG append mat=(0.3, 0.29, 0.31, 1.0) src_faces=6 fmt=34359738375
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [6] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [7] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [8] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [6] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [7] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [8] _ready (res://mocks/ring_vibes.gd:637)
+ERROR: Index p_idx = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_set_material (scene/resources/mesh.cpp:1946)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:34)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [3] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [4] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [5] _ready (res://mocks/ring_vibes.gd:637)
+ERROR: Index p_surface = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_get_arrays (scene/resources/mesh.cpp:1841)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [3] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [4] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [5] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array')
+   at: bake (res://pipeline/mesh_baker.gd:36)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [3] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [4] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [5] _ready (res://mocks/ring_vibes.gd:637)
+WARNING: ring_vibes: building recipe 'gable' baked nothing
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _build_buildings (res://mocks/ring_vibes.gd:4773)
+       [1] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [2] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [3] _ready (res://mocks/ring_vibes.gd:637)
+JOGLO DBG surfaces=1 faces=44
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [6] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [7] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [8] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [6] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [7] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [8] _ready (res://mocks/ring_vibes.gd:637)
+BAKE DBG append mat=(0.26, 0.19, 0.15, 1.0) src_faces=44 fmt=34359738375
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [6] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [7] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [8] _ready (res://mocks/ring_vibes.gd:637)
+ERROR: Index p_idx = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_set_material (scene/resources/mesh.cpp:1946)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:34)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [3] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [4] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [5] _ready (res://mocks/ring_vibes.gd:637)
+ERROR: Index p_surface = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_get_arrays (scene/resources/mesh.cpp:1841)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [3] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [4] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [5] _ready (res://mocks/ring_vibes.gd:637)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array')
+   at: bake (res://pipeline/mesh_baker.gd:36)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _build_buildings (res://mocks/ring_vibes.gd:4771)
+       [3] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [4] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [5] _ready (res://mocks/ring_vibes.gd:637)
+WARNING: ring_vibes: building recipe 'meru' baked nothing
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _build_buildings (res://mocks/ring_vibes.gd:4773)
+       [1] _load_buildings (res://mocks/ring_vibes.gd:5027)
+       [2] _rebuild (res://mocks/ring_vibes.gd:3572)
+       [3] _ready (res://mocks/ring_vibes.gd:637)
+ring_vibes: 143141 OSM buildings loaded (0 styles)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+BAKE DBG append mat=(0.3, 0.29, 0.31, 1.0) src_faces=6 fmt=34359738375
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+ERROR: Index p_idx = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_set_material (scene/resources/mesh.cpp:1946)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:34)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+ERROR: Index p_surface = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_get_arrays (scene/resources/mesh.cpp:1841)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array')
+   at: bake (res://pipeline/mesh_baker.gd:36)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+JOGLO DBG surfaces=1 faces=44
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+BAKE DBG append mat=(0.26, 0.19, 0.15, 1.0) src_faces=44 fmt=34359738375
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+ERROR: Index p_idx = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_set_material (scene/resources/mesh.cpp:1946)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:34)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+ERROR: Index p_surface = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_get_arrays (scene/resources/mesh.cpp:1841)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array')
+   at: bake (res://pipeline/mesh_baker.gd:36)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _bake_building_mesh (res://mocks/ring_vibes.gd:4825)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2709)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Invalid call. Nonexistent function 'surface_get_format' in base 'BoxMesh'.
+   at: _append (res://pipeline/mesh_baker.gd:76)
+   GDScript backtrace (most recent call first):
+       [0] _append (res://pipeline/mesh_baker.gd:76)
+       [1] _gather (res://pipeline/mesh_baker.gd:62)
+       [2] _gather (res://pipeline/mesh_baker.gd:64)
+       [3] bake (res://pipeline/mesh_baker.gd:26)
+       [4] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [5] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [6] _shot_run (res://mocks/ring_vibes.gd:2298)
+ERROR: Index p_idx = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_set_material (scene/resources/mesh.cpp:1946)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:34)
+       [1] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+ERROR: Index p_surface = -1 is out of bounds (surfaces.size() = 0).
+   at: surface_get_arrays (scene/resources/mesh.cpp:1841)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+SCRIPT ERROR: Out of bounds get index '0' (on base: 'Array')
+   at: bake (res://pipeline/mesh_baker.gd:36)
+   GDScript backtrace (most recent call first):
+       [0] bake (res://pipeline/mesh_baker.gd:36)
+       [1] _build_structure (res://mocks/ring_vibes.gd:6213)
+       [2] _structure_parade (res://mocks/ring_vibes.gd:2716)
+       [3] _shot_run (res://mocks/ring_vibes.gd:2298)
+SHOT structure dock   side tris=204   res://../logs/shots/20260817_0732_meru_bake/structure_dock_side.png
+SHOT structure dock   tq   tris=204   res://../logs/shots/20260817_0732_meru_bake/structure_dock_tq.png
+SHOTS done

@@ -37,33 +37,50 @@ var sight_timer := 0.0
 var cached_visible := false
 var cached_target: Node3D
 func toss_from_trex(impulse: Vector3,source: PhysicsBody3D) -> void:
-	trex_toss_velocity=impulse;trex_toss_time=.8;velocity.y=impulse.y;lizard.toss(velocity,impulse,source)
+	trex_toss_velocity=impulse;trex_toss_time=.8;velocity=impulse
+	if dead:
+		lizard.die(impulse,Vector3.ZERO)
+		if lizard.ragdoll:
+			for bone in lizard.ragdoll.get_children():
+				if bone is PhysicsBody3D: bone.add_collision_exception_with(source)
+	else: lizard.toss(Vector3.ZERO,impulse,source)
+func finish_trex_hold() -> void:
+	if dead: lizard.die()
 func _ready() -> void:
+	# Squadmates are not moving platforms. Overlap recovery must never become
+	# inherited upward launch velocity when several bodies meet on a slope.
+	platform_floor_layers=0;platform_wall_layers=0
 	health=175 if elite else 50;floor_snap_length=.6;floor_max_angle=deg_to_rad(48)
 	shape=CollisionShape3D.new();var capsule=CapsuleShape3D.new();capsule.radius=.4 if elite else .28;capsule.height=1.95 if elite else 1.3;shape.shape=capsule;shape.position.y=capsule.height*.5;add_child(shape)
 	lizard=preload("res://lizard_actor.gd").new();lizard.elite=elite;lizard.scale=Vector3.ONE*(1.5 if elite else 1.0);add_child(lizard)
-	var sight=preload("res://vision_debug.gd").new();sight.setup(65 if elite else 55,95 if elite else 80,Color(.85,.08,.15) if elite else Color(1,.75,.08),1.25 if elite else .85);add_child(sight)
+	# Opening contact should be earned by crossing a readable lane, not by a
+	# wide peripheral cone reaching through the arena.  Elites retain the wider
+	# cone and longer sightline, but neither can instantly light up a whole fight.
+	var sight=preload("res://vision_debug.gd").new();sight.setup(50 if elite else 42,70 if elite else 58,Color(.85,.08,.15) if elite else Color(1,.75,.08),1.25 if elite else .85);add_child(sight)
 	label=Label3D.new();label.text="ELITE / CAPTAIN" if elite else "GRUNT";label.billboard=BaseMaterial3D.BILLBOARD_ENABLED;label.font_size=22;label.pixel_size=.003;label.position.y=capsule.height+.3;label.visibility_range_end=45;add_child(label)
 	audio=AudioStreamPlayer3D.new();audio.stream=arena.kit.gun_sounds.Carbine;audio.volume_db=-19;audio.unit_size=8;add_child(audio)
 	destination=position;last_position=position;repath=randf();cooldown=randf_range(.5,2)
 func order(point: Vector3,speed: float,animation: String) -> void:
-	point.x=clampf(point.x,-245,245);point.z=clampf(point.z,-545,30);point.y=arena.height_at(point.x,point.z)
+	point.x=clampf(point.x,-795,1335) if arena.get("world_data") else clampf(point.x,-245,245)
+	point.z=clampf(point.z,-2635,95) if arena.get("world_data") else clampf(point.z,-545,30);point.y=arena.height_at(point.x,point.z)
 	if destination.distance_to(point)>3: repath=0
 	destination=point;pace=speed;gait=animation
 func take_hit(damage: float,source: Vector3,_point: Vector3) -> String:
 	if dead: return "DOWN"
 	squad.report_contact(source);manager.active=true;health-=damage
 	if health<=0:
-		dead=true;collision_layer=0;collision_mask=0;label.hide();lizard.die(velocity,(global_position-source).normalized()*3)
+		dead=true;collision_layer=0;collision_mask=0;label.hide()
+		if not has_meta("trex_held"): lizard.die(velocity,(global_position-source).normalized()*3)
 		if elite: squad.issue_orders()
 		return "CAPTAIN DOWN / GRUNTS ROUTED" if elite else "GRUNT DOWN"
 	return "%s / %d HP" % ["ELITE" if elite else "GRUNT",int(health)]
 func sees_player() -> bool:
 	combat_target=arena.walker
-	if is_instance_valid(manager.trex) and global_position.distance_to(manager.trex.global_position)<global_position.distance_to(arena.walker.global_position): combat_target=manager.trex
+	for predator in get_tree().get_nodes_in_group("tyrants"):
+		if predator.health>0 and global_position.distance_squared_to(predator.global_position)<global_position.distance_squared_to(combat_target.global_position): combat_target=predator
 	if combat_target==cached_target and sight_timer>0: return cached_visible
 	cached_target=combat_target;sight_timer=.25
-	var range=65.0 if elite else 55.0;var fov=95.0 if elite else 80.0
+	var range=50.0 if elite else 42.0;var fov=70.0 if elite else 58.0
 	var target=combat_target.global_position+Vector3.UP*(2.0 if combat_target==manager.trex else 1.0)
 	var planar=target-global_position;planar.y=0
 	if planar.length()>range: cached_visible=false;return false

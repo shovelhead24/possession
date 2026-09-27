@@ -8,6 +8,7 @@ var dying := false
 var elite := false
 var ragdoll: PhysicalBoneSimulator3D
 var weapons: Array[MeshInstance3D]=[]
+var animation_elapsed := 0.0
 static var cached_scenes: Dictionary={}
 func _ready() -> void:
 	var size_factor=scale.x
@@ -30,6 +31,8 @@ func _ready() -> void:
 			else: weapons.append(n)
 		for child in n.get_children(): stack.append(child)
 	if player:
+		player.callback_mode_process=AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+		animation_elapsed=randf()*.04 # Spread distant pose updates across frames.
 		for key in player.get_animation_list():
 			for name in ["Idle","Run","Fire","Death","Flee","Walk","Strafe","Jump","Crouch","Dive","Check","Scratch","Look","Talk"]:
 				if name.to_lower()==String(key).get_slice("/",String(key).get_slice_count("/")-1).to_lower():
@@ -38,6 +41,15 @@ func _ready() -> void:
 		play("Idle")
 	if skeleton:
 		muzzle=BoneAttachment3D.new();muzzle.bone_name="Muzzle";skeleton.add_child(muzzle)
+
+func _process(delta: float) -> void:
+	if dying or not player or not player.is_playing(): return
+	animation_elapsed+=delta
+	var camera=get_viewport().get_camera_3d()
+	var distance=camera.global_position.distance_to(global_position) if camera else 0.0
+	var interval=1.0/(60.0 if distance<18 else (30.0 if distance<45 else (15.0 if distance<110 else 8.0)))
+	if animation_elapsed>=interval:
+		player.advance(animation_elapsed);animation_elapsed=0.0
 func play(clip: String) -> void:
 	if player and clips.has(clip) and player.current_animation!=clips[clip]: player.play(clips[clip],.1)
 func animate(speed: float,delta: float) -> void:

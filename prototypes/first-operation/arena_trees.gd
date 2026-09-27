@@ -6,6 +6,8 @@ var arena: Node3D
 
 func _ready() -> void:
 	arena=get_parent()
+	if arena.get("world_data"):
+		load_baked(arena.world_data);return
 	var source=arena.kit.imported(arena.kit.GAME+"realistic_fir_trees_pack_lods_gameready/scene.gltf")
 	if not source: return
 	var helper=preload("res://tree_mesh_tools.gd").new()
@@ -21,7 +23,8 @@ func _ready() -> void:
 			# the cheap LOD2 geometry in the far band instead.
 			var mesh=helper._normalize_mesh(variants[key].get(mini(lod,2)))
 			var mm=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=mesh
-			var instance=MultiMeshInstance3D.new();instance.multimesh=mm;instance.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_ON if lod<2 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(instance);levels.append(instance)
+			# Only trees close enough to affect immediate cover/readability cast.
+			var instance=MultiMeshInstance3D.new();instance.multimesh=mm;instance.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_ON if lod==0 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(instance);levels.append(instance)
 		buckets.append(levels)
 	assert(not buckets.is_empty(),"Tree pack has no usable LODs")
 	var rng=RandomNumberGenerator.new();rng.seed=852
@@ -46,11 +49,25 @@ func _process(delta: float) -> void:
 	elapsed+=delta
 	if elapsed>.5: elapsed=0;update_lods()
 
+func load_baked(data: Resource) -> void:
+	for variant in 3:
+		var levels=[]
+		for lod in 4:
+			var mm=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=data.tree_meshes[variant*4+lod]
+			var node=MultiMeshInstance3D.new();node.multimesh=mm;node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_ON if lod==0 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(node);levels.append(node)
+		buckets.append(levels)
+	trees=data.trees
+	for tree in trees:
+		var body=StaticBody3D.new();body.add_to_group("trex_passable_tree");body.position=tree.position
+		var collision=CollisionShape3D.new();var shape=CylinderShape3D.new();shape.radius=tree.height*.023;shape.height=tree.height*.55;collision.shape=shape;collision.position.y=shape.height*.5;body.add_child(collision);add_child(body)
+	update_lods();print("TREES_BAKED_READY: ",trees.size())
+
 func update_lods() -> void:
 	var lists=[]
 	for variant in buckets: lists.append([[],[],[],[]])
 	for tree in trees:
 		var distance=arena.camera.global_position.distance_to(tree.position)
+		if arena.get("world_data") and distance>380: continue
 		var lod=0 if distance<35 else (1 if distance<90 else (2 if distance<180 else 3))
 		lists[tree.variant][lod].append(tree.transform)
 	for v in range(buckets.size()):

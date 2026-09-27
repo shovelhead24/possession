@@ -8,6 +8,9 @@ var cover: Node
 var navigation: RefCounted
 var grenade_cooldown := 0.0
 var trex: Node3D
+var tyrants: Array[Node3D]=[]
+var garrisons: Array[Dictionary]=[]
+var stream_timer := 0.0
 var defeated := false
 func _ready() -> void:
 	arena=get_parent();name="PracticeRange"
@@ -21,11 +24,21 @@ func reset() -> void:
 	for bolt in get_tree().get_nodes_in_group("plasma_bolts"): bolt.queue_free()
 	for grenade in get_tree().get_nodes_in_group("frag_grenades"): grenade.queue_free()
 	for enemy in enemies: enemy.queue_free()
-	if is_instance_valid(trex): trex.queue_free()
+	for actor in tyrants:
+		if is_instance_valid(actor): actor.remove_from_group("tyrants");actor.set_physics_process(false);actor.queue_free()
+	tyrants.clear();garrisons.clear()
 	for squad in squads: squad.queue_free()
 	squads.clear();grenade_cooldown=0
 	enemies.clear();health=100;active=false;defeated=false
-	trex=preload("res://trex.gd").new();trex.arena=arena;trex.manager=self;add_child(trex)
+	for index in (4 if arena.get("world_data") else 1):
+		var actor=preload("res://trex.gd").new();actor.arena=arena;actor.manager=self;actor.name="Rexy_%d" % (index+1)
+		if arena.get("world_data"): actor.patrol=preload("res://arena_bake_data.gd").patrol_route(index)
+		add_child(actor);tyrants.append(actor)
+		if arena.get("world_data"): actor.waypoint=1 # Head for the common centre immediately.
+	trex=tyrants[0]
+	if arena.get("world_data"):
+		for home in arena.world_data.homes: garrisons.append({"home":home,"squad":null,"snapshot":{},"cleared":false})
+		stream_squads();return
 	for home in [Vector3(48,0,-95),Vector3(112,0,-180),Vector3(-118,0,-230),Vector3(145,0,-370)]:
 		var squad=preload("res://reptile_squad.gd").new();squad.manager=self;squad.home=home;squad.home.y=arena.height_at(home.x,home.z);squad.last_known=squad.home;add_child(squad);squads.append(squad)
 		for i in range(5):
@@ -34,6 +47,63 @@ func reset() -> void:
 			var cell=navigation.open_cell(spawn);enemy.position=Vector3(cell.x*4,arena.height_at(cell.x*4,cell.y*4),cell.y*4);add_child(enemy);enemies.append(enemy);squad.members.append(enemy)
 			if i==0: squad.captain=enemy
 		squad.issue_orders()
+
+func near_garrison(home: Vector3,player_radius: float,rex_radius: float) -> bool:
+	if arena.walker.global_position.distance_squared_to(home)<player_radius*player_radius: return true
+	for actor in tyrants:
+		if is_instance_valid(actor) and actor.global_position.distance_squared_to(home)<rex_radius*rex_radius: return true
+	return false
+
+func stream_squads() -> void:
+	for entry in garrisons:
+		if entry.cleared: continue
+		if not is_instance_valid(entry.squad):
+			if not near_garrison(entry.home,220,90): continue
+			var squad=preload("res://reptile_squad.gd").new();squad.manager=self;squad.home=entry.home;squad.last_known=entry.home;add_child(squad);squads.append(squad);entry.squad=squad
+			for i in 5:
+				var saved=entry.snapshot.get(i,{})
+				if saved.get("dead",false): continue
+				var unit=preload("res://squad_enemy.gd").new();unit.elite=i==0;unit.arena=arena;unit.manager=self;unit.squad=squad;unit.set_meta("garrison_slot",i)
+				var spawn=saved.get("position",entry.home+Vector3((i-2)*3,0,float(i%2)*4))
+				unit.position=ground_spawn(spawn)
+				if unit.position==Vector3.INF: unit.free();continue
+				add_child(unit);unit.health=saved.get("health",unit.health);enemies.append(unit);squad.members.append(unit)
+				if i==0: squad.captain=unit
+			squad.issue_orders()
+		elif not near_garrison(entry.home,310,160):
+			var squad=entry.squad;var alive=0
+			# Persist casualties, damage and positions across streaming boundaries.
+			var engaged=false
+			for unit in squad.members:
+				if unit.has_meta("trex_held") or near_garrison(unit.global_position,280,130): engaged=true;break
+			if engaged: continue
+			for unit in squad.members:
+				entry.snapshot[unit.get_meta("garrison_slot")]={"dead":unit.dead,"health":unit.health,"position":unit.position}
+				if not unit.dead: alive+=1
+				enemies.erase(unit);unit.queue_free()
+			entry.cleared=alive==0;squads.erase(squad);squad.queue_free();entry.squad=null
+
+func ground_spawn(wanted: Vector3) -> Vector3:
+	# Navigation cells are route waypoints, not shared actor spawn sockets.
+	# Preserve formation offsets and reserve actual body-sized clearances.
+	var cell=navigation.open_cell(wanted)
+	var center=wanted if not navigation.is_blocked(wanted) else Vector3(cell.x*navigation.cell_size,0,cell.y*navigation.cell_size)
+	for ring in 18:
+		for spoke in (1 if ring==0 else 16):
+			var angle=spoke*TAU/16.0
+			var p=center+Vector3(cos(angle),0,sin(angle))*ring*2.0
+			if navigation.is_blocked(p): continue
+			var blocked=false
+			for other in enemies:
+				if is_instance_valid(other) and not other.dead and Vector2(p.x-other.position.x,p.z-other.position.z).length()<2.1: blocked=true;break
+			if blocked: continue
+			for rock in cover.rocks:
+				if Vector2(p.x-rock.position.x,p.z-rock.position.z).length()<rock.radius+1: blocked=true;break
+			if blocked: continue
+			p.y=arena.height_at(p.x,p.z)+.05
+			return p
+	push_warning("No safe squad spawn found; skipped an obstructed slot instead of overlapping actors")
+	return Vector3.INF
 
 func hurt(amount: int,source: String="PLASMA") -> void:
 	if defeated: return
@@ -69,6 +139,11 @@ func alert_shot(point: Vector3) -> void:
 			if not unit.dead and unit.position.distance_to(point)<75: squad.report_contact(point);break
 func _physics_process(delta: float) -> void:
 	grenade_cooldown=maxf(0,grenade_cooldown-delta)
+	stream_timer-=delta
+	if stream_timer<=0 and not garrisons.is_empty(): stream_timer=1.0;stream_squads()
+	if not is_instance_valid(trex):
+		for actor in tyrants:
+			if is_instance_valid(actor): trex=actor;break
 func throw_grenade() -> void:
 	if grenade_cooldown>0 or arena.kit.driving or arena.kit.menu.opened: return
 	grenade_cooldown=.8

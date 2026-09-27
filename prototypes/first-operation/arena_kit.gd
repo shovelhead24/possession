@@ -252,14 +252,14 @@ func vehicle(label: String, path: String, pos: Vector3, length_m: float) -> void
 		preload("res://warthog_finish.gd").finish(model,Callable(self,"bounds"));body.track_extension=.18;body.wheel_mount_raise=.14;arena.add_child(body);body.center_of_mass.y=.48;body.setup(model,Callable(self,"bounds"));body.add_child(preload("res://vehicle_audio.gd").new());body.add_child(preload("res://wheel_dirt.gd").new())
 		warthog_turret=preload("res://warthog_turret.gd").new();body.add_child(warthog_turret);warthog_turret.setup(self,body,model)
 	else:
-		body=preload("res://tank_controller.gd").new();body.name=label;body.position=pos;body.floor_snap_length=1.0;body.floor_max_angle=deg_to_rad(50);body.add_child(model)
+		body=preload("res://tank_controller.gd").new();body.name=label;body.position=pos;body.add_child(model)
 		# Raised central belly with a ramped front underside. The approach face
 		# climbs small obstacles instead of behaving as a vertical plough blade.
 		var collision=CollisionShape3D.new();collision.name="HullCollision";var shape=ConvexPolygonShape3D.new()
 		var half_width=a.size.x*.31;var front=-length_m*.275;var rear=length_m*.275
 		shape.points=PackedVector3Array([Vector3(-half_width,.38,front),Vector3(half_width,.38,front),Vector3(-half_width,0,rear),Vector3(half_width,0,rear),Vector3(-half_width,.72,front),Vector3(half_width,.72,front),Vector3(-half_width,.72,rear),Vector3(half_width,.72,rear)])
 		collision.shape=shape;collision.position.y=.45;body.add_child(collision)
-		arena.add_child(body);body.setup(model,self)
+		arena.add_child(body);body.setup_tank(model,self)
 	vehicles.append(body)
 	body.collision_mask|=4
 	var impacts=preload("res://vehicle_impacts.gd").new();impacts.kit=self;body.add_child(impacts)
@@ -298,6 +298,7 @@ func restore_vehicle_collision(body: PhysicsBody3D) -> void:
 		body.remove_collision_exception_with(arena.walker);arena.walker.remove_collision_exception_with(body)
 
 func _input(event: InputEvent) -> void:
+	if arena.rex_menu and arena.rex_menu.blocks_player(): return
 	if arena.shots_running: return
 	if menu and menu.opened: return
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -315,6 +316,7 @@ func _input(event: InputEvent) -> void:
 		else: use_weapon()
 
 func use_weapon() -> void:
+	if arena.rex_menu and arena.rex_menu.blocks_player(): return
 	if cooldown>0 or driving or weapons.is_empty() or reloading: return
 	var key=names[selected]
 	arena.get_node("PracticeRange").alert_shot(arena.camera.global_position)
@@ -349,6 +351,9 @@ func _process(delta: float) -> void:
 	if not names.is_empty() and names[selected]=="Carbine" and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and not (menu and menu.opened): use_weapon()
 
 func _physics_process(delta: float) -> void:
+	if arena.rex_menu and arena.rex_menu.opened:
+		for car in vehicles: car.controlled=false;car.set_controls(0,0,true)
+		return
 	if arena.shots_running: return
 	for body in vehicles:
 		if body.has_method("set_controls"):

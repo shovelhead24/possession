@@ -105,6 +105,12 @@ func _ready() -> void:
 	sun.rotation_degrees = Vector3(-48,-35,0)
 	sun.light_energy = 1.1
 	sun.shadow_enabled = true
+	# Low-spec combat lighting: one tight shadow projection for actors and cover
+	# close to the player.  The ring backdrop provides atmosphere, not gameplay
+	# shadow detail, and is excluded below.
+	sun.directional_shadow_mode=DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance=42.0
+	sun.directional_shadow_fade_start=0.72
 	add_child(sun)
 	purple = material(Color(0.59,0.30,0.94),0.0,0.6,true)
 	inactive = material(Color(0.16,0.20,0.25))
@@ -125,7 +131,8 @@ func _ready() -> void:
 		capture_sequence.call_deferred()
 
 func build_landscape() -> void:
-	box(Vector3(0,-0.35,0),Vector3(9000,0.5,9000),ground_material(Color(0.25,0.33,0.24)))
+	var far_floor=box(Vector3(0,-0.35,0),Vector3(9000,0.5,9000),ground_material(Color(0.25,0.33,0.24)))
+	far_floor.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var terrain := ground_material(Color(0.29,0.36,0.28))
 	var surface := SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -143,7 +150,8 @@ func build_landscape() -> void:
 			for p in [p0,p2,p1,p0,p3,p2]:
 				surface.add_vertex(p)
 	surface.generate_normals()
-	mesh_node(surface.commit(),Vector3.ZERO,terrain)
+	var ring_mesh=mesh_node(surface.commit(),Vector3.ZERO,terrain)
+	ring_mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for i in range(18):
 		var distance_m := 1000.0 + i*3600.0
 		var x := (1.0 if i%2==0 else -1.0)*(4000.0+absf(sin(i*2.1))*12000.0)
@@ -154,7 +162,8 @@ func build_landscape() -> void:
 		m.radial_segments = 7
 		var pos := ring_point(distance_m/RADIUS,x)
 		pos.y += m.height*0.35
-		mesh_node(m,pos,ground_material(Color(0.30,0.33,0.37)))
+		var mountain=mesh_node(m,pos,ground_material(Color(0.30,0.33,0.37)))
+		mountain.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 func ring_point(angle: float, lateral: float) -> Vector3:
 	var hill := (sin(angle*23.0+lateral/16000.0)*0.5+0.5)*550.0
