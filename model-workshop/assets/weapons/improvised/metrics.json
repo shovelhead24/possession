@@ -1,0 +1,40 @@
+{
+  "triangles": 844,
+  "materials": 7,
+  "mesh_objects": 27,
+  "dimensions_blender_m": [
+    0.5805626511573792,
+    0.14600001275539398,
+    0.9797759056091309
+  ],
+  "nodes": [
+    "Bare metal impact chip lower",
+    "Bare metal impact chip upper",
+    "Bent road-sign U shoe",
+    "Continuous bent load-bearing pipe",
+    "Crude weld bead lower",
+    "Crude weld bead upper",
+    "Grip choke wrap",
+    "Grip heel wrap",
+    "Grip underwrap",
+    "Mismatched shoe fastener 00",
+    "Mismatched shoe fastener 01",
+    "Overlapping cloth wrap 00",
+    "Overlapping cloth wrap 01",
+    "Overlapping cloth wrap 02",
+    "Overlapping cloth wrap 03",
+    "Overlapping cloth wrap 04",
+    "Overlapping cloth wrap 05",
+    "Pipe pommel cap",
+    "Pipe rust scar",
+    "Pipe scrape long",
+    "Pry claw tine left",
+    "Pry claw tine right",
+    "Raw cut tip lower",
+    "Raw cut tip upper",
+    "Surviving cream road paint",
+    "Torn lower cut lip",
+    "Torn upper cut lip"
+  ],
+  "passed": true
+}

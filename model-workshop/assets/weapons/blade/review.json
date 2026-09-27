@@ -1,4 +1,4 @@
 {
-    "status":  "ready",
-    "summary":  "Usable and convincing. Both views read immediately as a one-handed military cleaver: the broad faceted blade, reinforced spine, swept guard, ribbed grip, and compact pommel create a distinctive silhouette with credible Halo CE-era low-poly economy. Metal, bronze guard, and grip components separate clearly, though the grip is lighter than the README’s “dark rubber” description. The 1.2975 m overall length closely matches the 1.3 m catalogue reach, with plausible one-handed proportions. The 1,000-triangle/5-material construction is efficient, and the documented grip/blade markers plus separated guard, grip, pommel, and blade parts are useful for integration."
+  "status": "ready",
+  "summary": "Rebuilt and clean-import validated as a 0.427 m practical full-tang utility/fighting knife. The actual-GLB renders were opened: the 125 mm by 36 mm matte grip, 44 mm-wide drop/clip-point blade, compact guard, and integrated tang eye correct the rejected swollen silhouette, while blackened fittings, satin steel, and the brighter ground bevel remain visibly distinct. Technical validation reports 584 triangles, 10 mesh objects, 4 materials, zero degenerate polygons, zero source non-manifold edges, and all required attachment nodes; supervisor independent visual approval remains pending."
 }

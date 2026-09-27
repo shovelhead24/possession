@@ -1,0 +1,30 @@
+{
+  "triangles": 1444,
+  "materials": 5,
+  "mesh_objects": 17,
+  "dimensions_blender_m": [
+    0.15399999916553497,
+    0.13200001418590546,
+    1.2869999408721924
+  ],
+  "nodes": [
+    "Continuous impact rail",
+    "Crown cap",
+    "Grip front ferrule",
+    "Hand index band",
+    "Head socket",
+    "Lead hand grip",
+    "Pommel body",
+    "Pommel plate",
+    "Rail clamp plate",
+    "Rail clamp plate.001",
+    "Rail clamp plate.002",
+    "Rail clamp plate.003",
+    "Rail through-bolt",
+    "Rail through-bolt.001",
+    "Rear hand grip",
+    "Steel haft",
+    "Weighted steel shell"
+  ],
+  "passed": true
+}

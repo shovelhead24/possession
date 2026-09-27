@@ -1,0 +1,137 @@
+{
+  "asset": "weapons-club",
+  "triangles": 2372,
+  "materials": 5,
+  "dimensions_m": [
+    0.202,
+    0.14,
+    1.19
+  ],
+  "bounds_min_m": [
+    -0.084,
+    -0.07,
+    0.0
+  ],
+  "bounds_max_m": [
+    0.118,
+    0.07,
+    1.19
+  ],
+  "physical_overall_length_m": 1.19,
+  "catalogue_attack_reach_m": 1.5,
+  "non_manifold_edges": 0,
+  "degenerate_faces": 0,
+  "mesh_parts": 25,
+  "markers": {
+    "marker_grip_rear": {
+      "location_m": [
+        0.0,
+        0.0,
+        0.185
+      ],
+      "rotation_euler_rad": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "purpose": "rear hand attachment; local +Z follows haft"
+    },
+    "marker_grip_lead": {
+      "location_m": [
+        0.0,
+        0.0,
+        0.445
+      ],
+      "rotation_euler_rad": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "purpose": "lead hand attachment; local +Z follows haft"
+    },
+    "marker_strike": {
+      "location_m": [
+        0.118,
+        0.0,
+        1.02
+      ],
+      "rotation_euler_rad": [
+        0.0,
+        1.5708,
+        0.0
+      ],
+      "purpose": "primary contact point; local +Z points outward along +X"
+    },
+    "marker_sweep_pivot": {
+      "location_m": [
+        0.0,
+        0.0,
+        0.185
+      ],
+      "rotation_euler_rad": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "purpose": "committed swing reference; local +Z follows haft"
+    }
+  },
+  "export_validation": {
+    "verified": true,
+    "mesh_nodes": 25,
+    "marker_nodes": {
+      "marker_grip_rear": {
+        "type": "EMPTY",
+        "location_m": [
+          0.0,
+          0.0,
+          0.185
+        ],
+        "local_z_world": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "marker_grip_lead": {
+        "type": "EMPTY",
+        "location_m": [
+          0.0,
+          0.0,
+          0.445
+        ],
+        "local_z_world": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "marker_strike": {
+        "type": "EMPTY",
+        "location_m": [
+          0.118,
+          0.0,
+          1.02
+        ],
+        "local_z_world": [
+          1.0,
+          0.0,
+          -0.0
+        ]
+      },
+      "marker_sweep_pivot": {
+        "type": "EMPTY",
+        "location_m": [
+          0.0,
+          0.0,
+          0.185
+        ],
+        "local_z_world": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      }
+    }
+  }
+}

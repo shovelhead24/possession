@@ -1,0 +1,25 @@
+{
+  "triangles": 1000,
+  "materials": 5,
+  "mesh_objects": 12,
+  "dimensions_blender_m": [
+    1.2975000143051147,
+    0.44241052865982056,
+    0.18987709283828735
+  ],
+  "nodes": [
+    "Blade_Assembly",
+    "Blade_Collar",
+    "Blade_Spine_Rail",
+    "Grip_Core",
+    "Grip_Rib_00",
+    "Grip_Rib_01",
+    "Grip_Rib_02",
+    "Guard_Central_Block",
+    "Guard_Swept_Crosspiece",
+    "Pommel_Cap",
+    "Pommel_Tip",
+    "Tang_Frame"
+  ],
+  "passed": true
+}

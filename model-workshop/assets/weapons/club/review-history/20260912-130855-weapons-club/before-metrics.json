@@ -1,0 +1,36 @@
+{
+  "triangles": 1588,
+  "materials": 6,
+  "mesh_objects": 23,
+  "dimensions_blender_m": [
+    0.7103068232536316,
+    0.44999998807907104,
+    2.011160373687744
+  ],
+  "nodes": [
+    "Crown impact shoe",
+    "Grip rib 00",
+    "Grip rib 01",
+    "Grip rib 02",
+    "Grip rib 03",
+    "Grip rib 04",
+    "Grip sleeve",
+    "Grip top ferrule",
+    "Head neck",
+    "Impact wear gauge",
+    "Lower collar",
+    "Pommel body",
+    "Pommel cap",
+    "Rear balance spine",
+    "Rear spine inset",
+    "Sweep rail fastener",
+    "Sweep rail fastener.001",
+    "Sweep rail fastener.002",
+    "Sweep rail fastener.003",
+    "Sweep rail lower",
+    "Sweep rail upper",
+    "Upper collar",
+    "Weighted club head"
+  ],
+  "passed": true
+}

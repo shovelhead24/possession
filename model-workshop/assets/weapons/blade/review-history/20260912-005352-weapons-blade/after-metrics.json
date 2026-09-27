@@ -1,0 +1,23 @@
+{
+  "triangles": 584,
+  "materials": 4,
+  "mesh_objects": 10,
+  "dimensions_blender_m": [
+    0.4269999861717224,
+    0.0478585809469223,
+    0.026999998837709427
+  ],
+  "nodes": [
+    "Blade_Cutting_Bevel",
+    "Blade_Primary",
+    "Blade_Ricasso",
+    "Full_Tang",
+    "Grip_Pin_01",
+    "Grip_Pin_02",
+    "Grip_Scale_Lower",
+    "Grip_Scale_Upper",
+    "Guard_Black_Oxide",
+    "Integrated_Lanyard_Eye"
+  ],
+  "passed": true
+}

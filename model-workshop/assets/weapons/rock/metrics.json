@@ -1,0 +1,16 @@
+{
+  "triangles": 88,
+  "materials": 4,
+  "mesh_objects": 3,
+  "dimensions_blender_m": [
+    0.166576087474823,
+    0.0989999994635582,
+    0.11899999529123306
+  ],
+  "nodes": [
+    "Rock_Core",
+    "Impact_Chipped_Face",
+    "Quarry_Chips"
+  ],
+  "passed": true
+}
