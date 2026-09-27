@@ -1,4 +1,5 @@
 extends Node3D
+const RingFrame = preload("res://world/ring_frame.gd")
 
 # VehicleDef is preloaded, not referenced by class_name. A `class_name` only resolves once the
 # Godot EDITOR has registered it in the global class cache, and this project runs headless --
@@ -807,8 +808,7 @@ func _radius() -> float:
 
 # Ring-space to local: theta=0 under camera, floor y=0, spinward = +x, lat = z.
 func _ring_pos(theta: float, lat: float, h: float) -> Vector3:
-	var r: float = _radius() - h
-	return Vector3(r * sin(theta), _radius() - r * cos(theta), lat)
+	return RingFrame.position(theta * _radius(), h, lat, _radius())
 
 func _surface_pos(arc: float, lat: float) -> Vector3:
 	return _ring_pos(arc / _radius(), lat, _terrain_h(arc, lat))
@@ -2650,7 +2650,7 @@ func _shoot_silhouette(vi: int, dir: String) -> void:
 	var rad: float = maxf(0.5 * local.size.length(), 0.5)
 	# Sun not behind the subject: shoot from whichever flank the sun lights, so the near face reads as
 	# form rather than a flat backlit shadow. to_sun is world-space near the home arc, where the parade is.
-	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	var to_sun := RingFrame.sun_direction(sun_angle, sun_tilt)
 	var side: float = 1.0 if basis.x.dot(to_sun) >= 0.0 else -1.0
 	var fov := 42.0                                  # narrow: less perspective stretch on a close subject
 	var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.15   # margin so the silhouette clears the edges
@@ -3856,7 +3856,7 @@ func _process(delta: float) -> void:
 	var period: float = SUN_PERIODS[sun_speed_idx]
 	if period > 0.0 and not sun_paused:
 		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
-	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	var to_sun := RingFrame.sun_direction(sun_angle, sun_tilt)
 	# day/night is only "to_sun.y" as a global scalar when the camera sits near arc=0 (spawn) --
 	# the terrain's OWN lighting (and the ring-in-sky element) correctly varies by arc position via
 	# dot(normal(theta), to_sun), which is what makes the far side of the ring show a genuinely
@@ -3868,7 +3868,9 @@ func _process(delta: float) -> void:
 	# and evaluating the SAME formula there keeps everything consistent regardless of position.
 	var r_now := _radius()
 	var cam_theta := atan2(_cam.global_position.x, r_now - _cam.global_position.y)
-	var local_lit := clampf(-sin(cam_theta) * to_sun.x + cos(cam_theta) * to_sun.y, 0.0, 1.0)
+	var local_up := RingFrame.up(cam_theta * r_now, r_now)
+	_sky_mat.set_shader_parameter("local_up", local_up)
+	var local_lit := clampf(local_up.dot(to_sun), 0.0, 1.0)
 	var sun_theta := atan2(-to_sun.x, to_sun.y)   # arc position most face-on to the sun; mirrors ring_sky.gdshader
 	_dbg_cam_theta_deg = rad_to_deg(cam_theta)
 	_dbg_sun_theta_deg = rad_to_deg(sun_theta)
@@ -3932,7 +3934,7 @@ func _process(delta: float) -> void:
 	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
 	# Scale it down at night so everything dims together. Max raised (0.4 -> 0.65) -- daytime overall
 	# read as "way too dark".
-	_env.ambient_light_energy = lerpf(0.12, 0.8, day)
+	_env.ambient_light_energy = lerpf(lerpf(0.12, 0.8, day), 0.04, _space)
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
