@@ -1,13 +1,23 @@
 extends Node
 ## Static source-asset proof. No tactical controllers or encounter behavior.
 const Frame = preload("res://world/ring_frame.gd")
+const Support = preload("res://world/terrain_support.gd")
 var patch: Node3D
 var entries: Array[Dictionary] = []
 var finished := false
 var selected := -1
+var contact_debug := MeshInstance3D.new()
+var show_contacts := false
 
 func setup(tile: Node3D) -> void:
 	patch = tile
+	patch.surface_changed.connect(reground_footprints)
+	patch.add_child(contact_debug)
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.vertex_color_use_as_albedo = true
+	contact_debug.material_override = material
+	contact_debug.visible = false
 	load_gallery.call_deferred()
 
 func load_gallery() -> void:
@@ -66,6 +76,10 @@ func load_gallery() -> void:
 	print("GALLERY ready: ", entries.size(), " static assets; no controllers")
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F12:
+		show_contacts = not show_contacts
+		contact_debug.visible = show_contacts
+		get_viewport().set_input_as_handled()
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F11:
 		focus_next()
 		get_viewport().set_input_as_handled()
@@ -100,10 +114,48 @@ func add_entry(title: String, model: Node3D, coord: Vector2, height: float) -> v
 	label.pixel_size = 0.018
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	root.add_child(label)
-	patch.markers.append(root)
-	patch.anchors.append(coord)
-	entries.append({"name":title,"root":root,"model":model,"coord":coord,"height":height})
+	var footprint := Vector2.ZERO
+	if title == "Warthog": footprint = Vector2(1.05,1.55)
+	if title == "Altay tank": footprint = Vector2(1.5,2.7)
+	if title == "Frontier relay": footprint = Vector2(2.5,3.5)
+	if footprint == Vector2.ZERO:
+		patch.markers.append(root)
+		patch.anchors.append(coord)
+	entries.append({"name":title,"root":root,"model":model,"coord":coord,"height":height,
+		"footprint":footprint,"label":label,"support":{}})
 	patch.reground()
+
+func reground_footprints() -> void:
+	var lines := ImmediateMesh.new()
+	if entries.is_empty():
+		return
+	var count := 0
+	for entry in entries:
+		if entry.footprint == Vector2.ZERO:
+			continue
+		var result: Dictionary = Support.fit(patch,entry.coord,entry.footprint,entry.name != "Frontier relay")
+		entry.support = result
+		if not result.valid:
+			entry.label.text = entry.name + " / UNSUPPORTED FOOTPRINT"
+			continue
+		entry.root.transform = result.transform
+		entry.label.text = "%s / STATIC\nfootprint gap %.2fm%s" % [entry.name,result.max_gap,
+			" / UNEVEN" if result.max_gap > 0.25 else ""]
+		for sample in result.samples:
+			if count == 0:
+				lines.surface_begin(Mesh.PRIMITIVE_LINES)
+			var color := Color.ORANGE if sample.gap > 0.25 else Color.GREEN
+			if sample.gap < -0.02: color = Color.RED
+			lines.surface_set_color(color)
+			lines.surface_add_vertex(sample.ground)
+			lines.surface_set_color(color)
+			lines.surface_add_vertex(sample.point+Frame.up(entry.coord.x,patch.viewer._radius())*0.15)
+			count += 1
+	if count > 0:
+		lines.surface_end()
+		contact_debug.mesh = lines
+	else:
+		contact_debug.mesh = null
 
 func import_source(path: String) -> Node3D:
 	if not FileAccess.file_exists(path):

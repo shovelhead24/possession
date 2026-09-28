@@ -132,3 +132,30 @@ game/world/grass_texture.webp is a byte-identical project copy with the correct
 extension. The original file is untouched. Only the authored patch is changed,
 not the ring's satellite imagery. --author-check validates texture availability,
 UV count, metre spacing, and UV stability across sculpt/save/reload operations.
+
+## Static footprint fit
+
+terrain_support.gd samples a 3x3 footprint against the authored triangles. The
+Warthog and tank align to a plane derived from the four corners, then re-sample
+the rotated footprint and lift along ring-up until the sampled bottom plane
+does not penetrate. The relay keeps ring-up orientation and lifts to its highest
+sample. This never edits or flattens terrain implicitly. Heights and bases are
+recomputed on surface_changed after sculpting or loading saved edits.
+
+Half-footprints are explicit approximations: Warthog (1.05,1.55) m, tank
+(1.5,2.7) m, relay (2.5,3.5) m. They are not extracted wheel or track sockets.
+The relay rectangle includes the separate terminal. Alien/T-Rex remain upright
+single-anchor previews. F12 displays nine diagnostic contact lines per supported
+asset; labels show maximum clearance and warn UNEVEN above 0.25 m. Green/orange
+mark small/large gaps; red marks penetration below -0.02 m. Unsupported samples
+outside the tile are rejected, leaving the previous transform with a warning.
+
+Limitations: no suspension, body collision, feet IK, equilibrium/stability test,
+or guarantee against terrain intersections between samples. A lifted rigid
+footprint can have visible air gaps: the warning is intentional, not a claim
+that all wheels/feet touch. Do not substitute this for dynamic controllers.
+
+Tests: --author-check passes a synthetic inclined plane (vehicle tilt), an
+upright relay on that slope, a center bump (gap reporting), and edge rejection,
+then restores in-memory terrain. --content-check validates the three footprint
+fits and two creature anchors before/after a stroke using actual assets.

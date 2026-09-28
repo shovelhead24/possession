@@ -138,6 +138,7 @@ func _capture_authoring() -> void:
 	while is_instance_valid(content_gallery) and not content_gallery.finished:
 		await get_tree().process_frame
 	if OS.get_cmdline_user_args().has("--content-all"):
+		content_gallery.contact_debug.visible = true
 		_hud_full = false
 		_update_hud()
 		for i in content_gallery.entries.size():
@@ -171,7 +172,7 @@ func _check_content() -> void:
 		await get_tree().process_frame
 	assert(content_gallery.entries.size() == 5)
 	for entry in content_gallery.entries:
-		assert(entry.root.position.distance_to(authored_patch.triangle_point(entry.coord)) < 0.001)
+		_check_entry_support(entry)
 		var bounds: AABB = content_gallery.model_bounds(entry.model)
 		assert(absf(bounds.position.y) < 0.002)
 	var entry: Dictionary = content_gallery.entries[0]
@@ -179,11 +180,20 @@ func _check_content() -> void:
 	authored_patch.sculpt(entry.coord, 3.0)
 	assert(entry.root.position.distance_to(before) > 2.9)
 	for item in content_gallery.entries:
-		assert(item.root.position.distance_to(authored_patch.triangle_point(item.coord)) < 0.001)
+		_check_entry_support(item)
 	print("PASS: five source assets loaded, posed geometry grounded, anchors follow terrain edits")
 	if OS.get_cmdline_user_args().has("--author-capture"):
 		return
 	get_tree().quit()
+
+func _check_entry_support(entry: Dictionary) -> void:
+	if entry.footprint == Vector2.ZERO:
+		assert(entry.root.position.distance_to(authored_patch.triangle_point(entry.coord)) < 0.001)
+	else:
+		assert(entry.support.valid)
+		assert(entry.support.min_gap > -0.02)
+		assert(entry.support.samples.size() == 9)
+		assert(entry.root.transform.is_equal_approx(entry.support.transform))
 
 func _check_frames() -> void:
 	sun_paused = true
@@ -270,4 +280,27 @@ func _check_authoring() -> void:
 	var edited_uv: PackedVector2Array = patch.surface.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
 	assert(edited_uv == uv)
 	print("PASS: sculpt, collision, anchors, save/reload, smooth/flatten, border, metre-scaled grass UVs")
+	_check_footprints(patch)
 	get_tree().quit()
+
+func _check_footprints(patch: Node3D) -> void:
+	var support = preload("res://world/terrain_support.gd")
+	var saved: PackedFloat64Array = patch.heights.duplicate()
+	for z in patch.N:
+		for x in patch.N:
+			patch.heights[z*patch.N+x] = 10.0 + (x*patch.STEP-patch.SIZE/2)*0.1 + (z*patch.STEP-patch.SIZE/2)*0.05
+	patch.rebuild()
+	var vehicle: Dictionary = support.fit(patch,Vector2.ZERO,Vector2(2,3),true)
+	assert(vehicle.valid and vehicle.max_gap < 0.02 and vehicle.min_gap > -0.02)
+	assert(vehicle.transform.basis.y.dot(RingFrame.up(0,_radius())) < 0.999)
+	var relay: Dictionary = support.fit(patch,Vector2.ZERO,Vector2(2,3),false)
+	assert(relay.valid and relay.max_gap > 0.5 and relay.min_gap > -0.02)
+	assert(relay.transform.basis.y.dot(RingFrame.up(0,_radius())) > 0.99999)
+	patch.heights[(patch.N/2)*patch.N+patch.N/2] += 3.0
+	patch.rebuild()
+	var bump: Dictionary = support.fit(patch,Vector2.ZERO,Vector2(6,6),true)
+	assert(bump.valid and bump.max_gap > 2 and bump.min_gap > -0.02)
+	assert(not support.fit(patch,Vector2(127,0),Vector2(2,3),true).valid)
+	patch.heights = saved
+	patch.rebuild()
+	print("PASS: footprint slope fit, upright relay, uneven-ground gaps, outside-tile rejection")

@@ -1,4 +1,5 @@
 extends Node3D
+signal surface_changed
 ## A fixed-resolution curved tile: mesh, physics and anchors share its triangles.
 const Frame = preload("res://world/ring_frame.gd")
 const N := 65
@@ -125,6 +126,7 @@ func reground() -> void:
 		markers[i].position = triangle_point(center + anchors[i])
 		var up := Frame.up(center.x + anchors[i].x, viewer._radius())
 		markers[i].basis = Basis(up.cross(Vector3.BACK).normalized(), up, Vector3.BACK)
+	surface_changed.emit()
 
 func sculpt(p: Vector2, amount: float) -> void:
 	var old := heights.duplicate()
@@ -207,7 +209,7 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	label.position.y = get_viewport().get_visible_rect().size.y - 64
-	label.text = "F9 terrain brush: %s | F10 %s | [ ] radius %.0fm | F11 inspect assets\nAim at tile, PageUp/Down sculpt | Ctrl+S save | %s" % [
+	label.text = "F9 brush: %s | F10 %s | [ ] radius %.0fm | F11 assets | F12 contacts\nAim at tile, PageUp/Down sculpt | Ctrl+S save | %s" % [
 		"ON" if enabled else "OFF", ["raise/lower","smooth","flatten"][mode],brush_radius,
 		"UNSAVED" if dirty else "saved/unchanged"]
 	cursor.visible = enabled
