@@ -88,3 +88,34 @@ multi-tile streaming, edit revision/bake pipeline, other ring-angle precision,
 footprint leveling for structures and actual entity/controller integration.
 An anchor grounds one point; it does not level an entire building footprint.
 Local saved edits are not automatically committed or backed up remotely.
+
+## Static content proof (28 September 2026)
+
+content_gallery.gd loads the existing Warthog archive, Altay GLB, first-operation
+lizard_rig GLB and T-Rex GLB in place; no source art is copied or modified. It
+extracts the relay-only procedural layout from study.gd without mission state.
+F11 visits each asset. Ring-coordinate anchors re-ground on patch rebuilds.
+The old box relay is replaced by this earlier relay geometry; scale markers stay.
+
+Static skinned poses are baked in memory before bounds normalization, because
+source mesh bounds did not describe the rendered T-Rex pose. Surface materials
+are explicitly retained. This needs a real renderer; the gallery is skipped
+headless, and --content-check rejects headless runs rather than reporting a
+misleading success. Godot's bake implementation was checked here:
+https://github.com/godotengine/godot/blob/4.5-stable/scene/3d/mesh_instance_3d.cpp
+
+Preview choices: 4.8 m Warthog length, 9 m tank length, 2.2 m alien height,
+24 m T-Rex length (~7 m posed height). These are not final gameplay dimensions.
+Source skin/animation/controller files remain unchanged. Static meshes have no
+object collision, animations, AI or possession controls. Terrain still collides.
+An upright root anchor is not multi-point suspension, feet IK or footprint
+leveling. Those remain explicit integration work; do not enable old controllers
+without replacing their flat world-height/gravity assumptions.
+
+--content-check with OpenGL Compatibility passed on the real map: five entries,
+posed mesh minimum Y near zero, shared triangle anchors, and re-grounding after
+a terrain stroke. --author-capture --content-all captures each F11 viewpoint.
+Tests edit only memory and never save home.json. Specular/gloss material
+conversion warnings remain on import. Raw GLTF decoding is synchronous, one
+asset per frame; bake/cache and proper streaming are not implemented. The
+repository-relative external asset paths are development-only, not export-safe.

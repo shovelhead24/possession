@@ -8,6 +8,7 @@ var _preview_index := -1
 var _foundation_ready := false
 var _started_ms := 0
 var authored_patch: Node3D
+var content_gallery: Node
 
 func base_height(arc: float, lateral: float) -> float:
 	return super._terrain_h(arc, lateral)
@@ -118,6 +119,12 @@ func _ready() -> void:
 		_apply_look()
 		if OS.get_cmdline_user_args().has("--author-check"):
 			_check_authoring.call_deferred()
+		else:
+			content_gallery = preload("res://world/content_gallery.gd").new()
+			add_child(content_gallery)
+			content_gallery.setup(patch)
+			if OS.get_cmdline_user_args().has("--content-check"):
+				_check_content.call_deferred()
 	for i in _patch_names.size():
 		_preview_queue.append(i)
 	print("FOUNDATION ready in ", Time.get_ticks_msec() - _started_ms,
@@ -128,12 +135,54 @@ func _ready() -> void:
 		_capture_authoring.call_deferred()
 
 func _capture_authoring() -> void:
+	while is_instance_valid(content_gallery) and not content_gallery.finished:
+		await get_tree().process_frame
+	if OS.get_cmdline_user_args().has("--content-all"):
+		_hud_full = false
+		_update_hud()
+		for i in content_gallery.entries.size():
+			content_gallery.focus_next()
+			for frame in 3:
+				await get_tree().process_frame
+			await RenderingServer.frame_post_draw
+			var shot := "user://ring-content-%d.png" % i
+			assert(get_viewport().get_texture().get_image().save_png(shot) == OK)
+		get_tree().quit()
+		return
+	if OS.get_cmdline_user_args().has("--content-closeup"):
+		content_gallery.selected = 2
+		content_gallery.focus_next()
+		_hud_full = false
+		_update_hud()
 	for i in 12:
 		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	var path := "user://ring-authoring-preview.png"
 	var error := get_viewport().get_texture().get_image().save_png(path)
 	print("AUTHOR capture: ", ProjectSettings.globalize_path(path), " result=", error)
+	get_tree().quit()
+
+func _check_content() -> void:
+	if DisplayServer.get_name() == "headless":
+		push_error("Run --content-check with a renderer to validate posed geometry")
+		get_tree().quit(1)
+		return
+	while not content_gallery.finished:
+		await get_tree().process_frame
+	assert(content_gallery.entries.size() == 5)
+	for entry in content_gallery.entries:
+		assert(entry.root.position.distance_to(authored_patch.triangle_point(entry.coord)) < 0.001)
+		var bounds: AABB = content_gallery.model_bounds(entry.model)
+		assert(absf(bounds.position.y) < 0.002)
+	var entry: Dictionary = content_gallery.entries[0]
+	var before: Vector3 = entry.root.position
+	authored_patch.sculpt(entry.coord, 3.0)
+	assert(entry.root.position.distance_to(before) > 2.9)
+	for item in content_gallery.entries:
+		assert(item.root.position.distance_to(authored_patch.triangle_point(item.coord)) < 0.001)
+	print("PASS: five source assets loaded, posed geometry grounded, anchors follow terrain edits")
+	if OS.get_cmdline_user_args().has("--author-capture"):
+		return
 	get_tree().quit()
 
 func _check_frames() -> void:

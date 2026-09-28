@@ -56,27 +56,18 @@ func setup(owner_viewer: Node3D) -> void:
 	label.add_theme_color_override("font_color", Color.YELLOW)
 	layer.add_child(label)
 	rebuild()
-	# Relay scale stand-in: footprint, cabin and antenna. Not the final relay asset.
-	for a in [Vector2.ZERO, Vector2(24, 0), Vector2(-24, 20)]:
+	# Human-scale references; the source-asset gallery supplies the actual relay.
+	for a in [Vector2(24, 0), Vector2(-24, 20)]:
 		var anchor := Node3D.new()
 		add_child(anchor)
 		anchors.append(a)
 		markers.append(anchor)
 		var mesh := MeshInstance3D.new()
 		var box := BoxMesh.new()
-		box.size = Vector3(8, 4, 8) if a == Vector2.ZERO else Vector3(1, 2, 1)
+		box.size = Vector3(1, 2, 1)
 		mesh.mesh = box
 		mesh.position.y = box.size.y / 2
 		anchor.add_child(mesh)
-		if a == Vector2.ZERO:
-			var mast := MeshInstance3D.new()
-			var cylinder := CylinderMesh.new()
-			cylinder.top_radius = 0.15
-			cylinder.bottom_radius = 0.15
-			cylinder.height = 10
-			mast.mesh = cylinder
-			mast.position.y = 9
-			anchor.add_child(mast)
 	reground()
 	if not OS.get_cmdline_user_args().has("--author-check") and FileAccess.file_exists(save_path):
 		if not load_edits():
@@ -201,7 +192,7 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	label.position.y = get_viewport().get_visible_rect().size.y - 64
-	label.text = "F9 terrain brush: %s | F10 %s | [ ] radius %.0fm\nAim at tile, PageUp/Down sculpt | Ctrl+S save | %s" % [
+	label.text = "F9 terrain brush: %s | F10 %s | [ ] radius %.0fm | F11 inspect assets\nAim at tile, PageUp/Down sculpt | Ctrl+S save | %s" % [
 		"ON" if enabled else "OFF", ["raise/lower","smooth","flatten"][mode],brush_radius,
 		"UNSAVED" if dirty else "saved/unchanged"]
 	cursor.visible = enabled
