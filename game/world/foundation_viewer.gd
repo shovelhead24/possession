@@ -8,6 +8,17 @@ var _preview_index := -1
 var _foundation_ready := false
 var _started_ms := 0
 
+func _load_buildings() -> void:
+	# Automatic OSM placement is retired from this viewer. Preserve source data.
+	pass
+
+func _load_roadlines() -> void:
+	# No automatic road-derived placements or hedge ribbons.
+	pass
+
+func _build_hedges() -> void:
+	pass
+
 func _patch_preview(_base: String) -> Image:
 	# Keep real heightfields; imagery is allowed to resolve after the first frame.
 	return null
