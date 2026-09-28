@@ -2,6 +2,7 @@ extends Node3D
 signal surface_changed
 ## A fixed-resolution curved tile: mesh, physics and anchors share its triangles.
 const Frame = preload("res://world/ring_frame.gd")
+const Bake = preload("res://world/terrain_bake.gd")
 const N := 65
 const STEP := 4.0
 const SIZE := (N - 1) * STEP
@@ -27,11 +28,16 @@ var label := Label.new()
 var cursor := MeshInstance3D.new()
 var timer := 0.0
 var save_path := "user://ring-authoring/home.json"
+var bake_status := "pending"
+var baked_levels: Array = []
+var cache_hits := 0
 
 func setup(owner_viewer: Node3D) -> void:
 	viewer = owner_viewer
 	if OS.get_cmdline_user_args().has("--foundation-lite"):
 		save_path = "user://ring-authoring/home-lite.json"
+	if OS.get_cmdline_user_args().has("--author-check"):
+		save_path = "user://ring-authoring/test-patch.json"
 	heights.resize(N * N)
 	for z in N:
 		for x in N:
@@ -67,7 +73,12 @@ func setup(owner_viewer: Node3D) -> void:
 	label.position = Vector2(12, 600)
 	label.add_theme_color_override("font_color", Color.YELLOW)
 	layer.add_child(label)
-	rebuild()
+	if not OS.get_cmdline_user_args().has("--author-check") and FileAccess.file_exists(save_path):
+		if not load_edits():
+			push_warning("Saved terrain could not be loaded; file retained: " + save_path)
+			rebuild(true)
+	else:
+		rebuild(true)
 	# Human-scale references; the source-asset gallery supplies the actual relay.
 	for a in [Vector2(24, 0), Vector2(-24, 20)]:
 		var anchor := Node3D.new()
@@ -81,10 +92,6 @@ func setup(owner_viewer: Node3D) -> void:
 		mesh.position.y = box.size.y / 2
 		anchor.add_child(mesh)
 	reground()
-	if not OS.get_cmdline_user_args().has("--author-check") and FileAccess.file_exists(save_path):
-		if not load_edits():
-			push_warning("Saved terrain could not be loaded; file retained: " + save_path)
-
 func contains(p: Vector2) -> bool:
 	return absf(p.x - center.x) < SIZE / 2 and absf(p.y - center.y) < SIZE / 2
 
@@ -99,7 +106,39 @@ func triangle_point(p: Vector2) -> Vector3:
 		return vertices[i] * (1-u-v) + vertices[i+1] * u + vertices[i+N] * v
 	return vertices[i+N+1] * (u+v-1) + vertices[i+N] * (1-u) + vertices[i+1] * (1-v)
 
-func rebuild() -> void:
+func bake_key() -> String:
+	return Bake.revision(heights,N,STEP,center,viewer._radius(),GRASS_REPEAT_METRES)
+
+func bake_current() -> bool:
+	var key := bake_key()
+	var path := save_path+".bake.res"
+	if not Bake.write_cache(path,key,heights,N,STEP,vertices,surface.mesh,shape.shape):
+		bake_status = "failed (source retained)"
+		return false
+	var data := Bake.read_cache(path,key,N)
+	if data == null:
+		bake_status = "failed (source retained)"
+		return false
+	baked_levels = data.get_meta("levels")
+	bake_status = "ready"
+	print("TERRAIN BAKE saved: ", key.left(12), " / ", baked_levels.size(), " height levels + mesh/collision")
+	return true
+
+func rebuild(use_cache := false) -> void:
+	baked_levels.clear()
+	bake_status = "pending save"
+	if use_cache:
+		var data := Bake.read_cache(save_path+".bake.res",bake_key(),N)
+		if data != null:
+			vertices = data.get_meta("vertices")
+			surface.mesh = data.get_meta("mesh")
+			shape.shape = data.get_meta("collision")
+			baked_levels = data.get_meta("levels")
+			bake_status = "cached"
+			cache_hits += 1
+			print("TERRAIN BAKE cache hit: ", bake_key().left(12))
+			reground()
+			return
 	vertices.resize(N * N)
 	for z in N:
 		for x in N:
@@ -119,6 +158,8 @@ func rebuild() -> void:
 	st.generate_normals()
 	surface.mesh = st.commit()
 	shape.shape = surface.mesh.create_trimesh_shape()
+	if use_cache:
+		bake_current()
 	reground()
 
 func reground() -> void:
@@ -165,6 +206,8 @@ func save_edits() -> bool:
 	if DirAccess.rename_absolute(temp,save_path) != OK:
 		return false
 	dirty = false
+	if not bake_current():
+		push_warning("Terrain source saved, but its derived bake failed; it will rebuild on load")
 	return true
 
 func load_edits() -> bool:
@@ -185,7 +228,7 @@ func load_edits() -> bool:
 		return false
 	heights = PackedFloat64Array(data.heights)
 	baseline = PackedFloat64Array(data.baseline)
-	rebuild()
+	rebuild(true)
 	dirty = false
 	return true
 
@@ -209,9 +252,9 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	label.position.y = get_viewport().get_visible_rect().size.y - 64
-	label.text = "F9 brush: %s | F10 %s | [ ] radius %.0fm | F11 assets | F12 contacts\nAim at tile, PageUp/Down sculpt | Ctrl+S save | %s" % [
+	label.text = "F9 brush: %s | F10 %s | [ ] radius %.0fm | F11 assets | F12 contacts\nAim at tile, PageUp/Down sculpt | Ctrl+S save | %s | bake: %s" % [
 		"ON" if enabled else "OFF", ["raise/lower","smooth","flatten"][mode],brush_radius,
-		"UNSAVED" if dirty else "saved/unchanged"]
+		"UNSAVED" if dirty else "saved/unchanged",bake_status]
 	cursor.visible = enabled
 	if not enabled:
 		return

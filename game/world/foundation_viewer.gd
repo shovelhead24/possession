@@ -257,9 +257,45 @@ func _check_authoring() -> void:
 	for i in patch.markers.size():
 		assert(patch.markers[i].position.distance_to(patch.triangle_point(patch.anchors[i]))<0.001)
 	assert(patch.save_edits())
+	assert(patch.bake_status == "ready")
+	var bake = preload("res://world/terrain_bake.gd")
+	var key: String = patch.bake_key()
+	var hits: int = patch.cache_hits
+	assert(patch.baked_levels.size() == 7)
+	assert(patch.baked_levels[0].width == 65 and patch.baked_levels[-1].width == 2)
+	for level in patch.baked_levels:
+		assert(level.heights.size() == level.width*level.width)
+		var stride: int = (patch.N-1)/(level.width-1)
+		for edge in level.width:
+			assert(absf(level.heights[edge]-patch.heights[edge*stride]) < 0.001)
+			assert(absf(level.heights[(level.width-1)*level.width+edge]-patch.heights[(patch.N-1)*patch.N+edge*stride]) < 0.001)
+			assert(absf(level.heights[edge*level.width]-patch.heights[edge*stride*patch.N]) < 0.001)
+			assert(absf(level.heights[edge*level.width+level.width-1]-patch.heights[edge*stride*patch.N+patch.N-1]) < 0.001)
+		assert(level.height_error_m >= 0)
 	var saved: PackedFloat64Array = patch.heights.duplicate()
 	patch.sculpt(Vector2.ZERO,-12)
+	assert(patch.baked_levels.is_empty())
+	assert(bake.read_cache(patch.save_path+".bake.res",patch.bake_key(),patch.N) == null)
 	assert(patch.load_edits())
+	assert(patch.cache_hits == hits+1)
+	assert(patch.bake_key() == key)
+	assert(patch.save_edits()) # Re-save cached subresources, not just fresh meshes.
+	assert(patch.load_edits())
+	assert(patch.cache_hits == hits+2)
+	assert(bake.read_cache(patch.save_path+".bake.res","stale-revision",patch.N) == null)
+	# Invalid derived metadata must fall back, never replace source terrain.
+	var invalid := Resource.new()
+	invalid.set_meta("revision",key)
+	var invalid_path := "user://ring-authoring/test-invalid.bake.res"
+	assert(ResourceSaver.save(invalid,invalid_path) == OK)
+	assert(bake.read_cache(invalid_path,key,patch.N) == null)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	var cached_point: Vector3 = patch.triangle_point(Vector2.ZERO)
+	var cached_up := RingFrame.up(0,_radius())
+	var cached_hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(cached_point+cached_up*50,cached_point-cached_up*50,1<<19))
+	assert(not cached_hit.is_empty() and cached_hit.position.distance_to(cached_point) < 0.02)
+	print("PASS: seven baked levels, warm cache hit, stale/invalid rejection, cached collision")
 	var max_error := 0.0
 	for i in saved.size():
 		max_error = maxf(max_error,absf(patch.heights[i]-saved[i]))
