@@ -4,6 +4,8 @@ const Frame = preload("res://world/ring_frame.gd")
 const N := 65
 const STEP := 4.0
 const SIZE := (N - 1) * STEP
+const GRASS_REPEAT_METRES := 2.0
+const GRASS_TEXTURE := "res://world/grass_texture.webp"
 var viewer: Node3D
 var center := Vector2.ZERO
 var heights := PackedFloat64Array()
@@ -41,7 +43,16 @@ func setup(owner_viewer: Node3D) -> void:
 	add_child(body)
 	body.add_child(shape)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.29, 0.37, 0.22)
+	var grass := Image.load_from_file(GRASS_TEXTURE)
+	if grass != null and not grass.is_empty():
+		grass.generate_mipmaps()
+		mat.albedo_texture = ImageTexture.create_from_image(grass)
+		mat.albedo_color = Color.WHITE
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+		mat.texture_repeat = true
+	else:
+		push_warning("Grass texture unavailable; using the diagnostic green fallback")
+		mat.albedo_color = Color(0.29, 0.37, 0.22)
 	mat.roughness = 0.95
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	surface.material_override = mat
@@ -99,6 +110,10 @@ func rebuild() -> void:
 		for x in N-1:
 			var i := z*N+x
 			for index in [i, i+1, i+N, i+1, i+N+1, i+N]:
+				# Ring-surface metres, not a normalized 0..1 tile UV. Remains
+				# stable during sculpting and across neighboring tile origins.
+				var p := center + Vector2((index % N)*STEP-SIZE/2, (index / N)*STEP-SIZE/2)
+				st.set_uv(p / GRASS_REPEAT_METRES)
 				st.add_vertex(vertices[index])
 	st.generate_normals()
 	surface.mesh = st.commit()

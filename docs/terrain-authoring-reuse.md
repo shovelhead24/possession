@@ -119,3 +119,16 @@ Tests edit only memory and never save home.json. Specular/gloss material
 conversion warnings remain on import. Raw GLTF decoding is synchronous, one
 asset per frame; bake/cache and proper streaming are not implemented. The
 repository-relative external asset paths are development-only, not export-safe.
+
+## Grass surface reference
+
+The editable patch now uses the supplied grass texture at one repeat per 2 m,
+with ring-surface UVs set on every mesh rebuild, mipmaps and anisotropic filtering.
+Sculpting does not slide or reset its UVs; steep slopes stretch this planar
+mapping, so triplanar/painted materials remain future work. The selected repeat
+size is provisional, not a calibrated physical size from the source image.
+The original C:/Games/possession/assets/grass texture.jpg is actually WebP data;
+game/world/grass_texture.webp is a byte-identical project copy with the correct
+extension. The original file is untouched. Only the authored patch is changed,
+not the ring's satellite imagery. --author-check validates texture availability,
+UV count, metre spacing, and UV stability across sculpt/save/reload operations.

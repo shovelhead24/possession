@@ -223,6 +223,14 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _check_authoring() -> void:
 	var patch = authored_patch
+	var material: StandardMaterial3D = patch.surface.material_override
+	assert(material.albedo_texture != null)
+	var arrays: Array = patch.surface.mesh.surface_get_arrays(0)
+	var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	assert(uv.size() == arrays[Mesh.ARRAY_VERTEX].size())
+	assert(uv[0].is_equal_approx(Vector2(-64,-64)))
+	assert(uv[1].is_equal_approx(Vector2(-62,-64)))
+	assert(uv[2].is_equal_approx(Vector2(-64,-62)))
 	patch.save_path = "user://ring-authoring/test-patch.json"
 	var before: Vector3 = patch.triangle_point(Vector2.ZERO)
 	patch.sculpt(Vector2.ZERO, 8.0)
@@ -259,5 +267,7 @@ func _check_authoring() -> void:
 	patch.sculpt(Vector2.ZERO,0.5)
 	assert(absf(patch.heights[middle]-previous-5) < 0.000001)
 	assert(patch.heights[0] == patch.baseline[0])
-	print("PASS: sculpt, triangle collision, anchor grounding, save/reload, smooth/flatten, pinned border")
+	var edited_uv: PackedVector2Array = patch.surface.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV]
+	assert(edited_uv == uv)
+	print("PASS: sculpt, collision, anchors, save/reload, smooth/flatten, border, metre-scaled grass UVs")
 	get_tree().quit()
