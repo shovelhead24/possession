@@ -175,6 +175,8 @@ varying vec2 v_tile_uv;   // repeating drape UV for the beyond-DEM fallback (sam
 varying vec3 v_world_pos;
 varying float v_height;   // metres above the ring floor (v_h is normalised, no good for shadowing)
 varying vec2 v_ring;      // (arc, lat) -- needed in fragment for the splice-patch lookup
+uniform bool authored_patch_enabled = false;
+uniform vec4 authored_patch_rect = vec4(0.0); // center arc/lat, half extents
 varying float v_depth;    // metres below sea level (>0 = underwater); from the UNCLAMPED height
 
 float hash12(vec2 p) {
@@ -372,6 +374,10 @@ void vertex() {
 }
 
 void fragment() {
+	if (authored_patch_enabled && abs(v_ring.x-authored_patch_rect.x) < authored_patch_rect.z
+			&& abs(v_ring.y-authored_patch_rect.y) < authored_patch_rect.w) {
+		discard; // fixed authored mesh owns this region, including lowered terrain
+	}
 	// beyond the walls' lat position -> never rendered at all (was a vertex-space sink before,
 	// which folded into a visible "wall" of geometry at the tile straddling the boundary — clean
 	// discard instead, per-fragment, no folded geometry).
