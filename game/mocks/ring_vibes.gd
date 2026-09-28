@@ -3203,6 +3203,15 @@ func _patch_floor(field: PackedFloat32Array) -> float:
 	s.sort()
 	return s[int(float(s.size()) * 0.02)]
 
+func _patch_preview(base: String) -> Image:
+	if FileAccess.file_exists(base + "_sat.dat"):
+		var ci := Image.new()
+		if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
+			ci.resize(PATCH_COL_RES, PATCH_COL_RES, Image.INTERPOLATE_LANCZOS)
+			ci.convert(Image.FORMAT_RGB8)
+			return ci
+	return null
+
 func _load_patches() -> void:
 	# each splice is resampled to PATCH_RES^2 and stacked into one Texture2DArray; a CPU copy is
 	# kept alongside so _terrain_h returns exactly what the shader draws (render-authoritative
@@ -3226,13 +3235,8 @@ func _load_patches() -> void:
 		# real imagery if the pipeline has fetched it; a flat tint plate stands in until then, so a
 		# half-finished fetch still renders (the array needs every layer present and same-size).
 		var cimg: Image = null
-		if FileAccess.file_exists(base + "_sat.dat"):
-			var ci := Image.new()
-			if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
-				ci.resize(PATCH_COL_RES, PATCH_COL_RES, Image.INTERPOLATE_LANCZOS)
-				ci.convert(Image.FORMAT_RGB8)
-				cimg = ci
-				any_col = true
+		cimg = _patch_preview(base)
+		any_col = any_col or cimg != null
 		if cimg == null:
 			cimg = Image.create(PATCH_COL_RES, PATCH_COL_RES, false, Image.FORMAT_RGB8)
 			cimg.fill(p["tint"])

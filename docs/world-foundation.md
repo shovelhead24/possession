@@ -1,5 +1,20 @@
 # World foundation integration
 
+## Prototype startup previews
+
+The foundation viewer starts patch imagery with biome tint plates, preserving
+all coarse heightfields and geography. One worker decodes/resizes one satellite
+preview at a time, prioritising the closest remaining arc after each completion.
+The main thread uploads one 512px texture-array layer. The worker saves PNG
+previews under user://foundation-previews keyed by source path, modification time
+and resolution. Subsequent runs read these small files instead of full sources.
+This is a lazy cache, not yet a portable, prebuilt asset bundle. A future bake
+step should produce versioned preview tiles and GPU-ready nearby detail.
+Home DEM/imagery, roads and building loading are still synchronous. The existing
+high-resolution terrain worker continues independently. Camera warps reprioritise
+the preview queue after the current job; a job in progress is not cancelled.
+Shutdown joins outstanding workers. No source dataset files are rewritten.
+
 Branch: integration/world-foundation, based on preserved game 567876f.
 
 Run game/world/foundation_viewer.tscn in Godot 4.5.1. F1/F2/F3/F4
