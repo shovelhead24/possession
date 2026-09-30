@@ -45,27 +45,36 @@ static func normal_at(p: Vector3, radius: float, rough: float) -> Vector3:
 		field(p+Vector3(0,e,0),radius,rough)-field(p-Vector3(0,e,0),radius,rough),
 		field(p+Vector3(0,0,e),radius,rough)-field(p-Vector3(0,0,e),radius,rough)).normalized()
 
-func generate(radius: float, rough: float) -> Dictionary:
+static func sampled(p: Vector3, radius: float, rough: float, sampler: Callable) -> float:
+	return sampler.call(p,radius,rough) if sampler.is_valid() else field(p,radius,rough)
+
+static func sampled_normal(p: Vector3, radius: float, rough: float, sampler: Callable) -> Vector3:
+	var e := 0.03
+	return Vector3(sampled(p+Vector3(e,0,0),radius,rough,sampler)-sampled(p-Vector3(e,0,0),radius,rough,sampler),
+		sampled(p+Vector3(0,e,0),radius,rough,sampler)-sampled(p-Vector3(0,e,0),radius,rough,sampler),
+		sampled(p+Vector3(0,0,e),radius,rough,sampler)-sampled(p-Vector3(0,0,e),radius,rough,sampler)).normalized()
+
+func generate(radius: float, rough: float, origin := ORIGIN, cells := CELLS, spacing := 1.0, sampler := Callable()) -> Dictionary:
 	var started := Time.get_ticks_msec()
-	var nx := CELLS.x+1
-	var ny := CELLS.y+1
+	var nx := cells.x+1
+	var ny := cells.y+1
 	var values := PackedFloat32Array()
-	values.resize(nx*ny*(CELLS.z+1))
-	for z in CELLS.z+1:
+	values.resize(nx*ny*(cells.z+1))
+	for z in cells.z+1:
 		for y in ny:
 			for x in nx:
-				values[(z*ny+y)*nx+x] = field(ORIGIN+Vector3(x,y,z),radius,rough)
+				values[(z*ny+y)*nx+x] = sampled(origin+Vector3(x,y,z)*spacing,radius,rough,sampler)
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
-	for z in CELLS.z:
-		for y in CELLS.y:
-			for x in CELLS.x:
+	for z in cells.z:
+		for y in cells.y:
+			for x in cells.x:
 				var points: Array[Vector3] = []
 				var distances: Array[float] = []
 				var negative := 0
 				for corner in CORNERS:
 					var c: Vector3i = Vector3i(x,y,z)+corner
-					points.append(ORIGIN+Vector3(c))
+					points.append(origin+Vector3(c)*spacing)
 					var d := values[(c.z*ny+c.y)*nx+c.x]
 					distances.append(d)
 					if d < 0: negative += 1
@@ -105,7 +114,7 @@ func generate(radius: float, rough: float) -> Dictionary:
 							c = swap
 						for p in [a,b,c]:
 							vertices.append(p)
-							normals.append(normal_at(p,radius,rough))
+							normals.append(sampled_normal(p,radius,rough,sampler))
 	return {"vertices":vertices,"normals":normals,"ms":Time.get_ticks_msec()-started}
 
 func rebuild() -> void:
