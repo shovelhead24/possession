@@ -11,6 +11,7 @@ var revision := 0
 var install_ms := 0
 var max_resident := 0
 var checks_started := false
+var textured := true
 
 static func landscape(p: Vector3, radius: float, rough: float) -> float:
 	var distance_from_home := Vector2(p.x,p.z).length()
@@ -28,10 +29,28 @@ static func landscape(p: Vector3, radius: float, rough: float) -> float:
 
 func _ready() -> void:
 	super._ready()
+	terrain.material_override = preload("res://world/materials/expanse_material.gd").create()
+	hud.add_theme_color_override("font_outline_color", Color(0,0,0,0.8))
+	hud.add_theme_constant_override("outline_size", 4)
+	# The original grey diagnostic material tolerated lighting that clips pale
+	# limestone to white in Compatibility. Leave headroom for the actual albedo.
+	for child in get_children():
+		if child is DirectionalLight3D:
+			child.light_energy = 0.85
+		if child is WorldEnvironment:
+			child.environment.ambient_light_energy = 0.35
 	DisplayServer.window_set_title("SDF expanse / 512m streamed landscape")
 	for child in get_children():
 		if child is Label3D: child.queue_free()
 	camera.far = 220
+	if OS.get_cmdline_user_args().has("--expanse-bridge"):
+		camera.position = SITES[2]
+		camera.look_at(Vector3(-65,7,45))
+		look = Vector2(camera.rotation.y,camera.rotation.x)
+	if OS.get_cmdline_user_args().has("--material-close"):
+		camera.position = Vector3(-53,5,25)
+		camera.look_at(Vector3(-65,7,45))
+		look = Vector2(camera.rotation.y,camera.rotation.x)
 	for spec in [["1 / HOME TUNNEL",Vector3(0,15,0)],["2 / HIGH PASS",Vector3(70,35,25)],
 		["3 / STONE BRIDGE",Vector3(-65,22,45)],["4 / BASIN",Vector3(45,4,-80)]]:
 		var label := Label3D.new()
@@ -70,6 +89,10 @@ func desired() -> Array[Vector2i]:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_T:
+			textured = not textured
+			terrain.material_override.set_shader_parameter("textured", textured)
+			return
 		if event.keycode >= KEY_1 and event.keycode <= KEY_4:
 			var i: int = event.keycode-KEY_1
 			walking = false
@@ -141,7 +164,7 @@ func _process(delta: float) -> void:
 	triangles = 0
 	for entry in chunks.values(): triangles += entry.triangles
 	max_resident = maxi(max_resident,chunks.size())
-	hud.text = "SDF EXPANSE / 512 x 512m / 2m samples / %s\n1 home | 2 high pass | 3 stone bridge | 4 basin | F walk/fly\nWASD + mouse | Space/Ctrl vertical | Shift faster | [ ] tunnels | R detail\n%d/%d chunks | %d queued | %d triangles | worker %dms / install %dms | %.0f FPS%s" % [
+	hud.text = "SDF EXPANSE / 512 x 512m / 2m samples / %s\n1 home | 2 high pass | 3 stone bridge | 4 basin | F walk/fly | T textures\nWASD + mouse | Space/Ctrl vertical | Shift faster | [ ] tunnels | R detail\n%d/%d chunks | %d queued | %d triangles | worker %dms / install %dms | %.0f FPS%s" % [
 		"WALK" if walking else "FLY",chunks.size(),wanted.size(),missing,triangles,generation_ms,install_ms,Engine.get_frames_per_second(),
 		"\nWaiting for nearby collision" if walking and not neighborhood_ready(player.position) else ""]
 	if missing == 0 and worker == null:

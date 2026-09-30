@@ -41,3 +41,21 @@ resolution, LOD transitions, disk caching, material design, exact-surface error
 bounds, larger coordinate precision, region authoring and ring integration.
 The small original demo remains available with 1 m sampling; no previous saves
 or source assets are replaced.
+
+## Material pass (2026-09-30)
+
+User-supplied limestone colour, meadow grass albedo/OpenGL normal, and mossy
+granite albedo/OpenGL normal/roughness are wired through materials/expanse.gdshader.
+World-space triplanar mapping, slope grass/rock blend, analytic bridge material
+selection. Raw source images unchanged, runtime capped at 1024 with mipmaps.
+See game/world/materials/README.md for provenance and export/licensing caveats.
+T toggles diagnostic flat shading. Lighting reduced to avoid pale stone clipping.
+--expanse-bridge starts at the bridge overview; --material-close starts nearer.
+Neither changes geometry, generation, collision, renderer, engine, or saved data.
+
+Rendered check on Godot 4.5.1 Compatibility/Intel UHD: no shader errors;
+1280x800 close bridge sample ~59.7 FPS, 25 chunks / 54,786 triangles after loading.
+Streaming edge/cavity/eviction tests and localized edit plus bridge traversal
+regression passed. Still a coarse geometry prototype, not final arch masonry.
+An additional rock-heavy close view measured ~46 FPS before avoiding unused
+grass/rock texture samples outside slope transitions; frame rate is view-dependent.
