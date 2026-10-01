@@ -87,6 +87,7 @@ func _build_arena_band() -> void:
 	arcs.sort()
 	arcs.append(circumference)
 	var lateral: Array[float] = [-25000,-22000,-19000,-16000,-13000,-10000,-8000,-3500,-1000,-arena_extent*1.7,-arena_extent,0,arena_extent,arena_extent*1.7,1000,3500,8000,10000,13000,16000,19000,22000,25000]
+	lateral.sort() # Extent may now exceed the fixed 1000 m row.
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for arc in arcs:

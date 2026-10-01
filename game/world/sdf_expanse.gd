@@ -12,6 +12,16 @@ var install_ms := 0
 var max_resident := 0
 var checks_started := false
 var textured := true
+var stream_jobs: Array[Dictionary] = []
+
+func stream_worker_limit() -> int:
+	return 1
+
+func stream_install_budget_usec() -> int:
+	return 5000
+
+func chunk_generated(_result: Dictionary) -> void:
+	pass
 
 static func landscape(p: Vector3, radius: float, rough: float) -> float:
 	var distance_from_home := Vector2(p.x,p.z).length()
@@ -148,29 +158,39 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	var wanted := desired()
-	if worker != null and not worker.is_alive():
-		var result: Dictionary = worker.wait_to_finish()
-		worker = null
-		if active_revision == revision and active_key in wanted:
-			install(active_key,result)
+	# Workers only produce primitive arrays. Start at most one costly install
+	# after the budget is exhausted; a single indivisible upload may exceed it.
+	var install_started := Time.get_ticks_usec()
+	var installed := false
+	for job in stream_jobs.duplicate():
+		if not job.has("result") and not job.thread.is_alive():
+			job.result=job.thread.wait_to_finish();chunk_generated(job.result)
+		if not job.has("result"): continue
+		if job.revision!=revision or job.key not in wanted:
+			stream_jobs.erase(job);continue
+		if installed and Time.get_ticks_usec()-install_started>=stream_install_budget_usec(): continue
+		active_key=job.key;active_revision=job.revision
+		install(job.key,job.result);installed=true;stream_jobs.erase(job)
 	for key in chunks.keys():
 		if key not in wanted:
-			chunks[key].node.queue_free()
-			chunks.erase(key)
+			retire_chunk(key)
 	var missing := 0
 	for key in wanted:
 		if chunks.has(key) and chunks[key].revision == revision: continue
 		missing += 1
-		if worker == null:
+		var pending := false
+		for job in stream_jobs:
+			if job.key==key: pending=true;break
+		if not pending and stream_jobs.size()<stream_worker_limit():
 			active_key = key
 			active_revision = revision
-			worker = Thread.new()
+			var thread := Thread.new()
 			var layout := chunk_layout()
-			var error := worker.start(generate.bind(tunnel_radius,roughness,
+			var error := thread.start(generate.bind(tunnel_radius,roughness,
 				Vector3(key.x*CHUNK,layout.bottom,key.y*CHUNK),layout.cells,layout.spacing,chunk_sampler()))
-			if error != OK:
-				worker = null
-				push_error("Chunk generation worker failed")
+			if error==OK: stream_jobs.append({"thread":thread,"key":key,"revision":revision})
+			else: push_error("Chunk generation worker failed")
+	worker=stream_jobs[0].thread if not stream_jobs.is_empty() else null
 	triangles = 0
 	for entry in chunks.values(): triangles += entry.triangles
 	max_resident = maxi(max_resident,chunks.size())
@@ -188,6 +208,16 @@ func _process(delta: float) -> void:
 	else:
 		ready_frames = 0
 		frame_times.clear()
+
+func retire_chunk(key: Vector2i) -> void:
+	chunks[key].node.queue_free()
+	chunks.erase(key)
+
+func _exit_tree() -> void:
+	for job in stream_jobs:
+		if not job.has("result"): job.thread.wait_to_finish()
+	stream_jobs.clear();worker=null
+	super._exit_tree()
 
 func install(key: Vector2i,result: Dictionary) -> void:
 	var started := Time.get_ticks_msec()

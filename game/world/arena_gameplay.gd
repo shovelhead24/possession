@@ -33,6 +33,7 @@ var test_complete := false
 var test_vehicle_controls := false
 var test_capture := false
 var weapon_sounds: Array[AudioStream]=[]
+var vehicle_system: Node
 
 func setup_turret(model: Node3D) -> void:
 	var gun := model.find_child("Gun1",true,false) as Node3D
@@ -99,15 +100,21 @@ func own_movement() -> bool:
 
 func handle_input(event: InputEvent) -> bool:
 	if not initialized: return false
+	if vehicle_system.handle_input(event): return true
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_TAB:
 				var index := actors.find(controlled_actor)
 				release_control();possess(actors[(index+1)%actors.size()]);return true
 			KEY_E:
-				if own_movement(): release_control()
-				elif arena.camera.position.distance_to(vehicle.position)<9: enter_vehicle()
+				if driving:
+					if vehicle_system.exit_on_foot(): driving=false
+				elif controlled_actor: release_control()
 				else:
+					for car in vehicle_system.vehicles:
+						if arena.camera.position.distance_to(car.position)<9:
+							var rear: bool=car==vehicle and car.to_local(arena.camera.position).z>1.3 and absf(car.to_local(arena.camera.position).x)<1.8
+							enter_vehicle(car,rear);return true
 					var nearest: Node3D
 					var distance := 8.0
 					for actor in actors:
@@ -132,6 +139,10 @@ func handle_input(event: InputEvent) -> bool:
 			KEY_H:
 				release_control();arena.walking=false;arena.camera.position=vehicle.position+Vector3(0,3,6)
 				arena.camera.look_at(vehicle.position+Vector3.UP);arena.look=Vector2(arena.camera.rotation.y,arena.camera.rotation.x);return true
+			KEY_K:
+				release_control();arena.walking=false;var tank: Node3D=vehicle_system.vehicles[1]
+				arena.camera.position=tank.position+Vector3(4,4,6);arena.camera.look_at(tank.position+Vector3.UP)
+				arena.look=Vector2(arena.camera.rotation.y,arena.camera.rotation.x);return true
 			KEY_F:
 				if own_movement(): release_control();return true
 			KEY_0,KEY_1,KEY_2,KEY_3,KEY_4,KEY_5,KEY_6,KEY_7,KEY_8,KEY_9: release_control()
@@ -143,19 +154,21 @@ func possess(actor: Node3D) -> void:
 	arena.look=Vector2(actor.rotation.y,-.2);arena.camera.rotation=Vector3(arena.look.y,arena.look.x,0)
 	Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 
-func enter_vehicle() -> void:
+func enter_vehicle(car: RigidBody3D=null, turret_seat := false) -> void:
 	release_control();driving=true;vehicle.controlled=true;vehicle_patrol=false;arena.walking=false
-	arena.look=Vector2(vehicle.rotation.y,-.2);arena.camera.rotation=Vector3(arena.look.y,arena.look.x,0)
+	vehicle_system.enter(car if car else vehicle,turret_seat)
 	Input.mouse_mode=Input.MOUSE_MODE_CAPTURED
 
 func release_control() -> void:
 	if controlled_actor: controlled_actor.controlled=false
 	controlled_actor=null;driving=false
+	if vehicle_system: vehicle_system.release()
 	if vehicle: vehicle.controlled=vehicle_patrol;vehicle.set_controls(0,0,true)
 
 func reset_all() -> void:
 	release_control();vehicle_patrol=false;vehicle_waypoint=0
 	vehicle.transform=vehicle_home;vehicle.linear_velocity=Vector3.ZERO;vehicle.angular_velocity=Vector3.ZERO
+	vehicle_system.reset_all()
 	for actor in actors: actor.reset_actor()
 	player_health=100;ammo=[30,5];reloading=0
 
@@ -223,25 +236,14 @@ func _physics_process(delta: float) -> void:
 		else:
 			var radius := 14.0 if controlled_actor.kind=="T-Rex" else 5.0
 			arena.camera.position=controlled_actor.position+Vector3.UP*(5.0 if radius>10 else 2.5)+arena.camera.basis.z*radius
-	if driving:
-		vehicle.controlled=true
-		if test_vehicle_controls: vehicle.set_controls(.8,0,false)
-		else: vehicle.driver_controls(Input.is_key_pressed(KEY_W),Input.is_key_pressed(KEY_S),Input.is_key_pressed(KEY_SPACE),float(Input.is_key_pressed(KEY_A))-float(Input.is_key_pressed(KEY_D)))
-		arena.camera.position=vehicle.position+Vector3.UP*3.2+arena.camera.basis.z*8
-	elif vehicle_patrol:
+	vehicle_system.tick(delta,test_vehicle_controls)
+	if vehicle_patrol and not driving:
 		var goal := vehicle_route[vehicle_waypoint];goal.y=vehicle.position.y
 		if vehicle.position.distance_to(goal)<5: vehicle_waypoint=(vehicle_waypoint+1)%vehicle_route.size()
 		var direction := (goal-vehicle.position).normalized()
 		var steer := clampf((-vehicle.basis.z).signed_angle_to(direction,Vector3.UP)*1.5,-1,1)
 		vehicle.controlled=true;vehicle.set_controls(.5,steer,vehicle.linear_velocity.length()>9)
-	else: vehicle.controlled=false;vehicle.set_controls(0,0,true)
-	# Never simulate a vehicle onto missing collision during streaming.
-	vehicle.freeze=not arena.neighborhood_ready(vehicle.position)
-	if driving and turret_yaw:
-		turret_yaw.rotation.y=arena.camera.rotation.y-vehicle.rotation.y
-		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and shot_wait<=0:
-			shot_wait=.1;shoot(turret_muzzle.global_position,aim_direction(turret_muzzle.global_position,vehicle),15,220,vehicle,Color(1,.8,.2))
-	elif arena.walking and not controlled_actor and player_health>0 and reloading<=0:
+	if arena.walking and not own_movement() and player_health>0 and reloading<=0:
 		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED and shot_wait<=0 and ammo[selected]>0:
 			shot_wait=.18 if selected==0 else 1.0;ammo[selected]-=1
 			shoot(arena.camera.position,-arena.camera.basis.z,25 if selected==0 else 120,250 if selected==0 else 600,arena.player,Color(.4,1,.5) if selected==0 else Color(.5,.8,1))
@@ -249,7 +251,7 @@ func _physics_process(delta: float) -> void:
 	if holder:
 		holder.visible=arena.walking and not own_movement()
 		holder.position.z=lerpf(holder.position.z,-.5,delta*12)
-	health_hud.text="Tab possess aliens/Rex | H find Warthog, E enter/exit | Backspace observer\nLMB fire/bite | Q weapon | R reload | P patrol/hold | V routes | Y reset\n%s | %s %d | %s" % ["Warthog" if driving else (controlled_actor.kind if controlled_actor else "Player %.0f HP" % player_health),"Carbine" if selected==0 else "Railgun",ammo[selected],"Reloading" if reloading>0 else (message if message_time>0 else "")]
+	health_hud.text="Tab aliens/Rex | H Warthog / K tank, E enter/exit | F2 setup / C view / G gunner\nLMB fire/bite | Q weapon | R reload | P patrol/hold | V routes | Y reset\n%s | %s %d | %s" % [str(vehicle_system.driving.name) if driving else (controlled_actor.kind if controlled_actor else "Player %.0f HP" % player_health),"Carbine" if selected==0 else "Railgun",ammo[selected],"Reloading" if reloading>0 else (message if message_time>0 else "")]
 	crosshair.visible=arena.walking or own_movement()
 	crosshair.position=get_viewport().get_visible_rect().size*.5-Vector2(4,12)
 	if OS.get_cmdline_user_args().has("--gameplay-check") and not checks_started:
@@ -257,6 +259,9 @@ func _physics_process(delta: float) -> void:
 
 func check_gameplay() -> void:
 	assert(actors.size()==4 and weapons.size()==2 and vehicle.corners.size()==4)
+	assert(vehicle_system.vehicles.size()==2 and vehicle_system.vehicles[1].corners.size()==8)
+	assert(is_equal_approx(vehicle.track_extension,.18) and is_equal_approx(vehicle.wheel_mount_raise,.14))
+	assert(is_equal_approx(vehicle.center_of_mass.y,.48))
 	for actor in actors:
 		assert(actor.skeleton!=null and actor.animator!=null and not actor.clips.is_empty())
 		var skins := 0
@@ -282,16 +287,46 @@ func check_gameplay() -> void:
 	alien.reset_actor();assert(alien.health==alien.max_health)
 	select_weapon(1);assert(weapons[1].visible and not weapons[0].visible);select_weapon(0)
 	possess(alien);assert(alien.controlled and own_movement());release_control();assert(not alien.controlled)
-	enter_vehicle();assert(driving and vehicle.controlled);release_control()
+	enter_vehicle();assert(driving and vehicle_system.driving==vehicle);release_control()
 	vehicle.controlled=true;vehicle.set_controls(.6,0,false)
 	var start: Vector3=vehicle.position
 	# Exercise real traction without depending on physical keyboard state.
-	driving=true;test_vehicle_controls=true
+	enter_vehicle();test_vehicle_controls=true
 	for i in 180: await get_tree().physics_frame
-	driving=false;test_vehicle_controls=false
+	release_control();test_vehicle_controls=false
 	assert(vehicle.grounded_count>0,"Vehicle suspension has no ground contact")
 	assert(vehicle.position.distance_to(start)>2,"Vehicle did not drive")
 	print("GAMEPLAY_VEHICLE displacement=",vehicle.position.distance_to(start)," contacts=",vehicle.grounded_count)
+	reset_all()
+	for i in 120: await get_tree().physics_frame
+	var applied: int=vehicle.forces_applied
+	vehicle_system.test_starvation=true
+	for i in 90: await get_tree().physics_frame
+	assert(vehicle.streaming_suspended and vehicle.forces_applied==applied,"Suspension applied forces while stream-frozen")
+	vehicle_system.test_starvation=false
+	var max_up := 0.0
+	for i in 120:
+		await get_tree().physics_frame
+		max_up=maxf(max_up,vehicle.linear_velocity.y)
+	assert(max_up<3,"Vehicle launched on streaming resume")
+	# Moving the observer must never evict terrain underneath parked vehicles.
+	var camera_before: Transform3D=arena.camera.transform
+	arena.camera.position=Vector3(600,90,600)
+	for i in 120:
+		await get_tree().physics_frame
+		assert(not vehicle.streaming_suspended and arena.neighborhood_ready(vehicle.position))
+	assert(arena.spare_order.size()<=arena.SPARE_CAP and arena.spare_bytes<=arena.SPARE_BYTES)
+	arena.camera.transform=camera_before
+	var tank: RigidBody3D=vehicle_system.vehicles[1]
+	enter_vehicle(tank);test_vehicle_controls=true
+	var tank_start: Vector3=tank.position
+	for i in 150: await get_tree().physics_frame
+	release_control();test_vehicle_controls=false
+	assert(tank.position.distance_to(tank_start)>1 and tank.grounded_count>0,"Tank did not drive")
+	assert(tank.tracks.sides.size()==2 and tank.tracks.wheels.size()>0)
+	tank.cooldown=0
+	assert(tank.fire_cannon() and not tank.fire_cannon(),"Tank cannon cooldown not enforced")
+	print("VEHICLE_STREAM_CHECK max_resume_up=",max_up," tank_displacement=",tank.position.distance_to(tank_start)," spare_estimate_bytes=",arena.spare_bytes)
 	reset_all();test_complete=true
 	print("PASS: live skins/clips, patrol movement, weapons/switching, alien fire/death/reset, Rex bite, possession/release, four-wheel driving")
 	if OS.get_cmdline_user_args().has("--gameplay-capture"):
@@ -309,4 +344,8 @@ func check_gameplay() -> void:
 		await get_tree().process_frame
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("user://sdf-arena-railgun.png")
+		print("GAMEPLAY_CAPTURE saved")
+	# Finish worker jobs before teardown rather than exiting amid generation.
+	while not arena.stream_jobs.is_empty(): await get_tree().process_frame
+	print("GAMEPLAY_CHECK complete")
 	get_tree().quit()

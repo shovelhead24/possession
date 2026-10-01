@@ -12,6 +12,8 @@ uniform bool bridge_enabled = true;
 uniform bool overpass_enabled = false;
 uniform bool compound_floors = false;
 uniform bool coarse_surface = false;
+uniform bool detail_surface = false;
+uniform float coarse_inner_extent = 0.0;
 uniform sampler2D detail_mask : filter_nearest, repeat_disable;
 uniform float local_extent = 384.0;
 // Tile coverage in metres; limestone aspect ratio preserves the source image.
@@ -55,7 +57,17 @@ float bridge_field(vec3 p) {
 
 void fragment() {
 	vec3 p = world_position;
-	if (coarse_surface && texture(detail_mask,(p.xz+vec2(local_extent))/(2.0*local_extent)).r > 0.5) { discard; }
+	if (coarse_surface && max(abs(p.x),abs(p.z))<coarse_inner_extent) { discard; }
+	// Screen-space ordered dither: the same threshold gives complementary
+	// opaque coverage, avoiding alpha sorting and keeping the coarse fallback.
+	if (coarse_surface || detail_surface) {
+		float coverage = texture(detail_mask,(p.xz+vec2(local_extent))/(2.0*local_extent)).r;
+		vec2 cell = mod(floor(FRAGCOORD.xy),4.0);
+		float ranks[16] = float[16](0.0,8.0,2.0,10.0,12.0,4.0,14.0,6.0,3.0,11.0,1.0,9.0,15.0,7.0,13.0,5.0);
+		float threshold = (ranks[int(cell.y)*4+int(cell.x)]+0.5)/16.0;
+		if (coarse_surface && threshold < coverage) { discard; }
+		if (detail_surface && threshold >= coverage) { discard; }
+	}
 	// The two recovered buildings retain floors at their original terrain datum.
 	// Reserve those footprints visually to prevent coincident grass/floor surfaces.
 	if (compound_floors && abs(p.y-5.0)<0.1 &&

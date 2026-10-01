@@ -16,6 +16,22 @@ var controlled := false
 var suspension_exclusions: Array[RID]=[]
 var balanced_braking := false
 var reverse_engaged := false
+var streaming_suspended := false
+var stream_velocity := Vector3.ZERO
+var stream_angular := Vector3.ZERO
+var forces_applied := 0
+var stream_speed_limit := INF
+var stream_braking := false
+
+func set_stream_ready(value: bool) -> void:
+	if streaming_suspended == not value: return
+	streaming_suspended=not value
+	if not value:
+		stream_velocity=linear_velocity;stream_angular=angular_velocity
+		freeze=true
+	else:
+		freeze=false;linear_velocity=stream_velocity;angular_velocity=stream_angular
+		sleeping=false
 
 func driver_controls(gas: bool, stop_reverse: bool, biased_stop: bool, steer: float) -> void:
 	if gas: reverse_engaged=false
@@ -120,6 +136,8 @@ func point(anchor: Vector3, xy: Vector2, side: float) -> Vector3:
 	return anchor+Vector3(xy.x*side,xy.y,0)
 
 func _physics_process(dt: float) -> void:
+	# Frozen bodies must not accumulate suspension/tyre forces while collision loads.
+	if freeze or streaming_suspended: return
 	if corners.is_empty(): return
 	var up=global_basis.y.normalized()
 	var steer_limit=deg_to_rad(lerpf(steer_max,minf(steer_fast,steer_max),clampf(linear_velocity.length()/25,0,1)))
@@ -150,15 +168,18 @@ func _physics_process(dt: float) -> void:
 			var load=clampf(compression*spring_rate-contact_v.dot(up)*damping,0,18000)
 			if target_y>bump.hub.y: load+=minf((target_y-bump.hub.y)*60000,12000)
 			apply_force(up*load,lever)
+			forces_applied+=1
 			var forward=-global_basis.z
 			if c.front: forward=forward.rotated(up,steering)
 			forward=forward.slide(hit.normal).normalized()
 			var right=forward.cross(hit.normal).normalized()
 			var drive=throttle*engine_force*2*(front_power_percent/100.0 if c.front else 1-front_power_percent/100.0) if controlled else 0.0
+			if linear_velocity.length()>stream_speed_limit: drive=0.0
 			if absf(c.get("omega",0.0)*radius)>top_speed and signf(drive)==signf(c.get("omega",0.0)): drive=0
 			var brake=0.0
 			if not controlled or balanced_braking: brake=brake_strength
 			elif braking: brake=brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0)
+			if stream_braking: brake=maxf(brake,brake_strength)
 			c.drive_allocation=drive;c.brake_allocation=brake
 			var dynamics=preload("res://world/tyre_dynamics.gd").step(c.get("omega",0.0),contact_v.dot(forward),contact_v.dot(right),radius,load,grip,drive*radius,brake,dt)
 			c.omega=dynamics.omega;c.slip=dynamics.slip
