@@ -9,6 +9,11 @@ uniform sampler2D rock_roughness : filter_linear_mipmap_anisotropic, repeat_enab
 uniform sampler2D limestone : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform bool textured = true;
 uniform bool bridge_enabled = true;
+uniform bool overpass_enabled = false;
+uniform bool compound_floors = false;
+uniform bool coarse_surface = false;
+uniform sampler2D detail_mask : filter_nearest, repeat_disable;
+uniform float local_extent = 384.0;
 // Tile coverage in metres; limestone aspect ratio preserves the source image.
 uniform float grass_metres = 2.0;
 uniform float rock_metres = 3.0;
@@ -50,6 +55,11 @@ float bridge_field(vec3 p) {
 
 void fragment() {
 	vec3 p = world_position;
+	if (coarse_surface && texture(detail_mask,(p.xz+vec2(local_extent))/(2.0*local_extent)).r > 0.5) { discard; }
+	// The two recovered buildings retain floors at their original terrain datum.
+	// Reserve those footprints visually to prevent coincident grass/floor surfaces.
+	if (compound_floors && abs(p.y-5.0)<0.1 &&
+		((abs(p.x-46.0)<6.0 && abs(p.z+197.0)<7.0) || (abs(p.x-83.0)<6.0 && abs(p.z+203.0)<7.0))) { discard; }
 	vec3 n = normalize(world_normal);
 	vec3 w = pow(abs(n), vec3(4.0));
 	w /= max(w.x + w.y + w.z, 0.0001);
@@ -59,8 +69,9 @@ void fragment() {
 	ROUGHNESS = 0.95;
 	if (!textured) {
 		ALBEDO = vec3(0.48, 0.55, 0.40);
-	} else if (bridge_enabled && bridge_field(p) < ground_field && abs(p.x + 65.0) < 29.0 && abs(p.z - 45.0) < 11.0) {
-		ALBEDO = triplanar(limestone, p, n, w, stone_metres).rgb;
+	} else if ((bridge_enabled && bridge_field(p) < ground_field && abs(p.x + 65.0) < 29.0 && abs(p.z - 45.0) < 11.0)
+		|| (overpass_enabled && abs(p.x+154.0)<44.0 && abs(p.z+80.0)<12.0 && (p.y>5.0 || abs(abs(p.x+154.0)-32.0)<3.2))) {
+		ALBEDO = triplanar(limestone, p, n, w, stone_metres).rgb * (overpass_enabled ? 0.72 : 1.0);
 	} else {
 		float grass = smoothstep(0.55, 0.85, n.y);
 		vec3 detailed = n;

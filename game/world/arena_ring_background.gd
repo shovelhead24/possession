@@ -7,6 +7,7 @@ var previews_loaded := 0
 var preview_total := 0
 var loading_home := false
 var home_pending := true
+var arena_extent := 96.0
 
 func _ready() -> void:
 	pass
@@ -28,6 +29,7 @@ func setup(owner_arena: Node3D) -> void:
 	source = source.replace("void fragment() {", "void fragment() {\n\tif (max(abs(v_world_pos.x), abs(v_world_pos.z)) < arena_extent) { discard; }")
 	shader.code = source
 	_mat.shader = shader
+	_mat.set_shader_parameter("arena_extent",arena_extent)
 	_mat.set_shader_parameter("patch_col_tex", _patch_col_tex)
 	_mat.set_shader_parameter("patch_count", _patch_rects.size())
 	_mat.set_shader_parameter("patch_rect", _patch_rects)
@@ -70,7 +72,7 @@ func _load_dem() -> void:
 
 func _far_terrain_h(arc: float, lat: float) -> float:
 	var distance := Vector2(wrapf(arc, -CIRCUMFERENCES[c_idx]/2, CIRCUMFERENCES[c_idx]/2), lat).length()
-	return lerpf(-0.25, super._far_terrain_h(arc,lat), smoothstep(150.0,3500.0,distance))
+	return lerpf(-0.25, super._far_terrain_h(arc,lat), smoothstep(arena_extent*1.7,3500.0,distance))
 
 func _build_arena_band() -> void:
 	# Add closely spaced rows around the arena so the foreground/distant ground
@@ -80,11 +82,11 @@ func _build_arena_band() -> void:
 	for i in BAND_SEGS:
 		var arc := float(i) * circumference / BAND_SEGS
 		if arc > 8000 and arc < circumference-8000: arcs.append(arc)
-	for arc in [-8000.0,-3500.0,-1000.0,-256.0,-96.0,0.0,96.0,256.0,1000.0,3500.0,8000.0]:
+	for arc in [-8000.0,-3500.0,-1000.0,-arena_extent*1.7,-arena_extent,0.0,arena_extent,arena_extent*1.7,1000.0,3500.0,8000.0]:
 		arcs.append(fposmod(arc,circumference))
 	arcs.sort()
 	arcs.append(circumference)
-	var lateral: Array[float] = [-25000,-22000,-19000,-16000,-13000,-10000,-8000,-3500,-1000,-256,-96,0,96,256,1000,3500,8000,10000,13000,16000,19000,22000,25000]
+	var lateral: Array[float] = [-25000,-22000,-19000,-16000,-13000,-10000,-8000,-3500,-1000,-arena_extent*1.7,-arena_extent,0,arena_extent,arena_extent*1.7,1000,3500,8000,10000,13000,16000,19000,22000,25000]
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for arc in arcs:

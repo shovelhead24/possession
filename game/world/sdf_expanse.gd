@@ -90,6 +90,12 @@ func desired() -> Array[Vector2i]:
 func chunk_sampler() -> Callable:
 	return landscape
 
+func chunk_layout() -> Dictionary:
+	return {"bottom":-12.0,"cells":Vector3i(16,28,16),"spacing":2.0}
+
+func movement_limit() -> float:
+	return 254.0
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_T:
@@ -134,8 +140,8 @@ func _physics_process(delta: float) -> void:
 		player.velocity = Vector3.ZERO
 		return # Hold safely while the next collision neighborhood streams.
 	super._physics_process(delta)
-	camera.position.x = clampf(camera.position.x,-254,254)
-	camera.position.z = clampf(camera.position.z,-254,254)
+	camera.position.x = clampf(camera.position.x,-movement_limit(),movement_limit())
+	camera.position.z = clampf(camera.position.z,-movement_limit(),movement_limit())
 	if camera.position.y < -8:
 		walking = false
 		camera.position.y = 12
@@ -159,8 +165,9 @@ func _process(delta: float) -> void:
 			active_key = key
 			active_revision = revision
 			worker = Thread.new()
+			var layout := chunk_layout()
 			var error := worker.start(generate.bind(tunnel_radius,roughness,
-				Vector3(key.x*CHUNK,-12,key.y*CHUNK),Vector3i(16,28,16),2.0,chunk_sampler()))
+				Vector3(key.x*CHUNK,layout.bottom,key.y*CHUNK),layout.cells,layout.spacing,chunk_sampler()))
 			if error != OK:
 				worker = null
 				push_error("Chunk generation worker failed")

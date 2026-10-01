@@ -90,11 +90,14 @@ func _input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if OS.get_cmdline_user_args().has("--arena-capture"): return
 	super._physics_process(delta)
-	camera.position.x = clampf(camera.position.x,-90,90)
-	camera.position.z = clampf(camera.position.z,-90,90)
+	camera.position.x = clampf(camera.position.x,-movement_limit(),movement_limit())
+	camera.position.z = clampf(camera.position.z,-movement_limit(),movement_limit())
 	if walking:
-		player.position.x = clampf(player.position.x,-90,90)
-		player.position.z = clampf(player.position.z,-90,90)
+		player.position.x = clampf(player.position.x,-movement_limit(),movement_limit())
+		player.position.z = clampf(player.position.z,-movement_limit(),movement_limit())
+
+func movement_limit() -> float:
+	return 90.0
 
 func _process(delta: float) -> void:
 	super._process(delta)
