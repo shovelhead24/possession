@@ -31,6 +31,9 @@ func source_specs() -> Array:
 func include_relay() -> bool:
 	return true
 
+func freeze_source_pose() -> bool:
+	return true
+
 func load_gallery() -> void:
 	if DisplayServer.get_name() == "headless":
 		push_warning("Static content gallery requires a renderer for posed-mesh baking; skipped headless")
@@ -52,7 +55,7 @@ func load_gallery() -> void:
 		await get_tree().process_frame
 		# Imported skinned bounds describe the source mesh, not necessarily its
 		# visible rest pose. Freeze that pose before measuring the static display.
-		for mesh in model.find_children("*", "MeshInstance3D", true, false):
+		for mesh in model.find_children("*", "MeshInstance3D", true, false) if freeze_source_pose() else []:
 			if mesh.skin != null and mesh.get_node_or_null(mesh.skeleton) is Skeleton3D:
 				var baked: ArrayMesh = mesh.bake_mesh_from_current_skeleton_pose()
 				if baked != null:
@@ -79,7 +82,7 @@ func load_gallery() -> void:
 		print("GALLERY loaded: ", spec[0], " dimensions(m)=", bounds.size)
 	if include_relay(): add_entry("Frontier relay",make_relay(),Vector2(25,-22),8.5)
 	finished = true
-	print("GALLERY ready: ", entries.size(), " static assets; no controllers")
+	print("GALLERY ready: ", entries.size(), " static assets; no controllers" if freeze_source_pose() else " live source rigs")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F12:

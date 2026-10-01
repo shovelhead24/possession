@@ -103,7 +103,7 @@ func _process(delta: float) -> void:
 	super._process(delta)
 	if not content_started and ready_frames > 2 and ring_background.background_ready:
 		content_started = true
-		arena_content = preload("res://world/arena_content.gd").new()
+		arena_content = make_arena_content()
 		add_child(arena_content)
 		arena_content.setup(self)
 	var actors: int = arena_content.entries.size() if is_instance_valid(arena_content) else 0
@@ -119,6 +119,9 @@ func _process(delta: float) -> void:
 		if OS.get_cmdline_user_args().has("--arena-capture") and arena_frames >= 120 and not capture_requested and (not OS.get_cmdline_user_args().has("--arena-check") or arena_verification_done):
 			capture_requested = true
 			capture_arena.call_deferred()
+
+func make_arena_content() -> Node:
+	return preload("res://world/arena_content.gd").new()
 
 func check_arena() -> void:
 	await get_tree().physics_frame

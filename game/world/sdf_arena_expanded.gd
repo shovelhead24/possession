@@ -204,6 +204,7 @@ func focus_site(index: int) -> void:
 
 func _input(event: InputEvent) -> void:
 	if OS.get_cmdline_user_args().has("--expanded-capture"): return
+	if is_instance_valid(arena_content) and arena_content.get("kit") and arena_content.kit.handle_input(event): return
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_T:
@@ -233,6 +234,7 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	if OS.get_cmdline_user_args().has("--expanded-capture"): return
+	if is_instance_valid(arena_content) and arena_content.get("kit") and arena_content.kit.own_movement(): return
 	# The larger terrain includes canyon floors below the small demo's rescue
 	# threshold. Use its movement integrator with a lower rescue threshold.
 	if walking and not neighborhood_ready(player.position):
@@ -296,6 +298,12 @@ func _process(delta: float) -> void:
 		if OS.get_cmdline_user_args().has("--expanded-capture") and expanded_frames >= 90 and not expanded_capture_requested and (not OS.get_cmdline_user_args().has("--expanded-check") or expanded_passed):
 			expanded_capture_requested = true
 			capture_expanded.call_deferred()
+
+func make_arena_content() -> Node:
+	# Automated terrain captures retain static references; interactive scene is live.
+	if OS.get_cmdline_user_args().has("--expanded-check") or OS.get_cmdline_user_args().has("--expanded-capture"):
+		return super.make_arena_content()
+	return preload("res://world/arena_live_content.gd").new()
 
 func check_expanded() -> void:
 	await get_tree().physics_frame
