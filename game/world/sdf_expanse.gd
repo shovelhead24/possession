@@ -87,6 +87,9 @@ func desired() -> Array[Vector2i]:
 	keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-center).length_squared() < (b-center).length_squared())
 	return keys
 
+func chunk_sampler() -> Callable:
+	return landscape
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_T:
@@ -157,7 +160,7 @@ func _process(delta: float) -> void:
 			active_revision = revision
 			worker = Thread.new()
 			var error := worker.start(generate.bind(tunnel_radius,roughness,
-				Vector3(key.x*CHUNK,-12,key.y*CHUNK),Vector3i(16,28,16),2.0,landscape))
+				Vector3(key.x*CHUNK,-12,key.y*CHUNK),Vector3i(16,28,16),2.0,chunk_sampler()))
 			if error != OK:
 				worker = null
 				push_error("Chunk generation worker failed")

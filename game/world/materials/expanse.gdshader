@@ -8,6 +8,7 @@ uniform sampler2D rock_normal : hint_normal, filter_linear_mipmap_anisotropic, r
 uniform sampler2D rock_roughness : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D limestone : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform bool textured = true;
+uniform bool bridge_enabled = true;
 // Tile coverage in metres; limestone aspect ratio preserves the source image.
 uniform float grass_metres = 2.0;
 uniform float rock_metres = 3.0;
@@ -58,7 +59,7 @@ void fragment() {
 	ROUGHNESS = 0.95;
 	if (!textured) {
 		ALBEDO = vec3(0.48, 0.55, 0.40);
-	} else if (bridge_field(p) < ground_field && abs(p.x + 65.0) < 29.0 && abs(p.z - 45.0) < 11.0) {
+	} else if (bridge_enabled && bridge_field(p) < ground_field && abs(p.x + 65.0) < 29.0 && abs(p.z - 45.0) < 11.0) {
 		ALBEDO = triplanar(limestone, p, n, w, stone_metres).rgb;
 	} else {
 		float grass = smoothstep(0.55, 0.85, n.y);

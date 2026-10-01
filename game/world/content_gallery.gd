@@ -20,6 +20,17 @@ func setup(tile: Node3D) -> void:
 	contact_debug.visible = false
 	load_gallery.call_deferred()
 
+func source_specs() -> Array:
+	return [
+		["Warthog", "res://../assets/halo_warthog.zip", Vector2(-12,-20), 4.8, false],
+		["Altay tank", "res://altay_main_battle_tank_fbx.glb", Vector2(3,-20), 9.0, false],
+		["Alien", "res://../prototypes/first-operation/lizard_rig.glb", Vector2(-12,0), 2.2, true],
+		["T-Rex", "res://../assets/rigged-t-rex-fabulous/source/rigged_t-rex_fabulous.glb", Vector2(32,32), 24.0, false],
+	]
+
+func include_relay() -> bool:
+	return true
+
 func load_gallery() -> void:
 	if DisplayServer.get_name() == "headless":
 		push_warning("Static content gallery requires a renderer for posed-mesh baking; skipped headless")
@@ -27,12 +38,7 @@ func load_gallery() -> void:
 		return
 	# One source per frame keeps a visible progress state. Runtime GLTF decoding
 	# is still synchronous; this is not the eventual streamed/baked asset pipeline.
-	var specs := [
-		["Warthog", "res://../assets/halo_warthog.zip", Vector2(-12,-20), 4.8, false],
-		["Altay tank", "res://altay_main_battle_tank_fbx.glb", Vector2(3,-20), 9.0, false],
-		["Alien", "res://../prototypes/first-operation/lizard_rig.glb", Vector2(-12,0), 2.2, true],
-		["T-Rex", "res://../assets/rigged-t-rex-fabulous/source/rigged_t-rex_fabulous.glb", Vector2(32,32), 24.0, false],
-	]
+	var specs := source_specs()
 	for spec in specs:
 		await get_tree().process_frame
 		var model := import_source(ProjectSettings.globalize_path(spec[1]).simplify_path())
@@ -71,7 +77,7 @@ func load_gallery() -> void:
 		model.position -= Vector3(bounds.get_center().x,bounds.position.y,bounds.get_center().z)
 		add_entry(spec[0],model,spec[2],bounds.size.y)
 		print("GALLERY loaded: ", spec[0], " dimensions(m)=", bounds.size)
-	add_entry("Frontier relay",make_relay(),Vector2(25,-22),8.5)
+	if include_relay(): add_entry("Frontier relay",make_relay(),Vector2(25,-22),8.5)
 	finished = true
 	print("GALLERY ready: ", entries.size(), " static assets; no controllers")
 
