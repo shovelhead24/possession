@@ -13,6 +13,7 @@ var max_resident := 0
 var checks_started := false
 var textured := true
 var stream_jobs: Array[Dictionary] = []
+var install_profiles: Array[Dictionary] = []
 
 func stream_worker_limit() -> int:
 	return 1
@@ -220,30 +221,40 @@ func _exit_tree() -> void:
 	super._exit_tree()
 
 func install(key: Vector2i,result: Dictionary) -> void:
-	var started := Time.get_ticks_msec()
+	var started := Time.get_ticks_usec()
+	var upload_ms := 0.0
+	var collision_ms := 0.0
+	var attach_ms := 0.0
 	var node := Node3D.new()
 	add_child(node)
 	if result.vertices.size() > 0:
 		var mesh := ArrayMesh.new()
-		var arrays := []
-		arrays.resize(Mesh.ARRAY_MAX)
-		arrays[Mesh.ARRAY_VERTEX] = result.vertices
-		arrays[Mesh.ARRAY_NORMAL] = result.normals
+		var arrays := mesh_arrays(result)
+		var phase := Time.get_ticks_usec()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+		upload_ms=(Time.get_ticks_usec()-phase)/1000.0
 		var instance := MeshInstance3D.new()
 		instance.mesh = mesh
 		instance.material_override = terrain.material_override
 		node.add_child(instance)
 		var body := StaticBody3D.new()
 		var shape := CollisionShape3D.new()
+		phase=Time.get_ticks_usec()
 		shape.shape = mesh.create_trimesh_shape()
+		collision_ms=(Time.get_ticks_usec()-phase)/1000.0
+		phase=Time.get_ticks_usec()
 		node.add_child(body)
 		body.add_child(shape)
+		attach_ms=(Time.get_ticks_usec()-phase)/1000.0
 	if chunks.has(key): chunks[key].node.queue_free()
-	chunks[key] = {"node":node,"triangles":result.vertices.size()/3,"revision":active_revision}
+	chunks[key] = {"node":node,"triangles":triangle_count(result),"revision":active_revision}
 	generation_ms = result.ms
-	install_ms = Time.get_ticks_msec()-started
-	print("SDF_CHUNK ",key," generation_ms=",generation_ms," install_ms=",install_ms," triangles=",result.vertices.size()/3)
+	install_ms = int((Time.get_ticks_usec()-started)/1000)
+	if OS.get_cmdline_user_args().has("--terrain-profile"):
+		var profile: Dictionary=result.get("profile",{}).duplicate()
+		profile.merge({"key":str(key),"generation_ms":result.ms,"cached":result.get("cached",false),"upload_call_ms":upload_ms,"collision_create_ms":collision_ms,"collision_attach_ms":attach_ms,"install_ms":(Time.get_ticks_usec()-started)/1000.0,"triangles":triangle_count(result),"vertices":result.vertices.size()})
+		install_profiles.append(profile)
+	print("SDF_CHUNK ",key," generation_ms=",generation_ms," install_ms=",install_ms," triangles=",triangle_count(result))
 
 func check_expanse() -> void:
 	assert(chunks.size() <= 25 and neighborhood_ready(camera.position))

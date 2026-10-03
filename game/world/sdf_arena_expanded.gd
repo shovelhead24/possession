@@ -208,7 +208,7 @@ func neighborhood_ready(p: Vector3) -> bool:
 func _ready() -> void:
 	# Generated arrays are disposable. Source recipe, mesher and engine version
 	# identify the cache; edits select new entries rather than altering old data.
-	geometry_cache_tag = (FileAccess.get_file_as_string("res://world/sdf_arena_expanded.gd").get_slice("func chunk_sampler()",0)+FileAccess.get_file_as_string("res://world/sdf_demo.gd")+str(Engine.get_version_info())).sha256_text()
+	geometry_cache_tag = (FileAccess.get_file_as_string("res://world/sdf_arena_expanded.gd").get_slice("func chunk_sampler()",0)+FileAccess.get_file_as_string("res://world/sdf_demo.gd")+FileAccess.get_file_as_string("res://world/tetra_mesher.gd")+str(OS.get_cmdline_user_args().has("--mesher-legacy"))+str(Engine.get_version_info())).sha256_text()
 	DirAccess.make_dir_recursive_absolute(CACHE_FOLDER)
 	super._ready()
 	DisplayServer.window_set_title("SDF arena / canyon, tunnels and two compounds")
@@ -247,18 +247,28 @@ func _ready() -> void:
 	# Warm-up starts near the original actors. A distant overview follows only
 	# after the initial source models have collision to ground against.
 
+func cache_folder_for(_spacing: float) -> String:
+	return CACHE_FOLDER
+
 func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, spacing := 1.0, sampler := Callable()) -> Dictionary:
 	# Only primitive arrays/file I/O on workers; GPU resources stay main-thread.
+	var cache_started := Time.get_ticks_usec()
 	var key := "%s/%s/%s/%.3f/%.3f/%.3f" % [geometry_cache_tag,str(origin),str(cells),spacing,radius,detail]
-	var path := CACHE_FOLDER+key.sha256_text()+".bin"
+	var folder := cache_folder_for(spacing)
+	DirAccess.make_dir_recursive_absolute(folder)
+	var path := folder+key.sha256_text()+".bin"
 	if FileAccess.file_exists(path):
 		var reader := FileAccess.open(path,FileAccess.READ)
 		if reader != null:
 			var cached: Variant = reader.get_var(false)
 			reader.close()
 			if cached is Dictionary and cached.get("vertices") is PackedVector3Array and cached.get("normals") is PackedVector3Array:
-				if cached.vertices.size() > 0 and cached.vertices.size() == cached.normals.size() and cached.vertices.size()%3 == 0:
-					return {"vertices":cached.vertices,"normals":cached.normals,"ms":0,"cached":true}
+				var indexed: bool=cached.get("indices") is PackedInt32Array
+				if cached.get("schema",0)==2 and cached.vertices.size()==cached.normals.size() and ((indexed and cached.indices.size()%3==0) or (not indexed and cached.vertices.size()%3==0)):
+					cached.ms=0;cached.cached=true
+					cached.profile={"cache_read_ms":(Time.get_ticks_usec()-cache_started)/1000.0}
+					return cached
+	var setup_started := Time.get_ticks_usec()
 	var effective_sampler := sampler
 	if is_equal_approx(spacing,2.0):
 		var in_mid := origin.x>=-MID_EXTENT and origin.x<MID_EXTENT and origin.z>=-MID_EXTENT and origin.z<MID_EXTENT
@@ -274,12 +284,20 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 					var p := coarse_origin+Vector3(x,y,z)*step
 					values[(z*ny+y)*nx+x] = mid_field(p,radius,detail) if in_mid else expanded_field(p,radius,detail)
 		effective_sampler = border_field.bind(origin,coarse_origin,values,nx,ny,step)
+	var setup_ms := (Time.get_ticks_usec()-setup_started)/1000.0
 	var result := super.generate(radius,detail,origin,cells,spacing,effective_sampler)
+	result.profile.boundary_setup_ms=setup_ms
+	result.ms+=setup_ms
+	var write_started := Time.get_ticks_usec()
 	var writer := FileAccess.open(path+".tmp",FileAccess.WRITE)
 	if writer != null:
-		writer.store_var({"vertices":result.vertices,"normals":result.normals},false)
+		var saved := {"schema":2,"vertices":result.vertices,"normals":result.normals}
+		if result.has("indices"): saved.indices=result.indices
+		writer.store_var(saved,false)
 		writer.close()
 		DirAccess.rename_absolute(path+".tmp",path)
+	result.profile.cache_write_ms=(Time.get_ticks_usec()-write_started)/1000.0
+	result.profile.job_wall_ms=(Time.get_ticks_usec()-cache_started)/1000.0
 	return result
 
 func focus_site(index: int) -> void:
@@ -409,10 +427,7 @@ func _process(delta: float) -> void:
 	if coarse_worker != null and not coarse_worker.is_alive():
 		var result: Dictionary = coarse_worker.wait_to_finish()
 		coarse_worker = null
-		var arrays := []
-		arrays.resize(Mesh.ARRAY_MAX)
-		arrays[Mesh.ARRAY_VERTEX] = result.vertices
-		arrays[Mesh.ARRAY_NORMAL] = result.normals
+		var arrays := mesh_arrays(result)
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 		if coarse_stage==0:
@@ -422,7 +437,7 @@ func _process(delta: float) -> void:
 		else:
 			coarse_mid.mesh=mesh;coarse_ready=true
 			coarse.material_override.set_shader_parameter("coarse_inner_extent",MID_EXTENT)
-		print("ARENA_COARSE stage=",coarse_stage," generation_ms=",result.ms," triangles=",result.vertices.size()/3)
+		print("ARENA_COARSE stage=",coarse_stage," generation_ms=",result.ms," triangles=",triangle_count(result))
 	update_coverage(delta)
 	hud.text = "SDF ARENA / 1536 x 1536m / hills, canyons, tunnels, overpass\n1-4 actors | 0 overview | 5 FOB | 6 relay | 7 canyon | 8-9 tunnels | - outer hills\nWASD + mouse | F walk/fly | Shift faster | Space/Ctrl | T textures | C clouds\n%s | detail %d/%d | distant %s | 2 compounds | ring %d/%d | %.0f FPS" % [
 		"WALK" if walking else "FLY",chunks.size(),desired().size(),"ready" if coarse_ready else "generating",ring_background.previews_loaded,ring_background.preview_total,Engine.get_frames_per_second()]

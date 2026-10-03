@@ -55,7 +55,21 @@ static func sampled_normal(p: Vector3, radius: float, rough: float, sampler: Cal
 		sampled(p+Vector3(0,0,e),radius,rough,sampler)-sampled(p-Vector3(0,0,e),radius,rough,sampler)).normalized()
 
 func generate(radius: float, rough: float, origin := ORIGIN, cells := CELLS, spacing := 1.0, sampler := Callable()) -> Dictionary:
-	var started := Time.get_ticks_msec()
+	if OS.get_cmdline_user_args().has("--mesher-legacy"):
+		return generate_legacy(radius,rough,origin,cells,spacing,sampler)
+	return preload("res://world/tetra_mesher.gd").build(sampled.bind(radius,rough,sampler),origin,cells,spacing)
+
+static func mesh_arrays(result: Dictionary) -> Array:
+	var arrays := [];arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX]=result.vertices;arrays[Mesh.ARRAY_NORMAL]=result.normals
+	if result.has("indices") and not result.indices.is_empty(): arrays[Mesh.ARRAY_INDEX]=result.indices
+	return arrays
+
+static func triangle_count(result: Dictionary) -> int:
+	return int(result.indices.size()/3) if result.has("indices") else int(result.vertices.size()/3)
+
+func generate_legacy(radius: float, rough: float, origin := ORIGIN, cells := CELLS, spacing := 1.0, sampler := Callable()) -> Dictionary:
+	var started := Time.get_ticks_usec()
 	var nx := cells.x+1
 	var ny := cells.y+1
 	var values := PackedFloat32Array()
@@ -64,6 +78,7 @@ func generate(radius: float, rough: float, origin := ORIGIN, cells := CELLS, spa
 		for y in ny:
 			for x in nx:
 				values[(z*ny+y)*nx+x] = sampled(origin+Vector3(x,y,z)*spacing,radius,rough,sampler)
+	var sampled_at := Time.get_ticks_usec()
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
 	for z in cells.z:
@@ -114,8 +129,10 @@ func generate(radius: float, rough: float, origin := ORIGIN, cells := CELLS, spa
 							c = swap
 						for p in [a,b,c]:
 							vertices.append(p)
-							normals.append(sampled_normal(p,radius,rough,sampler))
-	return {"vertices":vertices,"normals":normals,"ms":Time.get_ticks_msec()-started}
+	var triangulated_at := Time.get_ticks_usec()
+	for p in vertices: normals.append(sampled_normal(p,radius,rough,sampler))
+	var finished := Time.get_ticks_usec()
+	return {"vertices":vertices,"normals":normals,"ms":(finished-started)/1000.0,"profile":{"sample_ms":(sampled_at-started)/1000.0,"triangulate_ms":(triangulated_at-sampled_at)/1000.0,"normal_ms":(finished-triangulated_at)/1000.0,"grid_samples":values.size(),"normal_samples":vertices.size()*6,"unique_vertices":vertices.size(),"triangles":vertices.size()/3}}
 
 func rebuild() -> void:
 	if worker != null: return
@@ -230,10 +247,7 @@ func _process(delta: float) -> void:
 		var result: Dictionary = worker.wait_to_finish()
 		worker = null
 		var started := Time.get_ticks_msec()
-		var arrays := []
-		arrays.resize(Mesh.ARRAY_MAX)
-		arrays[Mesh.ARRAY_VERTEX] = result.vertices
-		arrays[Mesh.ARRAY_NORMAL] = result.normals
+		var arrays := mesh_arrays(result)
 		var mesh := ArrayMesh.new()
 		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 		terrain.mesh = mesh
@@ -242,7 +256,7 @@ func _process(delta: float) -> void:
 			player.position = Vector3(0,0.1,-12)
 			player.velocity = Vector3.ZERO
 		generation_ms = result.ms
-		triangles = result.vertices.size()/3
+		triangles = triangle_count(result)
 		print("SDF_READY generation_ms=",generation_ms," mesh_collision_ms=",Time.get_ticks_msec()-started," triangles=",triangles)
 	hud.text = "SDF authoring proof / %s\nWASD move | mouse click/look | Esc release | Space/Ctrl rise/lower\nF walk/fly (walk starts at tunnel) | [ ] tunnel radius %.1fm | R rock detail\n%s | %d triangles | last generation %dms | %.0f FPS" % [
 		"WALK" if walking else "FLY",tunnel_radius,"GENERATING" if worker != null else "READY",triangles,generation_ms,Engine.get_frames_per_second()]
