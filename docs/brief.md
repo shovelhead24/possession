@@ -30,6 +30,9 @@ Medieval-first progression, broad tech trees/RPG simulation, catalogue completio
 
 ## Technical and historical references
 
+Current SDF terrain implementation plan: [authoring and retained streaming work](sdf-authoring-plan.md).
+Generated meshes persist on disk by default; authored recipes remain the source.
+
 Use [.decisions/INDEX.md](../.decisions/INDEX.md) before reading relevant technical decisions. Terrain, rendering, co-op and hardware constraints retain their established authority. Prior area documents preserve useful implementation notes but their superseded progression, mission and map assumptions must not silently govern new work.
 
 ## Decisions next

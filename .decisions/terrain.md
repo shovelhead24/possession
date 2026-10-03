@@ -1,8 +1,29 @@
 # Terrain / World Bake
 
+### sdf-recipe-persistent-cache — Author recipes; retain generated meshes by default
+**Date:** 2026-10-03
+**Status:** active
+**Decision:** For the SDF arena and its authoring pipeline, procedural base plus
+ordered authored feature definitions are the authoritative terrain. Generate
+meshes/collision where needed, retain generated meshes on disk by default, and
+stream valid cached results when appropriate. This includes hand-authored areas;
+authoring does not require pre-generating every area the player might never visit.
+Unless explicitly instructed otherwise, do not purge disk caches or make
+persistence opt-in. RAM residency remains bounded independently. Purging is an
+explicit housekeeping task; packaging, retention and shipping strategy remain
+future decisions. Recipe/mesher revisions invalidate reuse, not automatically
+delete old files. Initial tools include raise/lower, flatten, carve, spline
+ridge/tunnel, and bridge, with selectable editable features and undo/redo.
+**Why:** Preserve expensive generation work between visits and sessions without
+making baked meshes the editable world source or requiring a whole-ring bake.
+**Scope:** Supersedes the mandatory pre-bake/no-runtime-generation requirement of
+`bake-architecture` for the SDF pipeline only. Existing DEM/ring background and
+CDLOD work is preserved, not globally replaced. Implementation plan and retained
+follow-ups: `docs/sdf-authoring-plan.md`.
+
 ### bake-architecture — Prebaked layered world; recipe is source, bake is artifact
 **Date:** 2026-07-19
-**Status:** active
+**Status:** SUPERSEDED 2026-10-03 by sdf-recipe-persistent-cache for the SDF pipeline; retained for the older layered bake pipeline
 **Decision:** The world is prebaked, not runtime-generated (supersedes the April brainstorm's "no baked worlds" — that rule was scale-dependent and died with the 2,000 km decision). Architecture: layered bake DAG (L0 builders' shape → L7 hand edits) of pure functions with content-addressed caching; per-region compose parameter overrides; coherence via per-layer contracts + bake gates (non-negotiables as computable tests, e.g. see-it-reach-it); runtime adds only bounded detail octaves + deterministic scatter from baked density fields — instances are never data. Git versions generator code + seed + edit deltas; the binary bake is a reproducible build artifact, never committed. Substrate policy: generous interfaces, naive engines — coordinate/tiling scheme and additive-only field registry (LayerBuf) are the over-engineered frozen parts; layer implementations stay naive. Details: docs/terrain.md, docs/terrain/layerbuf-v0.md.
 **Why:** Collapses runtime cost on potato hardware (bitmap sample beats noise stack, flat cost), makes authored moment sites edits-to-data rather than procgen coaxing, gives determinism and debuggability (layer bisection), and fits solo+AI development — cheap subagents iterate layer code against hard gates offline. Resolutions, layer count evolution, and all tuning values deliberately unrecorded.
 

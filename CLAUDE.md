@@ -62,3 +62,13 @@ Key files: `cage_mesh.gd`, `cage_mesh_gizmo.gd`, `cage_panel.gd`, `cage_subdivid
 
 ### Workflow change
 User now runs Claude Code natively on Windows laptop (direct file access — no more git push/pull loop needed for edits). Godot project root is `game/` inside the repo.
+
+### Standing terrain cache rule
+Unless the user explicitly directs otherwise, retain generated terrain meshes on
+disk and stream valid cached results when appropriate. RAM eviction is not disk
+deletion. Do not introduce automatic disk purging or disable persistence by
+default; purging is an explicit housekeeping task, with shipping policy revisited
+later. Recipes remain authoritative; stale caches must never be reused after an
+edit. This does not require generating unvisited areas. See
+`.decisions/terrain.md#sdf-recipe-persistent-cache` and
+`docs/sdf-authoring-plan.md` for the authoring and performance backlog.
