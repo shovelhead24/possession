@@ -171,7 +171,7 @@ func desired() -> Array[Vector2i]:
 				var speed: float=maxf(14,body.linear_velocity.length())
 				var direction: Vector3=body.linear_velocity.normalized() if body.linear_velocity.length()>2 else -body.basis.z
 				var horizon: float=clampf(2.0+cold_chunk_seconds*3.0/stream_worker_limit(),4.0,8.0)
-				var distance: float=minf(320,speed*horizon)
+				var distance: float=minf(320,maxf(speed*horizon,speed*speed/7.0+64.0))
 				for step in range(0,ceili(distance/CHUNK)+1):
 					append_neighborhood(keys,key_at(body.position+direction*step*CHUNK),1)
 	var center := key_at(camera.position)

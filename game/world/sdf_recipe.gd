@@ -7,7 +7,10 @@ static func feature(kind: String, p: Vector3) -> Dictionary:
 	return {"kind":kind,"x":p.x,"y":p.y,"z":p.z,"radius":16.0,"height":12.0,"length":48.0,"width":12.0,"thickness":4.0,"yaw":0.0,"bend":0.0}
 
 static func bounds(f: Dictionary) -> Rect2:
+	if f.has("end_x"):
+		return Rect2(Vector2(f.x,f.z),Vector2.ZERO).expand(Vector2(f.end_x,f.end_z)).grow(f.radius+2)
 	var reach: float = f.length*.5+absf(f.bend)+maxf(f.radius,f.width)+2.0
+	reach=maxf(reach,f.radius*float(f.get("aspect",1))+2)
 	return Rect2(Vector2(f.x-reach,f.z-reach),Vector2.ONE*reach*2)
 
 static func relevant(features: Array, area: Rect2) -> Array:
@@ -20,9 +23,15 @@ static func field(p: Vector3, radius: float, rough: float, features: Array) -> f
 	var d := Base.expanded_field(p,radius,rough)
 	for f in features:
 		if not bounds(f).has_point(Vector2(p.x,p.z)): continue
+		var before := d
 		var q := (p-Vector3(f.x,f.y,f.z)).rotated(Vector3.UP,-deg_to_rad(f.yaw))
-		var radial := Vector2(q.x,q.z).length()
+		var brush_q := Vector2(q.x,q.z/float(f.get("aspect",1)))
+		var radial := maxf(absf(brush_q.x),absf(brush_q.y)) if f.get("shape","circle")=="square" else brush_q.length()
 		var weight := 1.0-smoothstep(0.0,f.radius,radial)
+		# Brush height deltas compose additively; later strokes never move an old cut.
+		if f.has("amount") and f.kind in ["hill","lower"]:
+			d += float(f.amount)*weight*(-1.0 if f.kind=="hill" else 1.0)
+			continue
 		match f.kind:
 			"hill":
 				d=minf(d,maxf(p.y-(f.y+f.height*weight),radial-f.radius))
@@ -33,6 +42,15 @@ static func field(p: Vector3, radius: float, rough: float, features: Array) -> f
 			"carve":
 				d=maxf(d,-(q.length()-f.radius))
 			"ridge", "tunnel":
+				if f.has("end_x"):
+					var a := Vector3(f.x,f.y,f.z);var b := Vector3(f.end_x,f.end_y,f.end_z)
+					var axis := b-a;var length := maxf(axis.length(),.01);axis/=length
+					var relative := p-(a+b)*.5
+					var axial := relative.dot(axis)
+					var distance := Vector2((relative-axis*axial).length()-f.radius,absf(axial)-length*.5)
+					var cylinder := distance.max(Vector2.ZERO).length()+minf(maxf(distance.x,distance.y),0)
+					d=maxf(d,-cylinder) if f.kind=="tunnel" else minf(d,cylinder)
+					continue
 				# Quadratic spline, tessellated deterministically into eight capsules.
 				var curve := INF
 				var a := Vector3(-f.length*.5,0,0)
@@ -49,6 +67,7 @@ static func field(p: Vector3, radius: float, rough: float, features: Array) -> f
 					var support := Base.box(q-Vector3(sign_value*(f.length*.5-f.thickness),-f.height*.5,0),Vector3(f.thickness*.5,f.height*.5,f.width*.5))
 					deck=minf(deck,support)
 				d=minf(d,deck)
+		if f.has("amount"): d=lerpf(before,d,1.0-exp(-float(f.amount)))
 	return d
 
 static func validate(data: Variant) -> bool:
@@ -61,6 +80,16 @@ static func validate(data: Variant) -> bool:
 			if not is_finite(float(f[key])) or absf(f[key])>100000: return false
 		for key in ["radius","height","length","width","thickness"]:
 			if f[key]<1: return false
+		if f.has("amount"):
+			if not f.amount is float and not f.amount is int: return false
+			if not is_finite(float(f.amount)) or f.amount<0 or f.amount>100000: return false
+		if f.get("shape","circle") not in ["circle","square","ellipse"]: return false
+		if not f.get("aspect",1) is float and not f.get("aspect",1) is int: return false
+		if not is_finite(float(f.get("aspect",1))) or f.get("aspect",1)<.1 or f.get("aspect",1)>10: return false
+		if f.has("end_x") or f.has("end_y") or f.has("end_z"):
+			for key in ["end_x","end_y","end_z"]:
+				if not f.get(key) is float and not f.get(key) is int: return false
+				if not is_finite(float(f[key])) or absf(f[key])>100000: return false
 	return true
 
 static func document(features: Array) -> Dictionary:

@@ -5,6 +5,50 @@ Run `game/world/sdf_authoring.tscn`, or the workspace launcher
 
 ## Use
 
+### Brush controls (updated)
+
+Brush mode is the default. Choose a tool without immediately creating a feature;
+hold left mouse over terrain to accumulate a stroke. Earlier strokes remain.
+One stroke is one undo step. Hill/ravine add signed field offsets at the adjustable
+Strength/s rate; flatten/carve/ridge/bridge progressively blend toward their target
+shape. Strength is not guaranteed metres of displacement on steep surfaces.
+Moving strokes resample between cursor positions. Tunnel is a two-point tool.
+
+- WASD flies while editing; Space/Ctrl rises/descends; Shift flies faster.
+- Hold right mouse and move to look; release to freely point the cursor.
+- Wheel zooms/dollies toward the cursor. Shift-wheel or [ / ] changes radius.
+- Radius has a visible terrain footprint. Choose circle, square or ellipse;
+  ellipse ratio stretches its second axis and yaw rotates it. The preview is a
+  horizontal outline, not a conforming decal.
+- F3 toggles chunk cages: cyan ready, orange pending.
+- Turn Brush off for explicit feature creation/transform. **Move feature** moves
+  an existing feature; it is intentionally not a new brush stamp.
+
+Tunnel: click an entrance. Its proposed exit searches eight horizontal directions
+at 2 m intervals, up to 256 m, choosing the shortest detected through-path. This is
+a bounded heuristic, not a globally shortest-path solver; if none is found it
+uses the configured length. Inspect the result. The cylinder guide and exit handle
+render through terrain. Drag the exit in the camera-facing plane; Ctrl snaps its
+horizontal heading to 45-degree increments. **Set tunnel exit** then click picks
+a visible surface; Alt-click finds the first solid-to-air exit along the ray
+through the uncarved terrain, at 2 m probe resolution. Esc cancels. Endpoints save
+in the recipe. Turn Brush off to numerically edit an existing tunnel's radius.
+
+Input accumulates while meshing finishes. Old neighbouring surfaces remain until
+the replacement batch is ready, then visuals/collision swap together. The HUD
+reports queued strokes; preview can lag rather than continually cancelling jobs.
+All generated revisions remain on disk. The 2048-feature limit still applies;
+long strokes are sampled, not an unlimited voxel painting store.
+
+Vehicle look-ahead now includes stopping distance. A finite-domain guard prevents
+Warthog/tank bodies leaving the supported rectangle. The workshop HUD shows the
+collision-ahead speed limit. This does not eliminate genuine generation delays
+or enlarge the domain; the guard is a prototype boundary stop, not a designed
+physical perimeter. These changes also apply to the original expanded arena's
+shared vehicle system and look-ahead calculation.
+
+### Explicit feature mode
+
 - Click hill, lower, flatten, carve, ridge, tunnel or bridge to add a feature.
 - Select an entry; change its numeric properties. Distances are metres, yaw is
   degrees. Drag its orange centre horizontally, or use Place then click terrain.
@@ -60,7 +104,7 @@ avoids mismatched editable near terrain and unchanged distant LOD geometry.
 
 Generated vertical range is -24..64 m. Keep shapes within it. Very thin features
 may disappear at 2 m sampling. Materials use the shared terrain shader; no per-
-feature material painter yet. Selection is via list and centre marker, not a full
+feature material painter yet. Selection includes list, centre and tunnel exit, not a full
 transform/endpoint gizmo suite. The spatial filter is a conservative linear scan
 per chunk, not a hierarchical index; thousands of features need further work.
 
@@ -81,3 +125,9 @@ res://world/sdf_authoring.tscn -- --authoring-check` checks undo/redo, rebuilt h
 collision, a clear tunnel and its roof, bridge deck and clearance, recipe save,
 and actual Warthog movement. Test recipes and captures use separate filenames;
 the user's saved recipe is not overwritten. Both checks passed on 2026-10-03.
+
+`check_sdf_brush.gd` checks accumulated/repeated ravines, time-based strength,
+square/ellipse footprints, endpoint cylinders, persistence and matching shared-edge
+vertices in two actual adjacent ravine meshes. The rendered check additionally
+tests wheel zoom/size, chunk cages and vehicle boundary containment. These tests
+do not prove every tunnel proposal finds an exit.

@@ -20,6 +20,29 @@ var marker := MeshInstance3D.new()
 var edited_bounds: Array = []
 var dragging := false
 var drag_position := Vector3.ZERO
+var brush_mode := true
+var brush_template: Dictionary=Recipe.feature("lower",Vector3.ZERO)
+var brush := preload("res://world/sdf_brush.gd").new()
+var brushing := false
+var brush_dirty := false
+var brush_rate := 4.0
+var fly_speed := 25.0
+var brush_time := 0.0
+var looking := false
+var brush_cursor := MeshInstance3D.new()
+var staged_chunks := {}
+var chunk_overlay := MeshInstance3D.new()
+var show_chunks := false
+var overlay_signature := ""
+var endpoint_guide := MeshInstance3D.new()
+var endpoint_handle := MeshInstance3D.new()
+var picking_endpoint := false
+var endpoint_dragging := false
+var endpoint_preview := Vector3.ZERO
+var endpoint_plane := Plane()
+
+func stream_worker_limit() -> int:
+	return 2
 
 func make_arena_content() -> Node:
 	return preload("res://world/arena_live_content.gd").new()
@@ -38,6 +61,15 @@ func _ready() -> void:
 	marker.mesh=sphere
 	var mat := StandardMaterial3D.new();mat.albedo_color=Color.ORANGE;mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
 	marker.material_override=mat;add_child(marker)
+	var cursor_mesh := SphereMesh.new();cursor_mesh.radius=1;cursor_mesh.height=2
+	brush_cursor.mesh=cursor_mesh
+	var cursor_mat := StandardMaterial3D.new();cursor_mat.albedo_color=Color(1,.65,.1,.22);cursor_mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;cursor_mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	brush_cursor.material_override=cursor_mat;add_child(brush_cursor)
+	add_child(chunk_overlay)
+	var line_material := StandardMaterial3D.new();line_material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;line_material.vertex_color_use_as_albedo=true;line_material.no_depth_test=true
+	chunk_overlay.material_override=line_material
+	add_child(endpoint_guide);endpoint_guide.material_override=line_material
+	endpoint_handle.mesh=cursor_mesh;endpoint_handle.material_override=line_material;add_child(endpoint_handle)
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	refresh()
 	DisplayServer.window_set_title("SDF recipe workshop / F1 edit or play")
@@ -63,8 +95,11 @@ func desired() -> Array[Vector2i]:
 	var kit := live_kit()
 	if kit:
 		for body in kit.vehicle_system.vehicles:
-			var ahead: Vector3=body.position+body.linear_velocity*4
-			for point in [body.position,ahead]:
+			var speed: float=body.linear_velocity.length()
+			var direction: Vector3=body.linear_velocity.normalized() if speed>2 else -body.basis.z
+			var reach: float=minf(320,maxf(80,maxf(speed*6,speed*speed/7+64)))
+			for step in range(0,ceili(reach/32)+1):
+				var point: Vector3=body.position+direction*step*32
 				var centre_key := key_at(point)
 				for z in range(-2,3):
 					for x in range(-2,3):
@@ -77,6 +112,7 @@ func neighborhood_ready(p: Vector3) -> bool:
 	for z in range(-1,2):
 		for x in range(-1,2):
 			var key := centre+Vector2i(x,z)
+			if absi(key.x)>=24 or absi(key.y)>=24: continue
 			if not chunks.has(key) or chunks[key].revision!=revision: return false
 	return true
 
@@ -109,10 +145,57 @@ func chunk_generated(result: Dictionary) -> void:
 	if result.get("cached",false): cache_reads+=1
 	else: cache_builds+=1
 
+func install(key: Vector2i, result: Dictionary) -> void:
+	if not editing or not chunks.has(key):
+		super.install(key,result);return
+	# Build each replacement within the normal install budget, but leave its old
+	# neighbour-compatible surface active until the whole revision is ready.
+	var old: Dictionary=chunks[key]
+	chunks.erase(key)
+	super.install(key,result)
+	var replacement: Dictionary=chunks[key]
+	replacement.node.hide()
+	for body in replacement.node.get_children():
+		if body is StaticBody3D: body.collision_layer=0
+	staged_chunks[key]=replacement
+	old.revision=active_revision;chunks[key]=old
+
+func activate_staged() -> void:
+	for key in staged_chunks:
+		var replacement: Dictionary=staged_chunks[key]
+		if not chunks.has(key): replacement.node.queue_free();continue
+		chunks[key].node.queue_free();chunks[key]=replacement
+		replacement.node.show()
+		for body in replacement.node.get_children():
+			if body is StaticBody3D: body.collision_layer=1
+	staged_chunks.clear();overlay_signature=""
+
+func update_chunk_overlay() -> void:
+	chunk_overlay.visible=show_chunks
+	if not show_chunks: return
+	var signature := str(chunks.keys())+str(revision)+str(staged_chunks.keys())+str(ready_frames>0)
+	if signature==overlay_signature: return
+	overlay_signature=signature
+	var mesh := ImmediateMesh.new();mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	for key in chunks:
+		var colour := Color.ORANGE if chunks[key].revision!=revision or staged_chunks.has(key) else Color(0,.9,1)
+		mesh.surface_set_color(colour)
+		var p := Vector3(key.x*CHUNK,-24,key.y*CHUNK)
+		for y in [-24.0,0.0,64.0]:
+			var corners := [Vector3(p.x,y,p.z),Vector3(p.x+32,y,p.z),Vector3(p.x+32,y,p.z+32),Vector3(p.x,y,p.z+32)]
+			for i in 4: mesh.surface_add_vertex(corners[i]);mesh.surface_add_vertex(corners[(i+1)%4])
+		for offset in [Vector3.ZERO,Vector3(32,0,0),Vector3(32,0,32),Vector3(0,0,32)]:
+			mesh.surface_add_vertex(p+offset);mesh.surface_add_vertex(p+offset+Vector3(0,88,0))
+	mesh.surface_end();chunk_overlay.mesh=mesh
+
 func change(next: Array, remember := true) -> void:
 	if remember:
 		undo_stack.append(features.duplicate(true));redo_stack.clear()
 	var changed := []
+	for key in staged_chunks:
+		changed.append(Rect2(Vector2(key)*CHUNK,Vector2.ONE*CHUNK).grow(.1))
+		staged_chunks[key].node.queue_free()
+	staged_chunks.clear()
 	# Conservatively invalidate both old and new footprints, but retain unrelated chunks.
 	for i in maxi(features.size(),next.size()):
 		if i<features.size() and i<next.size() and features[i]==next[i]: continue
@@ -132,13 +215,34 @@ func change(next: Array, remember := true) -> void:
 func make_panel() -> void:
 	panel=PanelContainer.new();panel.position=Vector2(550,100);panel.size=Vector2(400,480)
 	var canvas := CanvasLayer.new();add_child(canvas);canvas.add_child(panel)
-	var column := VBoxContainer.new();panel.add_child(column)
+	var scroll := ScrollContainer.new();scroll.custom_minimum_size=Vector2(400,470);panel.add_child(scroll)
+	var column := VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(column)
 	var title := Label.new();title.text="SDF RECIPE / F1 edit-play";column.add_child(title)
+	var toggle := CheckButton.new();toggle.text="Brush (off = edit/move features)";toggle.button_pressed=true;column.add_child(toggle)
+	toggle.toggled.connect(func(value: bool): finish_brush();flush_brush();brush_mode=value;refresh())
+	var debug_button := Button.new();debug_button.text="F3 chunk outlines / cyan ready, orange pending";column.add_child(debug_button)
+	debug_button.pressed.connect(func(): show_chunks=not show_chunks)
+	var shape_row := HBoxContainer.new();column.add_child(shape_row)
+	var shapes := OptionButton.new()
+	for label in ["circle","square","ellipse"]: shapes.add_item(label)
+	shape_row.add_child(shapes)
+	shapes.item_selected.connect(func(index: int): brush_template.shape=["circle","square","ellipse"][index])
+	var aspect_label := Label.new();aspect_label.text="Ellipse ratio";shape_row.add_child(aspect_label)
+	var aspect := SpinBox.new();aspect.min_value=.25;aspect.max_value=4;aspect.step=.25;aspect.value=1;shape_row.add_child(aspect)
+	aspect.value_changed.connect(func(value: float): brush_template.aspect=value)
+	var end_button := Button.new();end_button.text="Set tunnel exit (Alt-click = far surface)";column.add_child(end_button)
+	end_button.pressed.connect(func(): picking_endpoint=true;notice.text="Click exit surface; Alt-click looks through the near surface. Ctrl snaps heading to 45 degrees.")
+	var rates := HBoxContainer.new();column.add_child(rates)
+	for spec in [["Strength/s",4.0],["Fly m/s",25.0]]:
+		var label := Label.new();label.text=spec[0];rates.add_child(label)
+		var speed := SpinBox.new();speed.min_value=.25;speed.max_value=100;speed.step=.25;speed.value=spec[1];rates.add_child(speed)
+		if spec[0]=="Strength/s": speed.value_changed.connect(func(value: float): brush_rate=value)
+		else: speed.value_changed.connect(func(value: float): fly_speed=value)
 	var tools := HFlowContainer.new();column.add_child(tools)
 	for kind in Recipe.TYPES:
-		var button := Button.new();button.text=kind;tools.add_child(button);button.pressed.connect(add_feature.bind(kind))
+		var button := Button.new();button.text="ravine" if kind=="lower" else kind;tools.add_child(button);button.pressed.connect(add_feature.bind(kind))
 	feature_list=ItemList.new();feature_list.custom_minimum_size=Vector2(270,85);column.add_child(feature_list)
-	feature_list.item_selected.connect(func(index: int): selected=index;refresh())
+	feature_list.item_selected.connect(func(index: int): selected=index;brush_template=features[index].duplicate(true);brush_template.erase("amount");refresh())
 	var grid := GridContainer.new();grid.columns=4;column.add_child(grid)
 	for key in ["x","y","z","radius","height","length","width","thickness","yaw","bend"]:
 		var label := Label.new();label.text=key;grid.add_child(label)
@@ -147,10 +251,10 @@ func make_panel() -> void:
 		if key=="y": value.min_value=-20;value.max_value=55
 		grid.add_child(value);fields[key]=value;value.value_changed.connect(edit_value.bind(key))
 	var actions := HFlowContainer.new();column.add_child(actions)
-	for spec in [["Place",place_selected],["Focus",focus_selected],["Delete",delete_selected],["Earlier",reorder.bind(-1)],["Later",reorder.bind(1)],["Undo",undo],["Redo",redo],["Save",save],["Load",load_saved]]:
+	for spec in [["Move feature",place_selected],["Focus",focus_selected],["Delete",delete_selected],["Earlier",reorder.bind(-1)],["Later",reorder.bind(1)],["Undo",undo],["Redo",redo],["Save",save],["Load",load_saved]]:
 		var button := Button.new();button.text=spec[0];actions.add_child(button);button.pressed.connect(spec[1])
 	notice=Label.new();notice.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;notice.custom_minimum_size.x=270
-	notice.text="Add a feature; edit numbers or Place on terrain. Save explicitly."
+	notice.text="WASD fly, RMB look, LMB sculpt. Wheel zoom; Shift-wheel size. Strokes accumulate. Save explicitly."
 	column.add_child(notice)
 
 func refresh() -> void:
@@ -160,12 +264,21 @@ func refresh() -> void:
 	for i in features.size(): feature_list.add_item("%d  %s" % [i+1,features[i].kind])
 	if selected>=0:
 		feature_list.select(selected)
-		for key in fields: fields[key].value=features[selected][key]
-	marker.visible=selected>=0 and editing
+	var values: Dictionary=brush_template if brush_mode else (features[selected] if selected>=0 else brush_template)
+	for key in fields: fields[key].value=values[key]
+	marker.visible=selected>=0 and editing and not brush_mode
 	if selected>=0: marker.position=Vector3(features[selected].x,features[selected].y,features[selected].z)
 	updating=false
 
 func add_feature(kind: String) -> void:
+	finish_brush();flush_brush()
+	if brush_mode:
+		brush_template.kind=kind;brush_template.erase("amount")
+		for key in ["end_x","end_y","end_z"]: brush_template.erase(key)
+		refresh()
+		if kind=="tunnel": brush_template.radius=4;refresh()
+		notice.text="Brush: "+kind+" — hold left mouse on terrain; earlier strokes stay."
+		return
 	var p := camera.position-camera.basis.z*25;p.y=0
 	var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(p.x,64,p.z),Vector3(p.x,-24,p.z),1))
 	if not hit.is_empty(): p.y=hit.position.y
@@ -179,36 +292,172 @@ func add_feature(kind: String) -> void:
 	selected=features.size()-1;refresh()
 
 func edit_value(value: float, key: String) -> void:
-	if updating or selected<0: return
+	if updating: return
+	if brush_mode: brush_template[key]=value;return
+	if selected<0: return
 	var next := features.duplicate(true);next[selected][key]=value;change(next)
 
 func delete_selected() -> void:
+	finish_brush();flush_brush()
 	if selected<0: return
 	var next := features.duplicate(true);next.remove_at(selected);change(next)
 
 func reorder(direction: int) -> void:
+	finish_brush();flush_brush()
 	if selected<0 or selected+direction<0 or selected+direction>=features.size(): return
 	var next := features.duplicate(true);var temp: Dictionary=next[selected]
 	next[selected]=next[selected+direction];next[selected+direction]=temp;selected+=direction;change(next)
 
 func undo() -> void:
+	finish_brush();flush_brush()
 	if undo_stack.is_empty(): return
 	redo_stack.append(features.duplicate(true));change(undo_stack.pop_back(),false)
 
 func redo() -> void:
+	finish_brush();flush_brush()
 	if redo_stack.is_empty(): return
 	undo_stack.append(features.duplicate(true));change(redo_stack.pop_back(),false)
 
 func save() -> void:
+	finish_brush();flush_brush()
 	notice.text="Saved sdf-authoring.json in Godot user data." if Recipe.save_recipe(SAVE_PATH,features)==OK else "Save failed; recipe still in memory."
 
 func load_saved() -> void:
+	finish_brush();flush_brush()
 	var data: Variant=JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
 	if not Recipe.validate(data): notice.text="Invalid/missing recipe; current edits retained.";return
 	change(data.features);notice.text="Loaded recipe. Undo restores previous edits."
 
 func place_selected() -> void:
-	if selected>=0: placing=true;notice.text="Click terrain to position selected feature. Esc cancels."
+	if selected>=0:
+		finish_brush();flush_brush();placing=true
+		notice.text="MOVE existing feature (not a new stroke). Click terrain. Esc cancels."
+
+func cursor_hit() -> Dictionary:
+	var mouse := get_viewport().get_mouse_position()
+	if panel.visible and panel.get_global_rect().has_point(mouse): return {}
+	var start := camera.project_ray_origin(mouse)
+	var query := PhysicsRayQueryParameters3D.create(start,start+camera.project_ray_normal(mouse)*1500,1)
+	query.exclude=[player.get_rid()]
+	return get_world_3d().direct_space_state.intersect_ray(query)
+
+func start_brush() -> void:
+	var hit := cursor_hit()
+	if hit.is_empty(): return
+	if brush_template.kind=="tunnel":
+		flush_brush()
+		var f := brush_template.duplicate(true);f.erase("amount")
+		var p: Vector3=hit.position
+		f.x=p.x;f.y=p.y;f.z=p.z
+		var end := suggested_exit(p,hit.normal)
+		f.end_x=end.x;f.end_y=end.y;f.end_z=end.z
+		var next := features.duplicate(true);next.append(f);selected=next.size()-1;change(next)
+		notice.text="Tunnel created. Drag cyan exit through terrain; Ctrl = 45° snap. Set tunnel exit enables surface picking."
+		return
+	var source: Array=brush.draft if brush_dirty else features
+	undo_stack.append(source.duplicate(true));redo_stack.clear()
+	brush.begin(source,brush_template);brushing=true;brush_time=0
+	brush.dab(hit.position,brush_rate/60.0);brush_dirty=true
+
+func finish_brush() -> void:
+	brushing=false
+
+func suggested_exit(start: Vector3, normal: Vector3) -> Vector3:
+	var best: Vector3 = start+(-camera.basis.z*Vector3(1,0,1)).normalized()*brush_template.length
+	var best_distance := INF
+	# Fixed-distance field probes, not unsafe sphere tracing of an approximate SDF.
+	for i in 8:
+		var direction := Vector3(cos(i*PI/4),0,sin(i*PI/4))
+		if direction.dot(normal)>.1: continue
+		var entered := false
+		for step in range(2,257,2):
+			var p := start+direction*step
+			var value := Recipe.field(p,tunnel_radius,roughness,features)
+			if value<-.1: entered=true
+			elif entered and value>.1:
+				if step<best_distance: best_distance=step;best=p+direction*2
+				break
+	return best
+
+func endpoint_position() -> Vector3:
+	var f: Dictionary=features[selected]
+	return Vector3(f.end_x,f.end_y,f.end_z)
+
+func snap_endpoint(p: Vector3) -> Vector3:
+	if not Input.is_key_pressed(KEY_CTRL): return p
+	var f: Dictionary=features[selected];var start := Vector3(f.x,f.y,f.z)
+	var offset := p-start;var length := Vector2(offset.x,offset.z).length()
+	var angle := snappedf(atan2(offset.z,offset.x),PI/4)
+	return Vector3(start.x+cos(angle)*length,p.y,start.z+sin(angle)*length)
+
+func set_endpoint(p: Vector3) -> void:
+	var next := features.duplicate(true);p=snap_endpoint(p)
+	next[selected].end_x=p.x;next[selected].end_y=p.y;next[selected].end_z=p.z;change(next)
+
+func update_endpoint_guide() -> void:
+	var active: bool = editing and selected>=0 and features[selected].has("end_x")
+	endpoint_guide.visible=active;endpoint_handle.visible=active
+	if not active: return
+	var f: Dictionary=features[selected];var start := Vector3(f.x,f.y,f.z)
+	var end := endpoint_preview if endpoint_dragging else endpoint_position()
+	endpoint_handle.position=end
+	var direction := (end-start).normalized()
+	var side := direction.cross(Vector3.UP).normalized()
+	if side.length_squared()<.01: side=Vector3.RIGHT
+	var up := direction.cross(side).normalized()
+	var mesh := ImmediateMesh.new();mesh.surface_begin(Mesh.PRIMITIVE_LINES);mesh.surface_set_color(Color.CYAN)
+	mesh.surface_add_vertex(start);mesh.surface_add_vertex(end)
+	for i in 32:
+		var a: Vector3 = (side*cos(i*TAU/32)+up*sin(i*TAU/32))*f.radius
+		var b: Vector3 = (side*cos((i+1)*TAU/32)+up*sin((i+1)*TAU/32))*f.radius
+		for centre in [start,end]: mesh.surface_add_vertex(centre+a);mesh.surface_add_vertex(centre+b)
+		if i%8==0: mesh.surface_add_vertex(start+a);mesh.surface_add_vertex(end+a)
+	mesh.surface_end();endpoint_guide.mesh=mesh
+
+func far_surface(mouse: Vector2) -> Variant:
+	var start := camera.project_ray_origin(mouse);var direction := camera.project_ray_normal(mouse)
+	var source := features.duplicate(true)
+	if selected>=0: source.remove_at(selected)
+	var entered := false
+	for step in range(0,1500,2):
+		var p := start+direction*step
+		if Recipe.field(p,tunnel_radius,roughness,source)<0: entered=true
+		elif entered: return p
+	return null
+
+func update_brush_outline(p: Vector3) -> void:
+	var mesh := ImmediateMesh.new();mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	var square: bool=brush_template.get("shape","circle")=="square"
+	var segments := 4 if square else 48
+	for i in segments:
+		var a := Vector3(cos(i*TAU/segments),0,sin(i*TAU/segments))
+		var b := Vector3(cos((i+1)*TAU/segments),0,sin((i+1)*TAU/segments))
+		if square:
+			var corners := [Vector3(-1,0,-1),Vector3(1,0,-1),Vector3(1,0,1),Vector3(-1,0,1)]
+			a=corners[i];b=corners[(i+1)%4]
+		a.z*=brush_template.get("aspect",1);b.z*=brush_template.get("aspect",1)
+		a=a.rotated(Vector3.UP,deg_to_rad(brush_template.yaw))*brush_template.radius
+		b=b.rotated(Vector3.UP,deg_to_rad(brush_template.yaw))*brush_template.radius
+		mesh.surface_add_vertex(a);mesh.surface_add_vertex(b)
+	mesh.surface_end();brush_cursor.mesh=mesh;brush_cursor.material_override=chunk_overlay.material_override
+	brush_cursor.position=p+Vector3.UP*.15;brush_cursor.scale=Vector3.ONE
+
+func flush_brush() -> void:
+	if not brush_dirty: return
+	brush_dirty=false;change(brush.draft,false)
+
+func editor_fly(delta: float) -> void:
+	var focus := get_viewport().gui_get_focus_owner()
+	if focus is LineEdit or focus is TextEdit: return
+	var direction := Vector3.ZERO
+	if Input.is_physical_key_pressed(KEY_W): direction-=camera.basis.z
+	if Input.is_physical_key_pressed(KEY_S): direction+=camera.basis.z
+	if Input.is_physical_key_pressed(KEY_A): direction-=camera.basis.x
+	if Input.is_physical_key_pressed(KEY_D): direction+=camera.basis.x
+	if Input.is_physical_key_pressed(KEY_SPACE): direction.y+=1
+	if Input.is_physical_key_pressed(KEY_CTRL): direction.y-=1
+	camera.position+=direction.normalized()*delta*fly_speed*(3 if Input.is_physical_key_pressed(KEY_SHIFT) else 1)
+	camera.position.x=clampf(camera.position.x,-740,740);camera.position.z=clampf(camera.position.z,-740,740)
 
 func focus_selected() -> void:
 	if selected<0: return
@@ -216,7 +465,10 @@ func focus_selected() -> void:
 	camera.position=target+Vector3(-28,25,-35);camera.look_at(target);look=Vector2(camera.rotation.y,camera.rotation.x)
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F3:
+		show_chunks=not show_chunks;return
 	if event is InputEventKey and event.pressed and event.keycode==KEY_F1:
+		finish_brush();flush_brush()
 		if editing and ready_frames<3:
 			notice.text="Wait for edited collision to finish before playing.";return
 		var kit := live_kit()
@@ -227,8 +479,44 @@ func _input(event: InputEvent) -> void:
 		Input.mouse_mode=Input.MOUSE_MODE_VISIBLE if editing else Input.MOUSE_MODE_CAPTURED
 		refresh();return
 	if editing:
+		if event is InputEventKey and event.pressed and event.keycode in [KEY_BRACKETLEFT,KEY_BRACKETRIGHT]:
+			brush_template.radius=clampf(brush_template.radius+(1 if event.keycode==KEY_BRACKETRIGHT else -1),1,120);refresh();return
+		if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN] and not panel.get_global_rect().has_point(event.position):
+			if event.shift_pressed:
+				brush_template.radius=clampf(brush_template.radius+(1 if event.button_index==MOUSE_BUTTON_WHEEL_UP else -1),1,120);refresh();return
+			var direction := camera.project_ray_normal(event.position)
+			camera.position+=direction*(1 if event.button_index==MOUSE_BUTTON_WHEEL_UP else -1)*fly_speed*.25
+			return
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT:
+			looking=event.pressed and not panel.get_global_rect().has_point(event.position)
+			if looking:
+				var focus := get_viewport().gui_get_focus_owner()
+				if focus: focus.release_focus()
+		if event is InputEventMouseMotion and looking:
+			look.x-=event.relative.x*.003;look.y=clampf(look.y-event.relative.y*.003,-1.5,1.5);camera.rotation=Vector3(look.y,look.x,0)
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not event.pressed and endpoint_dragging:
+			endpoint_dragging=false;set_endpoint(endpoint_preview);return
+		if event is InputEventMouseMotion and endpoint_dragging:
+			var point: Variant=endpoint_plane.intersects_ray(camera.project_ray_origin(event.position),camera.project_ray_normal(event.position))
+			if point!=null: endpoint_preview=snap_endpoint(point)
+			return
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed and not panel.get_global_rect().has_point(event.position) and selected>=0 and features[selected].has("end_x"):
+			if picking_endpoint:
+				var point: Variant=far_surface(event.position) if event.alt_pressed else cursor_hit().get("position")
+				if point!=null: set_endpoint(point);picking_endpoint=false
+				return
+			if not camera.is_position_behind(endpoint_position()) and camera.unproject_position(endpoint_position()).distance_to(event.position)<20:
+				endpoint_dragging=true;endpoint_preview=endpoint_position();endpoint_plane=Plane(camera.basis.z,endpoint_preview);return
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not placing and brush_mode:
+			if event.pressed:
+				if not panel.get_global_rect().has_point(event.position):
+					var focus := get_viewport().gui_get_focus_owner()
+					if focus: focus.release_focus()
+					start_brush()
+			else: finish_brush()
+			return
 		if event is InputEventKey and event.pressed and event.keycode==KEY_ESCAPE:
-			placing=false;dragging=false;refresh()
+			finish_brush();looking=false;placing=false;dragging=false;endpoint_dragging=false;picking_endpoint=false;refresh()
 		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not event.pressed and dragging:
 			dragging=false
 			var next := features.duplicate(true);next[selected].x=drag_position.x;next[selected].z=drag_position.z;change(next)
@@ -259,6 +547,16 @@ func _input(event: InputEvent) -> void:
 	super._input(event)
 
 func _physics_process(delta: float) -> void:
+	if editing:
+		editor_fly(delta)
+		var hit := cursor_hit()
+		brush_cursor.visible=brush_mode and not hit.is_empty()
+		if not hit.is_empty(): update_brush_outline(hit.position)
+		if brushing and not hit.is_empty():
+			brush_time+=delta
+			if brush_time>=.1:
+				brush.dab(hit.position,brush_rate*brush_time);brush_time=0;brush_dirty=true
+		return
 	var kit := live_kit()
 	if not editing and (not kit or not kit.own_movement()): super._physics_process(delta)
 
@@ -282,7 +580,13 @@ func resettle_edited_actors(kit: Node) -> void:
 	edited_bounds.clear()
 
 func _process(delta: float) -> void:
+	# Let each in-flight preview finish: continuous strokes must not starve meshing
+	# by invalidating its revision every input frame. Recipes still accumulate now.
+	if brush_dirty and stream_jobs.is_empty(): flush_brush()
 	super._process(delta)
+	if ready_frames>0 and not staged_chunks.is_empty(): activate_staged()
+	update_chunk_overlay()
+	update_endpoint_guide()
 	panel.position.x=maxf(0,get_viewport().get_visible_rect().size.x-panel.size.x-10)
 	var kit := live_kit()
 	if kit:
@@ -292,10 +596,20 @@ func _process(delta: float) -> void:
 		for actor in kit.actors: actor.set_physics_process(not editing)
 		if editing:
 			for body in kit.vehicle_system.vehicles: body.set_stream_ready(false)
-	hud.text="SDF WORKSHOP / F1 edit-play | WASD + mouse fly | F walk\nRecipe features %d | cache %d / generated %d | %d chunks | %.0f FPS\n2m samples / vertical range -24..64m / drag orange centre or Place" % [features.size(),cache_reads,cache_builds,chunks.size(),Engine.get_frames_per_second()]
+	if not editing: brush_cursor.hide()
+	hud.text="SDF WORKSHOP / WASD fly | RMB look | LMB sculpt | F1 play\n%s / %.1f strength/s / radius %.1fm | features %d | %.0f FPS\n%s" % [brush_template.kind,brush_rate,brush_template.radius,features.size(),Engine.get_frames_per_second(),"Stroke queued; preview catching up" if brush_dirty else "Wheel zoom | Shift-wheel size | F3 chunks | Space/Ctrl rise/fall"]
+	if kit and kit.vehicle_system.driving:
+		var vehicle: RigidBody3D=kit.vehicle_system.driving
+		hud.text+="\nCollision-ahead speed limit: %.1f m/s%s" % [vehicle.stream_speed_limit," / waiting for terrain" if vehicle.streaming_suspended else ""]
 
 func check_workshop() -> void:
 	while ready_frames<3 or not live_kit(): await get_tree().process_frame
+	var original_transform := camera.transform
+	var wheel := InputEventMouseButton.new();wheel.position=Vector2(100,300);wheel.button_index=MOUSE_BUTTON_WHEEL_UP;wheel.pressed=true
+	_input(wheel);assert(camera.transform!=original_transform)
+	var old_radius: float=brush_template.radius;wheel.shift_pressed=true;_input(wheel);assert(brush_template.radius==old_radius+1)
+	brush_template.radius=old_radius;camera.transform=original_transform
+	show_chunks=true;update_chunk_overlay();assert(chunk_overlay.mesh!=null)
 	var original := features.duplicate(true)
 	var f := Recipe.feature("hill",Vector3(-40,0,-40));f.radius=12;f.height=10
 	change([f]);undo();assert(features==original);redo();assert(features.size()==1)
@@ -324,8 +638,13 @@ func check_workshop() -> void:
 	var start: Vector3=kit.vehicle.position
 	for i in 180: await get_tree().physics_frame
 	assert(kit.vehicle.position.distance_to(start)>1,"Vehicle did not move in play mode")
+	var vehicle_transform: Transform3D=kit.vehicle.transform
+	kit.vehicle.position.x=movement_limit()+20;kit.vehicle.linear_velocity=Vector3(20,0,0)
+	kit.vehicle_system.tick(1.0/60,true)
+	assert(kit.vehicle.position.x<=movement_limit()-8 and kit.vehicle.linear_velocity.x<=0,"Vehicle escaped finite terrain domain")
+	kit.vehicle.transform=vehicle_transform;kit.vehicle.set_stream_ready(true)
 	kit.test_vehicle_controls=false;kit.release_control();editing=true;panel.show();selected=2;refresh()
-	print("PASS: workshop undo/redo, hill/tunnel/bridge collision, recipe save/load, live Warthog movement")
+	print("PASS: workshop undo/redo, hill/tunnel/bridge collision, recipe save/load, live Warthog movement, boundary guard, wheel zoom/size, chunk outlines")
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("user://sdf-authoring.png")
 	get_tree().quit()

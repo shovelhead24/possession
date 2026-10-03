@@ -143,6 +143,14 @@ func update_camera(delta: float) -> void:
 func tick(delta: float, test_controls := false) -> void:
 	if not initialized: return
 	for body in vehicles:
+		# The prototype has a finite collision domain: contain bodies before their
+		# wheel footprint can leave it, rather than letting streaming brake too late.
+		var edge: float=arena.movement_limit()-8.0
+		for axis in [0,2]:
+			if absf(body.position[axis])>edge:
+				body.position[axis]=clampf(body.position[axis],-edge,edge)
+				if body.linear_velocity[axis]*body.position[axis]>0: body.linear_velocity[axis]=0
+				body.stream_velocity[axis]=0
 		if arena.walking and not driving:
 			body.remove_collision_exception_with(arena.player);arena.player.remove_collision_exception_with(body)
 		else:
@@ -153,7 +161,9 @@ func tick(delta: float, test_controls := false) -> void:
 			var direction: Vector3=body.linear_velocity.normalized() if body.linear_velocity.length()>2 else -body.basis.z
 			var available := 320.0
 			for distance in range(16,321,16):
-				if not arena.neighborhood_ready(body.position+direction*distance): available=distance-16.0;break
+				var probe: Vector3=body.position+direction*distance
+				probe.x=clampf(probe.x,-edge,edge);probe.z=clampf(probe.z,-edge,edge)
+				if not arena.neighborhood_ready(probe): available=distance-16.0;break
 			body.stream_speed_limit=minf(body.top_speed,sqrt(7.0*maxf(0,available-24)))
 			body.stream_braking=body.linear_velocity.length()>body.stream_speed_limit+.5
 		body.controlled=body==driving and not gunning and not menu.opened and not body.streaming_suspended

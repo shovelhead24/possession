@@ -55,7 +55,7 @@ func check() -> void:
 	assert(FileAccess.file_exists(Workshop.CACHE_PATH+before+".bin"))
 	workshop.generate(3.2,.35,origin,cells,2,Recipe.field.bind([edited]))
 	assert(FileAccess.file_exists(Workshop.CACHE_PATH+before+".bin"),"Edit deleted old cache")
-	for node in [workshop.terrain,workshop.collision,workshop.camera,workshop.player,workshop.hud,workshop.marker]: node.free()
+	for node in [workshop.terrain,workshop.collision,workshop.camera,workshop.player,workshop.hud,workshop.marker,workshop.brush_cursor,workshop.chunk_overlay,workshop.endpoint_guide,workshop.endpoint_handle]: node.free()
 	workshop.free()
 	print("PASS: seven tools, composition order, recipe validation/roundtrip, chunk boundary field, local cache keys, cache reuse and retained old revisions")
 	quit()
