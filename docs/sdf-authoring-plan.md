@@ -3,6 +3,12 @@
 Updated 2026-10-03. This is agreed direction and planned work, not a claim that
 the editor or the follow-ups below have been implemented.
 
+Implementation update: a first [working SDF workshop](sdf-authoring-workshop.md)
+now implements the seven feature tools, ordered recipe save/load, undo/redo,
+centre placement/drag, local invalidation and persistent mesh caches. The workshop
+is separate from the expanded arena; see its scope/limitations before treating
+the broader milestone or performance backlog below as complete.
+
 ## Standing storage rule
 
 Save procedural seeds/parameters and ordered authored features as world source.
