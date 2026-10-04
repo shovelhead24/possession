@@ -154,15 +154,26 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 			for area in changed:
 				if area.has_point(point): dirty=true;break
 			if not dirty: continue
+			# Height strokes are constant down a column. Collapse consecutive
+			# additions once, preserving ordering around non-additive operations.
+			var column_ops := []
+			var offset := 0.0
+			for item in compiled:
+				if item.additive:
+					offset+=float(item.feature.amount)*item.weights[z*dims.x+x]*(-1 if item.feature.kind=="hill" else 1)
+					continue
+				if offset!=0: column_ops.append({"offset":offset});offset=0
+				if not item.sphere or item.area.has_point(point): column_ops.append(item)
+			if offset!=0: column_ops.append({"offset":offset})
 			for y in dims.y:
 				var id := (z*dims.y+y)*dims.x+x
 				var p := grid_origin+Vector3(x,y,z)*spacing
 				var value: float=values[id] if append_only else base[id]
-				for item in compiled:
-					if item.additive:
-						value+=float(item.feature.amount)*item.weights[z*dims.x+x]*(-1 if item.feature.kind=="hill" else 1)
+				for item in column_ops:
+					if item.has("offset"):
+						value+=item.offset
 					elif item.sphere:
-						if item.area.has_point(point): value=maxf(value,item.feature.radius-p.distance_to(item.center))
+						value=maxf(value,item.feature.radius-p.distance_to(item.center))
 					else: value=Recipe.compose(p,value,[item.feature])
 				values[id]=value;touched+=1
 	var sampled_at := Time.get_ticks_usec()

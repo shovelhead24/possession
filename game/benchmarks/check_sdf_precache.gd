@@ -62,6 +62,19 @@ func _initialize() -> void:
 	assert(a.size()>0 and a.size()==b.size())
 	for key in a: assert(b.has(key) and a[key].distance_to(b[key])<.0001,"Crater seam position/normal mismatch")
 	var report := {"cold_ms":first.ms,"warm_small_brush_ms":warm.ms,"warm_dose_change_ms":deeper.ms,"warm_profile":warm.profile,"field_error":error,"disk_restored_ms":reused.ms}
+	var repeated := []
+	var repeats_cache := Cache.new();repeats_cache.build(origin,cells,2,[],3.2,.35)
+	for i in 20:
+		var stamp := Recipe.feature("lower",Vector3(-48,0,-48));stamp.radius=16;stamp.amount=.0666666666667
+		repeated.append(stamp)
+	var repeated_result := repeats_cache.build(origin,cells,2,repeated,3.2,.35)
+	var rs: Dictionary=repeated_result._field_state
+	for z in dims.z:
+		for y in dims.y:
+			for x in dims.x:
+				var p := origin-Vector3.ONE*2+Vector3(x,y,z)*2
+				assert(absf(rs.values[(z*dims.y+y)*dims.x+x]-Recipe.field(p,3.2,.35,repeated))<.00002,"Collapsed repeated brush differs from ordered source")
+	report.repeated_20_clicks_ms=repeated_result.ms;report.repeated_field_ms=repeated_result.profile.field_ms
 	file=FileAccess.open("user://sdf-precache-results.json",FileAccess.WRITE);file.store_string(JSON.stringify(report,"\t"));file.close()
 	print("PRECACHE_PROFILE ",JSON.stringify(report))
 	print("PASS: local remesh, zero warm base evaluations, cached kernels, dose changes, undo, ordered edits, float32 field fidelity, disk-restored warm cache")

@@ -100,15 +100,16 @@ unrelated streaming jobs no longer prevent submission. Their unchanged snapshots
 remain valid across edit revisions. Brush outline geometry is reused, and the
 feature list is not rebuilt on every dab.
 
-A dirty local batch swaps together. Physics rebuilding is deferred until the
-stroke ends, while cursor picking follows
+A dirty local visual batch swaps together. Physics now catches up during strokes,
+while cursor picking follows
 the cached edited field so it does not wait for old collision to catch up. Editor
-mode pauses actors and freezes vehicles. Returning to play waits for current
-chunks; actors within changed footprints are relocated above sampled terrain and
-vehicles have velocities cleared. This is a deliberate editor transition, NOT
-continuous destruction or a guarantee of footprint fit on every overhang. Inspect
-placement after significant edits. Existing static trees are not re-authored or
-re-grounded by this first editor.
+mode pauses AI and driving input, not ground contact: vehicles retain suspension
+and gravity, and creatures settle without patrolling. Supported objects are carried
+up when terrain grows through them; cuts let them fall. Switching to play waits
+for current collision but no longer globally repositions objects. Raised-solid
+handling is an editor correction, not a guarantee of footprint fit on every
+overhang. Inspect placement after significant edits. Static trees are not
+re-authored or re-grounded by this editor.
 
 Collision now uses the grenade lab's small-section approach: prepare changed
 8 m sections within a roughly 4 ms frame budget, register disabled replacement
@@ -116,6 +117,9 @@ bodies, then switch collision after a physics tick. The first edit converts an
 existing whole-chunk collider; later edits reuse unchanged sections. Comparison
 is against the installed collision, not just the last visual update, so no earlier
 part of a held stroke is forgotten. F1 still waits for all current collision.
+Rapid previews no longer discard partially prepared collision: the current update
+finishes and only the newest successor is retained. Consecutive additive brush
+contributions are combined per column rather than replayed for every height sample.
 New carve features use compact spherical bounds; saved legacy features are not
 silently rewritten. Recipes and old disk caches remain intact.
 
@@ -166,3 +170,33 @@ published 14 updates while held, retained all 4.0 accumulated strength units, an
 finished collision about 140 ms after release. Both sides of the seam agreed with
 the sampled surface. These are submitted-edit timings, not physical mouse-to-
 photon measurements or guarantees for large/cold edits.
+
+## Diagnosing stalls and deep holes
+
+Every workshop launch now writes a distinct `sdf-editor-trace-<timestamp>.jsonl`
+under `%APPDATA%/Godot/app_userdata/HaloTest/`. It records input/picking time,
+submissions, worker timings, preview latency, collision section swaps and slow
+frames, with queue sizes and feature counts. Slow-frame records separate editor
+submission, streaming, collision and editor-physics time from the overall frame
+gap. A large gap outside those stages is not automatically a meshing stall.
+Logs flush about once per second and on clean exit; abrupt termination can lose
+the latest buffered second. The standard Godot log still holds engine errors.
+
+`--authoring-repro` runs 20 rapid, separate 16 m brush clicks, checks none are
+lost, verifies a Warthog falls into a cut and rises when ground is restored, and
+checks camera access at -18 m. It uses injected terrain hit coordinates; actual
+mouse picking is logged separately during normal use. Saved recipes are untouched.
+
+The workshop's inherited -8 m camera teleport is removed. Recovery now starts
+below -30 m, outside its -24..64 m generated terrain volume. This allows access to
+valid deep holes; it does not extend terrain generation below -24 m. Original
+non-workshop scenes keep their existing camera recovery limits.
+
+Latest repeated-click reproduction passed correctness, not a responsiveness target:
+20 separate 16 m clicks completed in 8.08 s including input frames and draining,
+with six publications during the sequence. The Warthog moved from about +0.11 m
+to -3.51 m and back to +0.11 m without entering play mode. This run had long frame
+gaps outside measured editor work, and another user-owned workshop remained open;
+no user session was closed. Do not extrapolate the earlier small-brush timings to
+this workload or call all stalls fixed. The new trace is intended to diagnose the
+next normal user session, including real cursor picking.

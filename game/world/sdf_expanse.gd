@@ -146,6 +146,9 @@ func neighborhood_ready(p: Vector3) -> bool:
 			if not chunks.has(key) or chunks[key].revision != revision: return false
 	return true
 
+func recovery_floor() -> float:
+	return -8.0
+
 func _physics_process(delta: float) -> void:
 	if walking and not neighborhood_ready(player.position):
 		player.velocity = Vector3.ZERO
@@ -153,7 +156,7 @@ func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	camera.position.x = clampf(camera.position.x,-movement_limit(),movement_limit())
 	camera.position.z = clampf(camera.position.z,-movement_limit(),movement_limit())
-	if camera.position.y < -8:
+	if camera.position.y < recovery_floor():
 		walking = false
 		camera.position.y = 12
 

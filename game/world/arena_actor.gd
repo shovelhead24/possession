@@ -159,4 +159,5 @@ func _physics_process(delta: float) -> void:
 			var pose := skeleton.get_bone_global_pose(head)
 			pose.basis*=Basis(Vector3.RIGHT,sin(action_time/.4*PI)*-.35)
 			skeleton.set_bone_global_pose_override(head,pose,1.0 if action_time>0 else 0.0,true)
-	if position.y < -23: reset_actor()
+	var fall_limit := minf(-23,arena.recovery_floor()) if arena.has_method("recovery_floor") else -23.0
+	if position.y < fall_limit: reset_actor()

@@ -51,6 +51,25 @@ var aim_point := Vector3.ZERO
 var aim_valid := false
 var brush_outline_signature := ""
 var preview_publications := 0
+var trace_file: FileAccess
+var trace_path := ""
+var trace_flush_usec := 0
+var last_process_usec := 0
+var physics_ms := 0.0
+var collision_supports := {}
+
+func trace_edit(event: String, extra := {}) -> void:
+	if trace_file==null: return
+	var data := {"event":event,"usec":Time.get_ticks_usec(),"revision":revision,"features":features.size(),"jobs":stream_jobs.size(),"pending_preview":preview_expected.size(),"pending_collision":collision_pending.size(),"brushing":brushing,"brush_dirty":brush_dirty}
+	data.merge(extra);trace_file.store_line(JSON.stringify(data))
+
+func recovery_floor() -> float:
+	return -30.0 # Below the editable volume, not through its legitimate holes.
+
+func _exit_tree() -> void:
+	trace_edit("exit")
+	if trace_file: trace_file.close();trace_file=null
+	super._exit_tree()
 
 func stream_worker_limit() -> int:
 	return 2
@@ -62,6 +81,9 @@ func live_kit() -> Node:
 	return arena_content.kit if is_instance_valid(arena_content) and arena_content.get("kit") and arena_content.kit.initialized else null
 
 func _ready() -> void:
+	trace_path="user://sdf-editor-trace-"+str(Time.get_unix_time_from_system()).replace(".","-")+".jsonl"
+	trace_file=FileAccess.open(trace_path,FileAccess.WRITE)
+	print("EDITOR_TRACE ",ProjectSettings.globalize_path(trace_path))
 	DirAccess.make_dir_recursive_absolute(CACHE_PATH)
 	if FileAccess.file_exists(SAVE_PATH):
 		var saved: Variant=JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
@@ -85,6 +107,8 @@ func _ready() -> void:
 	refresh()
 	DisplayServer.window_set_title("SDF recipe workshop / F1 edit or play")
 	if OS.get_cmdline_user_args().has("--authoring-check"): check_workshop.call_deferred()
+	if OS.get_cmdline_user_args().has("--authoring-repro"): check_repeated_clicks.call_deferred()
+	trace_edit("ready",{"path":trace_path})
 
 func rebuild() -> void:
 	revision+=1
@@ -179,6 +203,7 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 
 func chunk_generated(result: Dictionary) -> void:
 	last_field_profile=result.get("profile",{})
+	trace_edit("worker_done",{"generation_ms":result.ms,"field":last_field_profile,"cached":result.get("cached",false)})
 	if result.get("cached",false): cache_reads+=1
 	else: cache_builds+=1
 
@@ -208,13 +233,17 @@ func publish_preview() -> void:
 	if not preview_meshes.is_empty() and edit_started_usec>0:
 		preview_publications+=1
 		preview_latency_ms=(Time.get_ticks_usec()-edit_started_usec)/1000.0;edit_started_usec=0
+		trace_edit("preview",{"latency_ms":preview_latency_ms,"chunks":preview_meshes.size(),"field":last_field_profile})
 	preview_meshes.clear();preview_expected.clear()
 
 func queue_editor_collision(key: Vector2i, parts: Dictionary) -> void:
 	# Compare with LIVE collision, not the last generated revision: several visual
 	# updates may have accumulated while a stroke held physics work back.
 	if collision_pending.has(key):
-		for body in collision_pending[key].staged.values(): body.queue_free()
+		# Finish bounded work already started; keep only the latest next snapshot.
+		# Rapid clicks must not continually destroy half-built physics resources.
+		collision_pending[key].next_parts=parts
+		return
 	var old_parts: Dictionary=chunks[key].get("collision_parts",{})
 	var dirty := []
 	for id in parts:
@@ -222,7 +251,7 @@ func queue_editor_collision(key: Vector2i, parts: Dictionary) -> void:
 	collision_pending[key]={"parts":parts,"dirty":dirty,"staged":{},"tick":-1}
 
 func pump_editor_collision() -> void:
-	if brushing or brush_dirty or collision_pending.is_empty(): return
+	if collision_pending.is_empty(): return
 	var started := Time.get_ticks_usec()
 	for key in collision_pending.keys():
 		var pending: Dictionary=collision_pending[key]
@@ -242,6 +271,7 @@ func pump_editor_collision() -> void:
 			if Time.get_ticks_usec()-started>=4000: return
 		if pending.tick<0: pending.tick=Engine.get_physics_frames();continue
 		if Engine.get_physics_frames()<=pending.tick: continue
+		remember_collision_support(key)
 		if not chunks[key].has("collision_blocks"):
 			# First edit converts the original whole-chunk collider to sections.
 			for child in chunks[key].node.get_children():
@@ -256,6 +286,8 @@ func pump_editor_collision() -> void:
 			body.collision_layer=1;body.collision_mask=1;chunks[key].collision_blocks[id]=body
 		chunks[key].collision_parts=pending.parts
 		collision_pending.erase(key)
+		if pending.has("next_parts"): queue_editor_collision(key,pending.next_parts)
+		trace_edit("collision_swap",{"key":str(key),"sections":pending.staged.size()})
 		if Time.get_ticks_usec()-started>=4000: return
 
 func update_chunk_overlay() -> void:
@@ -276,7 +308,7 @@ func update_chunk_overlay() -> void:
 			mesh.surface_add_vertex(p+offset);mesh.surface_add_vertex(p+offset+Vector3(0,88,0))
 	mesh.surface_end();chunk_overlay.mesh=mesh
 
-func change(next: Array, remember := true, update_ui := true) -> void:
+func change(next: Array, remember := true, update_ui := true, input_stamp := 0) -> void:
 	if remember:
 		undo_stack.append(features.duplicate(true));redo_stack.clear()
 	var changed := []
@@ -287,7 +319,7 @@ func change(next: Array, remember := true, update_ui := true) -> void:
 		if i<features.size() and i<next.size() and features[i]==next[i]: continue
 		if i<features.size(): changed.append(field_cache.influence(features[i]).grow(2.1))
 		if i<next.size(): changed.append(field_cache.influence(next[i]).grow(2.1))
-	if edit_started_usec==0: edit_started_usec=latest_input_usec if latest_input_usec>0 else Time.get_ticks_usec()
+	if edit_started_usec==0: edit_started_usec=input_stamp if input_stamp>0 else Time.get_ticks_usec()
 	features=next.duplicate(true);revision+=1;ready_frames=0
 	# Unrelated background jobs still have valid snapshots; don't discard them
 	# merely because a nearby stroke advanced the global editor revision.
@@ -305,6 +337,7 @@ func change(next: Array, remember := true, update_ui := true) -> void:
 		else: preview_expected[key]=true
 	selected=mini(selected,features.size()-1)
 	if update_ui: refresh()
+	trace_edit("edit_submitted",{"dirty_chunks":preview_expected.size()})
 	notice.text="Edited — Save to keep recipe. Old meshes retained on disk."
 
 func make_panel() -> void:
@@ -369,6 +402,8 @@ func add_feature(kind: String) -> void:
 	finish_brush();flush_brush()
 	if brush_mode:
 		brush_template.kind=kind;brush_template.erase("amount")
+		if kind=="carve": brush_template.localized=true
+		else: brush_template.erase("localized")
 		for key in ["end_x","end_y","end_z"]: brush_template.erase(key)
 		refresh()
 		if kind=="tunnel": brush_template.radius=4;refresh()
@@ -440,9 +475,12 @@ func cursor_hit() -> Dictionary:
 		if not current.is_empty(): return current
 	return hit
 
-func start_brush() -> void:
-	var hit := cursor_hit()
+func start_brush(hit_override := {}) -> void:
+	var started := Time.get_ticks_usec()
+	trace_edit("brush_pick_start")
+	var hit: Dictionary=cursor_hit() if hit_override.is_empty() else hit_override
 	if hit.is_empty(): return
+	trace_edit("brush_down",{"pick_ms":(Time.get_ticks_usec()-started)/1000.0,"radius":brush_template.radius,"tool":brush_template.kind,"point":str(hit.position)})
 	latest_input_usec=Time.get_ticks_usec()
 	if brush_template.kind=="tunnel":
 		flush_brush()
@@ -458,10 +496,13 @@ func start_brush() -> void:
 	undo_stack.append(source.duplicate(true));redo_stack.clear()
 	brush.begin(source,brush_template);brushing=true;brush_time=0
 	brush.dab(hit.position,brush_rate/60.0);brush_dirty=true
+	trace_edit("brush_input_done",{"input_ms":(Time.get_ticks_usec()-started)/1000.0})
 
 func finish_brush() -> void:
+	var started := Time.get_ticks_usec()
 	brushing=false
 	refresh()
+	trace_edit("brush_up",{"ui_ms":(Time.get_ticks_usec()-started)/1000.0})
 
 func suggested_exit(start: Vector3, normal: Vector3) -> Vector3:
 	var best: Vector3 = start+(-camera.basis.z*Vector3(1,0,1)).normalized()*brush_template.length
@@ -549,7 +590,7 @@ func update_brush_outline(p: Vector3) -> void:
 
 func flush_brush() -> void:
 	if not brush_dirty: return
-	brush_dirty=false;change(brush.draft,false,not brushing)
+	brush_dirty=false;change(brush.draft,false,not brushing,latest_input_usec)
 
 func editor_fly(delta: float) -> void:
 	var focus := get_viewport().gui_get_focus_owner()
@@ -579,7 +620,6 @@ func _input(event: InputEvent) -> void:
 		var kit := live_kit()
 		if kit:
 			kit.release_control()
-			if editing: resettle_edited_actors(kit)
 		editing=not editing;panel.visible=editing;placing=false;dragging=false;walking=false
 		Input.mouse_mode=Input.MOUSE_MODE_VISIBLE if editing else Input.MOUSE_MODE_CAPTURED
 		refresh();return
@@ -652,7 +692,9 @@ func _input(event: InputEvent) -> void:
 	super._input(event)
 
 func _physics_process(delta: float) -> void:
+	var started := Time.get_ticks_usec()
 	if editing:
+		settle_editor_contacts(delta)
 		editor_fly(delta)
 		var hit := cursor_hit()
 		aim_valid=not hit.is_empty()
@@ -664,6 +706,7 @@ func _physics_process(delta: float) -> void:
 			if brush_time>=1.0/60.0:
 				if not brush_dirty: latest_input_usec=Time.get_ticks_usec()
 				brush.dab(hit.position,brush_rate*brush_time);brush_time=0;brush_dirty=true
+		physics_ms=(Time.get_ticks_usec()-started)/1000.0
 		return
 	var kit := live_kit()
 	if not editing and (not kit or not kit.own_movement()): super._physics_process(delta)
@@ -688,11 +731,17 @@ func resettle_edited_actors(kit: Node) -> void:
 	edited_bounds.clear()
 
 func _process(delta: float) -> void:
+	var started := Time.get_ticks_usec()
+	var gap_ms := (started-last_process_usec)/1000.0 if last_process_usec else 0.0
+	last_process_usec=started
 	# Let each in-flight preview finish: continuous strokes must not starve meshing
 	# by invalidating its revision every input frame. Recipes still accumulate now.
 	if brush_dirty and preview_expected.is_empty(): flush_brush()
+	var submitted := Time.get_ticks_usec()
 	super._process(delta)
+	var streamed := Time.get_ticks_usec()
 	pump_editor_collision()
+	var collided := Time.get_ticks_usec()
 	publish_preview()
 	update_chunk_overlay()
 	update_endpoint_guide()
@@ -704,13 +753,88 @@ func _process(delta: float) -> void:
 		if editing: kit.crosshair.hide()
 		for actor in kit.actors: actor.set_physics_process(not editing)
 		if editing:
-			for body in kit.vehicle_system.vehicles: body.set_stream_ready(false)
+			for body in kit.vehicle_system.vehicles:
+				body.controlled=false;body.set_controls(0,0,true)
+				body.set_stream_ready(chunks.has(key_at(body.position)))
 	if not editing: brush_cursor.hide()
 	hud.text="SDF WORKSHOP / WASD fly | RMB look | LMB sculpt | F1 play\n%s / %.1f strength/s / radius %.1fm | features %d | %.0f FPS\n%s" % [brush_template.kind,brush_rate,brush_template.radius,features.size(),Engine.get_frames_per_second(),"Stroke queued; preview catching up" if brush_dirty else "Wheel zoom | Shift-wheel size | F3 chunks | Space/Ctrl rise/fall"]
 	if kit and kit.vehicle_system.driving:
 		var vehicle: RigidBody3D=kit.vehicle_system.driving
 		hud.text+="\nCollision-ahead speed limit: %.1f m/s%s" % [vehicle.stream_speed_limit," / waiting for terrain" if vehicle.streaming_suspended else ""]
 	if editing: hud.text+="\nPreview %.0f ms | warm %s | rebuilt %d/16 blocks | collision queue %d" % [preview_latency_ms,str(last_field_profile.get("warm_field",false)),last_field_profile.get("rebuilt_blocks",0),collision_pending.size()]
+	var total_ms := (Time.get_ticks_usec()-started)/1000.0
+	if gap_ms>80 or total_ms>40 or physics_ms>20:
+		trace_edit("stall",{"frame_gap_ms":gap_ms,"process_ms":total_ms,"submit_ms":(submitted-started)/1000.0,"stream_ms":(streamed-submitted)/1000.0,"collision_ms":(collided-streamed)/1000.0,"physics_ms":physics_ms})
+	if trace_file and started-trace_flush_usec>1000000: trace_file.flush();trace_flush_usec=started
+
+func remember_collision_support(key: Vector2i) -> void:
+	var kit := live_kit()
+	if not editing or not kit: return
+	var bodies: Array=[];bodies.append_array(kit.vehicle_system.vehicles);bodies.append_array(kit.actors)
+	for body in bodies:
+		if key_at(body.position)!=key or collision_supports.has(body): continue
+		var p: Vector3=body.position
+		var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(p+Vector3.UP*1.5,p-Vector3.UP*3,1))
+		if not hit.is_empty(): collision_supports[body]={"height":hit.position.y,"tick":Engine.get_physics_frames()}
+
+func settle_editor_contacts(delta: float) -> void:
+	var kit := live_kit()
+	if not kit: return
+	for body in collision_supports.keys():
+		if not is_instance_valid(body): collision_supports.erase(body);continue
+		var previous: Dictionary=collision_supports[body]
+		if Engine.get_physics_frames()<=previous.tick+1: continue
+		var p: Vector3=body.position
+		var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(p.x,64,p.z),Vector3(p.x,-24,p.z),1))
+		# Added solid cannot reliably push a buried rigid body out. Carry supported
+		# objects up with the edited floor, but never snap them down into a cut.
+		if not hit.is_empty() and hit.position.y>previous.height and p.y-previous.height<2 and (hit.position.y<=p.y+1.5 or Recipe.field(p+Vector3.UP*.5,tunnel_radius,roughness,features)<0):
+			body.position.y+=hit.position.y-previous.height
+			if body is RigidBody3D: body.sleeping=false
+		collision_supports.erase(body)
+	for actor in kit.actors:
+		if chunks.has(key_at(actor.position)):
+			actor.velocity.x=0;actor.velocity.z=0;actor.velocity.y-=20*delta;actor.move_and_slide()
+
+func check_repeated_clicks() -> void:
+	while ready_frames<3 or not live_kit(): await get_tree().process_frame
+	set_physics_process(false)
+	var original := features.duplicate(true)
+	brush_template=Recipe.feature("lower",Vector3.ZERO);brush_template.radius=16
+	var before := preview_publications
+	var started := Time.get_ticks_usec()
+	for click in 20:
+		start_brush({"position":Vector3(-32,0,-48),"normal":Vector3.UP})
+		finish_brush()
+		await get_tree().process_frame
+	while brush_dirty or not preview_expected.is_empty() or not collision_pending.is_empty() or ready_frames<3: await get_tree().process_frame
+	assert(features.size()==original.size()+20,"Rapid clicks lost edits")
+	trace_edit("rapid_click_test",{"elapsed_ms":(Time.get_ticks_usec()-started)/1000.0,"updates":preview_publications-before})
+	# Restore source then test physical response without editor-to-play relocation.
+	change([],false)
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	set_physics_process(true)
+	var kit := live_kit();var car: RigidBody3D=kit.vehicle
+	for frame in 60: await get_tree().physics_frame
+	var initial_y := car.position.y
+	var cut := Recipe.feature("lower",car.position);cut.radius=12;cut.amount=4
+	change([cut],false)
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	for frame in 120: await get_tree().physics_frame
+	assert(not car.freeze and car.position.y<initial_y-1,"Editor vehicle did not fall into cut")
+	var low_y := car.position.y
+	change([],false)
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	for frame in 60: await get_tree().physics_frame
+	assert(car.position.y>low_y+1,"Editor vehicle did not rise with restored ground")
+	# Shared walk/fly controller must allow the valid -8..-24 m terrain band.
+	editing=false;walking=false;camera.position=Vector3(-48,-18,-48)
+	_physics_process(0)
+	assert(camera.position.y< -17,"Deep-hole camera was teleported")
+	editing=true
+	trace_edit("repro_pass",{"vehicle_start_y":initial_y,"vehicle_hole_y":low_y,"vehicle_restored_y":car.position.y})
+	print("PASS: 20 repeated 16m clicks retained; live editor vehicle falls and rises; deep-hole camera not teleported. Trace: ",trace_path)
+	get_tree().quit()
 
 func check_workshop() -> void:
 	while ready_frames<3 or not collision_pending.is_empty() or not live_kit(): await get_tree().process_frame
