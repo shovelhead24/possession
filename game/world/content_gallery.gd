@@ -8,6 +8,8 @@ var finished := false
 var selected := -1
 var contact_debug := MeshInstance3D.new()
 var show_contacts := false
+var loading_sources_done := 0
+var loading_sources_total := 0
 
 func setup(tile: Node3D) -> void:
 	patch = tile
@@ -42,10 +44,16 @@ func load_gallery() -> void:
 	# One source per frame keeps a visible progress state. Runtime GLTF decoding
 	# is still synchronous; this is not the eventual streamed/baked asset pipeline.
 	var specs := source_specs()
+	loading_sources_total=specs.size();loading_sources_done=0
 	for spec in specs:
+		if patch.has_method("loading_event"):
+			patch.loading_event("Importing "+str(spec[0])+" — "+str(spec[1]).get_file())
+			await RenderingServer.frame_post_draw
 		await get_tree().process_frame
 		var model := import_source(ProjectSettings.globalize_path(spec[1]).simplify_path())
 		if model == null:
+			loading_sources_done+=1
+			if patch.has_method("loading_event"): patch.loading_event("WARNING: could not load "+str(spec[0]))
 			push_warning("Gallery asset unavailable: " + spec[0])
 			continue
 		model.hide()
@@ -74,11 +82,14 @@ func load_gallery() -> void:
 		var extent: float = bounds.size.y if spec[4] else maxf(bounds.size.x,bounds.size.z)
 		if extent <= 0.001:
 			model.free()
+			loading_sources_done+=1
 			continue
 		model.scale *= float(spec[3])/extent
 		bounds = model_bounds(model)
 		model.position -= Vector3(bounds.get_center().x,bounds.position.y,bounds.get_center().z)
 		add_entry(spec[0],model,spec[2],bounds.size.y)
+		loading_sources_done+=1
+		if patch.has_method("loading_event"): patch.loading_event(str(spec[0])+" ready")
 		print("GALLERY loaded: ", spec[0], " dimensions(m)=", bounds.size)
 	if include_relay(): add_entry("Frontier relay",make_relay(),Vector2(25,-22),8.5)
 	finished = true

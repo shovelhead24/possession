@@ -191,12 +191,39 @@ targets a far surface. Esc cancels placement. Radius changes modify the selected
 tunnel, not a future brush. Moving preserves its recipe position and is undoable;
 the old cut disappears unless another authored cut also occupies that location.
 Legacy curved tunnels support whole-feature movement/radius, but not the straight
-tunnel endpoint controls. Raise/Lower hides tunnel handles to prevent accidental
+tunnel endpoint controls. Both straight-tunnel handles now support screen-plane
+dragging: grab the centre to drag and select that end, or click away from handles
+to place the active end on a surface. Handles have priority over surface picking;
+no mode switch is needed. The active end starts as the exit. The green radius
+ring is tangent to the hit surface (including vertical walls), not a horizontal
+brush footprint. It is a guide circle, not a conforming decal on uneven rock.
+Raise/Lower hides tunnel handles to prevent accidental
 endpoint grabs while sculpting.
 
 `--authoring-tunnel-check` covers replacement rather than accumulation, translating
 both endpoints, endpoint/radius edits, undo/redo, one-shot disarming, cancellation
 and generated collision clearance. It does not save over the user's recipe.
+
+## Loading and returning to a test
+
+The workshop shows a briefing before synchronous scene setup: current goal,
+iteration notes and controls from `game/world/workshop_brief.json`, plus a recent
+scene screenshot. First launch captures a screenshot when ready; subsequent
+launches show the previous view with a timestamp until replaced by the new view.
+The screenshot represents the actual loaded saved terrain, not a staged example.
+
+The progress bar is explicitly approximate, weighted across terrain chunks,
+processed ring-image jobs, source models and final live-kit setup. It is not an
+ETA or byte counter. Counts can expand when vehicle look-ahead terrain becomes
+known; the displayed percentage stays monotonic and reaches 100 only at readiness.
+The activity log names asset imports before starting them and is also printed to
+the engine log as `WORKSHOP_LOAD`. Synchronous model/texture imports can still
+pause screen updates; this screen explains loading, not a threaded import rewrite.
+
+Click **Enter workshop** when ready. **F2** reopens the briefing. Input is gated
+while it is open. First-person hands and weapons are hidden in edit mode, restored
+only for normal on-foot play. `--authoring-loading-check` verifies readiness,
+screenshot creation, opening/closing the briefing and hidden editor viewmodels.
 
 Press **F8 before an operation**, then **F8 afterwards** (or use the panel button).
 Paired `operation_marker` BEGIN/END records contain a shared ID, UTC/Unix time,

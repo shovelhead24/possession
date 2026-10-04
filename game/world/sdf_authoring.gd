@@ -72,6 +72,10 @@ var picking_entry := false
 var tunnel_choice: OptionButton
 var tunnel_radius_control: SpinBox
 var tunnel_actions: HFlowContainer
+var loading_screen: CanvasLayer
+var loading_test_started := false
+var dragging_entry := false
+var surface_cursor := MeshInstance3D.new()
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
@@ -114,6 +118,15 @@ func live_kit() -> Node:
 	return arena_content.kit if is_instance_valid(arena_content) and arena_content.get("kit") and arena_content.kit.initialized else null
 
 func _ready() -> void:
+	var automated := false
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--authoring-") and arg!="--authoring-loading-check": automated=true
+	if not automated:
+		set_process(false);set_physics_process(false);set_process_input(false)
+		loading_screen=preload("res://world/workshop_loading.gd").new();add_child(loading_screen)
+		loading_screen.enter.pressed.connect(func(): Input.mouse_mode=Input.MOUSE_MODE_VISIBLE if editing else Input.MOUSE_MODE_CAPTURED)
+		Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
+		await RenderingServer.frame_post_draw
 	trace_path="user://sdf-editor-trace-"+str(Time.get_unix_time_from_system()).replace(".","-")+".jsonl"
 	trace_file=FileAccess.open(trace_path,FileAccess.WRITE)
 	print("EDITOR_TRACE ",ProjectSettings.globalize_path(trace_path))
@@ -126,6 +139,7 @@ func _ready() -> void:
 	var sphere := SphereMesh.new();sphere.radius=.7;sphere.height=1.4
 	marker.mesh=sphere
 	var mat := StandardMaterial3D.new();mat.albedo_color=Color.ORANGE;mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.no_depth_test=true
 	marker.material_override=mat;add_child(marker)
 	var cursor_mesh := SphereMesh.new();cursor_mesh.radius=1;cursor_mesh.height=2
 	brush_cursor.mesh=cursor_mesh
@@ -136,6 +150,11 @@ func _ready() -> void:
 	chunk_overlay.material_override=line_material
 	add_child(endpoint_guide);endpoint_guide.material_override=line_material
 	endpoint_handle.mesh=cursor_mesh;endpoint_handle.material_override=line_material;add_child(endpoint_handle)
+	var ring_mesh := ImmediateMesh.new();ring_mesh.surface_begin(Mesh.PRIMITIVE_LINES);ring_mesh.surface_set_color(Color(0.3,1,.45))
+	for i in 64:
+		ring_mesh.surface_add_vertex(Vector3(cos(i*TAU/64),0,sin(i*TAU/64)))
+		ring_mesh.surface_add_vertex(Vector3(cos((i+1)*TAU/64),0,sin((i+1)*TAU/64)))
+	ring_mesh.surface_end();surface_cursor.mesh=ring_mesh;surface_cursor.material_override=line_material;surface_cursor.hide();add_child(surface_cursor)
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	refresh()
 	DisplayServer.window_set_title("SDF workshop / Raise-Lower + editable tunnels")
@@ -144,6 +163,26 @@ func _ready() -> void:
 	if OS.get_cmdline_user_args().has("--authoring-ui-check"): check_simple_ui.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-tunnel-check"): check_tunnel_editing.call_deferred()
 	trace_edit("ready",{"path":trace_path})
+	set_process(true);set_physics_process(true);set_process_input(true)
+
+func loading_event(message: String) -> void:
+	if loading_screen: loading_screen.log_event(message)
+
+func update_loading_screen() -> void:
+	if not loading_screen or loading_screen.ready_to_enter: return
+	var wanted := desired();var done := 0
+	for key in wanted:
+		if chunks.has(key) and chunks[key].revision==revision: done+=1
+	var sources := int(arena_content.loading_sources_done) if is_instance_valid(arena_content) else 0
+	var total := int(arena_content.loading_sources_total) if is_instance_valid(arena_content) else 4
+	var ring_done: bool=ring_background.background_ready and not ring_background.home_pending and ring_background._preview_thread==null and ring_background._preview_queue.is_empty()
+	var imagery_total := maxi(1,ring_background.preview_total)
+	var processed: int=imagery_total-ring_background._preview_queue.size()-int(ring_background._preview_thread!=null)-int(ring_background.home_pending) if ring_background.background_ready else 0
+	var complete: bool=live_kit()!=null and ready_frames>=3 and collision_pending.is_empty() and ring_done
+	loading_screen.update_progress(done,wanted.size(),maxi(0,processed),imagery_total,sources,maxi(4,total),live_kit()!=null,complete)
+
+func briefing_open() -> bool:
+	return loading_screen!=null and not loading_screen.dismissed
 
 func rebuild() -> void:
 	revision+=1
@@ -426,7 +465,7 @@ func make_panel() -> void:
 		elif selected>=0 and features[selected].kind=="tunnel":
 			var next := features.duplicate(true);next[selected].radius=value;change(next))
 	var tunnel_help := Label.new();tunnel_help.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;tunnel_help.custom_minimum_size.x=270
-	tunnel_help.text="Creating switches straight to editing that tunnel. Moving replaces its old cut; it does not add another. Drag the cyan exit through terrain; Ctrl snaps to 45 degrees. Alt-click with Set exit targets the far surface. Esc cancels placement."
+	tunnel_help.text="Grab either centre point to drag/select that end; click elsewhere on terrain to place the active end. Orange = entrance, cyan = exit. Green circle shows the target opening on the wall. Focus tunnel finds its handles. Ctrl snaps heading; Alt-click targets the far exit surface. Moving replaces the old cut."
 	tunnel_panel.add_child(tunnel_help)
 	var advanced_toggle := CheckButton.new();advanced_toggle.text="Advanced tools and feature settings";column.add_child(advanced_toggle)
 	var advanced := VBoxContainer.new();column.add_child(advanced);advanced.hide()
@@ -497,9 +536,9 @@ func select_tunnel(index: int) -> void:
 	if index<0 or index>=features.size() or features[index].kind!="tunnel": return
 	finish_brush();flush_brush();selected=index
 	brush_template=features[index].duplicate(true);brush_template.erase("amount")
-	brush_mode=false;tunnel_new_armed=false;placing=false;dragging=false;picking_entry=false;picking_endpoint=false;endpoint_dragging=false
+	brush_mode=false;tunnel_new_armed=false;placing=false;dragging=false;picking_entry=false;picking_endpoint=features[index].has("end_x");endpoint_dragging=false
 	brush_mode_toggle.set_pressed_no_signal(false);refresh()
-	notice.text="EDITING tunnel %d. Move whole tunnel preserves its direction and length; Set entrance/exit changes one end. No new cuts on ordinary clicks." % (index+1)
+	notice.text="EDITING tunnel %d. Grab either centre handle to drag/select that end; click a surface to place the active end. Exit active initially. Move whole tunnel preserves both ends." % (index+1)
 
 func pick_tunnel_entry() -> void:
 	if selected<0 or not features[selected].has("end_x"): return
@@ -685,6 +724,7 @@ func endpoint_position() -> Vector3:
 func snap_endpoint(p: Vector3) -> Vector3:
 	if not Input.is_key_pressed(KEY_CTRL): return p
 	var f: Dictionary=features[selected];var start := Vector3(f.x,f.y,f.z)
+	if dragging_entry: start=Vector3(f.end_x,f.end_y,f.end_z)
 	var offset := p-start;var length := Vector2(offset.x,offset.z).length()
 	var angle := snappedf(atan2(offset.z,offset.x),PI/4)
 	return Vector3(start.x+cos(angle)*length,p.y,start.z+sin(angle)*length)
@@ -693,12 +733,39 @@ func set_endpoint(p: Vector3) -> void:
 	var next := features.duplicate(true);p=snap_endpoint(p)
 	next[selected].end_x=p.x;next[selected].end_y=p.y;next[selected].end_z=p.z;change(next)
 
+func set_tunnel_entry(p: Vector3) -> void:
+	var next := features.duplicate(true)
+	next[selected].x=p.x;next[selected].y=p.y;next[selected].z=p.z;change(next)
+
+func tunnel_target_hit(mouse: Vector2, far_side: bool) -> Dictionary:
+	if panel.visible and panel.get_global_rect().has_point(mouse): return {}
+	if not far_side: return cursor_hit()
+	var p: Variant=far_surface(mouse)
+	if p==null: return {}
+	var source := features.duplicate(true);source.remove_at(selected)
+	var n := Vector3.ZERO
+	for axis in 3:
+		var e := Vector3.ZERO;e[axis]=.05
+		n[axis]=Recipe.field(p+e,tunnel_radius,roughness,source)-Recipe.field(p-e,tunnel_radius,roughness,source)
+	return {"position":p,"normal":n.normalized()}
+
+func update_surface_cursor(hit: Dictionary) -> void:
+	surface_cursor.visible=not hit.is_empty()
+	if hit.is_empty(): return
+	var n: Vector3=hit.normal.normalized()
+	if n.length_squared()<.1: n=Vector3.UP
+	var tangent := n.cross(Vector3.FORWARD if absf(n.z)<.9 else Vector3.UP).normalized()
+	var radius: float=brush_template.radius if tunnel_new_armed else features[selected].radius
+	surface_cursor.transform=Transform3D(Basis(tangent,n,tangent.cross(n)).scaled(Vector3.ONE*radius),hit.position+n*.06)
+
 func update_endpoint_guide() -> void:
 	var active: bool = editing and not brush_mode and selected>=0 and features[selected].has("end_x")
 	endpoint_guide.visible=active;endpoint_handle.visible=active
 	if not active: return
 	var f: Dictionary=features[selected];var start := Vector3(f.x,f.y,f.z)
-	var end := endpoint_preview if endpoint_dragging else endpoint_position()
+	if endpoint_dragging and dragging_entry: start=endpoint_preview
+	var end := endpoint_preview if endpoint_dragging and not dragging_entry else endpoint_position()
+	marker.position=start
 	endpoint_handle.position=end
 	var direction := (end-start).normalized()
 	var side := direction.cross(Vector3.UP).normalized()
@@ -768,6 +835,13 @@ func focus_selected() -> void:
 	camera.position=target+Vector3(-28,25,-35);camera.look_at(target);look=Vector2(camera.rotation.y,camera.rotation.x)
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F2 and loading_screen and loading_screen.ready_to_enter:
+		if loading_screen.dismissed:
+			finish_brush();flush_brush();looking=false;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;loading_screen.reopen()
+		else:
+			loading_screen.close();Input.mouse_mode=Input.MOUSE_MODE_VISIBLE if editing else Input.MOUSE_MODE_CAPTURED
+		return
+	if briefing_open(): return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F8:
 		mark_operation();get_viewport().set_input_as_handled();return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F3:
@@ -799,24 +873,36 @@ func _input(event: InputEvent) -> void:
 		if event is InputEventMouseMotion and looking:
 			look.x-=event.relative.x*.003;look.y=clampf(look.y-event.relative.y*.003,-1.5,1.5);camera.rotation=Vector3(look.y,look.x,0)
 		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not event.pressed and endpoint_dragging:
-			endpoint_dragging=false;set_endpoint(endpoint_preview);return
+			endpoint_dragging=false
+			var initial := Vector3(features[selected].x,features[selected].y,features[selected].z) if dragging_entry else endpoint_position()
+			if not endpoint_preview.is_equal_approx(initial):
+				if dragging_entry: set_tunnel_entry(endpoint_preview)
+				else: set_endpoint(endpoint_preview)
+			dragging_entry=false;return
 		if event is InputEventMouseMotion and endpoint_dragging:
 			var point: Variant=endpoint_plane.intersects_ray(camera.project_ray_origin(event.position),camera.project_ray_normal(event.position))
 			if point!=null: endpoint_preview=snap_endpoint(point)
 			return
 		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed and not panel.get_global_rect().has_point(event.position) and not brush_mode and not placing and selected>=0 and features[selected].has("end_x"):
+			# Handles take priority over surface placement: both interactions are
+			# always available without switching tools. Choose nearest on screen.
+			var entrance := Vector3(features[selected].x,features[selected].y,features[selected].z)
+			var entry_distance := INF if camera.is_position_behind(entrance) else camera.unproject_position(entrance).distance_to(event.position)
+			var exit_distance := INF if camera.is_position_behind(endpoint_position()) else camera.unproject_position(endpoint_position()).distance_to(event.position)
+			if minf(entry_distance,exit_distance)<20:
+				dragging_entry=entry_distance<exit_distance;picking_entry=dragging_entry;picking_endpoint=not dragging_entry
+				endpoint_dragging=true;endpoint_preview=entrance if dragging_entry else endpoint_position();endpoint_plane=Plane(camera.basis.z,endpoint_preview)
+				notice.text=("Entrance" if dragging_entry else "Exit")+" active: drag this centre point, or click a surface to place it."
+				return
 			if picking_entry:
 				var hit := cursor_hit()
 				if not hit.is_empty():
-					var next := features.duplicate(true);next[selected].x=hit.position.x;next[selected].y=hit.position.y;next[selected].z=hit.position.z
-					change(next);picking_entry=false
+					set_tunnel_entry(hit.position)
 				return
-			if picking_endpoint:
-				var point: Variant=far_surface(event.position) if event.alt_pressed else cursor_hit().get("position")
-				if point!=null: set_endpoint(point);picking_endpoint=false
+			else:
+				var hit := tunnel_target_hit(event.position,event.alt_pressed)
+				if not hit.is_empty(): set_endpoint(hit.position);picking_endpoint=true
 				return
-			if not camera.is_position_behind(endpoint_position()) and camera.unproject_position(endpoint_position()).distance_to(event.position)<20:
-				endpoint_dragging=true;endpoint_preview=endpoint_position();endpoint_plane=Plane(camera.basis.z,endpoint_preview);return
 		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not placing and brush_mode:
 			if event.pressed:
 				if not panel.get_global_rect().has_point(event.position):
@@ -859,13 +945,20 @@ func _input(event: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
 	var started := Time.get_ticks_usec()
+	if briefing_open():
+		if editing: settle_editor_contacts(delta)
+		return
 	if editing:
 		settle_editor_contacts(delta)
 		editor_fly(delta)
 		var hit := cursor_hit()
+		var targeting := tunnel_new_armed or picking_entry or picking_endpoint
+		if targeting and not endpoint_dragging:
+			update_surface_cursor(tunnel_target_hit(get_viewport().get_mouse_position(),picking_endpoint and Input.is_key_pressed(KEY_ALT)))
+		else: surface_cursor.hide()
 		aim_valid=not hit.is_empty()
 		if aim_valid: aim_point=hit.position
-		brush_cursor.visible=brush_mode and not hit.is_empty()
+		brush_cursor.visible=brush_mode and not targeting and not hit.is_empty()
 		if not hit.is_empty(): update_brush_outline(hit.position)
 		if brushing and not hit.is_empty():
 			brush_time+=delta
@@ -914,8 +1007,9 @@ func _process(delta: float) -> void:
 	panel.position.x=maxf(0,get_viewport().get_visible_rect().size.x-panel.size.x-10)
 	var kit := live_kit()
 	if kit:
-		kit.test_capture=editing
+		kit.test_capture=editing or briefing_open()
 		kit.health_hud.visible=not editing
+		if kit.holder: kit.holder.visible=not editing and not briefing_open() and walking and not kit.own_movement()
 		if editing: kit.crosshair.hide()
 		for actor in kit.actors: actor.set_physics_process(not editing)
 		if editing:
@@ -933,6 +1027,19 @@ func _process(delta: float) -> void:
 	if gap_ms>80 or total_ms>40 or physics_ms>20:
 		trace_edit("stall",{"frame_gap_ms":gap_ms,"process_ms":total_ms,"submit_ms":(submitted-started)/1000.0,"stream_ms":(streamed-submitted)/1000.0,"collision_ms":(collided-streamed)/1000.0,"physics_ms":physics_ms,"engine_process_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"engine_physics_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000})
 	if trace_file and started-trace_flush_usec>1000000: trace_file.flush();trace_flush_usec=started
+	update_loading_screen()
+	if OS.get_cmdline_user_args().has("--authoring-loading-check") and loading_screen and loading_screen.ready_to_enter and not loading_test_started:
+		loading_test_started=true;check_loading_screen.call_deferred()
+
+func check_loading_screen() -> void:
+	assert(loading_screen.bar.value==100 and not loading_screen.enter.disabled and loading_screen.preview.texture!=null)
+	assert(not live_kit().holder.visible,"Viewmodel visible while editing")
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("user://workshop-loading-brief-check.png")
+	loading_screen.close();assert(not briefing_open())
+	loading_screen.reopen();assert(briefing_open())
+	print("PASS: loading complete, briefing screenshot present, enter/reopen works, first-person viewmodel hidden in edit mode")
+	get_tree().quit()
 
 func remember_collision_support(key: Vector2i) -> void:
 	var kit := live_kit()
@@ -1041,6 +1148,22 @@ func check_tunnel_editing() -> void:
 	tunnel.end_x=-36.0;tunnel.end_y=6.0;tunnel.end_z=-48.0
 	change([hill,tunnel],false);select_tunnel(1)
 	assert(not brush_mode and not tunnel_new_armed and features.size()==2)
+	# Centre grabs take priority even while surface targeting is active.
+	var saved_camera := camera.transform;var saved_panel := panel.position
+	camera.position=Vector3(-48,26,-70);camera.look_at(Vector3(-48,6,-48));panel.position.x=5000
+	for entry in [true,false]:
+		var centre := Vector3(tunnel.x,tunnel.y,tunnel.z) if entry else Vector3(tunnel.end_x,tunnel.end_y,tunnel.end_z)
+		var press := InputEventMouseButton.new();press.button_index=MOUSE_BUTTON_LEFT;press.pressed=true;press.position=camera.unproject_position(centre)
+		_input(press)
+		assert(endpoint_dragging and dragging_entry==entry,"Centre handle did not win over surface targeting")
+		var motion := InputEventMouseMotion.new();motion.position=press.position+Vector2(8,4);_input(motion)
+		assert(endpoint_preview.distance_to(centre)>.01,"Centre drag did not move preview")
+		var release := InputEventMouseButton.new();release.button_index=MOUSE_BUTTON_LEFT;release.pressed=false;release.position=motion.position;_input(release)
+		assert(not endpoint_dragging and features.size()==2)
+		undo();select_tunnel(1)
+	update_surface_cursor({"position":Vector3(-48,6,-48),"normal":Vector3.RIGHT})
+	assert(surface_cursor.basis.y.normalized().dot(Vector3.RIGHT)>.999,"Target circle not aligned to vertical wall")
+	camera.transform=saved_camera;panel.position=saved_panel;surface_cursor.hide()
 	assert(Recipe.field(Vector3(-48,6,-48),tunnel_radius,roughness,features)>0)
 	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
 	await get_tree().physics_frame

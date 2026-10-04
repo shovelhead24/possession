@@ -1,0 +1,7 @@
+{
+  "title": "Terrain workshop — editable tunnels",
+  "iteration": "2026-10-04 / tunnel handles + loading briefing",
+  "goal": "Keep the accepted Raise/Lower brush. Test creating one tunnel, moving that same tunnel, and adjusting its entrance, exit and radius without leaving extra cuts.",
+  "changes": "New: grab either tunnel centre point to drag/select that end; click a surface to place it. A green radius circle follows the target wall. Loading now shows this briefing, progress and a screenshot. Hands and gun are hidden while editing.",
+  "controls": "Raise/Lower: hold LMB on ground. RMB + WASD: fly; Space/Ctrl: up/down. Wheel: zoom; Shift-wheel: brush size.\nTunnel: Create ONE, then click entrance. Grab an orange entrance/cyan exit centre to drag and select it; click elsewhere on terrain to place that end. Focus tunnel finds its handles. Move whole tunnel moves both ends. Ctrl snaps exit heading; Alt-click targets the far exit surface. Esc cancels.\nF8: mark BEGIN/END around a slow operation. F3: chunks. F1: edit/play. F2: briefing. Save explicitly to retain terrain edits."
+}

@@ -69,6 +69,9 @@ func add_entry(title: String, model: Node3D, coord: Vector2, height: float) -> v
 
 func load_arena() -> void:
 	await super.load_arena()
+	if patch.has_method("loading_event"):
+		patch.loading_event("Preparing first-person arms, weapons and vehicle controls")
+		await RenderingServer.frame_post_draw
 	await kit.build_weapons()
 	kit.vehicle_system.initialize()
 	kit.initialized=true

@@ -30,6 +30,9 @@ func load_arena() -> void:
 				var clone := entry.model.duplicate() as Node3D
 				add_entry("Alien",clone,coord,entry.height)
 	await get_tree().process_frame
+	if patch.has_method("loading_event"):
+		patch.loading_event("Importing trees and preparing foliage LODs")
+		await RenderingServer.frame_post_draw
 	load_trees()
 	finished = true
 	print("ARENA_CONTENT ready actors=",entries.size()," trees=",tree_count)

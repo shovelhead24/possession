@@ -70,6 +70,8 @@ or headless tests alone are not the user-facing launch. Use a fresh process, not
 scene reload, and say which scene was launched. Never close an existing session
 with potentially unsaved work without permission. If launching fails or requires
 unavailable approval, report that explicitly rather than claiming it is running.
+Keep `game/world/workshop_brief.json` current with the iteration's test goal,
+changes and controls; the workshop loading screen presents this on launch.
 
 ### Standing terrain cache rule
 The user accepted the simple hold-to-sculpt Raise/Lower controls on 2026-10-04.
