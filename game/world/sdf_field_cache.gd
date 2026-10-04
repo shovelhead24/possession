@@ -53,7 +53,7 @@ static func valid_state(state: Dictionary, cells: Vector3i) -> bool:
 		for index in part.indices:
 			if index<0 or index>=part.vertices.size(): return false
 	for kernel in state.kernels.values():
-		if not kernel is PackedFloat32Array or kernel.size()!=dims.x*dims.z: return false
+		if not (kernel is PackedFloat32Array or kernel is PackedFloat64Array) or kernel.size()!=dims.x*dims.z: return false
 	return true
 
 func restore(origin: Vector3, cells: Vector3i, spacing: float, radius: float, rough: float, state: Dictionary) -> void:
@@ -68,8 +68,9 @@ func restore(origin: Vector3, cells: Vector3i, spacing: float, radius: float, ro
 	mutex.unlock()
 
 static func influence(f: Dictionary) -> Rect2:
-	if f.has("amount") and f.kind in ["hill","lower"]:
+	if f.kind=="flatten" or (f.has("amount") and f.kind in ["hill","lower"]):
 		var radius: float=f.radius*maxf(1,float(f.get("aspect",1)))
+		if f.get("shape","circle")=="square": radius*=sqrt(2.0)
 		return Rect2(Vector2(f.x-radius,f.z-radius),Vector2.ONE*radius*2).grow(.1)
 	return Recipe.bounds(f)
 
@@ -130,6 +131,7 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 	var compiled := []
 	for feature in (features.slice(old_features.size()) if append_only else features):
 		var item := {"feature":feature,"additive":feature.has("amount") and feature.kind in ["hill","lower"]}
+		item.flatten=optimise and feature.kind=="flatten"
 		item.area=Recipe.bounds(feature)
 		item.sphere=feature.kind=="carve" and not feature.has("amount")
 		item.curve=optimise and feature.kind in ["ridge","tunnel"] and not feature.has("end_x")
@@ -147,12 +149,13 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 			item.starts=starts;item.axes=axes;item.lengths=lengths
 		if item.sphere:
 			item.center=Vector3(feature.x,feature.y,feature.z);item.area=Recipe.bounds(feature)
-		if item.additive:
+		if item.additive or item.flatten:
 			var shape: Dictionary=feature.duplicate();shape.erase("amount");shape.erase("y");shape.erase("height")
 			var kernel_key := JSON.stringify(shape)
 			if old_kernels.has(kernel_key): kernels[kernel_key]=old_kernels[kernel_key]
 			if not kernels.has(kernel_key):
-				var weights := PackedFloat32Array();weights.resize(dims.x*dims.z)
+				var weights: Variant=PackedFloat64Array() if item.flatten else PackedFloat32Array()
+				weights.resize(dims.x*dims.z)
 				for z in dims.z:
 					for x in dims.x:
 						var p := (grid_origin+Vector3(x,0,z)*spacing-Vector3(feature.x,0,feature.z)).rotated(Vector3.UP,-deg_to_rad(feature.yaw))
@@ -178,6 +181,10 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 					offset+=float(item.feature.amount)*item.weights[z*dims.x+x]*(-1 if item.feature.kind=="hill" else 1)
 					continue
 				if offset!=0: column_ops.append({"offset":offset});offset=0
+				if item.flatten:
+					var weight: float=item.weights[z*dims.x+x]
+					if weight>0 and item.area.has_point(point): column_ops.append({"flatten_weight":weight,"height":item.feature.y,"blend":1.0-exp(-float(item.feature.amount)) if item.feature.has("amount") else 1.0,"blended":item.feature.has("amount")})
+					continue
 				if (not optimise and not item.sphere) or item.area.has_point(point): column_ops.append(item)
 			if offset!=0: column_ops.append({"offset":offset})
 			if optimise and (column_ops.is_empty() or (column_ops.size()==1 and column_ops[0].has("offset"))):
@@ -198,6 +205,9 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 				for item in column_ops:
 					if item.has("offset"):
 						value+=item.offset
+					elif item.has("flatten_weight"):
+						var flat := lerpf(value,p.y-item.height,item.flatten_weight)
+						value=lerpf(value,flat,item.blend) if item.blended else flat
 					elif item.sphere:
 						value=maxf(value,item.feature.radius-p.distance_to(item.center))
 					elif item.curve:
@@ -244,7 +254,7 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 		var offset := vertices.size();vertices.append_array(part.vertices);normals.append_array(part.normals)
 		for index in part.indices: indices.append(offset+index)
 	var footprint := base.size()*8+vertices.size()*24+indices.size()*4
-	for kernel in kernels.values(): footprint+=kernel.size()*4
+	for kernel in kernels.values(): footprint+=kernel.size()*(8 if kernel is PackedFloat64Array else 4)
 	state={"origin":origin,"cells":cells,"spacing":spacing,"base":base,"values":values,"features":features.duplicate(true),"parts":parts,"kernels":kernels,"bytes":footprint}
 	mutex.lock()
 	if entries.has(key): bytes-=entries[key].bytes;order.erase(key)

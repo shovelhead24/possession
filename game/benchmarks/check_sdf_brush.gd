@@ -5,6 +5,11 @@ const Mesher=preload("res://world/tetra_mesher.gd")
 
 func _initialize() -> void:
 	var tool := Recipe.feature("lower",Vector3.ZERO);tool.radius=8
+	var flatten := Brush.new();flatten.begin([],Recipe.feature("flatten",Vector3.ZERO))
+	flatten.dab(Vector3(0,5,0),.2);flatten.dab(Vector3(20,12,0),.2)
+	for stamp in flatten.draft: assert(stamp.y==5,"Flatten target drifted during stroke")
+	flatten.begin([],Recipe.feature("flatten",Vector3.ZERO));flatten.dab(Vector3(0,9,0),.2)
+	assert(flatten.draft[0].y==9,"New Flatten stroke did not pick a new level")
 	var brush := Brush.new();brush.begin([],tool)
 	brush.dab(Vector3(-32,0,-40),2)
 	var first: Array=brush.draft.duplicate(true)

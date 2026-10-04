@@ -76,6 +76,10 @@ var loading_screen: CanvasLayer
 var loading_test_started := false
 var dragging_entry := false
 var surface_cursor := MeshInstance3D.new()
+var play_requested := false
+var play_status: Label
+var grenade_cooldown := 0.0
+var crater_queue: Array=[]
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
@@ -162,6 +166,7 @@ func _ready() -> void:
 	if OS.get_cmdline_user_args().has("--authoring-repro"): check_repeated_clicks.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-ui-check"): check_simple_ui.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-tunnel-check"): check_tunnel_editing.call_deferred()
+	if OS.get_cmdline_user_args().has("--authoring-recovery-check"): check_brush_recovery.call_deferred()
 	trace_edit("ready",{"path":trace_path})
 	set_process(true);set_physics_process(true);set_process_input(true)
 
@@ -242,7 +247,41 @@ func neighborhood_ready(p: Vector3) -> bool:
 		for x in range(-1,2):
 			var key := centre+Vector2i(x,z)
 			if absi(key.x)>=24 or absi(key.y)>=24: continue
-			if not chunks.has(key) or chunks[key].revision!=revision: return false
+			if not chunks.has(key) or (editing and chunks[key].revision!=revision): return false
+	return true
+
+func switch_editor_mode(value: bool) -> void:
+	var kit := live_kit()
+	if kit: kit.release_control()
+	editing=value;play_requested=false;panel.visible=editing;placing=false;dragging=false;endpoint_dragging=false;walking=false
+	surface_cursor.hide();Input.mouse_mode=Input.MOUSE_MODE_VISIBLE if editing else Input.MOUSE_MODE_CAPTURED
+	refresh();trace_edit("mode_changed",{"editing":editing})
+
+func update_play_status() -> void:
+	var wanted := desired();var ready := 0
+	for key in wanted:
+		if chunks.has(key) and chunks[key].revision==revision: ready+=1
+	var sections := 0
+	for pending in collision_pending.values(): sections+=pending.dirty.size()+1
+	var remaining := maxi(0,preview_expected.size()-preview_meshes.size())
+	var safe: bool=ready==wanted.size() and preview_expected.is_empty() and collision_pending.is_empty() and not brush_dirty and crater_queue.is_empty() and live_kit()!=null
+	if play_requested and safe:
+		switch_editor_mode(false);notice.text="Play ready. B throws a grenade; F1 returns to editing."
+	play_status.text="PLAY READY — F1 to enter" if safe else "Terrain %d/%d | mesh results %d | collision steps %d | workers %d%s" % [ready,wanted.size(),remaining,sections,stream_jobs.size()," | brush queued" if brush_dirty else ""]
+	if play_requested: play_status.text="PLAY QUEUED — automatic when ready (F1 cancels)\n"+play_status.text
+	if editing: hud.text+="\n"+play_status.text
+
+func throw_grenade() -> void:
+	if editing or grenade_cooldown>0 or not live_kit(): return
+	var grenade := preload("res://world/terrain_grenade.gd").new();grenade.arena=self;add_child(grenade)
+	grenade.position=camera.position-camera.basis.z*.8;grenade.velocity=-camera.basis.z*16+Vector3.UP*3
+	grenade_cooldown=.3;trace_edit("grenade_thrown")
+
+func request_crater(p: Vector3, radius: float) -> bool:
+	if radius<=0 or p.y-radius< -22 or p.y+radius>62 or absf(p.x)+radius+2>movement_limit() or absf(p.z)+radius+2>movement_limit(): return false
+	if crater_queue.size()>=32 or features.size()+crater_queue.size()>=2048 or not neighborhood_ready(p): return false
+	var crater := Recipe.feature("carve",p);crater.radius=radius;crater.localized=true
+	crater_queue.append(crater);trace_edit("grenade_crater_queued",{"point":str(p),"radius":radius})
 	return true
 
 func chunk_sampler() -> Callable:
@@ -286,7 +325,7 @@ func chunk_generated(result: Dictionary) -> void:
 	else: cache_builds+=1
 
 func install(key: Vector2i, result: Dictionary) -> void:
-	if editing and chunks.has(key):
+	if chunks.has(key):
 		var started := Time.get_ticks_usec()
 		# Visual feedback is independent of expensive physics construction.
 		var mesh := ArrayMesh.new()
@@ -392,7 +431,9 @@ func change(next: Array, remember := true, update_ui := true, input_stamp := 0) 
 	if remember:
 		undo_stack.append(features.duplicate(true));redo_stack.clear()
 	var changed := []
-	for key in preview_expected: changed.append(Rect2(Vector2(key)*CHUNK,Vector2.ONE*CHUNK).grow(.1))
+	# Pending chunks are exact keys, NOT fresh edit footprints. Growing them
+	# repeatedly spreads invalidation by another chunk every resubmission.
+	var unfinished := preview_expected.duplicate()
 	preview_expected.clear();preview_meshes.clear()
 	# Conservatively invalidate both old and new footprints, but retain unrelated chunks.
 	for i in maxi(features.size(),next.size()):
@@ -404,13 +445,13 @@ func change(next: Array, remember := true, update_ui := true, input_stamp := 0) 
 	# Unrelated background jobs still have valid snapshots; don't discard them
 	# merely because a nearby stroke advanced the global editor revision.
 	for job in stream_jobs:
-		var dirty := false
+		var dirty := unfinished.has(job.key)
 		for area in changed:
 			if area.intersects(Rect2(Vector2(job.key)*CHUNK,Vector2.ONE*CHUNK)): dirty=true;break
 		if not dirty: job.revision=revision
 	edited_bounds.append_array(changed)
 	for key in chunks:
-		var dirty := false
+		var dirty := unfinished.has(key)
 		for area in changed:
 			if area.intersects(Rect2(Vector2(key)*CHUNK,Vector2.ONE*CHUNK)): dirty=true;break
 		if not dirty: chunks[key].revision=revision
@@ -426,6 +467,7 @@ func make_panel() -> void:
 	var scroll := ScrollContainer.new();scroll.custom_minimum_size=Vector2(400,470);panel.add_child(scroll)
 	var column := VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(column)
 	var title := Label.new();title.text="SDF RECIPE / F1 edit-play";column.add_child(title)
+	play_status=Label.new();play_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;column.add_child(play_status)
 	var simple_tools := HBoxContainer.new();column.add_child(simple_tools)
 	for kind in ["hill","lower"]:
 		var button := Button.new();button.text="Raise terrain" if kind=="hill" else "Lower terrain"
@@ -603,6 +645,7 @@ func add_feature(kind: String) -> void:
 		refresh()
 		if kind=="tunnel": brush_template.radius=4;refresh()
 		notice.text="Brush: "+kind+" — hold left mouse on terrain; earlier strokes stay."
+		if kind=="flatten": notice.text="FLATTEN: press at the desired height, then hold and drag. That level stays fixed for this stroke; strength controls how quickly it flattens."
 		return
 	var p := camera.position-camera.basis.z*25;p.y=0
 	var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(p.x,64,p.z),Vector3(p.x,-24,p.z),1))
@@ -846,16 +889,16 @@ func _input(event: InputEvent) -> void:
 		mark_operation();get_viewport().set_input_as_handled();return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F3:
 		show_chunks=not show_chunks;return
-	if event is InputEventKey and event.pressed and event.keycode==KEY_F1:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F1:
+		if play_requested: play_requested=false;notice.text="Play request cancelled; editing remains available.";return
 		finish_brush();flush_brush()
-		if editing and (ready_frames<3 or not collision_pending.is_empty()):
-			notice.text="Wait for edited collision to finish before playing.";return
-		var kit := live_kit()
-		if kit:
-			kit.release_control()
-		editing=not editing;panel.visible=editing;placing=false;dragging=false;walking=false
-		Input.mouse_mode=Input.MOUSE_MODE_VISIBLE if editing else Input.MOUSE_MODE_CAPTURED
-		refresh();return
+		if editing:
+			play_requested=true;notice.text="Preparing play mode; live progress above. F1 cancels."
+		else: switch_editor_mode(true)
+		return
+	if play_requested: return
+	if not editing and event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_B:
+		throw_grenade();return
 	if editing:
 		if event is InputEventKey and event.pressed and event.keycode in [KEY_BRACKETLEFT,KEY_BRACKETRIGHT]:
 			brush_template.radius=clampf(brush_template.radius+(1 if event.keycode==KEY_BRACKETRIGHT else -1),1,120);refresh();return
@@ -950,6 +993,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if editing:
 		settle_editor_contacts(delta)
+		if play_requested: return
 		editor_fly(delta)
 		var hit := cursor_hit()
 		var targeting := tunnel_new_armed or picking_entry or picking_endpoint
@@ -991,11 +1035,14 @@ func resettle_edited_actors(kit: Node) -> void:
 
 func _process(delta: float) -> void:
 	var started := Time.get_ticks_usec()
+	grenade_cooldown=maxf(0,grenade_cooldown-delta)
 	var gap_ms := (started-last_process_usec)/1000.0 if last_process_usec else 0.0
 	last_process_usec=started
 	# Let each in-flight preview finish: continuous strokes must not starve meshing
 	# by invalidating its revision every input frame. Recipes still accumulate now.
 	if brush_dirty and preview_expected.is_empty(): flush_brush()
+	if not crater_queue.is_empty() and not brush_dirty and preview_expected.is_empty():
+		var next := features.duplicate(true);next.append_array(crater_queue);crater_queue.clear();change(next,true,false)
 	var submitted := Time.get_ticks_usec()
 	super._process(delta)
 	var streamed := Time.get_ticks_usec()
@@ -1023,6 +1070,8 @@ func _process(delta: float) -> void:
 		hud.text+="\nCollision-ahead speed limit: %.1f m/s%s" % [vehicle.stream_speed_limit," / waiting for terrain" if vehicle.streaming_suspended else ""]
 	if editing: hud.text+="\nPreview %.0f ms | warm %s | rebuilt %d/16 blocks | collision queue %d" % [preview_latency_ms,str(last_field_profile.get("warm_field",false)),last_field_profile.get("rebuilt_blocks",0),collision_pending.size()]
 	hud.text+="\n"+operation_marker_status
+	update_play_status()
+	if not editing: hud.text+="\nB: grenade / queued craters %d" % crater_queue.size()
 	var total_ms := (Time.get_ticks_usec()-started)/1000.0
 	if gap_ms>80 or total_ms>40 or physics_ms>20:
 		trace_edit("stall",{"frame_gap_ms":gap_ms,"process_ms":total_ms,"submit_ms":(submitted-started)/1000.0,"stream_ms":(streamed-submitted)/1000.0,"collision_ms":(collided-streamed)/1000.0,"physics_ms":physics_ms,"engine_process_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"engine_physics_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000})
@@ -1139,6 +1188,69 @@ func check_simple_ui() -> void:
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("user://sdf-authoring-simple-ui.png")
 	print("PASS: simple Raise/Lower presets reset advanced modes without changing source; radius and strength controls; UI capture saved")
+	get_tree().quit()
+
+func wait_editor_idle() -> bool:
+	var deadline := Time.get_ticks_msec()+120000
+	while ready_frames<3 or not preview_expected.is_empty() or not collision_pending.is_empty() or brush_dirty or not crater_queue.is_empty():
+		if Time.get_ticks_msec()>deadline:
+			push_error("Editor queue failed to drain within 120 seconds");get_tree().quit(1);return false
+		await get_tree().process_frame
+	return true
+
+func check_brush_recovery() -> void:
+	while not live_kit(): await get_tree().process_frame
+	set_physics_process(false)
+	assert(await wait_editor_idle())
+	var hill := Recipe.feature("hill",Vector3(-48,0,-48));hill.radius=20;hill.height=12
+	change([hill],false);assert(await wait_editor_idle())
+	var flat := Recipe.feature("flatten",Vector3(-48,5,-48));flat.radius=4;flat.amount=.2
+	change([hill,flat],false)
+	var footprint := preview_expected.keys()
+	assert(footprint.size()<=4,"Small Flatten invalidated distant chunks")
+	for i in 12:
+		flat.amount+=.1;change([hill,flat],false)
+		assert(preview_expected.keys()==footprint,"Resubmitting pending edits spread dirty chunk boundaries")
+	assert(await wait_editor_idle())
+	var before := preview_publications
+	for kind in ["flatten","hill","lower"]:
+		if kind=="flatten": add_feature(kind)
+		else: select_simple_brush(kind)
+		brush_template.radius=4
+		start_brush({"position":Vector3(-48,5,-48),"normal":Vector3.UP})
+		for i in 12: brush.dab(Vector3(-48+i*.1,5,-48),.05)
+		finish_brush();flush_brush()
+		assert(await wait_editor_idle())
+		assert(preview_publications>before,"Brush failed after changing tools")
+		before=preview_publications
+	# Queue play during a real pending edit; it must enter automatically.
+	flat.amount+=.1;change([hill,flat],false)
+	var f1 := InputEventKey.new();f1.keycode=KEY_F1;f1.pressed=true;_input(f1)
+	assert(play_requested and editing)
+	assert(await wait_editor_idle())
+	await get_tree().process_frame
+	assert(not editing and not play_requested,"Queued F1 did not enter play")
+	var floor_hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(-48,60,-80),Vector3(-48,-22,-80),1))
+	assert(not floor_hit.is_empty())
+	camera.position=floor_hit.position+Vector3.UP*3;camera.look_at(floor_hit.position+Vector3(0,0,-5))
+	assert(await wait_editor_idle())
+	var count := features.size()
+	var throw_key := InputEventKey.new();throw_key.keycode=KEY_B;throw_key.pressed=true;_input(throw_key)
+	var deadline := Time.get_ticks_msec()+15000
+	while features.size()==count:
+		if Time.get_ticks_msec()>deadline: push_error("Grenade did not submit a crater");get_tree().quit(1);return
+		await get_tree().process_frame
+	assert(await wait_editor_idle())
+	await get_tree().physics_frame
+	var crater: Dictionary=features[-1]
+	assert(crater.kind=="carve" and crater.localized and crater.radius==2)
+	var from := Vector3(crater.x,64,crater.z)
+	var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from,from+Vector3.DOWN*87,1))
+	var sampled := field_cache.pick_surface(from,Vector3.DOWN,64-crater.y)
+	assert(not hit.is_empty() and not sampled.is_empty() and absf(hit.position.y-sampled.position.y)<.03,"Grenade collision differs from generated surface")
+	assert(not request_crater(Vector3(0,-24,0),2),"Grenade can cut through volume bottom")
+	_input(f1);assert(editing)
+	print("PASS: Flatten remains local; unfinished edits do not spread; Flatten/Raise/Lower publish; queued F1 enters; B grenade creates matching mesh/collision; bottom guarded")
 	get_tree().quit()
 
 func check_tunnel_editing() -> void:

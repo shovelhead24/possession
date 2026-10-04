@@ -173,6 +173,35 @@ photon measurements or guarantees for large/cold edits.
 
 ## Diagnosing stalls and deep holes
 
+### Flatten recovery, queued play and grenades (2026-10-04)
+
+The recorded failure had a pending preview grow from 9 to 80 chunks and finally
+publish after about 81 seconds. Small Flatten brushes inherited unnecessarily
+broad feature bounds, and every forced resubmission padded unfinished chunk
+rectangles again, spreading invalidation into neighbours. Unfinished work now
+carries exact chunk keys. Flatten invalidates its radial support (with rotated
+square/ellipse coverage) and caches column weights at double precision; sampled
+field and mesh regression checks retain exact output. Its first clicked height
+is held for the whole stroke, rather than following each new surface sample.
+
+F1 now queues a play transition while work remains. The panel/HUD shows resident
+terrain counts, missing mesh results, collision steps and worker count; it
+automatically enters when the visual/collision queues are complete. F1 cancels
+a pending transition. This waits for actual collision work, not just a preview.
+
+**B in play mode** throws the existing prototype grenade (two-second fuse,
+quick-settling bounce, 2 m subtractive sphere). Craters use the workshop's ordered
+recipe and retained disk mesh cache; use Save in edit mode to persist their source
+with the terrain. A bounded queue rejects out-of-volume or unloaded cuts. Existing
+collision stays live during regeneration, and updated sections replace it on
+completion. This is terrain destruction, not a finished damage/blast-impulse system.
+
+`--authoring-recovery-check` verifies a small Flatten edit stays local across 12
+unfinished resubmissions, switching Flatten/Raise/Lower keeps publishing, queued
+F1 enters automatically, and a real B-thrown grenade produces matching rendered
+field/collision with the volume-bottom guard intact. `check_sdf_brush.gd` also
+checks fixed-height Flatten strokes without changing Raise/Lower behaviour.
+
 The default panel now exposes **Raise terrain**, **Lower terrain**, brush radius
 in metres and strength per second. Hold LMB over terrain to accumulate a stroke.
 The raw feature coordinates and shape parameters are under **Advanced tools and

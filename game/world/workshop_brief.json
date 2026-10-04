@@ -1,7 +1,7 @@
 {
-  "title": "Terrain workshop — editable tunnels",
-  "iteration": "2026-10-04 / tunnel handles + loading briefing",
-  "goal": "Keep the accepted Raise/Lower brush. Test creating one tunnel, moving that same tunnel, and adjusting its entrance, exit and radius without leaving extra cuts.",
-  "changes": "New: grab either tunnel centre point to drag/select that end; click a surface to place it. A green radius circle follows the target wall. Loading now shows this briefing, progress and a screenshot. Hands and gun are hidden while editing.",
-  "controls": "Raise/Lower: hold LMB on ground. RMB + WASD: fly; Space/Ctrl: up/down. Wheel: zoom; Shift-wheel: brush size.\nTunnel: Create ONE, then click entrance. Grab an orange entrance/cyan exit centre to drag and select it; click elsewhere on terrain to place that end. Focus tunnel finds its handles. Move whole tunnel moves both ends. Ctrl snaps exit heading; Alt-click targets the far exit surface. Esc cancels.\nF8: mark BEGIN/END around a slow operation. F3: chunks. F1: edit/play. F2: briefing. Save explicitly to retain terrain edits."
+  "title": "Terrain workshop — brush recovery + grenades",
+  "iteration": "2026-10-04 / local Flatten, play progress, grenades",
+  "goal": "Try Flatten, then switch back to Raise/Lower. Check that edits keep arriving. Press F1 while edits are pending and watch the queue finish, then throw grenades in play mode.",
+  "changes": "Fixed expanding dirty-chunk queues after unfinished edits. Flatten now has a local footprint and holds the first clicked height throughout a stroke. F1 queues play with live progress and enters automatically when ready. Grenades use the existing 2-second fuse and quick-settling bounce; B throws a small terrain-cutting grenade.",
+  "controls": "Raise/Lower: hold LMB. Flatten: press at the target height, hold and drag. RMB + WASD: fly; Space/Ctrl: up/down. Wheel: zoom; Shift-wheel: brush size.\nF1: queue play / return to edit (press again while queued to cancel). B in play: grenade. F: walk/fly. F8: mark BEGIN/END around a slow operation. F3: chunks. F2: briefing.\nTunnel controls unchanged: drag centre handles, or click a surface to place the active end. Save explicitly to retain authored terrain and grenade craters."
 }
