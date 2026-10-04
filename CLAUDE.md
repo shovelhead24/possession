@@ -72,6 +72,10 @@ with potentially unsaved work without permission. If launching fails or requires
 unavailable approval, report that explicitly rather than claiming it is running.
 
 ### Standing terrain cache rule
+The user accepted the simple hold-to-sculpt Raise/Lower controls on 2026-10-04.
+Preserve that behaviour as the baseline when expanding other authoring tools;
+do not redesign or replace it incidentally while changing tunnel controls.
+
 Unless the user explicitly directs otherwise, retain generated terrain meshes on
 disk and stream valid cached results when appropriate. RAM eviction is not disk
 deletion. Do not introduce automatic disk purging or disable persistence by

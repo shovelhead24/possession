@@ -179,6 +179,25 @@ The raw feature coordinates and shape parameters are under **Advanced tools and
 feature settings**. Simple presets reset endpoint/placement modes and select a
 circular brush without altering already-authored terrain.
 
+Raise/Lower was accepted by the user on 2026-10-04 and is the retained baseline.
+**Tunnel tools / create or edit** separates one-shot creation from modification:
+click **Create ONE new tunnel**, then its entrance; creation automatically selects
+that tunnel in edit mode. Ordinary subsequent clicks cannot append another cut.
+Choose older tunnels in the selector. **Move whole tunnel** places its entrance
+at the next terrain click and translates the exit equally, preserving direction
+and length. **Set entrance/exit** moves only that end. The cyan exit can also be
+dragged through geometry; Ctrl snaps its heading and Alt-click with Set exit
+targets a far surface. Esc cancels placement. Radius changes modify the selected
+tunnel, not a future brush. Moving preserves its recipe position and is undoable;
+the old cut disappears unless another authored cut also occupies that location.
+Legacy curved tunnels support whole-feature movement/radius, but not the straight
+tunnel endpoint controls. Raise/Lower hides tunnel handles to prevent accidental
+endpoint grabs while sculpting.
+
+`--authoring-tunnel-check` covers replacement rather than accumulation, translating
+both endpoints, endpoint/radius edits, undo/redo, one-shot disarming, cancellation
+and generated collision clearance. It does not save over the user's recipe.
+
 Press **F8 before an operation**, then **F8 afterwards** (or use the panel button).
 Paired `operation_marker` BEGIN/END records contain a shared ID, UTC/Unix time,
 monotonic elapsed time, tool/radius/strength, camera and queue state. Each marker

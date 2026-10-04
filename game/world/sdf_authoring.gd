@@ -67,6 +67,11 @@ var brush_mode_toggle: CheckButton
 var simple_brush_label: Label
 var shape_choice: OptionButton
 var aspect_control: SpinBox
+var tunnel_new_armed := false
+var picking_entry := false
+var tunnel_choice: OptionButton
+var tunnel_radius_control: SpinBox
+var tunnel_actions: HFlowContainer
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
@@ -133,10 +138,11 @@ func _ready() -> void:
 	endpoint_handle.mesh=cursor_mesh;endpoint_handle.material_override=line_material;add_child(endpoint_handle)
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	refresh()
-	DisplayServer.window_set_title("SDF recipe workshop / F1 edit or play")
+	DisplayServer.window_set_title("SDF workshop / Raise-Lower + editable tunnels")
 	if OS.get_cmdline_user_args().has("--authoring-check"): check_workshop.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-repro"): check_repeated_clicks.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-ui-check"): check_simple_ui.call_deferred()
+	if OS.get_cmdline_user_args().has("--authoring-tunnel-check"): check_tunnel_editing.call_deferred()
 	trace_edit("ready",{"path":trace_path})
 
 func rebuild() -> void:
@@ -402,6 +408,26 @@ func make_panel() -> void:
 	for spec in [["Undo",undo],["Redo",redo],["Save",save],["Load",load_saved]]:
 		var button := Button.new();button.text=spec[0];simple_actions.add_child(button);button.pressed.connect(spec[1])
 	var top_column := column
+	var tunnel_toggle := CheckButton.new();tunnel_toggle.text="Tunnel tools / create or edit";column.add_child(tunnel_toggle)
+	var tunnel_panel := VBoxContainer.new();column.add_child(tunnel_panel);tunnel_panel.hide()
+	tunnel_toggle.toggled.connect(func(value: bool): tunnel_panel.visible=value)
+	var new_tunnel := Button.new();new_tunnel.text="Create ONE new tunnel: click its entrance";tunnel_panel.add_child(new_tunnel)
+	new_tunnel.pressed.connect(arm_new_tunnel)
+	tunnel_choice=OptionButton.new();tunnel_panel.add_child(tunnel_choice)
+	tunnel_choice.item_selected.connect(func(index: int): select_tunnel(tunnel_choice.get_item_id(index)))
+	tunnel_actions=HFlowContainer.new();tunnel_panel.add_child(tunnel_actions)
+	for spec in [["Move whole tunnel",place_selected],["Set entrance",pick_tunnel_entry],["Set exit",pick_tunnel_exit],["Focus tunnel",focus_selected]]:
+		var button := Button.new();button.text=spec[0];tunnel_actions.add_child(button);button.pressed.connect(spec[1])
+	var tunnel_size := HBoxContainer.new();tunnel_panel.add_child(tunnel_size)
+	var tunnel_label := Label.new();tunnel_label.text="Tunnel radius (metres)";tunnel_size.add_child(tunnel_label)
+	tunnel_radius_control=SpinBox.new();tunnel_radius_control.min_value=1;tunnel_radius_control.max_value=120;tunnel_radius_control.value=4;tunnel_size.add_child(tunnel_radius_control)
+	tunnel_radius_control.value_changed.connect(func(value: float):
+		if tunnel_new_armed: brush_template.radius=value
+		elif selected>=0 and features[selected].kind=="tunnel":
+			var next := features.duplicate(true);next[selected].radius=value;change(next))
+	var tunnel_help := Label.new();tunnel_help.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;tunnel_help.custom_minimum_size.x=270
+	tunnel_help.text="Creating switches straight to editing that tunnel. Moving replaces its old cut; it does not add another. Drag the cyan exit through terrain; Ctrl snaps to 45 degrees. Alt-click with Set exit targets the far surface. Esc cancels placement."
+	tunnel_panel.add_child(tunnel_help)
 	var advanced_toggle := CheckButton.new();advanced_toggle.text="Advanced tools and feature settings";column.add_child(advanced_toggle)
 	var advanced := VBoxContainer.new();column.add_child(advanced);advanced.hide()
 	advanced_toggle.toggled.connect(func(value: bool): advanced.visible=value)
@@ -422,7 +448,7 @@ func make_panel() -> void:
 	aspect_control=aspect
 	aspect.value_changed.connect(func(value: float): brush_template.aspect=value)
 	var end_button := Button.new();end_button.text="Set tunnel exit (Alt-click = far surface)";column.add_child(end_button)
-	end_button.pressed.connect(func(): picking_endpoint=true;notice.text="Click exit surface; Alt-click looks through the near surface. Ctrl snaps heading to 45 degrees.")
+	end_button.pressed.connect(pick_tunnel_exit)
 	var rates := HBoxContainer.new();column.add_child(rates)
 	for spec in [["Fly m/s",25.0]]:
 		var label := Label.new();label.text=spec[0];rates.add_child(label)
@@ -432,7 +458,9 @@ func make_panel() -> void:
 	for kind in Recipe.TYPES:
 		var button := Button.new();button.text="ravine" if kind=="lower" else kind;tools.add_child(button);button.pressed.connect(add_feature.bind(kind))
 	feature_list=ItemList.new();feature_list.custom_minimum_size=Vector2(270,85);column.add_child(feature_list)
-	feature_list.item_selected.connect(func(index: int): selected=index;brush_template=features[index].duplicate(true);brush_template.erase("amount");refresh())
+	feature_list.item_selected.connect(func(index: int):
+		if features[index].kind=="tunnel": select_tunnel(index)
+		else: selected=index;brush_template=features[index].duplicate(true);brush_template.erase("amount");refresh())
 	var grid := GridContainer.new();grid.columns=4;column.add_child(grid)
 	for key in ["x","y","z","radius","height","length","width","thickness","yaw","bend"]:
 		var label := Label.new();label.text=key;grid.add_child(label)
@@ -449,6 +477,7 @@ func make_panel() -> void:
 
 func select_simple_brush(kind: String) -> void:
 	finish_brush();flush_brush()
+	tunnel_new_armed=false;picking_entry=false
 	var radius: float=brush_template.radius
 	brush_template=Recipe.feature(kind,Vector3.ZERO);brush_template.radius=radius
 	brush_template.shape="circle";brush_template.aspect=1.0
@@ -457,11 +486,57 @@ func select_simple_brush(kind: String) -> void:
 	refresh()
 	notice.text=("Raise" if kind=="hill" else "Lower")+" terrain: hold left mouse on ground. Size and strength above are all you need."
 
+func arm_new_tunnel() -> void:
+	finish_brush();flush_brush()
+	brush_template=Recipe.feature("tunnel",Vector3.ZERO);brush_template.radius=tunnel_radius_control.value
+	brush_mode=true;tunnel_new_armed=true;placing=false;dragging=false;picking_entry=false;picking_endpoint=false;endpoint_dragging=false
+	brush_mode_toggle.set_pressed_no_signal(true);refresh()
+	notice.text="NEW TUNNEL: click its entrance once. Then edit that tunnel. Esc cancels."
+
+func select_tunnel(index: int) -> void:
+	if index<0 or index>=features.size() or features[index].kind!="tunnel": return
+	finish_brush();flush_brush();selected=index
+	brush_template=features[index].duplicate(true);brush_template.erase("amount")
+	brush_mode=false;tunnel_new_armed=false;placing=false;dragging=false;picking_entry=false;picking_endpoint=false;endpoint_dragging=false
+	brush_mode_toggle.set_pressed_no_signal(false);refresh()
+	notice.text="EDITING tunnel %d. Move whole tunnel preserves its direction and length; Set entrance/exit changes one end. No new cuts on ordinary clicks." % (index+1)
+
+func pick_tunnel_entry() -> void:
+	if selected<0 or not features[selected].has("end_x"): return
+	picking_entry=true;picking_endpoint=false;placing=false
+	notice.text="Click a surface for this tunnel's entrance. The exit stays fixed. Esc cancels."
+
+func pick_tunnel_exit() -> void:
+	if selected<0 or not features[selected].has("end_x"): return
+	picking_endpoint=true;picking_entry=false;placing=false
+	notice.text="Click exit surface; Alt-click targets the far side. Ctrl snaps heading to 45 degrees. Esc cancels."
+
+func reposition_selected(point: Vector3) -> void:
+	if selected<0: return
+	var next := features.duplicate(true);var f: Dictionary=next[selected]
+	var offset := point-Vector3(f.x,f.y,f.z)
+	f.x=point.x;f.y=point.y;f.z=point.z
+	if f.has("end_x"):
+		f.end_x+=offset.x;f.end_y+=offset.y;f.end_z+=offset.z
+	change(next)
+
 func refresh() -> void:
 	if feature_list==null: return
 	if selected<0 and not features.is_empty(): selected=0
 	updating=true;feature_list.clear()
 	for i in features.size(): feature_list.add_item("%d  %s" % [i+1,features[i].kind])
+	tunnel_choice.clear();tunnel_choice.add_item("Select an existing tunnel…",2147483647)
+	for i in features.size():
+		if features[i].kind=="tunnel":
+			tunnel_choice.add_item("Tunnel %d" % (i+1),i)
+			if i==selected and not tunnel_new_armed: tunnel_choice.select(tunnel_choice.item_count-1)
+	var editing_tunnel: bool=not brush_mode and selected>=0 and features[selected].kind=="tunnel"
+	for button in tunnel_actions.get_children(): button.disabled=not editing_tunnel
+	for index in [1,2]:
+		tunnel_actions.get_child(index).disabled=not editing_tunnel or not features[selected].has("end_x")
+		tunnel_actions.get_child(index).tooltip_text="Endpoint controls apply to straight entrance/exit tunnels; legacy curved tunnels can still be moved as a whole."
+	tunnel_radius_control.editable=editing_tunnel or tunnel_new_armed
+	if editing_tunnel: tunnel_radius_control.set_value_no_signal(features[selected].radius)
 	if selected>=0:
 		feature_list.select(selected)
 	var values: Dictionary=brush_template if brush_mode else (features[selected] if selected>=0 else brush_template)
@@ -470,12 +545,16 @@ func refresh() -> void:
 	shape_choice.select(["circle","square","ellipse"].find(brush_template.get("shape","circle")))
 	aspect_control.set_value_no_signal(float(brush_template.get("aspect",1)))
 	simple_brush_label.text="Selected: "+({"hill":"Raise terrain","lower":"Lower terrain"}.get(brush_template.kind,brush_template.kind) if brush_mode else "Advanced feature editing")
+	if editing_tunnel: simple_brush_label.text="Editing existing tunnel %d (not creating)" % (selected+1)
+	elif tunnel_new_armed: simple_brush_label.text="New tunnel armed: click entrance once"
 	for key in fields: fields[key].value=values[key]
 	marker.visible=selected>=0 and editing and not brush_mode
 	if selected>=0: marker.position=Vector3(features[selected].x,features[selected].y,features[selected].z)
 	updating=false
 
 func add_feature(kind: String) -> void:
+	if kind=="tunnel": arm_new_tunnel();return
+	tunnel_new_armed=false;picking_entry=false
 	finish_brush();flush_brush()
 	if brush_mode:
 		brush_template.kind=kind;brush_template.erase("amount")
@@ -537,7 +616,7 @@ func load_saved() -> void:
 
 func place_selected() -> void:
 	if selected>=0:
-		finish_brush();flush_brush();placing=true
+		finish_brush();flush_brush();placing=true;picking_entry=false;picking_endpoint=false
 		notice.text="MOVE existing feature (not a new stroke). Click terrain. Esc cancels."
 
 func cursor_hit() -> Dictionary:
@@ -560,6 +639,7 @@ func start_brush(hit_override := {}) -> void:
 	trace_edit("brush_down",{"pick_ms":(Time.get_ticks_usec()-started)/1000.0,"radius":brush_template.radius,"tool":brush_template.kind,"point":str(hit.position)})
 	latest_input_usec=Time.get_ticks_usec()
 	if brush_template.kind=="tunnel":
+		if not tunnel_new_armed: return
 		flush_brush()
 		var f := brush_template.duplicate(true);f.erase("amount")
 		var p: Vector3=hit.position
@@ -567,7 +647,7 @@ func start_brush(hit_override := {}) -> void:
 		var end := suggested_exit(p,hit.normal)
 		f.end_x=end.x;f.end_y=end.y;f.end_z=end.z
 		var next := features.duplicate(true);next.append(f);selected=next.size()-1;change(next)
-		notice.text="Tunnel created. Drag cyan exit through terrain; Ctrl = 45° snap. Set tunnel exit enables surface picking."
+		select_tunnel(selected)
 		return
 	var source: Array=brush.draft if brush_dirty else features
 	undo_stack.append(source.duplicate(true));redo_stack.clear()
@@ -614,7 +694,7 @@ func set_endpoint(p: Vector3) -> void:
 	next[selected].end_x=p.x;next[selected].end_y=p.y;next[selected].end_z=p.z;change(next)
 
 func update_endpoint_guide() -> void:
-	var active: bool = editing and selected>=0 and features[selected].has("end_x")
+	var active: bool = editing and not brush_mode and selected>=0 and features[selected].has("end_x")
 	endpoint_guide.visible=active;endpoint_handle.visible=active
 	if not active: return
 	var f: Dictionary=features[selected];var start := Vector3(f.x,f.y,f.z)
@@ -724,7 +804,13 @@ func _input(event: InputEvent) -> void:
 			var point: Variant=endpoint_plane.intersects_ray(camera.project_ray_origin(event.position),camera.project_ray_normal(event.position))
 			if point!=null: endpoint_preview=snap_endpoint(point)
 			return
-		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed and not panel.get_global_rect().has_point(event.position) and selected>=0 and features[selected].has("end_x"):
+		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and event.pressed and not panel.get_global_rect().has_point(event.position) and not brush_mode and not placing and selected>=0 and features[selected].has("end_x"):
+			if picking_entry:
+				var hit := cursor_hit()
+				if not hit.is_empty():
+					var next := features.duplicate(true);next[selected].x=hit.position.x;next[selected].y=hit.position.y;next[selected].z=hit.position.z
+					change(next);picking_entry=false
+				return
 			if picking_endpoint:
 				var point: Variant=far_surface(event.position) if event.alt_pressed else cursor_hit().get("position")
 				if point!=null: set_endpoint(point);picking_endpoint=false
@@ -740,10 +826,12 @@ func _input(event: InputEvent) -> void:
 			else: finish_brush()
 			return
 		if event is InputEventKey and event.pressed and event.keycode==KEY_ESCAPE:
-			finish_brush();looking=false;placing=false;dragging=false;endpoint_dragging=false;picking_endpoint=false;refresh()
+			finish_brush();looking=false;placing=false;dragging=false;endpoint_dragging=false;picking_endpoint=false;picking_entry=false
+			if tunnel_new_armed: tunnel_new_armed=false;brush_mode=false;brush_mode_toggle.set_pressed_no_signal(false)
+			refresh()
 		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not event.pressed and dragging:
 			dragging=false
-			var next := features.duplicate(true);next[selected].x=drag_position.x;next[selected].z=drag_position.z;change(next)
+			reposition_selected(drag_position)
 		if event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT and not panel.get_global_rect().has_point(event.position):
 			if event.pressed and not placing and selected>=0 and not camera.is_position_behind(marker.position) and camera.unproject_position(marker.position).distance_to(event.position)<18:
 				dragging=true;drag_position=marker.position
@@ -761,8 +849,7 @@ func _input(event: InputEvent) -> void:
 			query.exclude=[player.get_rid()]
 			var hit := get_world_3d().direct_space_state.intersect_ray(query)
 			if not hit.is_empty():
-				var next := features.duplicate(true);next[selected].x=hit.position.x;next[selected].y=hit.position.y;next[selected].z=hit.position.z
-				change(next);placing=false
+				reposition_selected(hit.position);placing=false
 		return
 	var kit := live_kit()
 	if kit and kit.handle_input(event): return
@@ -945,6 +1032,54 @@ func check_simple_ui() -> void:
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("user://sdf-authoring-simple-ui.png")
 	print("PASS: simple Raise/Lower presets reset advanced modes without changing source; radius and strength controls; UI capture saved")
+	get_tree().quit()
+
+func check_tunnel_editing() -> void:
+	set_physics_process(false)
+	var hill := Recipe.feature("hill",Vector3(-48,0,-48));hill.radius=30;hill.height=18
+	var tunnel := Recipe.feature("tunnel",Vector3(-60,6,-48));tunnel.radius=3
+	tunnel.end_x=-36.0;tunnel.end_y=6.0;tunnel.end_z=-48.0
+	change([hill,tunnel],false);select_tunnel(1)
+	assert(not brush_mode and not tunnel_new_armed and features.size()==2)
+	assert(Recipe.field(Vector3(-48,6,-48),tunnel_radius,roughness,features)>0)
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	await get_tree().physics_frame
+	var old_roof := PhysicsRayQueryParameters3D.create(Vector3(-48,6,-48),Vector3(-48,12,-48),1)
+	assert(not get_world_3d().direct_space_state.intersect_ray(old_roof).is_empty(),"Initial tunnel roof missing")
+	reposition_selected(Vector3(-60,6,-36))
+	assert(features.size()==2 and features[1].end_z==-36 and features[1].end_x==-36)
+	assert(Recipe.field(Vector3(-48,6,-48),tunnel_radius,roughness,features)<0,"Old tunnel cut remained")
+	assert(Recipe.field(Vector3(-48,6,-36),tunnel_radius,roughness,features)>0,"Moved tunnel missing")
+	undo();assert(features[1].z==-48 and features[1].end_z==-48)
+	redo();assert(features[1].z==-36 and features[1].end_z==-36)
+	set_endpoint(Vector3(-34,7,-35))
+	assert(features.size()==2 and features[1].x==-60 and features[1].end_x==-34)
+	tunnel_radius_control.value=4
+	assert(features[1].radius==4 and features.size()==2)
+	# A normal click after creation must not append another cut.
+	arm_new_tunnel()
+	start_brush({"position":Vector3(-48,10,-48),"normal":Vector3.UP})
+	assert(features.size()==3 and not brush_mode and not tunnel_new_armed)
+	start_brush({"position":Vector3(-40,10,-48),"normal":Vector3.UP})
+	assert(features.size()==3,"Editing created an accidental extra tunnel")
+	arm_new_tunnel()
+	var escape := InputEventKey.new();escape.keycode=KEY_ESCAPE;escape.pressed=true;_input(escape)
+	assert(not tunnel_new_armed and features.size()==3)
+	# Restore deterministic moved tunnel and await the actual mesh/collision.
+	change([hill,tunnel],false);select_tunnel(1);reposition_selected(Vector3(-60,6,-36))
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	await get_tree().physics_frame
+	var space := get_world_3d().direct_space_state
+	var new_cut := space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(-59,6,-36),Vector3(-37,6,-36),1))
+	assert(new_cut.is_empty(),"Moved tunnel collision is blocked")
+	assert(space.intersect_ray(old_roof).is_empty(),"Old tunnel cavity collision survived the move")
+	# Ray from old cavity upwards must now start inside solid; use a top-down
+	# hit as an unambiguous check of the rebuilt hill surface instead.
+	var ground := space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(-48,30,-48),Vector3(-48,-20,-48),1))
+	assert(not ground.is_empty() and ground.position.y>14,"Old tunnel region did not restore hill")
+	# Let the asynchronously imported live kit finish before clean shutdown.
+	while not live_kit(): await get_tree().process_frame
+	print("PASS: tunnel move replaces old cut; both endpoints translate; endpoint/radius edits and undo/redo retain feature count; creation disarms; moved collision clear")
 	get_tree().quit()
 
 func profile_frame_components() -> void:
