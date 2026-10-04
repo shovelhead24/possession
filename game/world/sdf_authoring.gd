@@ -30,7 +30,6 @@ var fly_speed := 25.0
 var brush_time := 0.0
 var looking := false
 var brush_cursor := MeshInstance3D.new()
-var staged_chunks := {}
 var chunk_overlay := MeshInstance3D.new()
 var show_chunks := false
 var overlay_signature := ""
@@ -40,6 +39,16 @@ var picking_endpoint := false
 var endpoint_dragging := false
 var endpoint_preview := Vector3.ZERO
 var endpoint_plane := Plane()
+var field_cache := preload("res://world/sdf_field_cache.gd").new()
+var collision_pending := {}
+var latest_input_usec := 0
+var edit_started_usec := 0
+var preview_latency_ms := 0.0
+var last_field_profile := {}
+var preview_expected := {}
+var preview_meshes := {}
+var aim_point := Vector3.ZERO
+var aim_valid := false
 
 func stream_worker_limit() -> int:
 	return 2
@@ -87,11 +96,28 @@ func movement_limit() -> float:
 
 func desired() -> Array[Vector2i]:
 	var keys := super.desired()
+	if editing and (brushing or brush_dirty):
+		# Retain resident terrain but do not flood the brush queue with fly/vehicle
+		# look-ahead while the user is actively drawing.
+		keys.assign(chunks.keys())
+		var target := key_at(brush.previous)
+		for z in range(-1,2):
+			for x in range(-1,2):
+				var key := target+Vector2i(x,z)
+				if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
+		keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-target).length_squared()<(b-target).length_squared())
+		return keys
 	var centre := key_at(camera.position)
 	for z in range(-2,3):
 		for x in range(-2,3):
 			var key := centre+Vector2i(x,z)
 			if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
+	if editing and aim_valid:
+		var target := key_at(aim_point)
+		for z in range(-1,2):
+			for x in range(-1,2):
+				var key := target+Vector2i(x,z)
+				if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
 	var kit := live_kit()
 	if kit:
 		for body in kit.vehicle_system.vehicles:
@@ -105,6 +131,9 @@ func desired() -> Array[Vector2i]:
 					for x in range(-2,3):
 						var key := centre_key+Vector2i(x,z)
 						if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
+	if editing and aim_valid:
+		var target := key_at(aim_point)
+		keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-target).length_squared()<(b-target).length_squared())
 	return keys
 
 func neighborhood_ready(p: Vector3) -> bool:
@@ -120,10 +149,14 @@ func chunk_sampler() -> Callable:
 	# Snapshot on the main thread, never read mutable editor data from a worker.
 	return Recipe.field.bind(features.duplicate(true))
 
+static func cached_path(local: Array, origin: Vector3, cells: Vector3i, spacing: float, radius: float, detail: float) -> String:
+	var version := FileAccess.get_file_as_string("res://world/sdf_field_cache.gd").sha256_text()
+	return CACHE_PATH+(version+Recipe.cache_key(local,origin,cells,spacing,radius,detail)).sha256_text()+".bin"
+
 func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, spacing := 1.0, sampler := Callable()) -> Dictionary:
 	var snapshot: Array=sampler.get_bound_arguments()[0]
-	var local := Recipe.relevant(snapshot,Rect2(Vector2(origin.x,origin.z),Vector2(cells.x,cells.z)*spacing).grow(.1))
-	var path := CACHE_PATH+Recipe.cache_key(local,origin,cells,spacing,radius,detail)+".bin"
+	var local := Recipe.relevant(snapshot,Rect2(Vector2(origin.x,origin.z),Vector2(cells.x,cells.z)*spacing).grow(spacing+.1))
+	var path := cached_path(local,origin,cells,spacing,radius,detail)
 	if FileAccess.file_exists(path):
 		var reader := FileAccess.open(path,FileAccess.READ)
 		if reader:
@@ -132,9 +165,10 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 				var valid: bool=data.vertices.size()==data.normals.size() and data.indices.size()%3==0
 				for index in data.indices:
 					if index<0 or index>=data.vertices.size(): valid=false;break
-				if valid:
-					data.ms=0;data.cached=true;return data
-	var result := preload("res://world/tetra_mesher.gd").build(Recipe.field.bind(radius,detail,local),origin,cells,spacing)
+				if valid and data.get("_field_state") is Dictionary and field_cache.valid_state(data._field_state,cells):
+					field_cache.restore(origin,cells,spacing,radius,detail,data._field_state)
+					data.ms=0;data.cached=true;data.profile={"warm_field":true,"base_evaluations":0,"rebuilt_blocks":0,"disk_restore":true};return data
+	var result := field_cache.build(origin,cells,spacing,local,radius,detail)
 	var writer := FileAccess.open(path+".tmp",FileAccess.WRITE)
 	if writer:
 		writer.store_var(result,false);writer.close()
@@ -142,43 +176,46 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 	return result
 
 func chunk_generated(result: Dictionary) -> void:
+	last_field_profile=result.get("profile",{})
 	if result.get("cached",false): cache_reads+=1
 	else: cache_builds+=1
 
 func install(key: Vector2i, result: Dictionary) -> void:
-	if not editing or not chunks.has(key):
-		super.install(key,result);return
-	# Build each replacement within the normal install budget, but leave its old
-	# neighbour-compatible surface active until the whole revision is ready.
-	var old: Dictionary=chunks[key]
-	chunks.erase(key)
+	if editing and chunks.has(key):
+		# Visual feedback is independent of expensive physics construction.
+		var mesh := ArrayMesh.new()
+		if not result.vertices.is_empty(): mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,mesh_arrays(result))
+		chunks[key].revision=active_revision;chunks[key].triangles=triangle_count(result)
+		preview_meshes[key]=mesh
+		publish_preview()
+		return
 	super.install(key,result)
-	var replacement: Dictionary=chunks[key]
-	replacement.node.hide()
-	for body in replacement.node.get_children():
-		if body is StaticBody3D: body.collision_layer=0
-	staged_chunks[key]=replacement
-	old.revision=active_revision;chunks[key]=old
 
-func activate_staged() -> void:
-	for key in staged_chunks:
-		var replacement: Dictionary=staged_chunks[key]
-		if not chunks.has(key): replacement.node.queue_free();continue
-		chunks[key].node.queue_free();chunks[key]=replacement
-		replacement.node.show()
-		for body in replacement.node.get_children():
-			if body is StaticBody3D: body.collision_layer=1
-	staged_chunks.clear();overlay_signature=""
+func publish_preview() -> void:
+	for key in preview_expected:
+		if chunks.has(key) and not preview_meshes.has(key): return
+	for key in preview_meshes:
+		if not chunks.has(key): continue
+		var mesh: ArrayMesh=preview_meshes[key]
+		var found := false
+		for child in chunks[key].node.get_children():
+			if child is MeshInstance3D: child.mesh=mesh;found=true
+		if not found:
+			var instance := MeshInstance3D.new();instance.mesh=mesh;instance.material_override=terrain.material_override;chunks[key].node.add_child(instance)
+		collision_pending[key]=mesh
+	if not preview_meshes.is_empty() and edit_started_usec>0:
+		preview_latency_ms=(Time.get_ticks_usec()-edit_started_usec)/1000.0;edit_started_usec=0
+	preview_meshes.clear();preview_expected.clear()
 
 func update_chunk_overlay() -> void:
 	chunk_overlay.visible=show_chunks
 	if not show_chunks: return
-	var signature := str(chunks.keys())+str(revision)+str(staged_chunks.keys())+str(ready_frames>0)
+	var signature := str(chunks.keys())+str(revision)+str(preview_expected.keys())+str(ready_frames>0)
 	if signature==overlay_signature: return
 	overlay_signature=signature
 	var mesh := ImmediateMesh.new();mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 	for key in chunks:
-		var colour := Color.ORANGE if chunks[key].revision!=revision or staged_chunks.has(key) else Color(0,.9,1)
+		var colour := Color.ORANGE if chunks[key].revision!=revision or preview_expected.has(key) else Color(0,.9,1)
 		mesh.surface_set_color(colour)
 		var p := Vector3(key.x*CHUNK,-24,key.y*CHUNK)
 		for y in [-24.0,0.0,64.0]:
@@ -192,15 +229,14 @@ func change(next: Array, remember := true) -> void:
 	if remember:
 		undo_stack.append(features.duplicate(true));redo_stack.clear()
 	var changed := []
-	for key in staged_chunks:
-		changed.append(Rect2(Vector2(key)*CHUNK,Vector2.ONE*CHUNK).grow(.1))
-		staged_chunks[key].node.queue_free()
-	staged_chunks.clear()
+	for key in preview_expected: changed.append(Rect2(Vector2(key)*CHUNK,Vector2.ONE*CHUNK).grow(.1))
+	preview_expected.clear();preview_meshes.clear()
 	# Conservatively invalidate both old and new footprints, but retain unrelated chunks.
 	for i in maxi(features.size(),next.size()):
 		if i<features.size() and i<next.size() and features[i]==next[i]: continue
-		if i<features.size(): changed.append(Recipe.bounds(features[i]).grow(2))
-		if i<next.size(): changed.append(Recipe.bounds(next[i]).grow(2))
+		if i<features.size(): changed.append(field_cache.influence(features[i]).grow(2.1))
+		if i<next.size(): changed.append(field_cache.influence(next[i]).grow(2.1))
+	if edit_started_usec==0: edit_started_usec=latest_input_usec if latest_input_usec>0 else Time.get_ticks_usec()
 	features=next.duplicate(true);revision+=1;ready_frames=0
 	edited_bounds.append_array(changed)
 	for key in chunks:
@@ -208,6 +244,7 @@ func change(next: Array, remember := true) -> void:
 		for area in changed:
 			if area.intersects(Rect2(Vector2(key)*CHUNK,Vector2.ONE*CHUNK)): dirty=true;break
 		if not dirty: chunks[key].revision=revision
+		else: preview_expected[key]=true
 	selected=mini(selected,features.size()-1)
 	refresh()
 	notice.text="Edited — Save to keep recipe. Old meshes retained on disk."
@@ -339,11 +376,16 @@ func cursor_hit() -> Dictionary:
 	var start := camera.project_ray_origin(mouse)
 	var query := PhysicsRayQueryParameters3D.create(start,start+camera.project_ray_normal(mouse)*1500,1)
 	query.exclude=[player.get_rid()]
-	return get_world_3d().direct_space_state.intersect_ray(query)
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if editing and not collision_pending.is_empty() and not hit.is_empty():
+		var current := field_cache.pick_surface(start,camera.project_ray_normal(mouse),start.distance_to(hit.position))
+		if not current.is_empty(): return current
+	return hit
 
 func start_brush() -> void:
 	var hit := cursor_hit()
 	if hit.is_empty(): return
+	latest_input_usec=Time.get_ticks_usec()
 	if brush_template.kind=="tunnel":
 		flush_brush()
 		var f := brush_template.duplicate(true);f.erase("amount")
@@ -469,7 +511,7 @@ func _input(event: InputEvent) -> void:
 		show_chunks=not show_chunks;return
 	if event is InputEventKey and event.pressed and event.keycode==KEY_F1:
 		finish_brush();flush_brush()
-		if editing and ready_frames<3:
+		if editing and (ready_frames<3 or not collision_pending.is_empty()):
 			notice.text="Wait for edited collision to finish before playing.";return
 		var kit := live_kit()
 		if kit:
@@ -550,11 +592,14 @@ func _physics_process(delta: float) -> void:
 	if editing:
 		editor_fly(delta)
 		var hit := cursor_hit()
+		aim_valid=not hit.is_empty()
+		if aim_valid: aim_point=hit.position
 		brush_cursor.visible=brush_mode and not hit.is_empty()
 		if not hit.is_empty(): update_brush_outline(hit.position)
 		if brushing and not hit.is_empty():
 			brush_time+=delta
 			if brush_time>=.1:
+				if not brush_dirty: latest_input_usec=Time.get_ticks_usec()
 				brush.dab(hit.position,brush_rate*brush_time);brush_time=0;brush_dirty=true
 		return
 	var kit := live_kit()
@@ -584,7 +629,17 @@ func _process(delta: float) -> void:
 	# by invalidating its revision every input frame. Recipes still accumulate now.
 	if brush_dirty and stream_jobs.is_empty(): flush_brush()
 	super._process(delta)
-	if ready_frames>0 and not staged_chunks.is_empty(): activate_staged()
+	if not brushing and not brush_dirty and not collision_pending.is_empty():
+		var key: Vector2i=collision_pending.keys()[0]
+		var mesh: ArrayMesh=collision_pending[key]
+		collision_pending.erase(key)
+		if chunks.has(key):
+			var shape := mesh.create_trimesh_shape() if mesh.get_surface_count()>0 else null
+			for child in chunks[key].node.get_children():
+				if child is StaticBody3D: child.queue_free()
+			if shape:
+				var body := StaticBody3D.new();var collider := CollisionShape3D.new();collider.shape=shape;body.add_child(collider);chunks[key].node.add_child(body)
+	publish_preview()
 	update_chunk_overlay()
 	update_endpoint_guide()
 	panel.position.x=maxf(0,get_viewport().get_visible_rect().size.x-panel.size.x-10)
@@ -601,9 +656,28 @@ func _process(delta: float) -> void:
 	if kit and kit.vehicle_system.driving:
 		var vehicle: RigidBody3D=kit.vehicle_system.driving
 		hud.text+="\nCollision-ahead speed limit: %.1f m/s%s" % [vehicle.stream_speed_limit," / waiting for terrain" if vehicle.streaming_suspended else ""]
+	if editing: hud.text+="\nPreview %.0f ms | warm %s | rebuilt %d/16 blocks | collision queue %d" % [preview_latency_ms,str(last_field_profile.get("warm_field",false)),last_field_profile.get("rebuilt_blocks",0),collision_pending.size()]
 
 func check_workshop() -> void:
-	while ready_frames<3 or not live_kit(): await get_tree().process_frame
+	while ready_frames<3 or not collision_pending.is_empty() or not live_kit(): await get_tree().process_frame
+	var baseline := features.duplicate(true)
+	var latency := []
+	set_physics_process(false) # Inject deterministic editor deltas, not mouse-position-dependent dabs.
+	var trial_offset := float(Time.get_ticks_usec()%1000000)/100000000.0
+	brushing=true;brush.previous=Vector3(-48,0,-48)
+	for dose in range(1,7):
+		var stamp := Recipe.feature("lower",brush.previous);stamp.radius=4;stamp.amount=float(dose)*.5+trial_offset
+		latest_input_usec=Time.get_ticks_usec()
+		change(baseline+[stamp],false)
+		while not preview_expected.is_empty(): await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+		latency.append((Time.get_ticks_usec()-latest_input_usec)/1000.0)
+	brushing=false;change(baseline,false)
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	var timing_file := FileAccess.open("user://sdf-edit-latency.json",FileAccess.WRITE)
+	timing_file.store_string(JSON.stringify({"warm_stroke_to_draw_ms":latency,"last_field_profile":last_field_profile},"\t"));timing_file.close()
+	print("EDIT_TO_DRAW_MS ",latency)
+	set_physics_process(true)
 	var original_transform := camera.transform
 	var wheel := InputEventMouseButton.new();wheel.position=Vector2(100,300);wheel.button_index=MOUSE_BUTTON_WHEEL_UP;wheel.pressed=true
 	_input(wheel);assert(camera.transform!=original_transform)
@@ -613,7 +687,7 @@ func check_workshop() -> void:
 	var original := features.duplicate(true)
 	var f := Recipe.feature("hill",Vector3(-40,0,-40));f.radius=12;f.height=10
 	change([f]);undo();assert(features==original);redo();assert(features.size()==1)
-	while ready_frames<3: await get_tree().process_frame
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
 	await get_tree().physics_frame
 	var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(-40,40,-40),Vector3(-40,-20,-40),1))
 	assert(not hit.is_empty() and absf(hit.position.y-10)<.2)
@@ -622,7 +696,7 @@ func check_workshop() -> void:
 	var tunnel := Recipe.feature("tunnel",Vector3(-40,5,-40));tunnel.radius=3
 	var bridge := Recipe.feature("bridge",Vector3(-40,20,-70));bridge.height=20
 	change([f,tunnel,bridge])
-	while ready_frames<3: await get_tree().process_frame
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
 	await get_tree().physics_frame
 	var space := get_world_3d().direct_space_state
 	assert(space.intersect_ray(PhysicsRayQueryParameters3D.create(Vector3(-58,5,-40),Vector3(-22,5,-40),1)).is_empty())

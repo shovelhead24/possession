@@ -66,6 +66,12 @@ mesh snapshot and ray-marched comparison remain available. See
 
 Priority follow-ups:
 
+Progress 2026-10-04: sampled-field/kernel caching and local section remeshing are
+implemented for the workshop; generated field/mesh state remains on disk.
+The separate [grenade destruction lab](terrain-destruction-lab.md) tests warm
+small cuts with live Warthog physics and staged collision handover. This does not
+complete cold streaming, finer volumetric LOD, long-session or shipping work below.
+
 1. Measure actual launch-to-playable time, separating terrain, models/textures,
    ring background and cache state. Investigate the recorded post-benchmark
    shutdown access violation; do not label it fixed without reproduction/testing.

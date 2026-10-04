@@ -3,7 +3,7 @@ extends RefCounted
 const CORNERS := [Vector3i(0,0,0),Vector3i(1,0,0),Vector3i(1,1,0),Vector3i(0,1,0),Vector3i(0,0,1),Vector3i(1,0,1),Vector3i(1,1,1),Vector3i(0,1,1)]
 const TETS := [[0,5,1,6],[0,1,2,6],[0,2,3,6],[0,3,7,6],[0,7,4,6],[0,4,5,6]]
 
-static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: float) -> Dictionary:
+static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: float, supplied := PackedFloat32Array(), normal_sampler := Callable()) -> Dictionary:
 	var started := Time.get_ticks_usec()
 	var nx := cells.x+1
 	var ny := cells.y+1
@@ -15,7 +15,7 @@ static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: f
 			for x in nx:
 				var id := (z*ny+y)*nx+x
 				positions[id]=origin+Vector3(x,y,z)*spacing
-				values[id]=sample.call(positions[id])
+				values[id]=supplied[id] if not supplied.is_empty() else sample.call(positions[id])
 	var sampled_at := Time.get_ticks_usec()
 	# Precompute polygon topology once per job, rather than allocating inside/outside
 	# lists and edge lists for every tetrahedron.
@@ -38,13 +38,15 @@ static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: f
 	var edge_vertices := {}
 	var ids := PackedInt32Array();ids.resize(8)
 	var polygon := PackedInt32Array();polygon.resize(4)
+	var slab := nx*ny
+	var corner_offsets := PackedInt32Array([0,1,nx+1,nx,slab,slab+1,slab+nx+1,slab+nx])
 	for z in cells.z:
 		for y in cells.y:
 			for x in cells.x:
 				var negative := 0
+				var base_id := (z*ny+y)*nx+x
 				for i in 8:
-					var c: Vector3i=Vector3i(x,y,z)+CORNERS[i]
-					ids[i]=(c.z*ny+c.y)*nx+c.x
+					ids[i]=base_id+corner_offsets[i]
 					if values[ids[i]]<0: negative+=1
 				if negative==0 or negative==8: continue
 				for tet in TETS:
@@ -76,6 +78,7 @@ static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: f
 	var e := .03
 	for i in vertices.size():
 		var p := vertices[i]
+		if normal_sampler.is_valid(): normals[i]=normal_sampler.call(p);continue
 		normals[i]=Vector3(sample.call(p+Vector3(e,0,0))-sample.call(p-Vector3(e,0,0)),sample.call(p+Vector3(0,e,0))-sample.call(p-Vector3(0,e,0)),sample.call(p+Vector3(0,0,e))-sample.call(p-Vector3(0,0,e))).normalized()
 	var finished := Time.get_ticks_usec()
 	return {"vertices":vertices,"normals":normals,"indices":indices,"ms":(finished-started)/1000.0,"profile":{"sample_ms":(sampled_at-started)/1000.0,"triangulate_ms":(triangulated_at-sampled_at)/1000.0,"normal_ms":(finished-triangulated_at)/1000.0,"grid_samples":count,"normal_samples":vertices.size()*6,"unique_vertices":vertices.size(),"triangles":indices.size()/3}}

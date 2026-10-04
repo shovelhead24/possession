@@ -7,6 +7,10 @@ static func feature(kind: String, p: Vector3) -> Dictionary:
 	return {"kind":kind,"x":p.x,"y":p.y,"z":p.z,"radius":16.0,"height":12.0,"length":48.0,"width":12.0,"thickness":4.0,"yaw":0.0,"bend":0.0}
 
 static func bounds(f: Dictionary) -> Rect2:
+	# Runtime craters are compact edits, not a global distance-field replacement.
+	# Padding preserves the sampling/normal neighbourhood outside the cut.
+	if f.kind=="carve" and f.get("localized",false):
+		return Rect2(Vector2(f.x-f.radius-2,f.z-f.radius-2),Vector2.ONE*(f.radius+2)*2)
 	if f.has("end_x"):
 		return Rect2(Vector2(f.x,f.z),Vector2.ZERO).expand(Vector2(f.end_x,f.end_z)).grow(f.radius+2)
 	var reach: float = f.length*.5+absf(f.bend)+maxf(f.radius,f.width)+2.0
@@ -20,7 +24,9 @@ static func relevant(features: Array, area: Rect2) -> Array:
 	return result
 
 static func field(p: Vector3, radius: float, rough: float, features: Array) -> float:
-	var d := Base.expanded_field(p,radius,rough)
+	return compose(p,Base.expanded_field(p,radius,rough),features)
+
+static func compose(p: Vector3, d: float, features: Array) -> float:
 	for f in features:
 		if not bounds(f).has_point(Vector2(p.x,p.z)): continue
 		var before := d
@@ -75,6 +81,7 @@ static func validate(data: Variant) -> bool:
 	if data.features.size()>2048: return false
 	for f in data.features:
 		if not f is Dictionary or f.get("kind") not in TYPES: return false
+		if f.has("localized") and not f.localized is bool: return false
 		for key in ["x","y","z","radius","height","length","width","thickness","yaw","bend"]:
 			if not f.get(key) is float and not f.get(key) is int: return false
 			if not is_finite(float(f[key])) or absf(f[key])>100000: return false

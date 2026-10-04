@@ -86,13 +86,26 @@ engine, origin and sampling settings. Distant edits do not change unrelated
 chunk cache keys. Old revisions remain on disk. There is no automatic purge and
 no whole-world generation on save. Undo can reuse a previous cached mesh.
 
-The old visible mesh/collision stays until the replacement is installed. Editor
+The sampled-field precache retains expensive base samples and brush kernels in
+an estimated 32 MiB RAM LRU. Warm edits rebuild affected 8 m horizontal sections
+rather than reevaluating/remeshing the entire chunk. Field state is persisted with
+meshes and restored on cache reads. First visits still require generation.
+Normals now come from gradients of the sampled grid, an approximation to the
+analytic normals; the sampled geometry remains authoritative.
+
+While a brush is active, local visual updates take priority over speculative
+streaming. A dirty local batch swaps together. Physics rebuilding is deferred
+until the stroke ends (one queued chunk per frame), while cursor picking follows
+the cached edited field so it does not wait for old collision to catch up. Editor
 mode pauses actors and freezes vehicles. Returning to play waits for current
 chunks; actors within changed footprints are relocated above sampled terrain and
 vehicles have velocities cleared. This is a deliberate editor transition, NOT
 continuous destruction or a guarantee of footprint fit on every overhang. Inspect
 placement after significant edits. Existing static trees are not re-authored or
 re-grounded by this first editor.
+
+Continuous small-crater destruction is tested separately in the
+[grenade lab](terrain-destruction-lab.md), not inferred from this editor pause.
 
 ## Scope and known limits
 
