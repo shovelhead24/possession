@@ -3,19 +3,31 @@ extends RefCounted
 const CORNERS := [Vector3i(0,0,0),Vector3i(1,0,0),Vector3i(1,1,0),Vector3i(0,1,0),Vector3i(0,0,1),Vector3i(1,0,1),Vector3i(1,1,1),Vector3i(0,1,1)]
 const TETS := [[0,5,1,6],[0,1,2,6],[0,2,3,6],[0,3,7,6],[0,7,4,6],[0,4,5,6]]
 
-static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: float, supplied := PackedFloat32Array(), normal_sampler := Callable()) -> Dictionary:
+static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: float, supplied := PackedFloat32Array(), normal_sampler := Callable(), skip_uniform_layers := true) -> Dictionary:
 	var started := Time.get_ticks_usec()
 	var nx := cells.x+1
 	var ny := cells.y+1
 	var count := nx*ny*(cells.z+1)
 	var values := PackedFloat32Array();values.resize(count)
 	var positions := PackedVector3Array();positions.resize(count)
+	var negative_per_layer := PackedInt32Array();negative_per_layer.resize(ny)
 	for z in cells.z+1:
 		for y in ny:
 			for x in nx:
 				var id := (z*ny+y)*nx+x
 				positions[id]=origin+Vector3(x,y,z)*spacing
 				values[id]=supplied[id] if not supplied.is_empty() else sample.call(positions[id])
+				if values[id]<0: negative_per_layer[y]+=1
+	# A pair of entirely positive/negative sample planes cannot contain a
+	# tetrahedral surface. Skip only proven-uniform layers, never infer from
+	# corner bounds or SDF distance (noise/tunnels need not be true distances).
+	var active_layers := PackedByteArray();active_layers.resize(cells.y)
+	var plane_size := nx*(cells.z+1)
+	var skipped_cells := 0
+	for y in cells.y:
+		var negatives := negative_per_layer[y]+negative_per_layer[y+1]
+		active_layers[y]=int(not skip_uniform_layers or (negatives!=0 and negatives!=plane_size*2))
+		if not active_layers[y]: skipped_cells+=cells.x*cells.z
 	var sampled_at := Time.get_ticks_usec()
 	# Precompute polygon topology once per job, rather than allocating inside/outside
 	# lists and edge lists for every tetrahedron.
@@ -42,6 +54,7 @@ static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: f
 	var corner_offsets := PackedInt32Array([0,1,nx+1,nx,slab,slab+1,slab+nx+1,slab+nx])
 	for z in cells.z:
 		for y in cells.y:
+			if not active_layers[y]: continue
 			for x in cells.x:
 				var negative := 0
 				var base_id := (z*ny+y)*nx+x
@@ -81,4 +94,4 @@ static func build(sample: Callable, origin: Vector3, cells: Vector3i, spacing: f
 		if normal_sampler.is_valid(): normals[i]=normal_sampler.call(p);continue
 		normals[i]=Vector3(sample.call(p+Vector3(e,0,0))-sample.call(p-Vector3(e,0,0)),sample.call(p+Vector3(0,e,0))-sample.call(p-Vector3(0,e,0)),sample.call(p+Vector3(0,0,e))-sample.call(p-Vector3(0,0,e))).normalized()
 	var finished := Time.get_ticks_usec()
-	return {"vertices":vertices,"normals":normals,"indices":indices,"ms":(finished-started)/1000.0,"profile":{"sample_ms":(sampled_at-started)/1000.0,"triangulate_ms":(triangulated_at-sampled_at)/1000.0,"normal_ms":(finished-triangulated_at)/1000.0,"grid_samples":count,"normal_samples":vertices.size()*6,"unique_vertices":vertices.size(),"triangles":indices.size()/3}}
+	return {"vertices":vertices,"normals":normals,"indices":indices,"ms":(finished-started)/1000.0,"profile":{"sample_ms":(sampled_at-started)/1000.0,"triangulate_ms":(triangulated_at-sampled_at)/1000.0,"normal_ms":(finished-triangulated_at)/1000.0,"skipped_cells":skipped_cells,"grid_samples":count,"normal_samples":vertices.size()*6,"unique_vertices":vertices.size(),"triangles":indices.size()/3}}

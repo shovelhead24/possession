@@ -173,6 +173,36 @@ photon measurements or guarantees for large/cold edits.
 
 ## Diagnosing stalls and deep holes
 
+The default panel now exposes **Raise terrain**, **Lower terrain**, brush radius
+in metres and strength per second. Hold LMB over terrain to accumulate a stroke.
+The raw feature coordinates and shape parameters are under **Advanced tools and
+feature settings**. Simple presets reset endpoint/placement modes and select a
+circular brush without altering already-authored terrain.
+
+Press **F8 before an operation**, then **F8 afterwards** (or use the panel button).
+Paired `operation_marker` BEGIN/END records contain a shared ID, UTC/Unix time,
+monotonic elapsed time, tool/radius/strength, camera and queue state. Each marker
+flushes immediately. The HUD confirms the marker. A key pressed during a blocked
+frame is processed after the stall; it is not an OS-level keypress timestamp.
+
+The latest optimisation skips proven-uniform sample layers, avoids dispatch
+overhead in additive columns, precomputes spline segment constants, and rebuilds
+sections only when sampled values (including the normal halo) actually change.
+Alternating same-process CPU trials preserved exact field and mesh arrays:
+lower 36.5→23.7 ms, carve 25.5→11.1 ms, tunnel 244.1→139.7 ms (medians).
+These are worker calculations, not click-to-screen times. Overall frame costs
+remain a separate bottleneck; an earlier within-run visibility diagnostic still
+measured 81 ms median frames with 3D disabled, versus 159–198 ms fully rendered.
+Machine load changed considerably between runs, so those absolute times must not
+be compared as a controlled before/after result.
+
+`profile_sdf_edit_cpu.gd` runs alternating original/optimised warm calculations;
+`check_sdf_layer_skip.gd` checks exact topology including zero planes.
+`--authoring-isolate` alongside `--authoring-repro` temporarily hides visual
+components for frame diagnostics, restores them, then runs the edit/contact test.
+`--authoring-ui-check` checks simple presets and captures the panel. The rendered
+reproduction also verifies F8 pairing, repeat suppression and immediate log flush.
+
 Every workshop launch now writes a distinct `sdf-editor-trace-<timestamp>.jsonl`
 under `%APPDATA%/Godot/app_userdata/HaloTest/`. It records input/picking time,
 submissions, worker timings, preview latency, collision section swaps and slow

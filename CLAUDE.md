@@ -63,6 +63,14 @@ Key files: `cage_mesh.gd`, `cage_mesh_gizmo.gd`, `cage_panel.gd`, `cage_subdivid
 ### Workflow change
 User now runs Claude Code natively on Windows laptop (direct file access — no more git push/pull loop needed for edits). Godot project root is `game/` inside the repo.
 
+### Standing launch rule
+After changing an iteration, always launch the newest relevant playable scene
+for the user before handing it back, unless explicitly told otherwise. Automated
+or headless tests alone are not the user-facing launch. Use a fresh process, not
+scene reload, and say which scene was launched. Never close an existing session
+with potentially unsaved work without permission. If launching fails or requires
+unavailable approval, report that explicitly rather than claiming it is running.
+
 ### Standing terrain cache rule
 Unless the user explicitly directs otherwise, retain generated terrain meshes on
 disk and stream valid cached results when appropriate. RAM eviction is not disk

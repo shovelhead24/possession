@@ -93,7 +93,7 @@ static func normal(p: Vector3, values: PackedFloat32Array, origin: Vector3, dims
 	var e:=values[i+slab];var g:=values[i+slab+1];var h:=values[i+slab+row];var j:=values[i+slab+row+1]
 	return Vector3(lerpf(lerpf(b-a,d-c0,f.y),lerpf(g-e,j-h,f.y),f.z),lerpf(lerpf(c0-a,d-b,f.x),lerpf(h-e,j-g,f.x),f.z),lerpf(lerpf(e-a,g-b,f.x),lerpf(h-c0,j-d,f.x),f.y)).normalized()
 
-func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, radius: float, rough: float) -> Dictionary:
+func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, radius: float, rough: float, optimise := true) -> Dictionary:
 	var started := Time.get_ticks_usec()
 	var key := str(origin)+str(cells)+str(spacing)+str(radius)+str(rough)
 	mutex.lock()
@@ -117,6 +117,7 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 	var old_kernels: Dictionary=state.get("kernels",{})
 	var kernels: Dictionary=old_kernels.duplicate() if append_only else {}
 	var base_calls := 0;var touched := 0
+	var changed_columns := PackedByteArray();changed_columns.resize(dims.x*dims.z)
 	if not warm:
 		base.resize(count);values.resize(count)
 		for z in dims.z:
@@ -129,7 +130,21 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 	var compiled := []
 	for feature in (features.slice(old_features.size()) if append_only else features):
 		var item := {"feature":feature,"additive":feature.has("amount") and feature.kind in ["hill","lower"]}
+		item.area=Recipe.bounds(feature)
 		item.sphere=feature.kind=="carve" and not feature.has("amount")
+		item.curve=optimise and feature.kind in ["ridge","tunnel"] and not feature.has("end_x")
+		if item.curve:
+			item.center=Vector3(feature.x,feature.y,feature.z)
+			item.angle=-deg_to_rad(feature.yaw)
+			item.blend=1.0-exp(-float(feature.amount)) if feature.has("amount") else 1.0
+			var starts := PackedVector3Array();var axes := PackedVector3Array();var lengths := PackedFloat64Array()
+			var a := Vector3(-feature.length*.5,0,0)
+			for i in range(1,9):
+				var t := i/8.0
+				var b := Vector3(lerpf(-feature.length*.5,feature.length*.5,t),0,4*t*(1-t)*feature.bend)
+				var ab := b-a
+				starts.append(a);axes.append(ab);lengths.append(ab.length_squared());a=b
+			item.starts=starts;item.axes=axes;item.lengths=lengths
 		if item.sphere:
 			item.center=Vector3(feature.x,feature.y,feature.z);item.area=Recipe.bounds(feature)
 		if item.additive:
@@ -163,8 +178,19 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 					offset+=float(item.feature.amount)*item.weights[z*dims.x+x]*(-1 if item.feature.kind=="hill" else 1)
 					continue
 				if offset!=0: column_ops.append({"offset":offset});offset=0
-				if not item.sphere or item.area.has_point(point): column_ops.append(item)
+				if (not optimise and not item.sphere) or item.area.has_point(point): column_ops.append(item)
 			if offset!=0: column_ops.append({"offset":offset})
+			if optimise and (column_ops.is_empty() or (column_ops.size()==1 and column_ops[0].has("offset"))):
+				# The common sculpt-only column needs no per-sample dictionaries,
+				# operation dispatch or world-position construction.
+				var delta: float=column_ops[0].offset if not column_ops.is_empty() else 0.0
+				for y in dims.y:
+					var id := (z*dims.y+y)*dims.x+x
+					var previous := values[id]
+					values[id]=(values[id] if append_only else base[id])+delta
+					if values[id]!=previous: changed_columns[z*dims.x+x]=1
+				touched+=dims.y
+				continue
 			for y in dims.y:
 				var id := (z*dims.y+y)*dims.x+x
 				var p := grid_origin+Vector3(x,y,z)*spacing
@@ -174,8 +200,18 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 						value+=item.offset
 					elif item.sphere:
 						value=maxf(value,item.feature.radius-p.distance_to(item.center))
+					elif item.curve:
+						var q: Vector3=(p-item.center).rotated(Vector3.UP,item.angle)
+						var curve := INF
+						for i in 8:
+							var a: Vector3=item.starts[i];var ab: Vector3=item.axes[i]
+							curve=minf(curve,(q-a-ab*clampf((q-a).dot(ab)/item.lengths[i],0,1)).length()-item.feature.radius)
+						var next := minf(value,curve) if item.feature.kind=="ridge" else maxf(value,-curve)
+						value=lerpf(value,next,item.blend) if item.feature.has("amount") else next
 					else: value=Recipe.compose(p,value,[item.feature])
+				var previous := values[id]
 				values[id]=value;touched+=1
+				if values[id]!=previous: changed_columns[z*dims.x+x]=1
 	var sampled_at := Time.get_ticks_usec()
 	var parts: Dictionary=state.get("parts",{}).duplicate()
 	var rebuilt := 0
@@ -187,14 +223,20 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 			var block_cells := Vector3i(mini(4,cells.x-x0),cells.y,mini(4,cells.z-z0))
 			var area := Rect2(Vector2(block_origin.x,block_origin.z),Vector2(block_cells.x,block_cells.z)*spacing).grow(spacing+.1)
 			var dirty := not parts.has(block_key)
-			for edit in changed:
-				if area.intersects(edit): dirty=true;break
+			if optimise:
+				# Include a full sample halo for gradient normals at section seams.
+				for z in range(z0,z0+block_cells.z+3):
+					for x in range(x0,x0+block_cells.x+3):
+						if changed_columns[z*dims.x+x]: dirty=true;break
+			else:
+				for edit in changed:
+					if area.intersects(edit): dirty=true;break
 			if not dirty: continue
 			var samples := PackedFloat32Array()
 			for z in block_cells.z+1:
 				for y in block_cells.y+1:
 					for x in block_cells.x+1: samples.append(values[((z0+z+1)*dims.y+y+1)*dims.x+x0+x+1])
-			parts[block_key]=Mesher.build(Callable(),block_origin,block_cells,spacing,samples,normal.bind(values,grid_origin,dims,spacing))
+			parts[block_key]=Mesher.build(Callable(),block_origin,block_cells,spacing,samples,normal.bind(values,grid_origin,dims,spacing),optimise)
 			rebuilt+=1
 			dirty_blocks.append(block_key)
 	var vertices := PackedVector3Array();var normals := PackedVector3Array();var indices := PackedInt32Array()

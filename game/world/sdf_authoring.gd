@@ -57,11 +57,39 @@ var trace_flush_usec := 0
 var last_process_usec := 0
 var physics_ms := 0.0
 var collision_supports := {}
+var operation_marker_id := 0
+var operation_marker_started := 0
+var operation_marker_status := "F8: mark BEGIN before a slow operation, END afterwards"
+var operation_marker_button: Button
+var simple_radius: SpinBox
+var simple_strength: SpinBox
+var brush_mode_toggle: CheckButton
+var simple_brush_label: Label
+var shape_choice: OptionButton
+var aspect_control: SpinBox
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
 	var data := {"event":event,"usec":Time.get_ticks_usec(),"revision":revision,"features":features.size(),"jobs":stream_jobs.size(),"pending_preview":preview_expected.size(),"pending_collision":collision_pending.size(),"brushing":brushing,"brush_dirty":brush_dirty}
 	data.merge(extra);trace_file.store_line(JSON.stringify(data))
+
+func mark_operation() -> void:
+	var now := Time.get_ticks_usec()
+	var wall := Time.get_unix_time_from_system()
+	var phase := "END" if operation_marker_started>0 else "BEGIN"
+	var elapsed := 0.0
+	if phase=="BEGIN":
+		operation_marker_id+=1;operation_marker_started=now
+	else:
+		elapsed=(now-operation_marker_started)/1000.0;operation_marker_started=0
+	var data := {"marker_id":operation_marker_id,"phase":phase,"unix_seconds":wall,"utc":Time.get_datetime_string_from_unix_time(int(wall))+"Z","elapsed_ms":elapsed,"tool":brush_template.kind,"radius_m":brush_template.radius,"strength_per_second":brush_rate,"editing":editing,"camera":str(camera.position),"aim":str(aim_point),"aim_valid":aim_valid}
+	trace_edit("operation_marker",data)
+	if trace_file: trace_file.flush();trace_flush_usec=now
+	operation_marker_status="MARK %d %s / %s" % [operation_marker_id,phase,data.utc]
+	if phase=="END": operation_marker_status+=" / %.2f seconds" % (elapsed/1000.0)
+	else: operation_marker_status+=" / F8 to mark END"
+	if operation_marker_button: operation_marker_button.text="F8: mark END" if operation_marker_started else "F8: mark BEGIN"
+	print("EDITOR_MARK ",JSON.stringify(data)," / ",ProjectSettings.globalize_path(trace_path))
 
 func recovery_floor() -> float:
 	return -30.0 # Below the editable volume, not through its legitimate holes.
@@ -108,6 +136,7 @@ func _ready() -> void:
 	DisplayServer.window_set_title("SDF recipe workshop / F1 edit or play")
 	if OS.get_cmdline_user_args().has("--authoring-check"): check_workshop.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-repro"): check_repeated_clicks.call_deferred()
+	if OS.get_cmdline_user_args().has("--authoring-ui-check"): check_simple_ui.call_deferred()
 	trace_edit("ready",{"path":trace_path})
 
 func rebuild() -> void:
@@ -180,6 +209,7 @@ static func cached_path(local: Array, origin: Vector3, cells: Vector3i, spacing:
 	return CACHE_PATH+(version+Recipe.cache_key(local,origin,cells,spacing,radius,detail)).sha256_text()+".bin"
 
 func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, spacing := 1.0, sampler := Callable()) -> Dictionary:
+	var started := Time.get_ticks_usec()
 	var snapshot: Array=sampler.get_bound_arguments()[0]
 	var local := Recipe.relevant(snapshot,Rect2(Vector2(origin.x,origin.z),Vector2(cells.x,cells.z)*spacing).grow(spacing+.1))
 	var path := cached_path(local,origin,cells,spacing,radius,detail)
@@ -193,12 +223,15 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 					if index<0 or index>=data.vertices.size(): valid=false;break
 				if valid and data.get("_field_state") is Dictionary and field_cache.valid_state(data._field_state,cells):
 					field_cache.restore(origin,cells,spacing,radius,detail,data._field_state)
-					data.ms=0;data.cached=true;data.profile={"warm_field":true,"base_evaluations":0,"rebuilt_blocks":0,"disk_restore":true};return data
+					data.ms=0;data.cached=true;data.profile={"warm_field":true,"base_evaluations":0,"rebuilt_blocks":0,"disk_restore":true,"worker_total_ms":(Time.get_ticks_usec()-started)/1000.0};return data
 	var result := field_cache.build(origin,cells,spacing,local,radius,detail)
+	var built := Time.get_ticks_usec()
 	var writer := FileAccess.open(path+".tmp",FileAccess.WRITE)
 	if writer:
 		writer.store_var(result,false);writer.close()
 		DirAccess.rename_absolute(path+".tmp",path)
+	result.profile.disk_write_ms=(Time.get_ticks_usec()-built)/1000.0
+	result.profile.worker_total_ms=(Time.get_ticks_usec()-started)/1000.0
 	return result
 
 func chunk_generated(result: Dictionary) -> void:
@@ -209,11 +242,13 @@ func chunk_generated(result: Dictionary) -> void:
 
 func install(key: Vector2i, result: Dictionary) -> void:
 	if editing and chunks.has(key):
+		var started := Time.get_ticks_usec()
 		# Visual feedback is independent of expensive physics construction.
 		var mesh := ArrayMesh.new()
 		if not result.vertices.is_empty(): mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,mesh_arrays(result))
 		chunks[key].revision=active_revision;chunks[key].triangles=triangle_count(result)
 		preview_meshes[key]={"mesh":mesh,"parts":result._field_state.parts}
+		trace_edit("mesh_upload",{"key":str(key),"upload_ms":(Time.get_ticks_usec()-started)/1000.0})
 		publish_preview()
 		return
 	super.install(key,result)
@@ -346,26 +381,53 @@ func make_panel() -> void:
 	var scroll := ScrollContainer.new();scroll.custom_minimum_size=Vector2(400,470);panel.add_child(scroll)
 	var column := VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(column)
 	var title := Label.new();title.text="SDF RECIPE / F1 edit-play";column.add_child(title)
+	var simple_tools := HBoxContainer.new();column.add_child(simple_tools)
+	for kind in ["hill","lower"]:
+		var button := Button.new();button.text="Raise terrain" if kind=="hill" else "Lower terrain"
+		button.size_flags_horizontal=Control.SIZE_EXPAND_FILL;simple_tools.add_child(button)
+		button.pressed.connect(select_simple_brush.bind(kind))
+	simple_brush_label=Label.new();column.add_child(simple_brush_label)
+	var simple_controls := GridContainer.new();simple_controls.columns=2;column.add_child(simple_controls)
+	var radius_label := Label.new();radius_label.text="Brush radius (metres)";simple_controls.add_child(radius_label)
+	simple_radius=SpinBox.new();simple_radius.min_value=1;simple_radius.max_value=120;simple_radius.step=1;simple_radius.value=brush_template.radius;simple_controls.add_child(simple_radius)
+	simple_radius.value_changed.connect(func(value: float): brush_template.radius=value;refresh())
+	var strength_label := Label.new();strength_label.text="Strength / second";simple_controls.add_child(strength_label)
+	simple_strength=SpinBox.new();simple_strength.min_value=.25;simple_strength.max_value=100;simple_strength.step=.25;simple_strength.value=brush_rate;simple_controls.add_child(simple_strength)
+	simple_strength.value_changed.connect(func(value: float): brush_rate=value)
+	var help := Label.new();help.text="Hold LMB on ground to sculpt. RMB + WASD to fly.\nWheel: zoom. Shift-wheel: brush size.";column.add_child(help)
+	operation_marker_button=Button.new();operation_marker_button.text="F8: mark BEGIN";column.add_child(operation_marker_button)
+	operation_marker_button.tooltip_text="Press before and after a slow operation. Timestamped markers flush immediately to the editor trace."
+	operation_marker_button.pressed.connect(mark_operation)
+	var simple_actions := HBoxContainer.new();column.add_child(simple_actions)
+	for spec in [["Undo",undo],["Redo",redo],["Save",save],["Load",load_saved]]:
+		var button := Button.new();button.text=spec[0];simple_actions.add_child(button);button.pressed.connect(spec[1])
+	var top_column := column
+	var advanced_toggle := CheckButton.new();advanced_toggle.text="Advanced tools and feature settings";column.add_child(advanced_toggle)
+	var advanced := VBoxContainer.new();column.add_child(advanced);advanced.hide()
+	advanced_toggle.toggled.connect(func(value: bool): advanced.visible=value)
+	column=advanced
 	var toggle := CheckButton.new();toggle.text="Brush (off = edit/move features)";toggle.button_pressed=true;column.add_child(toggle)
+	brush_mode_toggle=toggle
 	toggle.toggled.connect(func(value: bool): finish_brush();flush_brush();brush_mode=value;refresh())
 	var debug_button := Button.new();debug_button.text="F3 chunk outlines / cyan ready, orange pending";column.add_child(debug_button)
 	debug_button.pressed.connect(func(): show_chunks=not show_chunks)
 	var shape_row := HBoxContainer.new();column.add_child(shape_row)
 	var shapes := OptionButton.new()
+	shape_choice=shapes
 	for label in ["circle","square","ellipse"]: shapes.add_item(label)
 	shape_row.add_child(shapes)
 	shapes.item_selected.connect(func(index: int): brush_template.shape=["circle","square","ellipse"][index])
 	var aspect_label := Label.new();aspect_label.text="Ellipse ratio";shape_row.add_child(aspect_label)
 	var aspect := SpinBox.new();aspect.min_value=.25;aspect.max_value=4;aspect.step=.25;aspect.value=1;shape_row.add_child(aspect)
+	aspect_control=aspect
 	aspect.value_changed.connect(func(value: float): brush_template.aspect=value)
 	var end_button := Button.new();end_button.text="Set tunnel exit (Alt-click = far surface)";column.add_child(end_button)
 	end_button.pressed.connect(func(): picking_endpoint=true;notice.text="Click exit surface; Alt-click looks through the near surface. Ctrl snaps heading to 45 degrees.")
 	var rates := HBoxContainer.new();column.add_child(rates)
-	for spec in [["Strength/s",4.0],["Fly m/s",25.0]]:
+	for spec in [["Fly m/s",25.0]]:
 		var label := Label.new();label.text=spec[0];rates.add_child(label)
 		var speed := SpinBox.new();speed.min_value=.25;speed.max_value=100;speed.step=.25;speed.value=spec[1];rates.add_child(speed)
-		if spec[0]=="Strength/s": speed.value_changed.connect(func(value: float): brush_rate=value)
-		else: speed.value_changed.connect(func(value: float): fly_speed=value)
+		speed.value_changed.connect(func(value: float): fly_speed=value)
 	var tools := HFlowContainer.new();column.add_child(tools)
 	for kind in Recipe.TYPES:
 		var button := Button.new();button.text="ravine" if kind=="lower" else kind;tools.add_child(button);button.pressed.connect(add_feature.bind(kind))
@@ -379,11 +441,21 @@ func make_panel() -> void:
 		if key=="y": value.min_value=-20;value.max_value=55
 		grid.add_child(value);fields[key]=value;value.value_changed.connect(edit_value.bind(key))
 	var actions := HFlowContainer.new();column.add_child(actions)
-	for spec in [["Move feature",place_selected],["Focus",focus_selected],["Delete",delete_selected],["Earlier",reorder.bind(-1)],["Later",reorder.bind(1)],["Undo",undo],["Redo",redo],["Save",save],["Load",load_saved]]:
+	for spec in [["Move feature",place_selected],["Focus",focus_selected],["Delete",delete_selected],["Earlier",reorder.bind(-1)],["Later",reorder.bind(1)]]:
 		var button := Button.new();button.text=spec[0];actions.add_child(button);button.pressed.connect(spec[1])
 	notice=Label.new();notice.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;notice.custom_minimum_size.x=270
 	notice.text="WASD fly, RMB look, LMB sculpt. Wheel zoom; Shift-wheel size. Strokes accumulate. Save explicitly."
-	column.add_child(notice)
+	top_column.add_child(notice)
+
+func select_simple_brush(kind: String) -> void:
+	finish_brush();flush_brush()
+	var radius: float=brush_template.radius
+	brush_template=Recipe.feature(kind,Vector3.ZERO);brush_template.radius=radius
+	brush_template.shape="circle";brush_template.aspect=1.0
+	brush_mode=true;placing=false;dragging=false;picking_endpoint=false;endpoint_dragging=false
+	brush_mode_toggle.set_pressed_no_signal(true)
+	refresh()
+	notice.text=("Raise" if kind=="hill" else "Lower")+" terrain: hold left mouse on ground. Size and strength above are all you need."
 
 func refresh() -> void:
 	if feature_list==null: return
@@ -393,6 +465,11 @@ func refresh() -> void:
 	if selected>=0:
 		feature_list.select(selected)
 	var values: Dictionary=brush_template if brush_mode else (features[selected] if selected>=0 else brush_template)
+	simple_radius.set_value_no_signal(brush_template.radius)
+	simple_strength.set_value_no_signal(brush_rate)
+	shape_choice.select(["circle","square","ellipse"].find(brush_template.get("shape","circle")))
+	aspect_control.set_value_no_signal(float(brush_template.get("aspect",1)))
+	simple_brush_label.text="Selected: "+({"hill":"Raise terrain","lower":"Lower terrain"}.get(brush_template.kind,brush_template.kind) if brush_mode else "Advanced feature editing")
 	for key in fields: fields[key].value=values[key]
 	marker.visible=selected>=0 and editing and not brush_mode
 	if selected>=0: marker.position=Vector3(features[selected].x,features[selected].y,features[selected].z)
@@ -423,7 +500,7 @@ func add_feature(kind: String) -> void:
 
 func edit_value(value: float, key: String) -> void:
 	if updating: return
-	if brush_mode: brush_template[key]=value;return
+	if brush_mode: brush_template[key]=value;simple_radius.set_value_no_signal(brush_template.radius);return
 	if selected<0: return
 	var next := features.duplicate(true);next[selected][key]=value;change(next)
 
@@ -611,6 +688,8 @@ func focus_selected() -> void:
 	camera.position=target+Vector3(-28,25,-35);camera.look_at(target);look=Vector2(camera.rotation.y,camera.rotation.x)
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F8:
+		mark_operation();get_viewport().set_input_as_handled();return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F3:
 		show_chunks=not show_chunks;return
 	if event is InputEventKey and event.pressed and event.keycode==KEY_F1:
@@ -762,9 +841,10 @@ func _process(delta: float) -> void:
 		var vehicle: RigidBody3D=kit.vehicle_system.driving
 		hud.text+="\nCollision-ahead speed limit: %.1f m/s%s" % [vehicle.stream_speed_limit," / waiting for terrain" if vehicle.streaming_suspended else ""]
 	if editing: hud.text+="\nPreview %.0f ms | warm %s | rebuilt %d/16 blocks | collision queue %d" % [preview_latency_ms,str(last_field_profile.get("warm_field",false)),last_field_profile.get("rebuilt_blocks",0),collision_pending.size()]
+	hud.text+="\n"+operation_marker_status
 	var total_ms := (Time.get_ticks_usec()-started)/1000.0
 	if gap_ms>80 or total_ms>40 or physics_ms>20:
-		trace_edit("stall",{"frame_gap_ms":gap_ms,"process_ms":total_ms,"submit_ms":(submitted-started)/1000.0,"stream_ms":(streamed-submitted)/1000.0,"collision_ms":(collided-streamed)/1000.0,"physics_ms":physics_ms})
+		trace_edit("stall",{"frame_gap_ms":gap_ms,"process_ms":total_ms,"submit_ms":(submitted-started)/1000.0,"stream_ms":(streamed-submitted)/1000.0,"collision_ms":(collided-streamed)/1000.0,"physics_ms":physics_ms,"engine_process_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"engine_physics_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000})
 	if trace_file and started-trace_flush_usec>1000000: trace_file.flush();trace_flush_usec=started
 
 func remember_collision_support(key: Vector2i) -> void:
@@ -798,11 +878,18 @@ func settle_editor_contacts(delta: float) -> void:
 
 func check_repeated_clicks() -> void:
 	while ready_frames<3 or not live_kit(): await get_tree().process_frame
+	if OS.get_cmdline_user_args().has("--authoring-isolate"): await profile_frame_components()
 	set_physics_process(false)
 	var original := features.duplicate(true)
 	brush_template=Recipe.feature("lower",Vector3.ZERO);brush_template.radius=16
 	var before := preview_publications
 	var started := Time.get_ticks_usec()
+	var marker_key := InputEventKey.new();marker_key.keycode=KEY_F8;marker_key.pressed=true
+	var original_revision := revision
+	_input(marker_key)
+	assert(operation_marker_started>0 and revision==original_revision,"BEGIN marker modified terrain")
+	marker_key.echo=true;_input(marker_key);marker_key.echo=false
+	assert(operation_marker_started>0,"Key repeat closed marker")
 	for click in 20:
 		start_brush({"position":Vector3(-32,0,-48),"normal":Vector3.UP})
 		finish_brush()
@@ -810,6 +897,13 @@ func check_repeated_clicks() -> void:
 	while brush_dirty or not preview_expected.is_empty() or not collision_pending.is_empty() or ready_frames<3: await get_tree().process_frame
 	assert(features.size()==original.size()+20,"Rapid clicks lost edits")
 	trace_edit("rapid_click_test",{"elapsed_ms":(Time.get_ticks_usec()-started)/1000.0,"updates":preview_publications-before})
+	_input(marker_key)
+	assert(operation_marker_started==0,"END marker did not close interval")
+	var recorded := []
+	for line in FileAccess.get_file_as_string(trace_path).split("\n",false):
+		var entry: Variant=JSON.parse_string(line)
+		if entry is Dictionary and entry.get("event")=="operation_marker": recorded.append(entry)
+	assert(recorded.size()==2 and recorded[0].phase=="BEGIN" and recorded[1].phase=="END" and recorded[0].marker_id==recorded[1].marker_id and recorded[1].elapsed_ms>0,"Marker pair was not flushed to disk")
 	# Restore source then test physical response without editor-to-play relocation.
 	change([],false)
 	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
@@ -835,6 +929,47 @@ func check_repeated_clicks() -> void:
 	trace_edit("repro_pass",{"vehicle_start_y":initial_y,"vehicle_hole_y":low_y,"vehicle_restored_y":car.position.y})
 	print("PASS: 20 repeated 16m clicks retained; live editor vehicle falls and rises; deep-hole camera not teleported. Trace: ",trace_path)
 	get_tree().quit()
+
+func check_simple_ui() -> void:
+	var original := features.duplicate(true)
+	brush_mode=false;placing=true;picking_endpoint=true
+	brush_template=Recipe.feature("tunnel",Vector3.ZERO);brush_template.end_x=12.0
+	brush_template.shape="ellipse";brush_template.aspect=2.0
+	select_simple_brush("hill")
+	assert(brush_mode and brush_mode_toggle.button_pressed and not placing and not picking_endpoint)
+	assert(brush_template.kind=="hill" and brush_template.shape=="circle" and not brush_template.has("end_x"))
+	simple_radius.value=8;simple_strength.value=3
+	assert(brush_template.radius==8 and brush_rate==3)
+	select_simple_brush("lower")
+	assert(brush_template.kind=="lower" and brush_template.radius==8 and features==original)
+	await RenderingServer.frame_post_draw
+	get_viewport().get_texture().get_image().save_png("user://sdf-authoring-simple-ui.png")
+	print("PASS: simple Raise/Lower presets reset advanced modes without changing source; radius and strength controls; UI capture saved")
+	get_tree().quit()
+
+func profile_frame_components() -> void:
+	# Diagnostic only: keep simulation running and restore visibility afterwards.
+	# Within-run comparisons avoid mistaking changing machine load for edit speed.
+	var visuals := []
+	for entry in arena_content.entries: visuals.append([entry.root,entry.root.visible])
+	var ring_visible := ring_background.visible
+	var disabled := get_viewport().disable_3d
+	for mode in ["full_scene","actors_hidden","ring_and_actors_hidden","render_3d_disabled","full_scene_restored"]:
+		for pair in visuals: pair[0].visible=pair[1] if mode in ["full_scene","full_scene_restored"] else false
+		ring_background.visible=ring_visible if mode in ["full_scene","actors_hidden","full_scene_restored"] else false
+		get_viewport().disable_3d=mode=="render_3d_disabled"
+		for warmup in 5: await get_tree().process_frame
+		var gaps := [];var process := [];var physics := []
+		var previous := Time.get_ticks_usec()
+		for frame in 30:
+			await get_tree().process_frame
+			var now := Time.get_ticks_usec();gaps.append((now-previous)/1000.0);previous=now
+			process.append(Performance.get_monitor(Performance.TIME_PROCESS)*1000)
+			physics.append(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000)
+		gaps.sort();process.sort();physics.sort()
+		var report := {"mode":mode,"frame_median_ms":gaps[15],"frame_p95_ms":gaps[28],"engine_process_median_ms":process[15],"engine_physics_median_ms":physics[15]}
+		trace_edit("component_profile",report);print("COMPONENT_PROFILE ",JSON.stringify(report))
+	get_viewport().disable_3d=disabled
 
 func check_workshop() -> void:
 	while ready_frames<3 or not collision_pending.is_empty() or not live_kit(): await get_tree().process_frame
