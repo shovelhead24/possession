@@ -4,7 +4,11 @@ const Base = preload("res://world/sdf_arena_expanded.gd")
 const TYPES = ["hill", "lower", "flatten", "carve", "ridge", "tunnel", "bridge"]
 
 static func feature(kind: String, p: Vector3) -> Dictionary:
-	return {"kind":kind,"x":p.x,"y":p.y,"z":p.z,"radius":16.0,"height":12.0,"length":48.0,"width":12.0,"thickness":4.0,"yaw":0.0,"bend":0.0}
+	var result := {"kind":kind,"x":p.x,"y":p.y,"z":p.z,"radius":16.0,"height":12.0,"length":48.0,"width":12.0,"thickness":4.0,"yaw":0.0,"bend":0.0}
+	# New editor cuts use the grenade's compact support too. Do not silently
+	# rewrite existing saved features, whose original evaluation is preserved.
+	if kind=="carve": result.localized=true
+	return result
 
 static func bounds(f: Dictionary) -> Rect2:
 	# Runtime craters are compact edits, not a global distance-field replacement.

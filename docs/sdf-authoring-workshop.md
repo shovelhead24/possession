@@ -94,8 +94,14 @@ Normals now come from gradients of the sampled grid, an approximation to the
 analytic normals; the sampled geometry remains authoritative.
 
 While a brush is active, local visual updates take priority over speculative
-streaming. A dirty local batch swaps together. Physics rebuilding is deferred
-until the stroke ends (one queued chunk per frame), while cursor picking follows
+streaming. Input accumulates each physics tick rather than waiting for a 100 ms
+sampling interval. Successive drafts coalesce behind the current local preview;
+unrelated streaming jobs no longer prevent submission. Their unchanged snapshots
+remain valid across edit revisions. Brush outline geometry is reused, and the
+feature list is not rebuilt on every dab.
+
+A dirty local batch swaps together. Physics rebuilding is deferred until the
+stroke ends, while cursor picking follows
 the cached edited field so it does not wait for old collision to catch up. Editor
 mode pauses actors and freezes vehicles. Returning to play waits for current
 chunks; actors within changed footprints are relocated above sampled terrain and
@@ -103,6 +109,15 @@ vehicles have velocities cleared. This is a deliberate editor transition, NOT
 continuous destruction or a guarantee of footprint fit on every overhang. Inspect
 placement after significant edits. Existing static trees are not re-authored or
 re-grounded by this first editor.
+
+Collision now uses the grenade lab's small-section approach: prepare changed
+8 m sections within a roughly 4 ms frame budget, register disabled replacement
+bodies, then switch collision after a physics tick. The first edit converts an
+existing whole-chunk collider; later edits reuse unchanged sections. Comparison
+is against the installed collision, not just the last visual update, so no earlier
+part of a held stroke is forgotten. F1 still waits for all current collision.
+New carve features use compact spherical bounds; saved legacy features are not
+silently rewritten. Recipes and old disk caches remain intact.
 
 Continuous small-crater destruction is tested separately in the
 [grenade lab](terrain-destruction-lab.md), not inferred from this editor pause.
@@ -144,3 +159,10 @@ square/ellipse footprints, endpoint cylinders, persistence and matching shared-e
 vertices in two actual adjacent ravine meshes. The rendered check additionally
 tests wheel zoom/size, chunk cages and vehicle boundary containment. These tests
 do not prove every tunnel proposal finds an exit.
+
+2026-10-04 responsiveness regression: six warm 4 m edits reached the draw callback
+in 95–135 ms on Intel UHD at 960×600. A moving 60-tick stroke across a chunk seam
+published 14 updates while held, retained all 4.0 accumulated strength units, and
+finished collision about 140 ms after release. Both sides of the seam agreed with
+the sampled surface. These are submitted-edit timings, not physical mouse-to-
+photon measurements or guarantees for large/cold edits.

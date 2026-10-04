@@ -49,6 +49,8 @@ var preview_expected := {}
 var preview_meshes := {}
 var aim_point := Vector3.ZERO
 var aim_valid := false
+var brush_outline_signature := ""
+var preview_publications := 0
 
 func stream_worker_limit() -> int:
 	return 2
@@ -186,7 +188,7 @@ func install(key: Vector2i, result: Dictionary) -> void:
 		var mesh := ArrayMesh.new()
 		if not result.vertices.is_empty(): mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,mesh_arrays(result))
 		chunks[key].revision=active_revision;chunks[key].triangles=triangle_count(result)
-		preview_meshes[key]=mesh
+		preview_meshes[key]={"mesh":mesh,"parts":result._field_state.parts}
 		publish_preview()
 		return
 	super.install(key,result)
@@ -196,16 +198,65 @@ func publish_preview() -> void:
 		if chunks.has(key) and not preview_meshes.has(key): return
 	for key in preview_meshes:
 		if not chunks.has(key): continue
-		var mesh: ArrayMesh=preview_meshes[key]
+		var mesh: ArrayMesh=preview_meshes[key].mesh
 		var found := false
 		for child in chunks[key].node.get_children():
 			if child is MeshInstance3D: child.mesh=mesh;found=true
 		if not found:
 			var instance := MeshInstance3D.new();instance.mesh=mesh;instance.material_override=terrain.material_override;chunks[key].node.add_child(instance)
-		collision_pending[key]=mesh
+		queue_editor_collision(key,preview_meshes[key].parts)
 	if not preview_meshes.is_empty() and edit_started_usec>0:
+		preview_publications+=1
 		preview_latency_ms=(Time.get_ticks_usec()-edit_started_usec)/1000.0;edit_started_usec=0
 	preview_meshes.clear();preview_expected.clear()
+
+func queue_editor_collision(key: Vector2i, parts: Dictionary) -> void:
+	# Compare with LIVE collision, not the last generated revision: several visual
+	# updates may have accumulated while a stroke held physics work back.
+	if collision_pending.has(key):
+		for body in collision_pending[key].staged.values(): body.queue_free()
+	var old_parts: Dictionary=chunks[key].get("collision_parts",{})
+	var dirty := []
+	for id in parts:
+		if not old_parts.has(id) or old_parts[id].vertices!=parts[id].vertices or old_parts[id].indices!=parts[id].indices: dirty.append(id)
+	collision_pending[key]={"parts":parts,"dirty":dirty,"staged":{},"tick":-1}
+
+func pump_editor_collision() -> void:
+	if brushing or brush_dirty or collision_pending.is_empty(): return
+	var started := Time.get_ticks_usec()
+	for key in collision_pending.keys():
+		var pending: Dictionary=collision_pending[key]
+		if not chunks.has(key):
+			collision_pending.erase(key);continue
+		while not pending.dirty.is_empty():
+			var id: Vector2i=pending.dirty.pop_front()
+			var part: Dictionary=pending.parts[id]
+			var body := StaticBody3D.new();body.collision_layer=0;body.collision_mask=0
+			chunks[key].node.add_child(body)
+			if not part.indices.is_empty():
+				var faces := PackedVector3Array();faces.resize(part.indices.size())
+				for i in part.indices.size(): faces[i]=part.vertices[part.indices[i]]
+				var shape := ConcavePolygonShape3D.new();shape.set_faces(faces)
+				var collider := CollisionShape3D.new();collider.shape=shape;body.add_child(collider)
+			pending.staged[id]=body
+			if Time.get_ticks_usec()-started>=4000: return
+		if pending.tick<0: pending.tick=Engine.get_physics_frames();continue
+		if Engine.get_physics_frames()<=pending.tick: continue
+		if not chunks[key].has("collision_blocks"):
+			# First edit converts the original whole-chunk collider to sections.
+			for child in chunks[key].node.get_children():
+				if child is StaticBody3D and child not in pending.staged.values():
+					child.collision_layer=0;child.collision_mask=0;child.queue_free()
+			chunks[key].collision_blocks={}
+		for id in pending.staged:
+			if chunks[key].collision_blocks.has(id):
+				var old: StaticBody3D=chunks[key].collision_blocks[id]
+				old.collision_layer=0;old.collision_mask=0;old.queue_free()
+			var body: StaticBody3D=pending.staged[id]
+			body.collision_layer=1;body.collision_mask=1;chunks[key].collision_blocks[id]=body
+		chunks[key].collision_parts=pending.parts
+		collision_pending.erase(key)
+		if Time.get_ticks_usec()-started>=4000: return
 
 func update_chunk_overlay() -> void:
 	chunk_overlay.visible=show_chunks
@@ -225,7 +276,7 @@ func update_chunk_overlay() -> void:
 			mesh.surface_add_vertex(p+offset);mesh.surface_add_vertex(p+offset+Vector3(0,88,0))
 	mesh.surface_end();chunk_overlay.mesh=mesh
 
-func change(next: Array, remember := true) -> void:
+func change(next: Array, remember := true, update_ui := true) -> void:
 	if remember:
 		undo_stack.append(features.duplicate(true));redo_stack.clear()
 	var changed := []
@@ -238,6 +289,13 @@ func change(next: Array, remember := true) -> void:
 		if i<next.size(): changed.append(field_cache.influence(next[i]).grow(2.1))
 	if edit_started_usec==0: edit_started_usec=latest_input_usec if latest_input_usec>0 else Time.get_ticks_usec()
 	features=next.duplicate(true);revision+=1;ready_frames=0
+	# Unrelated background jobs still have valid snapshots; don't discard them
+	# merely because a nearby stroke advanced the global editor revision.
+	for job in stream_jobs:
+		var dirty := false
+		for area in changed:
+			if area.intersects(Rect2(Vector2(job.key)*CHUNK,Vector2.ONE*CHUNK)): dirty=true;break
+		if not dirty: job.revision=revision
 	edited_bounds.append_array(changed)
 	for key in chunks:
 		var dirty := false
@@ -246,7 +304,7 @@ func change(next: Array, remember := true) -> void:
 		if not dirty: chunks[key].revision=revision
 		else: preview_expected[key]=true
 	selected=mini(selected,features.size()-1)
-	refresh()
+	if update_ui: refresh()
 	notice.text="Edited — Save to keep recipe. Old meshes retained on disk."
 
 func make_panel() -> void:
@@ -403,6 +461,7 @@ func start_brush() -> void:
 
 func finish_brush() -> void:
 	brushing=false
+	refresh()
 
 func suggested_exit(start: Vector3, normal: Vector3) -> Vector3:
 	var best: Vector3 = start+(-camera.basis.z*Vector3(1,0,1)).normalized()*brush_template.length
@@ -468,6 +527,10 @@ func far_surface(mouse: Vector2) -> Variant:
 	return null
 
 func update_brush_outline(p: Vector3) -> void:
+	brush_cursor.position=p+Vector3.UP*.15
+	var signature := str([brush_template.radius,brush_template.get("shape","circle"),brush_template.get("aspect",1),brush_template.yaw])
+	if signature==brush_outline_signature: return
+	brush_outline_signature=signature
 	var mesh := ImmediateMesh.new();mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 	var square: bool=brush_template.get("shape","circle")=="square"
 	var segments := 4 if square else 48
@@ -486,7 +549,7 @@ func update_brush_outline(p: Vector3) -> void:
 
 func flush_brush() -> void:
 	if not brush_dirty: return
-	brush_dirty=false;change(brush.draft,false)
+	brush_dirty=false;change(brush.draft,false,not brushing)
 
 func editor_fly(delta: float) -> void:
 	var focus := get_viewport().gui_get_focus_owner()
@@ -598,7 +661,7 @@ func _physics_process(delta: float) -> void:
 		if not hit.is_empty(): update_brush_outline(hit.position)
 		if brushing and not hit.is_empty():
 			brush_time+=delta
-			if brush_time>=.1:
+			if brush_time>=1.0/60.0:
 				if not brush_dirty: latest_input_usec=Time.get_ticks_usec()
 				brush.dab(hit.position,brush_rate*brush_time);brush_time=0;brush_dirty=true
 		return
@@ -627,18 +690,9 @@ func resettle_edited_actors(kit: Node) -> void:
 func _process(delta: float) -> void:
 	# Let each in-flight preview finish: continuous strokes must not starve meshing
 	# by invalidating its revision every input frame. Recipes still accumulate now.
-	if brush_dirty and stream_jobs.is_empty(): flush_brush()
+	if brush_dirty and preview_expected.is_empty(): flush_brush()
 	super._process(delta)
-	if not brushing and not brush_dirty and not collision_pending.is_empty():
-		var key: Vector2i=collision_pending.keys()[0]
-		var mesh: ArrayMesh=collision_pending[key]
-		collision_pending.erase(key)
-		if chunks.has(key):
-			var shape := mesh.create_trimesh_shape() if mesh.get_surface_count()>0 else null
-			for child in chunks[key].node.get_children():
-				if child is StaticBody3D: child.queue_free()
-			if shape:
-				var body := StaticBody3D.new();var collider := CollisionShape3D.new();collider.shape=shape;body.add_child(collider);chunks[key].node.add_child(body)
+	pump_editor_collision()
 	publish_preview()
 	update_chunk_overlay()
 	update_endpoint_guide()
@@ -674,8 +728,33 @@ func check_workshop() -> void:
 		latency.append((Time.get_ticks_usec()-latest_input_usec)/1000.0)
 	brushing=false;change(baseline,false)
 	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	# Continuous input, not a sequence of edits each waiting for the last to finish.
+	var tool := Recipe.feature("lower",Vector3.ZERO);tool.radius=4
+	brush.begin(baseline,tool);brush.previous=Vector3(-36,0,-48);brushing=true
+	var publications_before := preview_publications
+	for tick in 60:
+		if not brush_dirty: latest_input_usec=Time.get_ticks_usec()
+		brush.dab(Vector3(-36+tick*8.0/59,0,-48),4.0/60.0);brush_dirty=true
+		await get_tree().physics_frame
+	var live_updates := preview_publications-publications_before
+	var released := Time.get_ticks_usec()
+	finish_brush();flush_brush()
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
+	var release_ms := (Time.get_ticks_usec()-released)/1000.0
+	var amount := 0.0
+	for feature in features.slice(baseline.size()): amount+=feature.amount
+	assert(absf(amount-4)<.00001,"Continuous stroke lost input strength")
+	assert(live_updates>=2,"Continuous stroke did not publish while held")
+	for x in [-32.01,-31.99]:
+		var from := Vector3(x,40,-48)
+		var hit := get_world_3d().direct_space_state.intersect_ray(PhysicsRayQueryParameters3D.create(from,from+Vector3.DOWN*63,1))
+		var expected := field_cache.pick_surface(from,Vector3.DOWN,40)
+		assert(not hit.is_empty() and not expected.is_empty() and absf(hit.position.y-expected.position.y)<.02,"Accumulated collision differs at stroke seam")
+	print("CONTINUOUS_BRUSH updates=",live_updates," strength=",amount," release_to_collision_ms=",release_ms)
+	change(baseline,false)
+	while ready_frames<3 or not collision_pending.is_empty(): await get_tree().process_frame
 	var timing_file := FileAccess.open("user://sdf-edit-latency.json",FileAccess.WRITE)
-	timing_file.store_string(JSON.stringify({"warm_stroke_to_draw_ms":latency,"last_field_profile":last_field_profile},"\t"));timing_file.close()
+	timing_file.store_string(JSON.stringify({"warm_stroke_to_draw_ms":latency,"continuous_updates":live_updates,"continuous_strength":amount,"release_to_collision_ms":release_ms,"last_field_profile":last_field_profile},"\t"));timing_file.close()
 	print("EDIT_TO_DRAW_MS ",latency)
 	set_physics_process(true)
 	var original_transform := camera.transform
