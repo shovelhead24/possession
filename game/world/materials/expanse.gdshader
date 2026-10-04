@@ -7,6 +7,11 @@ uniform sampler2D rock_albedo : source_color, filter_linear_mipmap_anisotropic, 
 uniform sampler2D rock_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D rock_roughness : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D limestone : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D grass_roughness : filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sparse_albedo : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sparse_normal : hint_normal, filter_linear_mipmap_anisotropic, repeat_enable;
+uniform sampler2D sparse_roughness : filter_linear_mipmap_anisotropic, repeat_enable;
+uniform bool nature_surface = false;
 uniform bool textured = true;
 uniform bool bridge_enabled = true;
 uniform bool overpass_enabled = false;
@@ -55,6 +60,18 @@ float bridge_field(vec3 p) {
 	return max(block, -arch);
 }
 
+float patch_hash(vec2 p) { return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+float patch_noise(vec2 p) {
+	vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+	return mix(mix(patch_hash(i),patch_hash(i+vec2(1,0)),f.x),mix(patch_hash(i+vec2(0,1)),patch_hash(i+vec2(1,1)),f.x),f.y);
+}
+
+vec3 ground_normal(sampler2D tex, vec2 uv, vec3 n) {
+	vec2 bump=texture(tex,uv).rg*2.0-1.0;
+	vec3 world_bump=vec3(bump.x,0.0,-bump.y);
+	return normalize(n+0.45*(world_bump-n*dot(world_bump,n)));
+}
+
 void fragment() {
 	vec3 p = world_position;
 	if (coarse_surface && max(abs(p.x),abs(p.z))<coarse_inner_extent) { discard; }
@@ -86,6 +103,13 @@ void fragment() {
 		ALBEDO = triplanar(limestone, p, n, w, stone_metres).rgb * (overpass_enabled ? 0.72 : 1.0);
 	} else {
 		float grass = smoothstep(0.55, 0.85, n.y);
+		// A shared world-space cover field: metre-scale material detail, broad
+		// irregular dry patches, and more exposed stone on steep/high ground.
+		float macro=patch_noise(p.xz/43.0);
+		float patches=0.7*macro+0.3*patch_noise(p.xz/11.0);
+		float sparse=smoothstep(0.38,0.7,patches+smoothstep(12.0,52.0,p.y)*0.16);
+		if (nature_surface) { grass*=1.0-smoothstep(0.68,0.88,patches)*0.55; }
+		float near_detail=1.0-smoothstep(35.0,90.0,distance(p,INV_VIEW_MATRIX[3].xyz));
 		vec3 detailed = n;
 		vec3 color = vec3(0.0);
 		vec3 rock_detail = n;
@@ -93,12 +117,33 @@ void fragment() {
 		if (grass < 1.0) {
 			color = triplanar(rock_albedo, p, n, w, vec2(rock_metres)).rgb;
 			ROUGHNESS = mix(triplanar(rock_roughness, p, n, w, vec2(rock_metres)).r, 0.95, grass);
-			rock_detail = detail_normal(rock_normal, p, n, w, rock_metres);
+			if (!nature_surface || near_detail>0.0) { rock_detail = normalize(mix(n,detail_normal(rock_normal,p,n,w,rock_metres),nature_surface ? near_detail : 1.0)); }
 			detailed = rock_detail;
 		}
 		if (grass > 0.0) {
-			color = mix(color, triplanar(grass_albedo, p, n, w, vec2(grass_metres)).rgb, grass);
-			detailed = normalize(mix(rock_detail, detail_normal(grass_normal, p, n, w, grass_metres), grass));
+			if (nature_surface) {
+				// Ground cover only exists on upward slopes: one planar lookup
+				// per map, not three triplanar projections per grass layer.
+				vec2 uv=vec2(p.x,-p.z)/grass_metres;
+				vec2 sparse_uv=vec2(p.x,-p.z)/2.0+vec2(0.37,0.19);
+				vec3 cover=vec3(0.0);vec3 cover_normal=n;float rough=0.95;
+				if (sparse<1.0) {
+					cover=mix(texture(grass_albedo,uv).rgb,texture(grass_albedo,uv*0.731+vec2(0.31,0.67)).rgb,0.4);
+					cover*=vec3(0.68,1.04,0.64);rough=texture(grass_roughness,uv).r;
+					if (near_detail>0.0) { cover_normal=ground_normal(grass_normal,uv,n); }
+				}
+				if (sparse>0.0) {
+					cover=mix(cover,texture(sparse_albedo,sparse_uv).rgb,sparse);
+					rough=mix(rough,texture(sparse_roughness,sparse_uv).r,sparse);
+					if (near_detail>0.0) { cover_normal=normalize(mix(cover_normal,ground_normal(sparse_normal,sparse_uv,n),sparse)); }
+				}
+				cover*=mix(vec3(0.82,0.86,0.75),vec3(1.06,1.02,0.91),macro);
+				color=mix(color,cover,grass);ROUGHNESS=mix(ROUGHNESS,rough,grass);
+				detailed=normalize(mix(rock_detail,normalize(mix(n,cover_normal,near_detail)),grass));
+			} else {
+				color = mix(color, triplanar(grass_albedo, p, n, w, vec2(grass_metres)).rgb, grass);
+				detailed = normalize(mix(rock_detail, detail_normal(grass_normal, p, n, w, grass_metres), grass));
+			}
 		}
 		ALBEDO = color;
 		NORMAL = normalize((VIEW_MATRIX * vec4(detailed, 0.0)).xyz);

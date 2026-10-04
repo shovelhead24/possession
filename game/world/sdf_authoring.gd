@@ -80,6 +80,8 @@ var play_requested := false
 var play_status: Label
 var grenade_cooldown := 0.0
 var crater_queue: Array=[]
+var nature := preload("res://world/workshop_nature.gd").new()
+var painted_trees: Node3D
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
@@ -139,7 +141,9 @@ func _ready() -> void:
 		var saved: Variant=JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
 		if Recipe.validate(saved): features=saved.features
 	super._ready()
+	preload("res://world/materials/expanse_material.gd").apply_nature(terrain.material_override)
 	make_panel()
+	painted_trees=preload("res://world/painted_trees.gd").new();painted_trees.workshop=self;add_child(painted_trees)
 	var sphere := SphereMesh.new();sphere.radius=.7;sphere.height=1.4
 	marker.mesh=sphere
 	var mat := StandardMaterial3D.new();mat.albedo_color=Color.ORANGE;mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -161,7 +165,8 @@ func _ready() -> void:
 	ring_mesh.surface_end();surface_cursor.mesh=ring_mesh;surface_cursor.material_override=line_material;surface_cursor.hide();add_child(surface_cursor)
 	Input.mouse_mode=Input.MOUSE_MODE_VISIBLE
 	refresh()
-	DisplayServer.window_set_title("SDF workshop / Raise-Lower + editable tunnels")
+	DisplayServer.window_set_title("SDF workshop / mountains, erosion and tree painting")
+	if OS.get_cmdline_user_args().has("--authoring-nature-check"): check_nature.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-check"): check_workshop.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-repro"): check_repeated_clicks.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-ui-check"): check_simple_ui.call_deferred()
@@ -438,8 +443,8 @@ func change(next: Array, remember := true, update_ui := true, input_stamp := 0) 
 	# Conservatively invalidate both old and new footprints, but retain unrelated chunks.
 	for i in maxi(features.size(),next.size()):
 		if i<features.size() and i<next.size() and features[i]==next[i]: continue
-		if i<features.size(): changed.append(field_cache.influence(features[i]).grow(2.1))
-		if i<next.size(): changed.append(field_cache.influence(next[i]).grow(2.1))
+		if i<features.size() and features[i].kind!="trees": changed.append(field_cache.influence(features[i]).grow(2.1))
+		if i<next.size() and next[i].kind!="trees": changed.append(field_cache.influence(next[i]).grow(2.1))
 	if edit_started_usec==0: edit_started_usec=input_stamp if input_stamp>0 else Time.get_ticks_usec()
 	features=next.duplicate(true);revision+=1;ready_frames=0
 	# Unrelated background jobs still have valid snapshots; don't discard them
@@ -477,7 +482,7 @@ func make_panel() -> void:
 	var simple_controls := GridContainer.new();simple_controls.columns=2;column.add_child(simple_controls)
 	var radius_label := Label.new();radius_label.text="Brush radius (metres)";simple_controls.add_child(radius_label)
 	simple_radius=SpinBox.new();simple_radius.min_value=1;simple_radius.max_value=120;simple_radius.step=1;simple_radius.value=brush_template.radius;simple_controls.add_child(simple_radius)
-	simple_radius.value_changed.connect(func(value: float): brush_template.radius=value;refresh())
+	simple_radius.value_changed.connect(set_brush_radius)
 	var strength_label := Label.new();strength_label.text="Strength / second";simple_controls.add_child(strength_label)
 	simple_strength=SpinBox.new();simple_strength.min_value=.25;simple_strength.max_value=100;simple_strength.step=.25;simple_strength.value=brush_rate;simple_controls.add_child(simple_strength)
 	simple_strength.value_changed.connect(func(value: float): brush_rate=value)
@@ -489,6 +494,7 @@ func make_panel() -> void:
 	for spec in [["Undo",undo],["Redo",redo],["Save",save],["Load",load_saved]]:
 		var button := Button.new();button.text=spec[0];simple_actions.add_child(button);button.pressed.connect(spec[1])
 	var top_column := column
+	nature.setup(self,column)
 	var tunnel_toggle := CheckButton.new();tunnel_toggle.text="Tunnel tools / create or edit";column.add_child(tunnel_toggle)
 	var tunnel_panel := VBoxContainer.new();column.add_child(tunnel_panel);tunnel_panel.hide()
 	tunnel_toggle.toggled.connect(func(value: bool): tunnel_panel.visible=value)
@@ -537,6 +543,7 @@ func make_panel() -> void:
 		speed.value_changed.connect(func(value: float): fly_speed=value)
 	var tools := HFlowContainer.new();column.add_child(tools)
 	for kind in Recipe.TYPES:
+		if kind in ["mountain","trees"]: continue # Dedicated, labelled controls above.
 		var button := Button.new();button.text="ravine" if kind=="lower" else kind;tools.add_child(button);button.pressed.connect(add_feature.bind(kind))
 	feature_list=ItemList.new();feature_list.custom_minimum_size=Vector2(270,85);column.add_child(feature_list)
 	feature_list.item_selected.connect(func(index: int):
@@ -623,6 +630,7 @@ func refresh() -> void:
 	var values: Dictionary=brush_template if brush_mode else (features[selected] if selected>=0 else brush_template)
 	simple_radius.set_value_no_signal(brush_template.radius)
 	simple_strength.set_value_no_signal(brush_rate)
+	simple_strength.editable=brush_template.kind not in ["mountain","trees"]
 	shape_choice.select(["circle","square","ellipse"].find(brush_template.get("shape","circle")))
 	aspect_control.set_value_no_signal(float(brush_template.get("aspect",1)))
 	simple_brush_label.text="Selected: "+({"hill":"Raise terrain","lower":"Lower terrain"}.get(brush_template.kind,brush_template.kind) if brush_mode else "Advanced feature editing")
@@ -632,6 +640,7 @@ func refresh() -> void:
 	marker.visible=selected>=0 and editing and not brush_mode
 	if selected>=0: marker.position=Vector3(features[selected].x,features[selected].y,features[selected].z)
 	updating=false
+	nature.refresh()
 
 func add_feature(kind: String) -> void:
 	if kind=="tunnel": arm_new_tunnel();return
@@ -658,6 +667,12 @@ func add_feature(kind: String) -> void:
 	var next := features.duplicate(true);next.append(added)
 	selected=next.size()-1;change(next)
 	selected=features.size()-1;refresh()
+
+func set_brush_radius(value: float) -> void:
+	brush_template.radius=clampf(value,8 if brush_template.kind=="mountain" else 1,100 if brush_template.kind=="mountain" else 120)
+	if brush_template.kind=="mountain":
+		nature.mountain.radius=brush_template.radius;nature.controls.radius.set_value_no_signal(brush_template.radius)
+	refresh()
 
 func edit_value(value: float, key: String) -> void:
 	if updating: return
@@ -720,6 +735,21 @@ func start_brush(hit_override := {}) -> void:
 	if hit.is_empty(): return
 	trace_edit("brush_down",{"pick_ms":(Time.get_ticks_usec()-started)/1000.0,"radius":brush_template.radius,"tool":brush_template.kind,"point":str(hit.position)})
 	latest_input_usec=Time.get_ticks_usec()
+	if brush_template.kind=="mountain":
+		flush_brush()
+		var f := nature.mountain.duplicate(true);f.x=hit.position.x;f.y=hit.position.y;f.z=hit.position.z
+		if not mountain_fits(f): return
+		if features.size()>=2048: notice.text="Recipe feature limit reached.";return
+		var next := features.duplicate(true);next.append(f);selected=next.size()-1;change(next)
+		brush_mode=false;brush_mode_toggle.set_pressed_no_signal(false);refresh()
+		notice.text="Mountain added. Select it under Mountains to change settings and Apply; click Mountain infill to add another."
+		return
+	if brush_template.kind=="trees" and nature.tree_erase:
+		var next := features.duplicate(true)
+		for i in range(next.size()-1,-1,-1):
+			if next[i].kind=="trees" and Vector2(next[i].x,next[i].z).distance_to(Vector2(hit.position.x,hit.position.z))<brush_template.radius+next[i].radius: next.remove_at(i)
+		if next!=features: change(next)
+		brushing=true;return
 	if brush_template.kind=="tunnel":
 		if not tunnel_new_armed: return
 		flush_brush()
@@ -901,10 +931,10 @@ func _input(event: InputEvent) -> void:
 		throw_grenade();return
 	if editing:
 		if event is InputEventKey and event.pressed and event.keycode in [KEY_BRACKETLEFT,KEY_BRACKETRIGHT]:
-			brush_template.radius=clampf(brush_template.radius+(1 if event.keycode==KEY_BRACKETRIGHT else -1),1,120);refresh();return
+			set_brush_radius(brush_template.radius+(1 if event.keycode==KEY_BRACKETRIGHT else -1));return
 		if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN] and not panel.get_global_rect().has_point(event.position):
 			if event.shift_pressed:
-				brush_template.radius=clampf(brush_template.radius+(1 if event.button_index==MOUSE_BUTTON_WHEEL_UP else -1),1,120);refresh();return
+				set_brush_radius(brush_template.radius+(1 if event.button_index==MOUSE_BUTTON_WHEEL_UP else -1));return
 			var direction := camera.project_ray_normal(event.position)
 			camera.position+=direction*(1 if event.button_index==MOUSE_BUTTON_WHEEL_UP else -1)*fly_speed*.25
 			return
@@ -1006,6 +1036,14 @@ func _physics_process(delta: float) -> void:
 		if not hit.is_empty(): update_brush_outline(hit.position)
 		if brushing and not hit.is_empty():
 			brush_time+=delta
+			if brush_template.kind=="trees" and nature.tree_erase:
+				if brush_time>.2: brush_time=0;start_brush(hit)
+				return
+			if brush_template.kind=="trees":
+				if brush_time>.2:
+					var count := brush.draft.size();brush.dab(hit.position,0);brush_time=0
+					if brush.draft.size()!=count: brush_dirty=true
+				return
 			if brush_time>=1.0/60.0:
 				if not brush_dirty: latest_input_usec=Time.get_ticks_usec()
 				brush.dab(hit.position,brush_rate*brush_time);brush_time=0;brush_dirty=true
@@ -1079,6 +1117,48 @@ func _process(delta: float) -> void:
 	update_loading_screen()
 	if OS.get_cmdline_user_args().has("--authoring-loading-check") and loading_screen and loading_screen.ready_to_enter and not loading_test_started:
 		loading_test_started=true;check_loading_screen.call_deferred()
+
+func mountain_fits(f: Dictionary) -> bool:
+	if absf(f.x)+f.radius>movement_limit() or absf(f.z)+f.radius>movement_limit():
+		notice.text="Mountain footprint exceeds editable arena; move inward or reduce radius.";return false
+	if f.y+f.height>58:
+		notice.text="Mountain could exceed the workshop's 64m ceiling. Lower its added height or choose lower ground.";return false
+	return true
+
+func check_nature() -> void:
+	while not live_kit(): await get_tree().process_frame
+	set_physics_process(false)
+	assert(await wait_editor_idle())
+	change([],false);assert(await wait_editor_idle())
+	nature.mountain.radius=20;nature.mountain.height=12;nature.mountain.erosion_steps=8
+	nature.arm_mountain();start_brush({"position":Vector3(-48,0,-48),"normal":Vector3.UP})
+	assert(features.size()==1 and features[0].kind=="mountain" and not brush_mode)
+	assert(await wait_editor_idle())
+	var before := features.duplicate(true)
+	nature.mountain.wind=1;nature.apply_mountain();assert(features.size()==1 and features[0].wind==1)
+	assert(await wait_editor_idle());undo();assert(features==before);assert(await wait_editor_idle())
+	nature.arm_trees(false);brush_template.radius=6
+	start_brush({"position":Vector3(-48,0,-48),"normal":Vector3.UP});finish_brush();flush_brush()
+	assert(features.size()==2 and features[1].kind=="trees")
+	assert(preview_expected.is_empty(),"Painting trees must not regenerate terrain")
+	var deadline := Time.get_ticks_msec()+15000
+	while painted_trees.items.is_empty() and Time.get_ticks_msec()<deadline: await get_tree().process_frame
+	assert(not painted_trees.items.is_empty(),"Painted firs did not appear")
+	for item in painted_trees.items.values(): assert(item.body.collision_layer==2)
+	painted_trees.update_lods();assert(not painted_trees.batches.is_empty())
+	assert(terrain.material_override.get_shader_parameter("nature_surface"))
+	assert(terrain.material_override.get_shader_parameter("sparse_normal")!=null)
+	camera.position=Vector3(-12,20,-12);camera.look_at(Vector3(-48,5,-48));panel.hide();hud.hide()
+	await RenderingServer.frame_post_draw
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--nature-shot="): get_viewport().get_texture().get_image().save_png(arg.trim_prefix("--nature-shot="))
+	var doc: Variant=JSON.parse_string(JSON.stringify(Recipe.document(features)))
+	assert(Recipe.validate(doc));assert(Recipe.relevant(features,Rect2(-100,-100,200,200)).size()==1)
+	nature.arm_trees(true);start_brush({"position":Vector3(-48,0,-48),"normal":Vector3.UP});finish_brush()
+	assert(features.size()==1);undo();assert(features.size()==2)
+	select_simple_brush("hill");assert(brush_mode and brush_template.kind=="hill")
+	print("PASS: mountain placement/replacement/undo; tree paint/erase/undo, grounding and no terrain rebuild; JSON roundtrip")
+	get_tree().quit()
 
 func check_loading_screen() -> void:
 	assert(loading_screen.bar.value==100 and not loading_screen.enter.disabled and loading_screen.preview.texture!=null)

@@ -18,3 +18,16 @@ static func create() -> ShaderMaterial:
 		image.generate_mipmaps()
 		material.set_shader_parameter(map, ImageTexture.create_from_image(image))
 	return material
+
+static func apply_nature(material: ShaderMaterial) -> void:
+	# Workshop only: retain original user-provided assets and older demo defaults.
+	for spec in [["grass_ground","grass"],["sparse_grass","sparse"],["rock_boulder_dry","rock"]]:
+		for map in [["diffuse.jpg","albedo"],["nor_gl.png","normal"],["rough.jpg","roughness"]]:
+			var image := Image.load_from_file("res://world/materials/nature/"+spec[0]+"_"+map[0])
+			assert(image!=null and not image.is_empty(),"Missing nature PBR map")
+			if image.get_width()>1024 or image.get_height()>1024: image.resize(1024,1024,Image.INTERPOLATE_LANCZOS)
+			image.convert(Image.FORMAT_RGB8);image.generate_mipmaps()
+			material.set_shader_parameter(spec[1]+"_"+map[1],ImageTexture.create_from_image(image))
+	material.set_shader_parameter("grass_metres",2.51)
+	material.set_shader_parameter("rock_metres",1.8)
+	material.set_shader_parameter("nature_surface",true)

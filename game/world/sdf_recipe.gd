@@ -1,16 +1,20 @@
 extends RefCounted
 ## Ordered, serialisable features in metres in the arena's ring-tangent frame.
 const Base = preload("res://world/sdf_arena_expanded.gd")
-const TYPES = ["hill", "lower", "flatten", "carve", "ridge", "tunnel", "bridge"]
+const Mountain = preload("res://world/mountain_infill.gd")
+const TYPES = ["hill", "lower", "flatten", "carve", "ridge", "tunnel", "bridge", "mountain", "trees"]
 
 static func feature(kind: String, p: Vector3) -> Dictionary:
 	var result := {"kind":kind,"x":p.x,"y":p.y,"z":p.z,"radius":16.0,"height":12.0,"length":48.0,"width":12.0,"thickness":4.0,"yaw":0.0,"bend":0.0}
 	# New editor cuts use the grenade's compact support too. Do not silently
 	# rewrite existing saved features, whose original evaluation is preserved.
 	if kind=="carve": result.localized=true
+	if kind=="mountain": result.merge({"radius":48.0,"height":24.0,"noise":"ridged","seed":1,"wavelength":24.0,"octaves":4,"roughness":.5,"water":.4,"wind":.2,"wind_direction":0.0,"erosion_steps":20},true)
+	if kind=="trees": result.merge({"seed":1,"density":12.0,"tree_height":10.0,"slope_limit":35.0})
 	return result
 
 static func bounds(f: Dictionary) -> Rect2:
+	if f.kind in ["mountain","trees"]: return Rect2(Vector2(f.x-f.radius,f.z-f.radius),Vector2.ONE*f.radius*2)
 	# Runtime craters are compact edits, not a global distance-field replacement.
 	# Padding preserves the sampling/normal neighbourhood outside the cut.
 	if f.kind=="carve" and f.get("localized",false):
@@ -24,6 +28,7 @@ static func bounds(f: Dictionary) -> Rect2:
 static func relevant(features: Array, area: Rect2) -> Array:
 	var result := []
 	for f in features:
+		if f.kind=="trees": continue
 		if bounds(f).intersects(area): result.append(f.duplicate(true))
 	return result
 
@@ -32,7 +37,10 @@ static func field(p: Vector3, radius: float, rough: float, features: Array) -> f
 
 static func compose(p: Vector3, d: float, features: Array) -> float:
 	for f in features:
+		if f.kind=="trees": continue
 		if not bounds(f).has_point(Vector2(p.x,p.z)): continue
+		if f.kind=="mountain":
+			d-=Mountain.sample(f,Vector2(p.x,p.z),Mountain.grid(f));continue
 		var before := d
 		var q := (p-Vector3(f.x,f.y,f.z)).rotated(Vector3.UP,-deg_to_rad(f.yaw))
 		var brush_q := Vector2(q.x,q.z/float(f.get("aspect",1)))
@@ -86,6 +94,13 @@ static func validate(data: Variant) -> bool:
 	for f in data.features:
 		if not f is Dictionary or f.get("kind") not in TYPES: return false
 		if f.has("localized") and not f.localized is bool: return false
+		if f.kind=="mountain":
+			if f.get("noise") not in ["ridged","simplex","perlin"]: return false
+			for spec in [["seed",0,999999],["wavelength",4,200],["octaves",1,6],["roughness",.1,.9],["water",0,1],["wind",0,1],["wind_direction",0,360],["erosion_steps",0,60]]:
+				if not valid_number(f,spec): return false
+		if f.kind=="trees":
+			for spec in [["seed",0,999999],["density",1,40],["tree_height",3,20],["slope_limit",0,60]]:
+				if not valid_number(f,spec): return false
 		for key in ["x","y","z","radius","height","length","width","thickness","yaw","bend"]:
 			if not f.get(key) is float and not f.get(key) is int: return false
 			if not is_finite(float(f[key])) or absf(f[key])>100000: return false
@@ -103,6 +118,10 @@ static func validate(data: Variant) -> bool:
 				if not is_finite(float(f[key])) or absf(f[key])>100000: return false
 	return true
 
+static func valid_number(f: Dictionary, spec: Array) -> bool:
+	var value: Variant=f.get(spec[0])
+	return (value is float or value is int) and is_finite(float(value)) and value>=spec[1] and value<=spec[2]
+
 static func document(features: Array) -> Dictionary:
 	return {"schema":1,"frame":"arena-ring-tangent-metres","features":features.duplicate(true)}
 
@@ -116,4 +135,5 @@ static func save_recipe(path: String, features: Array) -> Error:
 
 static func cache_key(features: Array, origin: Vector3, cells: Vector3i, spacing: float, radius: float, rough: float) -> String:
 	var source := FileAccess.get_file_as_string("res://world/sdf_recipe.gd")+FileAccess.get_file_as_string("res://world/sdf_arena_expanded.gd")+FileAccess.get_file_as_string("res://world/sdf_demo.gd")+FileAccess.get_file_as_string("res://world/tetra_mesher.gd")
+	source+=FileAccess.get_file_as_string("res://world/mountain_infill.gd")
 	return (source+str(Engine.get_version_info())+JSON.stringify(features)+str(origin)+str(cells)+str(spacing)+str(radius)+str(rough)).sha256_text()

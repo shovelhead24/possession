@@ -131,6 +131,9 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 	var compiled := []
 	for feature in (features.slice(old_features.size()) if append_only else features):
 		var item := {"feature":feature,"additive":feature.has("amount") and feature.kind in ["hill","lower"]}
+		if feature.kind=="trees": continue
+		item.mountain=feature.kind=="mountain"
+		if item.mountain: item.heights=Recipe.Mountain.grid(feature)
 		item.flatten=optimise and feature.kind=="flatten"
 		item.area=Recipe.bounds(feature)
 		item.sphere=feature.kind=="carve" and not feature.has("amount")
@@ -177,6 +180,8 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 			var column_ops := []
 			var offset := 0.0
 			for item in compiled:
+				if item.mountain:
+					offset-=Recipe.Mountain.sample(item.feature,point,item.heights);continue
 				if item.additive:
 					offset+=float(item.feature.amount)*item.weights[z*dims.x+x]*(-1 if item.feature.kind=="hill" else 1)
 					continue

@@ -13,6 +13,7 @@ func begin(source: Array, settings: Dictionary) -> void:
 func dab(point: Vector3, amount: float) -> void:
 	if not has_previous: flatten_height=point.y
 	var spacing := maxf(2,template.radius*.25)
+	if template.kind=="trees": spacing=maxf(3,template.radius)
 	var steps := maxi(1,ceili(previous.distance_to(point)/spacing)) if has_previous else 1
 	# Interpolate fast cursor motion, distributing time rather than multiplying it.
 	for i in range(1,mini(steps,128)+1):
@@ -26,5 +27,6 @@ func dab(point: Vector3, amount: float) -> void:
 			f.amount=0.0
 			samples[key]=draft.size();draft.append(f)
 		var f: Dictionary=draft[samples[key]]
+		if template.kind=="trees": continue
 		f.amount=minf(100000,f.amount+amount/mini(steps,128))
 	previous=point;has_previous=true
