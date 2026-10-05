@@ -20,6 +20,10 @@ var brief: Dictionary
 func _ready() -> void:
 	layer=100
 	brief=JSON.parse_string(FileAccess.get_file_as_string("res://world/workshop_brief.json"))
+	if get_parent().get("stress_course"):
+		brief.title="SDF stress course — increasing spline density"
+		brief.goal="F1 enters play when terrain is ready. E enters the Warthog; WASD drive, Space brakes, C changes camera. From its spawn near x=-28m, steer toward x=-14m and drive -Z beneath the bridges, through three labelled tiers to z=-604m. F8 begins/ends hitch capture. Save writes only sdf-stress-course.json."
+		brief.changes="228 deterministic features are added to a copy of your workshop. All 12 stations passed actual lane/floor/overhead and curved-bore collision checks. The cached full route peaked at 44.41 m/s with zero streaming brakes, power limiting or freezes. Mixed-cache dense generation remained heavily limited; these runs have warmed the course. Runway priority, progressive brakes and recent-chunk retention preserve vehicle top-speed tuning. Normal terrain saves and disk caches are retained. DEM/SDF work is a tested sampling prototype; playable integration remains next."
 	root=ColorRect.new();root.color=Color(.025,.035,.055);root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);add_child(root)
 	var margin := MarginContainer.new();margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left","right","top","bottom"]: margin.add_theme_constant_override("margin_"+side,18)

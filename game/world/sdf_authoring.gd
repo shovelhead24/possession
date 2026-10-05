@@ -3,6 +3,11 @@ extends "res://world/sdf_arena.gd"
 const Recipe = preload("res://world/sdf_recipe.gd")
 const SAVE_PATH := "user://sdf-authoring.json"
 const CACHE_PATH := "user://sdf-authoring-meshes/"
+@export var stress_course := false
+
+func recipe_save_path() -> String:
+	return "user://sdf-stress-course.json" if stress_course else SAVE_PATH
+
 var features: Array = []
 var undo_stack: Array = []
 var redo_stack: Array = []
@@ -84,6 +89,7 @@ var nature := preload("res://world/workshop_nature.gd").new()
 var painted_trees: Node3D
 var far_terrain: Node3D
 var vehicle_trace: Node
+var chunk_last_wanted := {}
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
@@ -145,6 +151,15 @@ func _ready() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
 		var saved: Variant=JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
 		if Recipe.validate(saved): features=saved.features
+	if stress_course:
+		var stress_saved: Variant=null
+		if FileAccess.file_exists(recipe_save_path()): stress_saved=JSON.parse_string(FileAccess.get_file_as_string(recipe_save_path()))
+		if Recipe.validate(stress_saved): features=stress_saved.features
+		else:
+			var additions: Array=preload("res://world/stress_course.gd").features()
+			if features.size()+additions.size()<=2048: features.append_array(additions)
+			else: push_error("Stress course exceeds recipe limit; original terrain left intact")
+		print("STRESS_COURSE -Z corridor / separate save: ",recipe_save_path()," / features=",features.size())
 	super._ready()
 	preload("res://world/materials/expanse_material.gd").apply_nature(terrain.material_override)
 	far_terrain=preload("res://world/workshop_far_terrain.gd").new();add_child(far_terrain);far_terrain.setup(self)
@@ -182,6 +197,7 @@ func _ready() -> void:
 	trace_edit("ready",{"path":trace_path})
 	vehicle_trace=preload("res://world/vehicle_trace.gd").new()
 	vehicle_trace.arena=self;add_child(vehicle_trace)
+	if stress_course: preload("res://world/stress_course.gd").signs(self)
 	set_process(true);set_physics_process(true);set_process_input(true)
 
 func loading_event(message: String) -> void:
@@ -244,17 +260,50 @@ func desired() -> Array[Vector2i]:
 		for body in kit.vehicle_system.vehicles:
 			var speed: float=body.linear_velocity.length()
 			var direction: Vector3=body.linear_velocity.normalized() if speed>2 else -body.basis.z
-			var reach: float=minf(320,maxf(80,maxf(speed*6,speed*speed/7+64)))
+			var planning_speed: float=maxf(speed,body.top_speed) if body==kit.vehicle_system.driving else speed
+			var reach: float=minf(640,maxf(80,planning_speed*planning_speed/7+planning_speed*4+96))
+			# A wider driven corridor allows steering before the next queue update;
+			# a thin straight ray can otherwise expose a missing neighbour each turn.
+			var half_width := 3 if body==kit.vehicle_system.driving else 2
 			for step in range(0,ceili(reach/32)+1):
 				var point: Vector3=body.position+direction*step*32
 				var centre_key := key_at(point)
-				for z in range(-2,3):
-					for x in range(-2,3):
+				for z in range(-half_width,half_width+1):
+					for x in range(-half_width,half_width+1):
 						var key := centre_key+Vector2i(x,z)
 						if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
 	if editing and aim_valid:
 		var target := key_at(aim_point)
 		keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-target).length_squared()<(b-target).length_squared())
+	elif kit and is_instance_valid(kit.vehicle_system.driving):
+		var driver: Node3D=kit.vehicle_system.driving
+		var target := key_at(driver.position)
+		var heading: Vector3=driver.linear_velocity.normalized() if driver.linear_velocity.length()>2 else -driver.basis.z
+		var forward := Vector2(heading.x,heading.z).normalized()
+		var straight: bool=absf(driver.turn)<.05 and absf(driver.angular_velocity.y)<.08
+		# Publish the collision runway before speculative outer steering shoulders.
+		# Pure radial ordering made expensive roadside ridges block supply ahead.
+		var runway := {}
+		for key in keys:
+			var offset := Vector2(key-target)*32.0
+			runway[key]=straight and offset.dot(forward)>=-64 and absf(offset.cross(forward))<=64
+		keys.sort_custom(func(a: Vector2i,b: Vector2i):
+			if runway[a]!=runway[b]: return runway[a]
+			return (a-target).length_squared()<(b-target).length_squared())
+	# Retain only existing/current-revision chunks; never queue obsolete scenery
+	# just for the grace period. Bound the extra residency independently of demand.
+	var now := Time.get_ticks_msec()
+	for key in keys: chunk_last_wanted[key]=now
+	var retained: Array=[]
+	for key in chunk_last_wanted.keys():
+		if key in keys: continue
+		if now-int(chunk_last_wanted[key])>6000 or not chunks.has(key) or chunks[key].revision!=revision:
+			chunk_last_wanted.erase(key)
+		else: retained.append(key)
+	retained.sort_custom(func(a,b): return chunk_last_wanted[a]>chunk_last_wanted[b])
+	for i in retained.size():
+		if i<96: keys.append(retained[i])
+		else: chunk_last_wanted.erase(retained[i])
 	return keys
 
 func neighborhood_ready(p: Vector3) -> bool:
@@ -714,11 +763,11 @@ func redo() -> void:
 
 func save() -> void:
 	finish_brush();flush_brush()
-	notice.text="Saved sdf-authoring.json in Godot user data." if Recipe.save_recipe(SAVE_PATH,features)==OK else "Save failed; recipe still in memory."
+	notice.text="Saved "+recipe_save_path().get_file()+" in Godot user data." if Recipe.save_recipe(recipe_save_path(),features)==OK else "Save failed; recipe still in memory."
 
 func load_saved() -> void:
 	finish_brush();flush_brush()
-	var data: Variant=JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+	var data: Variant=JSON.parse_string(FileAccess.get_file_as_string(recipe_save_path()))
 	if not Recipe.validate(data): notice.text="Invalid/missing recipe; current edits retained.";return
 	change(data.features);notice.text="Loaded recipe. Undo restores previous edits."
 

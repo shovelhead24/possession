@@ -71,4 +71,6 @@ func _physics_process(delta: float) -> void:
 				previous[key]={"grounded":grounded,"contact":contact,"travel":c.travel}
 		var limit: float=body.stream_speed_limit
 		bodies.append({"id":body.get_instance_id(),"name":str(body.name),"position":vector(body.global_position),"velocity":vector(body.linear_velocity),"angular_velocity":vector(body.angular_velocity),"speed_limit":limit if is_finite(limit) else null,"stream_braking":body.stream_braking,"suspended":body.streaming_suspended,"frozen":body.freeze,"controlled":body.controlled,"throttle":body.throttle,"turn":body.turn,"braking":body.braking,"balanced_braking":body.balanced_braking,"wheels":wheels})
+		bodies[-1].stream_brake_amount=body.stream_brake_amount
+		bodies[-1].stream_drive_scale=body.stream_drive_scale
 	remember({"sample_usec":started,"physics_frame":Engine.get_physics_frames(),"delta":delta,"editing":arena.editing,"jobs":arena.stream_jobs.size(),"resident_chunks":arena.chunks.size(),"vehicles":bodies,"sampling_ms":(Time.get_ticks_usec()-started)/1000.0})

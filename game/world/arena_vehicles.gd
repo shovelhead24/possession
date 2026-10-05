@@ -17,6 +17,7 @@ var seat_position := Vector3(-.52,.92,-.08)
 var status: Label
 var initialized := false
 var test_starvation := false
+var test_steer := 0.0
 
 func bounds(model: Node3D) -> AABB:
 	return content.model_bounds(model)
@@ -157,18 +158,25 @@ func tick(delta: float, test_controls := false) -> void:
 			body.add_collision_exception_with(arena.player);arena.player.add_collision_exception_with(body)
 		body.set_stream_ready(not test_starvation and arena.neighborhood_ready(body.position))
 		body.stream_speed_limit=INF;body.stream_braking=false
+		body.stream_brake_amount=0.0;body.stream_drive_scale=1.0
 		if body==driving or (body==vehicles[0] and gameplay.vehicle_patrol):
 			var direction: Vector3=body.linear_velocity.normalized() if body.linear_velocity.length()>2 else -body.basis.z
-			var available := 320.0
-			for distance in range(16,321,16):
+			var available := 640.0
+			for distance in range(16,641,16):
 				var probe: Vector3=body.position+direction*distance
 				probe.x=clampf(probe.x,-edge,edge);probe.z=clampf(probe.z,-edge,edge)
 				if not arena.neighborhood_ready(probe): available=distance-16.0;break
-			body.stream_speed_limit=minf(body.top_speed,sqrt(7.0*maxf(0,available-24)))
-			body.stream_braking=body.linear_velocity.length()>body.stream_speed_limit+.5
+			# This is a collision-supply ceiling, not the vehicle's top-speed cap.
+			var safe_limit: float=sqrt(7.0*maxf(0,available-24))
+			body.stream_control.step(body.linear_velocity.length(),safe_limit,available,delta)
+			body.stream_speed_limit=body.stream_control.limit
+			body.stream_brake_amount=body.stream_control.brake
+			body.stream_drive_scale=body.stream_control.drive
+			body.stream_braking=body.stream_brake_amount>.001
+		else: body.stream_control.reset()
 		body.controlled=body==driving and not gunning and not menu.opened and not body.streaming_suspended
 		if body.controlled:
-			if test_controls: body.set_controls(.8,0,false)
+			if test_controls: body.set_controls(.8,test_steer,false)
 			else: body.driver_controls(Input.is_physical_key_pressed(KEY_W),Input.is_physical_key_pressed(KEY_S),Input.is_physical_key_pressed(KEY_SPACE),float(Input.is_physical_key_pressed(KEY_A))-float(Input.is_physical_key_pressed(KEY_D)))
 		else: body.balanced_braking=false;body.set_controls(0,0,true)
 	if driving:

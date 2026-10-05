@@ -22,6 +22,9 @@ var stream_angular := Vector3.ZERO
 var forces_applied := 0
 var stream_speed_limit := INF
 var stream_braking := false
+var stream_control := preload("res://world/stream_speed_control.gd").new()
+var stream_brake_amount := 0.0
+var stream_drive_scale := 1.0
 
 func set_stream_ready(value: bool) -> void:
 	if streaming_suspended == not value: return
@@ -175,12 +178,13 @@ func _physics_process(dt: float) -> void:
 			forward=forward.slide(hit.normal).normalized()
 			var right=forward.cross(hit.normal).normalized()
 			var drive=throttle*engine_force*2*(front_power_percent/100.0 if c.front else 1-front_power_percent/100.0) if controlled else 0.0
+			drive*=stream_drive_scale
 			if linear_velocity.length()>stream_speed_limit: drive=0.0
 			if absf(c.get("omega",0.0)*radius)>top_speed and signf(drive)==signf(c.get("omega",0.0)): drive=0
 			var brake=0.0
 			if not controlled or balanced_braking: brake=brake_strength
 			elif braking: brake=brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0)
-			if stream_braking: brake=maxf(brake,brake_strength)
+			if stream_braking: brake=maxf(brake,brake_strength*stream_brake_amount)
 			c.drive_allocation=drive;c.brake_allocation=brake
 			var dynamics=preload("res://world/tyre_dynamics.gd").step(c.get("omega",0.0),contact_v.dot(forward),contact_v.dot(right),radius,load,grip,drive*radius,brake,dt)
 			c.omega=dynamics.omega;c.slip=dynamics.slip
