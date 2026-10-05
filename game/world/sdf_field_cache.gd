@@ -19,7 +19,7 @@ func pick_surface(start: Vector3, direction: Vector3, approximate_distance: floa
 	for distance in range(int(last),int(approximate_distance+96),2):
 		var p := start+direction*distance
 		var state: Dictionary=columns.get(Vector2i(floori(p.x/32),floori(p.z/32)),{})
-		if state.is_empty() or p.y < -24 or p.y >64: previous=INF;last=distance;continue
+		if state.is_empty() or p.y < state.origin.y or p.y >state.origin.y+state.cells.y*state.spacing: previous=INF;last=distance;continue
 		var dims: Vector3i=state.cells+Vector3i.ONE*3
 		var grid_origin: Vector3=state.origin-Vector3.ONE*state.spacing
 		var value := Recipe.Base.coarse_linear(p,grid_origin,state.values,dims.x,dims.y,state.spacing)
@@ -56,8 +56,8 @@ static func valid_state(state: Dictionary, cells: Vector3i) -> bool:
 		if not (kernel is PackedFloat32Array or kernel is PackedFloat64Array) or kernel.size()!=dims.x*dims.z: return false
 	return true
 
-func restore(origin: Vector3, cells: Vector3i, spacing: float, radius: float, rough: float, state: Dictionary) -> void:
-	var key := str(origin)+str(cells)+str(spacing)+str(radius)+str(rough)
+func restore(origin: Vector3, cells: Vector3i, spacing: float, radius: float, rough: float, state: Dictionary, base_identity := "") -> void:
+	var key := str(origin)+str(cells)+str(spacing)+str(radius)+str(rough)+base_identity
 	mutex.lock()
 	# Undo/cache loads must replace a resident newer revision as well: picking
 	# and the next incremental edit must see the restored, displayed field.
@@ -94,9 +94,9 @@ static func normal(p: Vector3, values: PackedFloat32Array, origin: Vector3, dims
 	var e:=values[i+slab];var g:=values[i+slab+1];var h:=values[i+slab+row];var j:=values[i+slab+row+1]
 	return Vector3(lerpf(lerpf(b-a,d-c0,f.y),lerpf(g-e,j-h,f.y),f.z),lerpf(lerpf(c0-a,d-b,f.x),lerpf(h-e,j-g,f.x),f.z),lerpf(lerpf(e-a,g-b,f.x),lerpf(h-c0,j-d,f.x),f.y)).normalized()
 
-func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, radius: float, rough: float, optimise := true) -> Dictionary:
+func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, radius: float, rough: float, optimise := true, base_sampler := Callable(), base_identity := "") -> Dictionary:
 	var started := Time.get_ticks_usec()
-	var key := str(origin)+str(cells)+str(spacing)+str(radius)+str(rough)
+	var key := str(origin)+str(cells)+str(spacing)+str(radius)+str(rough)+base_identity
 	mutex.lock()
 	var cached: Dictionary=entries.get(key,{})
 	# Packed arrays copy on write; immutable snapshots are safe for other jobs.
@@ -125,7 +125,8 @@ func build(origin: Vector3, cells: Vector3i, spacing: float, features: Array, ra
 			for y in dims.y:
 				for x in dims.x:
 					var id := (z*dims.y+y)*dims.x+x
-					base[id]=Recipe.Base.expanded_field(grid_origin+Vector3(x,y,z)*spacing,radius,rough)
+					var p := grid_origin+Vector3(x,y,z)*spacing
+					base[id]=base_sampler.call(p,radius,rough) if base_sampler.is_valid() else Recipe.Base.expanded_field(p,radius,rough)
 		base_calls=count
 	# Cache 2D brush kernels, reused across all vertical samples and dose changes.
 	var compiled := []

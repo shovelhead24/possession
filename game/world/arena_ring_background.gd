@@ -23,6 +23,7 @@ func setup(owner_arena: Node3D) -> void:
 	# The workshop no longer has the original 192 m-wide arena. Keep scenery
 	# outside its entire editable volume, including a chunk-sized edge margin.
 	arena_extent=maxf(arena_extent,ceilf(arena.movement_limit()/32.0)*32.0)
+	if arena.get("unified_terrain"): arena_extent=2048.0
 	_cam = arena.camera
 	_env = arena.world_environment.environment
 	_sun = arena.sun
@@ -38,8 +39,15 @@ func setup(owner_arena: Node3D) -> void:
 	# Use ring coordinates, not world X: the antipodal ring also has X near zero.
 	source = source.replace("void fragment() {", "void fragment() {\n\tfloat local_arc = UV.x - ring_circumference * floor(UV.x / ring_circumference + 0.5);\n\tif (max(abs(local_arc), abs(UV.y)) < arena_extent) { discard; }")
 	source = source.replace("UV.x / home_patch_size.x", "local_arc / home_patch_size.x")
+	if arena.get("unified_terrain"):
+		source=source.replace("max(abs(local_arc), abs(UV.y)) < arena_extent", "abs(local_arc) < 8000.0 && max(abs(v_world_pos.x), abs(v_world_pos.z)) < arena_extent")
+		source=source.replace("uniform vec3 to_sun", "uniform vec2 home_origin;\nuniform vec3 to_sun")
+		source=source.replace("vec2(local_arc / home_patch_size.x, -UV.y / home_patch_size.y)", "home_origin + vec2(local_arc / home_patch_size.x, -UV.y / home_patch_size.y)")
 	shader.code = source
 	_mat.shader = shader
+	if arena.get("terrain_source"):
+		var meta: Dictionary=arena.terrain_source.metadata
+		_mat.set_shader_parameter("home_origin",Vector2(meta.camera_px[0],meta.camera_px[1])/Vector2(meta.w,meta.h))
 	_mat.set_shader_parameter("arena_extent",arena_extent)
 	_mat.set_shader_parameter("patch_col_tex", _patch_col_tex)
 	_mat.set_shader_parameter("patch_count", _patch_rects.size())
@@ -85,6 +93,9 @@ func _far_terrain_h(arc: float, lat: float) -> float:
 	# Patch lookups already wrap, but home DEM and procedural fallback did not.
 	# Canonicalise BEFORE every source lookup, not just the fade-distance test.
 	arc=canonical_arc(arc)
+	if is_instance_valid(arena) and arena.get("terrain_source") and maxf(absf(arc),absf(lat))<=NEAR_EXTENT:
+		var h: float=arena.terrain_source.surface_height(Vector2(arc,lat),128.0)
+		return h-2.0*_radius()*pow(sin(arc/_radius()*.5),2)
 	var distance := maxf(absf(arc),absf(lat))
 	return lerpf(-0.25, super._far_terrain_h(arc,lat), smoothstep(arena_extent*1.7,maxf(3500,arena_extent*3),distance))
 
@@ -141,6 +152,13 @@ func boundary_vertex(arc: float, lat: float, samples: Array[float], along_arc: b
 			return pa.lerp(pb,(coordinate-samples[i])/(samples[i+1]-samples[i]))
 	return _ring_pos(arc/_radius(),lat,_far_terrain_h(arc,lat))
 
+static func aligned_edge_height(source: RefCounted, point: Vector2, along_z: bool) -> float:
+	var coordinate := point.y if along_z else point.x
+	var lo := floorf(coordinate/128.0)*128.0
+	var a := Vector2(point.x,lo) if along_z else Vector2(lo,point.y)
+	var b := a+(Vector2(0,128) if along_z else Vector2(128,0))
+	return lerpf(source.surface_height(a,128),source.surface_height(b,128),(coordinate-lo)/128.0)
+
 func _build_near_band(arcs: Array[float], lateral: Array[float]) -> void:
 	var coarse_arcs: Array[float]=[]
 	for arc in arcs:
@@ -150,7 +168,8 @@ func _build_near_band(arcs: Array[float], lateral: Array[float]) -> void:
 	var xs: Array[float]=coarse_arcs.duplicate();var zs: Array[float]=[]
 	for lat in lateral:
 		if absf(lat)<=NEAR_EXTENT: zs.append(lat)
-	for coordinate in range(-int(NEAR_EXTENT),int(NEAR_EXTENT),int(NEAR_STEP)):
+	var grid_start := ceili(-NEAR_EXTENT/NEAR_STEP)*int(NEAR_STEP) if arena.get("terrain_source") else -int(NEAR_EXTENT)
+	for coordinate in range(grid_start,int(NEAR_EXTENT),int(NEAR_STEP)):
 		xs.append(float(coordinate));zs.append(float(coordinate))
 	xs.append(NEAR_EXTENT);zs.append(NEAR_EXTENT)
 	xs=sorted_unique(xs);zs=sorted_unique(zs)
@@ -158,6 +177,10 @@ func _build_near_band(arcs: Array[float], lateral: Array[float]) -> void:
 	for arc in xs:
 		for lat in zs:
 			var point := _ring_pos(arc/_radius(),lat,_far_terrain_h(arc,lat))
+			if arena.get("terrain_source"):
+				point=Vector3(arc,arena.terrain_source.surface_height(Vector2(arc,lat),128.0),lat)
+				if absf(arc)==arena_extent: point.y=aligned_edge_height(arena.terrain_source,Vector2(arc,lat),true)
+				elif absf(lat)==arena_extent: point.y=aligned_edge_height(arena.terrain_source,Vector2(arc,lat),false)
 			# Fine boundary vertices lie on the actual coarse edge segments, not
 			# on a different sampled curve: no stitching job or hidden cracks.
 			if absf(arc)==NEAR_EXTENT: point=boundary_vertex(arc,lat,lateral,false)

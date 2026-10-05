@@ -32,8 +32,8 @@ static func relevant(features: Array, area: Rect2) -> Array:
 		if bounds(f).intersects(area): result.append(f.duplicate(true))
 	return result
 
-static func field(p: Vector3, radius: float, rough: float, features: Array) -> float:
-	return compose(p,Base.expanded_field(p,radius,rough),features)
+static func field(p: Vector3, radius: float, rough: float, features: Array, base_source: RefCounted=null) -> float:
+	return compose(p,base_source.base_field(p,radius,rough) if base_source else Base.expanded_field(p,radius,rough),features)
 
 static func compose(p: Vector3, d: float, features: Array) -> float:
 	for f in features:

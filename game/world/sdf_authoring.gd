@@ -4,6 +4,10 @@ const Recipe = preload("res://world/sdf_recipe.gd")
 const SAVE_PATH := "user://sdf-authoring.json"
 const CACHE_PATH := "user://sdf-authoring-meshes/"
 @export var stress_course := false
+@export var unified_terrain := true
+var terrain_source: RefCounted
+var terrain_lod: Node3D
+var satellite_stream: Node
 
 func recipe_save_path() -> String:
 	return "user://sdf-stress-course.json" if stress_course else SAVE_PATH
@@ -126,7 +130,10 @@ func _exit_tree() -> void:
 	super._exit_tree()
 
 func stream_worker_limit() -> int:
-	return 1 if is_instance_valid(far_terrain) and far_terrain.worker!=null else 2
+	var other := int(is_instance_valid(far_terrain) and far_terrain.worker!=null)
+	other+=int(is_instance_valid(terrain_lod) and terrain_lod.worker!=null)
+	other+=int(is_instance_valid(satellite_stream) and satellite_stream.worker!=null)
+	return maxi(0,2-other)
 
 func make_arena_content() -> Node:
 	return preload("res://world/arena_live_content.gd").new()
@@ -160,9 +167,17 @@ func _ready() -> void:
 			if features.size()+additions.size()<=2048: features.append_array(additions)
 			else: push_error("Stress course exceeds recipe limit; original terrain left intact")
 		print("STRESS_COURSE -Z corridor / separate save: ",recipe_save_path()," / features=",features.size())
+	if unified_terrain:
+		terrain_source=preload("res://world/unified_terrain_field.gd").new()
+		if not terrain_source.setup(features):
+			push_error("Unified DEM source could not load; retaining protected workshop")
+			terrain_source=null;unified_terrain=false
 	super._ready()
 	preload("res://world/materials/expanse_material.gd").apply_nature(terrain.material_override)
 	far_terrain=preload("res://world/workshop_far_terrain.gd").new();add_child(far_terrain);far_terrain.setup(self)
+	if unified_terrain:
+		terrain_lod=preload("res://world/workshop_terrain_lod.gd").new();add_child(terrain_lod);terrain_lod.setup(self)
+		satellite_stream=preload("res://world/workshop_satellite.gd").new();add_child(satellite_stream);satellite_stream.setup(self)
 	make_panel()
 	painted_trees=preload("res://world/painted_trees.gd").new();painted_trees.workshop=self;add_child(painted_trees)
 	var sphere := SphereMesh.new();sphere.radius=.7;sphere.height=1.4
@@ -215,8 +230,12 @@ func update_loading_screen() -> void:
 	var processed: int=imagery_total-ring_background._preview_queue.size()-int(ring_background._preview_thread!=null)-int(ring_background.home_pending) if ring_background.background_ready else 0
 	var far_done: int=far_terrain.tiles.size() if is_instance_valid(far_terrain) else 0
 	done+=far_done
-	var complete: bool=live_kit()!=null and ready_frames>=3 and collision_pending.is_empty() and ring_done and far_terrain.finished()
-	loading_screen.update_progress(done,wanted.size()+36,maxi(0,processed),imagery_total,sources,maxi(4,total),live_kit()!=null,complete)
+	var terrain_total := wanted.size()+36
+	if terrain_lod:
+		terrain_total+=220
+		done+=terrain_lod.tiles.size() if not terrain_lod.tiles.is_empty() else terrain_lod.staged.size()
+	var complete: bool=live_kit()!=null and ready_frames>=3 and collision_pending.is_empty() and ring_done and far_terrain.finished() and (not terrain_lod or terrain_lod.finished())
+	loading_screen.update_progress(done,terrain_total,maxi(0,processed),imagery_total,sources,maxi(4,total),live_kit()!=null,complete)
 
 func briefing_open() -> bool:
 	return loading_screen!=null and not loading_screen.dismissed
@@ -226,10 +245,26 @@ func rebuild() -> void:
 	ready_frames=0
 
 func chunk_layout() -> Dictionary:
-	return {"bottom":-24.0,"cells":Vector3i(16,44,16),"spacing":2.0}
+	if not unified_terrain or (active_key.x>=-24 and active_key.x<24 and active_key.y>=-24 and active_key.y<24):
+		return {"bottom":-24.0,"cells":Vector3i(16,44,16),"spacing":2.0}
+	var lower := INF;var upper := -INF
+	for z in [-2.0,16.0,34.0]:
+		for x in [-2.0,16.0,34.0]:
+			var height: float=terrain_source.surface_height(Vector2(active_key)*32+Vector2(x,z))
+			lower=minf(lower,height);upper=maxf(upper,height)
+	var area := Rect2(Vector2(active_key)*32,Vector2.ONE*32).grow(2.1)
+	for feature in Recipe.relevant(features,area):
+		lower=minf(lower,float(feature.y)-float(feature.height)-float(feature.radius))
+		upper=maxf(upper,float(feature.y)+float(feature.height)+float(feature.radius))
+	lower=floorf((lower-24)/2)*2;upper=ceilf((upper+24)/2)*2
+	return {"bottom":lower,"cells":Vector3i(16,int((upper-lower)/2),16),"spacing":2.0}
 
 func movement_limit() -> float:
-	return 740.0
+	return 2016.0 if unified_terrain else 740.0
+
+func terrain_key_allowed(key: Vector2i) -> bool:
+	var limit := 64 if unified_terrain else 24
+	return key.x>=-limit and key.x<limit and key.y>=-limit and key.y<limit
 
 func desired() -> Array[Vector2i]:
 	var keys := super.desired()
@@ -241,20 +276,20 @@ func desired() -> Array[Vector2i]:
 		for z in range(-1,2):
 			for x in range(-1,2):
 				var key := target+Vector2i(x,z)
-				if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
+				if terrain_key_allowed(key) and key not in keys: keys.append(key)
 		keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-target).length_squared()<(b-target).length_squared())
 		return keys
 	var centre := key_at(camera.position)
 	for z in range(-2,3):
 		for x in range(-2,3):
 			var key := centre+Vector2i(x,z)
-			if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
+			if terrain_key_allowed(key) and key not in keys: keys.append(key)
 	if editing and aim_valid:
 		var target := key_at(aim_point)
 		for z in range(-1,2):
 			for x in range(-1,2):
 				var key := target+Vector2i(x,z)
-				if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
+				if terrain_key_allowed(key) and key not in keys: keys.append(key)
 	var kit := live_kit()
 	if kit:
 		for body in kit.vehicle_system.vehicles:
@@ -271,7 +306,7 @@ func desired() -> Array[Vector2i]:
 				for z in range(-half_width,half_width+1):
 					for x in range(-half_width,half_width+1):
 						var key := centre_key+Vector2i(x,z)
-						if absi(key.x)<24 and absi(key.y)<24 and key not in keys: keys.append(key)
+						if terrain_key_allowed(key) and key not in keys: keys.append(key)
 	if editing and aim_valid:
 		var target := key_at(aim_point)
 		keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-target).length_squared()<(b-target).length_squared())
@@ -311,7 +346,7 @@ func neighborhood_ready(p: Vector3) -> bool:
 	for z in range(-1,2):
 		for x in range(-1,2):
 			var key := centre+Vector2i(x,z)
-			if absi(key.x)>=24 or absi(key.y)>=24: continue
+			if not terrain_key_allowed(key): continue
 			if not chunks.has(key) or (editing and chunks[key].revision!=revision): return false
 	return true
 
@@ -351,7 +386,7 @@ func request_crater(p: Vector3, radius: float) -> bool:
 
 func chunk_sampler() -> Callable:
 	# Snapshot on the main thread, never read mutable editor data from a worker.
-	return Recipe.field.bind(features.duplicate(true))
+	return Recipe.field.bind(features.duplicate(true),terrain_source if unified_terrain else null)
 
 static func cached_path(local: Array, origin: Vector3, cells: Vector3i, spacing: float, radius: float, detail: float) -> String:
 	var version := FileAccess.get_file_as_string("res://world/sdf_field_cache.gd").sha256_text()
@@ -360,8 +395,11 @@ static func cached_path(local: Array, origin: Vector3, cells: Vector3i, spacing:
 func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, spacing := 1.0, sampler := Callable()) -> Dictionary:
 	var started := Time.get_ticks_usec()
 	var snapshot: Array=sampler.get_bound_arguments()[0]
+	var source: RefCounted=sampler.get_bound_arguments()[1] if sampler.get_bound_arguments().size()>1 else null
 	var local := Recipe.relevant(snapshot,Rect2(Vector2(origin.x,origin.z),Vector2(cells.x,cells.z)*spacing).grow(spacing+.1))
 	var path := cached_path(local,origin,cells,spacing,radius,detail)
+	var base_identity: String=source.base_hash if source else ""
+	if source: path=CACHE_PATH+(path+base_identity).sha256_text()+".bin"
 	if FileAccess.file_exists(path):
 		var reader := FileAccess.open(path,FileAccess.READ)
 		if reader:
@@ -371,9 +409,9 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 				for index in data.indices:
 					if index<0 or index>=data.vertices.size(): valid=false;break
 				if valid and data.get("_field_state") is Dictionary and field_cache.valid_state(data._field_state,cells):
-					field_cache.restore(origin,cells,spacing,radius,detail,data._field_state)
+					field_cache.restore(origin,cells,spacing,radius,detail,data._field_state,base_identity)
 					data.ms=0;data.cached=true;data.profile={"warm_field":true,"base_evaluations":0,"rebuilt_blocks":0,"disk_restore":true,"worker_total_ms":(Time.get_ticks_usec()-started)/1000.0};return data
-	var result := field_cache.build(origin,cells,spacing,local,radius,detail)
+	var result := field_cache.build(origin,cells,spacing,local,radius,detail,true,source.base_field if source else Callable(),base_identity)
 	var built := Time.get_ticks_usec()
 	var writer := FileAccess.open(path+".tmp",FileAccess.WRITE)
 	if writer:
@@ -843,7 +881,7 @@ func suggested_exit(start: Vector3, normal: Vector3) -> Vector3:
 		var entered := false
 		for step in range(2,257,2):
 			var p := start+direction*step
-			var value := Recipe.field(p,tunnel_radius,roughness,features)
+			var value := Recipe.field(p,tunnel_radius,roughness,features,terrain_source)
 			if value<-.1: entered=true
 			elif entered and value>.1:
 				if step<best_distance: best_distance=step;best=p+direction*2
@@ -879,7 +917,7 @@ func tunnel_target_hit(mouse: Vector2, far_side: bool) -> Dictionary:
 	var n := Vector3.ZERO
 	for axis in 3:
 		var e := Vector3.ZERO;e[axis]=.05
-		n[axis]=Recipe.field(p+e,tunnel_radius,roughness,source)-Recipe.field(p-e,tunnel_radius,roughness,source)
+		n[axis]=Recipe.field(p+e,tunnel_radius,roughness,source,terrain_source)-Recipe.field(p-e,tunnel_radius,roughness,source,terrain_source)
 	return {"position":p,"normal":n.normalized()}
 
 func update_surface_cursor(hit: Dictionary) -> void:
@@ -920,7 +958,7 @@ func far_surface(mouse: Vector2) -> Variant:
 	var entered := false
 	for step in range(0,1500,2):
 		var p := start+direction*step
-		if Recipe.field(p,tunnel_radius,roughness,source)<0: entered=true
+		if Recipe.field(p,tunnel_radius,roughness,source,terrain_source)<0: entered=true
 		elif entered: return p
 	return null
 
@@ -960,7 +998,7 @@ func editor_fly(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_SPACE): direction.y+=1
 	if Input.is_physical_key_pressed(KEY_CTRL): direction.y-=1
 	camera.position+=direction.normalized()*delta*fly_speed*(3 if Input.is_physical_key_pressed(KEY_SHIFT) else 1)
-	camera.position.x=clampf(camera.position.x,-740,740);camera.position.z=clampf(camera.position.z,-740,740)
+	camera.position.x=clampf(camera.position.x,-movement_limit(),movement_limit());camera.position.z=clampf(camera.position.z,-movement_limit(),movement_limit())
 
 func focus_selected() -> void:
 	if selected<0: return
@@ -968,6 +1006,14 @@ func focus_selected() -> void:
 	camera.position=target+Vector3(-28,25,-35);camera.look_at(target);look=Vector2(camera.rotation.y,camera.rotation.x)
 
 func _input(event: InputEvent) -> void:
+	if unified_terrain and event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_5,KEY_6]:
+		if briefing_open(): return
+		walking=false
+		var point := Vector2(-14,-1100) if event.keycode==KEY_5 else Vector2(650,-1450)
+		camera.position=Vector3(point.x,terrain_source.surface_height(point)+(35 if event.keycode==KEY_5 else 650),point.y)
+		camera.look_at(Vector3(-14,terrain_source.surface_height(Vector2(-14,-1450)),-1450))
+		look=Vector2(camera.rotation.y,camera.rotation.x)
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F2 and loading_screen and loading_screen.ready_to_enter:
 		if loading_screen.dismissed:
 			finish_brush();flush_brush();looking=false;Input.mouse_mode=Input.MOUSE_MODE_VISIBLE;loading_screen.reopen()

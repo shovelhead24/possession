@@ -21,6 +21,19 @@ uniform bool detail_surface = false;
 uniform float coarse_inner_extent = 0.0;
 uniform sampler2D detail_mask : filter_nearest, repeat_disable;
 uniform float local_extent = 384.0;
+uniform bool cached_surface_normals = false;
+uniform sampler2D surface_normal_texture : filter_linear_mipmap, repeat_disable;
+uniform vec4 surface_normal_rect;
+uniform bool satellite_enabled = false;
+uniform bool satellite_preview_ready = false;
+uniform sampler2D satellite_preview : source_color, filter_linear_mipmap, repeat_disable;
+uniform sampler2DArray satellite_pages_0 : source_color, filter_linear_mipmap, repeat_disable;
+uniform sampler2DArray satellite_pages_1 : source_color, filter_linear_mipmap, repeat_disable;
+uniform sampler2DArray satellite_pages_2 : source_color, filter_linear_mipmap, repeat_disable;
+uniform vec2 satellite_origin;
+uniform vec2 satellite_span;
+uniform vec4 satellite_rects[9];
+uniform int satellite_levels[9];
 // Tile coverage in metres; limestone aspect ratio preserves the source image.
 uniform float grass_metres = 2.0;
 uniform float rock_metres = 3.0;
@@ -72,6 +85,26 @@ vec3 ground_normal(sampler2D tex, vec2 uv, vec3 n) {
 	return normalize(n+0.45*(world_bump-n*dot(world_bump,n)));
 }
 
+vec3 satellite_color(vec3 p, vec3 fallback) {
+	float radius=3000000.0/6.28318530718;
+	float arc=atan(p.x,radius-p.y)*radius;
+	vec2 uv=satellite_origin+vec2(arc,-p.z)/satellite_span;
+	vec3 color=satellite_preview_ready ? texture(satellite_preview,uv).rgb : fallback;
+	vec2 pixel=uv*8192.0;
+	for (int i=0;i<9;i++) {
+		if (satellite_levels[i]<0) { continue; }
+		vec2 local=pixel-satellite_rects[i].xy;
+		if (min(local.x,local.y)<0.0 || max(local.x,local.y)>=256.0) { continue; }
+		float scale=exp2(float(satellite_levels[i]));
+		vec3 tuv=vec3((local/scale+vec2(1.0))/(256.0/scale+2.0),float(i));
+		if (satellite_levels[i]==0) { color=texture(satellite_pages_0,tuv).rgb; }
+		else if (satellite_levels[i]==1) { color=texture(satellite_pages_1,tuv).rgb; }
+		else { color=texture(satellite_pages_2,tuv).rgb; }
+		break;
+	}
+	return color;
+}
+
 void fragment() {
 	vec3 p = world_position;
 	if (coarse_surface && max(abs(p.x),abs(p.z))<coarse_inner_extent) { discard; }
@@ -90,6 +123,10 @@ void fragment() {
 	if (compound_floors && abs(p.y-5.0)<0.1 &&
 		((abs(p.x-46.0)<6.0 && abs(p.z+197.0)<7.0) || (abs(p.x-83.0)<6.0 && abs(p.z+203.0)<7.0))) { discard; }
 	vec3 n = normalize(world_normal);
+	if (cached_surface_normals) {
+		vec2 normal_uv=((p.xz-surface_normal_rect.xy)/surface_normal_rect.zw*32.0+vec2(0.5))/33.0;
+		n=normalize(texture(surface_normal_texture,normal_uv).rgb*2.0-1.0);
+	}
 	vec3 w = pow(abs(n), vec3(4.0));
 	w /= max(w.x + w.y + w.z, 0.0001);
 	float broad = smoothstep(28.0, 60.0, length(p.xz)) * (1.5 * sin(p.x * 0.035) * cos(p.z * 0.028));
@@ -143,6 +180,13 @@ void fragment() {
 			} else {
 				color = mix(color, triplanar(grass_albedo, p, n, w, vec2(grass_metres)).rgb, grass);
 				detailed = normalize(mix(rock_detail, detail_normal(grass_normal, p, n, w, grass_metres), grass));
+			}
+		}
+		if (satellite_enabled) {
+			float amount=smoothstep(768.0,1024.0,max(abs(p.x),abs(p.z)))*smoothstep(0.1,0.65,n.y);
+			if (amount>0.0) {
+				vec3 satellite=satellite_color(p,color)*1.15;
+				color=mix(color,satellite*mix(vec3(1.0),color*1.5,near_detail*0.35),amount);
 			}
 		}
 		ALBEDO = color;

@@ -76,19 +76,33 @@ func _process(_delta: float) -> void:
 		# A job completed across a revision change may already satisfy this entry.
 		if tiles.has(job.key) and tiles[job.key].signature==job.signature: return
 		worker=Thread.new()
-		var err := worker.start(build.bind(job.key,job.features,arena.tunnel_radius,arena.roughness))
+		var err := worker.start(build.bind(job.key,job.features,arena.tunnel_radius,arena.roughness,arena.get("terrain_source")))
 		if err!=OK: worker=null;pending.push_front(job);push_error("Could not start SDF scenery worker")
 
-func build(key: Vector2i, features: Array, radius: float, rough: float) -> Dictionary:
+func build(key: Vector2i, features: Array, radius: float, rough: float, source: RefCounted=null) -> Dictionary:
 	var origin := Vector3(key.x*TILE,-24,key.y*TILE)
-	var path := FOLDER+(source_tag+Recipe.cache_key(features,origin,CELLS,STEP,radius,rough)).sha256_text()+".bin"
+	var identity: String=source.base_hash if source else ""
+	var path := FOLDER+(source_tag+identity+Recipe.cache_key(features,origin,CELLS,STEP,radius,rough)).sha256_text()+".bin"
 	if FileAccess.file_exists(path):
 		var file := FileAccess.open(path,FileAccess.READ)
 		if file:
 			var data: Variant=file.get_var(false)
 			if data is Dictionary and data.get("_field_state") is Dictionary and Cache.valid_state(data._field_state,CELLS):
 				data.cached=true;return data
-	var result := field_cache.build(origin,CELLS,STEP,features,radius,rough)
+	var result := field_cache.build(origin,CELLS,STEP,features,radius,rough,true,source.base_field if source else Callable(),identity)
+	# Store full-field normals with the coarse 3D mesh. A 2D normal drape cannot
+	# represent the different normals of a deck, its underside and a tunnel wall.
+	var normal_regions := {}
+	for i in result.vertices.size():
+		var p: Vector3=result.vertices[i]
+		var region := Vector2i(floori(p.x/32),floori(p.z/32))
+		if not normal_regions.has(region): normal_regions[region]=Recipe.relevant(features,Rect2(Vector2(region)*32,Vector2.ONE*32).grow(1.1))
+		var local: Array=normal_regions[region]
+		var n := Vector3.ZERO
+		for axis in 3:
+			var e := Vector3.ZERO;e[axis]=1
+			n[axis]=Recipe.field(p+e,radius,rough,local,source)-Recipe.field(p-e,radius,rough,local,source)
+		if n.length_squared()>.000001: result.normals[i]=n.normalized()
 	var file := FileAccess.open(path+".tmp",FileAccess.WRITE)
 	if file:
 		file.store_var(result,false);file.close();DirAccess.rename_absolute(path+".tmp",path)

@@ -21,7 +21,9 @@ func _initialize() -> void:
 		if not is_finite(field.field(p,3,.2)): push_error("Nonfinite outward transition");quit(1);return
 	var p := Vector3(-14,4,-1600)
 	var q := Field.Frame.coordinates(p)
-	if absf(field.base_field(p,3,.2)-(q.y-field.dem_height(q.x,q.z)))>.0001: push_error("Outer DEM mismatch");quit(1);return
+	var surface := Vector3(p.x,field.surface_height(Vector2(p.x,p.z)),p.z)
+	q=Field.Frame.coordinates(surface)
+	if absf(q.y-field.dem_height(q.x,q.z))>.05 or absf(field.base_field(surface,3,.2))>.001: push_error("Outer DEM mismatch");quit(1);return
 	var expected_origin: float=float(field.elevation.decode_u16((int(field.metadata.camera_px[1])*int(field.metadata.w)+int(field.metadata.camera_px[0]))*2))/float(field.metadata.h_scale)
 	if field.dem_height(0,0)!=expected_origin: push_error("DEM pixel origin mismatch");quit(1);return
 	var edits: Array=[Recipe.feature("hill",p),Recipe.feature("carve",p)]
