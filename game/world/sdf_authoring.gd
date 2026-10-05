@@ -83,6 +83,7 @@ var crater_queue: Array=[]
 var nature := preload("res://world/workshop_nature.gd").new()
 var painted_trees: Node3D
 var far_terrain: Node3D
+var vehicle_trace: Node
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
@@ -100,10 +101,11 @@ func mark_operation() -> void:
 		elapsed=(now-operation_marker_started)/1000.0;operation_marker_started=0
 	var data := {"marker_id":operation_marker_id,"phase":phase,"unix_seconds":wall,"utc":Time.get_datetime_string_from_unix_time(int(wall))+"Z","elapsed_ms":elapsed,"tool":brush_template.kind,"radius_m":brush_template.radius,"strength_per_second":brush_rate,"editing":editing,"camera":str(camera.position),"aim":str(aim_point),"aim_valid":aim_valid}
 	trace_edit("operation_marker",data)
+	if is_instance_valid(vehicle_trace): vehicle_trace.mark(operation_marker_id,phase=="BEGIN")
 	if trace_file: trace_file.flush();trace_flush_usec=now
 	operation_marker_status="MARK %d %s / %s" % [operation_marker_id,phase,data.utc]
 	if phase=="END": operation_marker_status+=" / %.2f seconds" % (elapsed/1000.0)
-	else: operation_marker_status+=" / F8 to mark END"
+	else: operation_marker_status+=" / vehicle history included (up to 5s) / F8 to mark END"
 	if operation_marker_button: operation_marker_button.text="F8: mark END" if operation_marker_started else "F8: mark BEGIN"
 	print("EDITOR_MARK ",JSON.stringify(data)," / ",ProjectSettings.globalize_path(trace_path))
 
@@ -111,6 +113,7 @@ func recovery_floor() -> float:
 	return -30.0 # Below the editable volume, not through its legitimate holes.
 
 func _exit_tree() -> void:
+	if is_instance_valid(vehicle_trace): vehicle_trace.drain()
 	if is_instance_valid(far_terrain): far_terrain.stop()
 	trace_edit("exit")
 	if trace_file: trace_file.close();trace_file=null
@@ -177,6 +180,8 @@ func _ready() -> void:
 	if OS.get_cmdline_user_args().has("--authoring-tunnel-check"): check_tunnel_editing.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-recovery-check"): check_brush_recovery.call_deferred()
 	trace_edit("ready",{"path":trace_path})
+	vehicle_trace=preload("res://world/vehicle_trace.gd").new()
+	vehicle_trace.arena=self;add_child(vehicle_trace)
 	set_process(true);set_physics_process(true);set_process_input(true)
 
 func loading_event(message: String) -> void:
@@ -494,7 +499,7 @@ func make_panel() -> void:
 	simple_strength.value_changed.connect(func(value: float): brush_rate=value)
 	var help := Label.new();help.text="Hold LMB on ground to sculpt. RMB + WASD to fly.\nWheel: zoom. Shift-wheel: brush size.";column.add_child(help)
 	operation_marker_button=Button.new();operation_marker_button.text="F8: mark BEGIN";column.add_child(operation_marker_button)
-	operation_marker_button.tooltip_text="Press before and after a slow operation. Timestamped markers flush immediately to the editor trace."
+	operation_marker_button.tooltip_text="Press around a problem. BEGIN includes up to five seconds of preceding vehicle telemetry; END finishes capture. Markers flush to the editor trace."
 	operation_marker_button.pressed.connect(mark_operation)
 	var simple_actions := HBoxContainer.new();column.add_child(simple_actions)
 	for spec in [["Undo",undo],["Redo",redo],["Save",save],["Load",load_saved]]:

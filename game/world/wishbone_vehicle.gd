@@ -158,6 +158,7 @@ func _physics_process(dt: float) -> void:
 		ray.collision_mask=1|4
 		var hit=space.intersect_ray(ray)
 		c.grounded=false
+		c.trace_normal=hit.get("normal",Vector3.ZERO);c.trace_collider=hit.get("collider_id",0)
 		var compression:=0.0
 		if not hit.is_empty() and hit.normal.dot(up)>.25:
 			var target_y=to_local(hit.position+up*radius).y-anchor.y
