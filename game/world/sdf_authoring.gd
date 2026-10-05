@@ -82,6 +82,7 @@ var grenade_cooldown := 0.0
 var crater_queue: Array=[]
 var nature := preload("res://world/workshop_nature.gd").new()
 var painted_trees: Node3D
+var far_terrain: Node3D
 
 func trace_edit(event: String, extra := {}) -> void:
 	if trace_file==null: return
@@ -110,12 +111,13 @@ func recovery_floor() -> float:
 	return -30.0 # Below the editable volume, not through its legitimate holes.
 
 func _exit_tree() -> void:
+	if is_instance_valid(far_terrain): far_terrain.stop()
 	trace_edit("exit")
 	if trace_file: trace_file.close();trace_file=null
 	super._exit_tree()
 
 func stream_worker_limit() -> int:
-	return 2
+	return 1 if is_instance_valid(far_terrain) and far_terrain.worker!=null else 2
 
 func make_arena_content() -> Node:
 	return preload("res://world/arena_live_content.gd").new()
@@ -142,6 +144,7 @@ func _ready() -> void:
 		if Recipe.validate(saved): features=saved.features
 	super._ready()
 	preload("res://world/materials/expanse_material.gd").apply_nature(terrain.material_override)
+	far_terrain=preload("res://world/workshop_far_terrain.gd").new();add_child(far_terrain);far_terrain.setup(self)
 	make_panel()
 	painted_trees=preload("res://world/painted_trees.gd").new();painted_trees.workshop=self;add_child(painted_trees)
 	var sphere := SphereMesh.new();sphere.radius=.7;sphere.height=1.4
@@ -167,6 +170,7 @@ func _ready() -> void:
 	refresh()
 	DisplayServer.window_set_title("SDF workshop / mountains, erosion and tree painting")
 	if OS.get_cmdline_user_args().has("--authoring-nature-check"): check_nature.call_deferred()
+	if OS.get_cmdline_user_args().has("--authoring-backdrop-check"): check_backdrop.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-check"): check_workshop.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-repro"): check_repeated_clicks.call_deferred()
 	if OS.get_cmdline_user_args().has("--authoring-ui-check"): check_simple_ui.call_deferred()
@@ -188,8 +192,10 @@ func update_loading_screen() -> void:
 	var ring_done: bool=ring_background.background_ready and not ring_background.home_pending and ring_background._preview_thread==null and ring_background._preview_queue.is_empty()
 	var imagery_total := maxi(1,ring_background.preview_total)
 	var processed: int=imagery_total-ring_background._preview_queue.size()-int(ring_background._preview_thread!=null)-int(ring_background.home_pending) if ring_background.background_ready else 0
-	var complete: bool=live_kit()!=null and ready_frames>=3 and collision_pending.is_empty() and ring_done
-	loading_screen.update_progress(done,wanted.size(),maxi(0,processed),imagery_total,sources,maxi(4,total),live_kit()!=null,complete)
+	var far_done: int=far_terrain.tiles.size() if is_instance_valid(far_terrain) else 0
+	done+=far_done
+	var complete: bool=live_kit()!=null and ready_frames>=3 and collision_pending.is_empty() and ring_done and far_terrain.finished()
+	loading_screen.update_progress(done,wanted.size()+36,maxi(0,processed),imagery_total,sources,maxi(4,total),live_kit()!=null,complete)
 
 func briefing_open() -> bool:
 	return loading_screen!=null and not loading_screen.dismissed
@@ -1158,6 +1164,26 @@ func check_nature() -> void:
 	assert(features.size()==1);undo();assert(features.size()==2)
 	select_simple_brush("hill");assert(brush_mode and brush_template.kind=="hill")
 	print("PASS: mountain placement/replacement/undo; tree paint/erase/undo, grounding and no terrain rebuild; JSON roundtrip")
+	get_tree().quit()
+
+func check_backdrop() -> void:
+	while not live_kit(): await get_tree().process_frame
+	set_physics_process(false)
+	assert(ring_background.arena_extent>=movement_limit())
+	assert(ring_background.near_band!=null)
+	var deadline := Time.get_ticks_msec()+120000
+	while not far_terrain.finished() and Time.get_ticks_msec()<deadline: await get_tree().process_frame
+	assert(far_terrain.finished(),"SDF scenery tiles did not finish")
+	for i in 2:
+		camera.position=Vector3(-12,20,-12) if i==0 else Vector3(-220,22,-220)
+		camera.look_at(Vector3(-48,5,-48) if i==0 else Vector3(-180,1,-160))
+		ready_frames=0;assert(await wait_editor_idle())
+		panel.hide();hud.hide();brush_cursor.hide();marker.hide()
+		await RenderingServer.frame_post_draw
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--backdrop-shot="):
+				get_viewport().get_texture().get_image().save_png(arg.trim_prefix("--backdrop-shot=")+str(i)+".png")
+	print("PASS: workshop backdrop extent, refined nearby mesh and streamed views beyond old 96m cutout")
 	get_tree().quit()
 
 func check_loading_screen() -> void:

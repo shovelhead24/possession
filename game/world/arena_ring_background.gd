@@ -8,12 +8,21 @@ var preview_total := 0
 var loading_home := false
 var home_pending := true
 var arena_extent := 96.0
+const NEAR_EXTENT := 8000.0
+const NEAR_STEP := 128.0
+var near_band: MeshInstance3D
+
+func canonical_arc(arc: float) -> float:
+	return wrapf(arc,-CIRCUMFERENCES[c_idx]*.5,CIRCUMFERENCES[c_idx]*.5)
 
 func _ready() -> void:
 	pass
 
 func setup(owner_arena: Node3D) -> void:
 	arena = owner_arena
+	# The workshop no longer has the original 192 m-wide arena. Keep scenery
+	# outside its entire editable volume, including a chunk-sized edge margin.
+	arena_extent=maxf(arena_extent,ceilf(arena.movement_limit()/32.0)*32.0)
 	_cam = arena.camera
 	_env = arena.world_environment.environment
 	_sun = arena.sun
@@ -26,7 +35,9 @@ func setup(owner_arena: Node3D) -> void:
 	var shader := Shader.new()
 	var source := FileAccess.get_file_as_string("res://mocks/ring_vibes.gdshader")
 	source = source.replace("uniform vec3 to_sun", "uniform float arena_extent = 96.0;\nuniform vec3 to_sun")
-	source = source.replace("void fragment() {", "void fragment() {\n\tif (max(abs(v_world_pos.x), abs(v_world_pos.z)) < arena_extent) { discard; }")
+	# Use ring coordinates, not world X: the antipodal ring also has X near zero.
+	source = source.replace("void fragment() {", "void fragment() {\n\tfloat local_arc = UV.x - ring_circumference * floor(UV.x / ring_circumference + 0.5);\n\tif (max(abs(local_arc), abs(UV.y)) < arena_extent) { discard; }")
+	source = source.replace("UV.x / home_patch_size.x", "local_arc / home_patch_size.x")
 	shader.code = source
 	_mat.shader = shader
 	_mat.set_shader_parameter("arena_extent",arena_extent)
@@ -71,8 +82,11 @@ func _load_dem() -> void:
 	_dem_hscale = float(meta.get("h_scale", 16.0))
 
 func _far_terrain_h(arc: float, lat: float) -> float:
-	var distance := Vector2(wrapf(arc, -CIRCUMFERENCES[c_idx]/2, CIRCUMFERENCES[c_idx]/2), lat).length()
-	return lerpf(-0.25, super._far_terrain_h(arc,lat), smoothstep(arena_extent*1.7,3500.0,distance))
+	# Patch lookups already wrap, but home DEM and procedural fallback did not.
+	# Canonicalise BEFORE every source lookup, not just the fade-distance test.
+	arc=canonical_arc(arc)
+	var distance := maxf(absf(arc),absf(lat))
+	return lerpf(-0.25, super._far_terrain_h(arc,lat), smoothstep(arena_extent*1.7,maxf(3500,arena_extent*3),distance))
 
 func _build_arena_band() -> void:
 	# Add closely spaced rows around the arena so the foreground/distant ground
@@ -94,13 +108,70 @@ func _build_arena_band() -> void:
 		for lat in lateral:
 			st.set_uv(Vector2(arc,lat))
 			st.add_vertex(_ring_pos(arc/_radius(),lat,_far_terrain_h(arc,lat)))
-	_grid_indices(st, arcs.size()-1, lateral.size()-1)
+	# The near square is built separately at DEM-appropriate resolution. Do not
+	# multiply that lateral resolution around the entire 3,000 km circumference.
+	for i in arcs.size()-1:
+		var middle := canonical_arc((arcs[i]+arcs[i+1])*.5)
+		for j in lateral.size()-1:
+			if absf(middle)<NEAR_EXTENT and absf((lateral[j]+lateral[j+1])*.5)<NEAR_EXTENT: continue
+			var a := i*lateral.size()+j;var b := a+lateral.size()
+			for index in [a,b,a+1,a+1,b,b+1]: st.add_index(index)
 	st.generate_normals()
 	_band = MeshInstance3D.new()
 	_band.mesh = st.commit()
 	_band.material_override = _mat
 	_band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_band)
+	_build_near_band(arcs,lateral)
+
+static func sorted_unique(values: Array[float]) -> Array[float]:
+	values.sort();var result: Array[float]=[]
+	for value in values:
+		if result.is_empty() or absf(result[-1]-value)>.001: result.append(value)
+	return result
+
+func boundary_vertex(arc: float, lat: float, samples: Array[float], along_arc: bool) -> Vector3:
+	var coordinate := arc if along_arc else lat
+	for i in samples.size()-1:
+		if coordinate>=samples[i] and coordinate<=samples[i+1]:
+			var a := Vector2(samples[i],lat) if along_arc else Vector2(arc,samples[i])
+			var b := Vector2(samples[i+1],lat) if along_arc else Vector2(arc,samples[i+1])
+			var pa := _ring_pos(a.x/_radius(),a.y,_far_terrain_h(a.x,a.y))
+			var pb := _ring_pos(b.x/_radius(),b.y,_far_terrain_h(b.x,b.y))
+			return pa.lerp(pb,(coordinate-samples[i])/(samples[i+1]-samples[i]))
+	return _ring_pos(arc/_radius(),lat,_far_terrain_h(arc,lat))
+
+func _build_near_band(arcs: Array[float], lateral: Array[float]) -> void:
+	var coarse_arcs: Array[float]=[]
+	for arc in arcs:
+		var local := canonical_arc(arc)
+		if absf(local)<=NEAR_EXTENT: coarse_arcs.append(local)
+	coarse_arcs=sorted_unique(coarse_arcs)
+	var xs: Array[float]=coarse_arcs.duplicate();var zs: Array[float]=[]
+	for lat in lateral:
+		if absf(lat)<=NEAR_EXTENT: zs.append(lat)
+	for coordinate in range(-int(NEAR_EXTENT),int(NEAR_EXTENT),int(NEAR_STEP)):
+		xs.append(float(coordinate));zs.append(float(coordinate))
+	xs.append(NEAR_EXTENT);zs.append(NEAR_EXTENT)
+	xs=sorted_unique(xs);zs=sorted_unique(zs)
+	var st := SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for arc in xs:
+		for lat in zs:
+			var point := _ring_pos(arc/_radius(),lat,_far_terrain_h(arc,lat))
+			# Fine boundary vertices lie on the actual coarse edge segments, not
+			# on a different sampled curve: no stitching job or hidden cracks.
+			if absf(arc)==NEAR_EXTENT: point=boundary_vertex(arc,lat,lateral,false)
+			elif absf(lat)==NEAR_EXTENT: point=boundary_vertex(arc,lat,coarse_arcs,true)
+			st.set_uv(Vector2(arc,lat));st.add_vertex(point)
+	for i in xs.size()-1:
+		for j in zs.size()-1:
+			if maxf(absf((xs[i]+xs[i+1])*.5),absf((zs[j]+zs[j+1])*.5))<arena_extent: continue
+			var a := i*zs.size()+j;var b := a+zs.size()
+			for index in [a,b,a+1,a+1,b,b+1]: st.add_index(index)
+	st.generate_normals()
+	near_band=MeshInstance3D.new();near_band.mesh=st.commit();near_band.material_override=_mat
+	near_band.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(near_band)
+	print("ARENA_BACKDROP extent=",arena_extent," near_vertices=",xs.size()*zs.size()," step=",NEAR_STEP)
 
 func _update_arena_light() -> void:
 	var to_sun := RingFrame.sun_direction(sun_angle,sun_tilt)
