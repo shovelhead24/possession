@@ -73,6 +73,14 @@ unavailable approval, report that explicitly rather than claiming it is running.
 Keep `game/world/workshop_brief.json` current with the iteration's test goal,
 changes and controls; the workshop loading screen presents this on launch.
 
+### Standing local performance-test rule
+Before running a local Godot performance test, inspect running Godot processes
+and ensure the test is the only local Godot instance. Do not benchmark alongside
+an existing playtest or editor. Stop only known disposable agent-owned test
+processes; ask before closing a session that may contain unsaved user work.
+Recheck after launch. If isolation cannot be established, defer the test and
+report it rather than presenting shared-load timings as an isolated benchmark.
+
 ### Standing terrain cache rule
 The user accepted the simple hold-to-sculpt Raise/Lower controls on 2026-10-04.
 Preserve that behaviour as the baseline when expanding other authoring tools;
