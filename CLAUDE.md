@@ -73,6 +73,17 @@ unavailable approval, report that explicitly rather than claiming it is running.
 Keep `game/world/workshop_brief.json` current with the iteration's test goal,
 changes and controls; the workshop loading screen presents this on launch.
 
+### Standing double-click launcher rule
+For every new playable test iteration, update the existing Terrain Workshop
+double-click launcher to point to the newest relevant test scene, project path,
+engine and launch arguments. Keep the same desktop shortcut so the user never
+needs to find a new command or launcher. Preserve its single-instance check,
+existing loading/briefing screen, saved work and persistent caches. Never close
+an existing session automatically. Validate the launcher paths and script after
+updating it, and keep the current test goal and controls in workshop_brief.json.
+The desktop shortcut targets this stable script:
+`C:\Users\Bran the builder\Documents\Codex\2026-10-05\read-handoff-2026-10-05-md\outputs\Launch-Terrain-Workshop.ps1`.
+
 ### Standing local performance-test rule
 Before running a local Godot performance test, inspect running Godot processes
 and ensure the test is the only local Godot instance. Do not benchmark alongside
