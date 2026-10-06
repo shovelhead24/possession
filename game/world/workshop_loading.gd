@@ -49,7 +49,7 @@ func _ready() -> void:
 	status=Label.new();status.text="Preparing workshop…";status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;outer.add_child(status)
 	activity=RichTextLabel.new();activity.custom_minimum_size.y=70;activity.scroll_following=true;outer.add_child(activity)
 	enter=Button.new();enter.text="Loading…";enter.disabled=true;enter.pressed.connect(close);outer.add_child(enter)
-	log_event("Preparing terrain, ring scenery and live models. Percentage counts phases, not remaining time.")
+	log_event("Preparing this iteration. Progress measures completed work, not remaining time.")
 
 func log_event(message: String) -> void:
 	var line := "[%5.1fs] %s" % [(Time.get_ticks_msec()-started)/1000.0,message]
