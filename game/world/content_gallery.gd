@@ -209,7 +209,11 @@ func import_source(path: String) -> Node3D:
 		error = doc.append_from_file(path,state)
 	if error != OK:
 		return null
+	prepare_import_meshes(state,path)
 	return doc.generate_scene(state) as Node3D
+
+func prepare_import_meshes(_state: GLTFState, _path: String) -> void:
+	pass
 
 func model_bounds(root: Node3D) -> AABB:
 	var result := AABB()

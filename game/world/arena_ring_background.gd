@@ -69,6 +69,11 @@ func setup(owner_arena: Node3D) -> void:
 	_clouds.ring_width = WIDTHS[w_idx]
 	_clouds.wall_top = wall_top_h
 	add_child(_clouds)
+	if OS.get_cmdline_user_args().has("--cached-cloud-noise"):
+		var lattice=preload("res://world/cloud_noise_cache.gd").get_texture()
+		for layer in _clouds._layers:
+			layer.material_override.set_shader_parameter("noise_lattice",lattice)
+			layer.material_override.set_shader_parameter("cached_noise",true)
 	for i in _patch_names.size(): _preview_queue.append(i)
 	preview_total = _preview_queue.size() + 1
 	background_ready = true

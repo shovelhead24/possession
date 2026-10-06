@@ -9,6 +9,7 @@ var clock := 0.0
 var epoch := 0
 var batches := {}
 var lod_clock := 0.0
+var uploaded := {}
 const LIMIT := 600
 
 static func scatter(features: Array) -> Array:
@@ -77,20 +78,23 @@ func _process(delta: float) -> void:
 			item.shape.shape.radius=c.height*.025;item.shape.shape.height=c.height*.45;item.shape.position.y=c.height*.225
 
 func update_lods() -> void:
+	if not visible: return
 	var buckets := {}
 	for item in items.values():
 		var distance: float=workshop.camera.position.distance_to(item.body.position)
 		if distance>200: continue
-		var key := Vector2i(item.variant,0 if distance<22 else (1 if distance<65 else 2))
+		var key := Vector2i(item.variant,workshop.arena_content.tree_lod(distance))
 		if not buckets.has(key): buckets[key]=[]
 		buckets[key].append(item.transform)
 	for key in buckets:
 		if not batches.has(key):
-			var node := MultiMeshInstance3D.new();node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			var node := MultiMeshInstance3D.new();node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_ON if key.y==0 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			node.multimesh=MultiMesh.new();node.multimesh.transform_format=MultiMesh.TRANSFORM_3D
 			node.multimesh.mesh=workshop.arena_content.tree_batches[key.x].batches[key.y].multimesh.mesh
 			add_child(node);batches[key]=node
 	for key in batches:
 		var transforms: Array=buckets.get(key,[]);var mm: MultiMesh=batches[key].multimesh
+		if uploaded.get(key,[])==transforms: continue
+		uploaded[key]=transforms
 		mm.instance_count=transforms.size()
 		for i in transforms.size(): mm.set_instance_transform(i,transforms[i])

@@ -16,8 +16,27 @@ func require(value: bool, message: String) -> bool:
 func run() -> void:
 	var script=load("res://world/sdf_authoring.gd")
 	if not require(script.can_instantiate(),"Workshop script failed compilation"): return
+	var workshop=script.new()
+	workshop.features=[Recipe.feature("hill",Vector3.ZERO)]
+	workshop.revision=1
+	var old_snapshot: Array=workshop.chunk_sampler().get_bound_arguments()[0]
+	workshop.features[0].x=100.0;workshop.revision+=1
+	var next_snapshot: Array=workshop.chunk_sampler().get_bound_arguments()[0]
+	if not require(old_snapshot[0].x==0 and next_snapshot[0].x==100,"Worker recipe snapshots were mutated or not invalidated"): return
+	# This unit creates the script without _ready(), so its eagerly allocated
+	# helper nodes have not yet been parented and must be released explicitly.
+	for name in ["terrain","collision","camera","player","hud","marker","brush_cursor","chunk_overlay","endpoint_guide","endpoint_handle","surface_cursor"]:
+		workshop.get(name).free()
+	workshop.free()
 	var source := Field.new()
 	if not require(source.setup([]),"DEM setup"): return
+	var indexed_recipe: Array=preload("res://world/stress_course.gd").features()
+	for point in [Vector3(-638,0,-768),Vector3(638,0,768),Vector3(2048,0,0),Vector3(-2048,0,0)]: indexed_recipe.append(Recipe.feature("hill",point))
+	var indexed := LOD.index_features(indexed_recipe)
+	if not require(indexed.size()==220,"Exterior feature index coverage"): return
+	for key in indexed:
+		var expected := Recipe.relevant(indexed_recipe,Rect2(Vector2(key)*256,Vector2.ONE*256).grow(130))
+		if not require(indexed[key]==expected,"Feature index changed order or membership at "+str(key)): return
 	var neighbors := {}
 	for z in range(-6,-2):
 		for x in range(-2,3): neighbors[Vector2i(x,z)]=16 if x<0 else 64

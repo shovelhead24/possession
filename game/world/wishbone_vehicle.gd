@@ -64,6 +64,7 @@ var spring_mat: StandardMaterial3D
 var rest_hub: Vector2=Linkage.solve(0).hub
 
 func _ready() -> void:
+	Linkage.prepare_height_search()
 	mass=800
 	center_of_mass_mode=RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	center_of_mass=Vector3(0,.6,0)

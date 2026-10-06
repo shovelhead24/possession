@@ -23,6 +23,30 @@ var mask_texture: ImageTexture
 var mask_signature := ""
 var cache_hits := 0
 var builds := 0
+var feature_revision := -1
+var local_features := {}
+var local_identities := {}
+var planned_steps := {}
+var plan_ms := 0.0
+
+static func index_features(features: Array) -> Dictionary:
+	var result := {}
+	for z in range(-8,8):
+		for x in range(-8,8):
+			if x>=-3 and x<3 and z>=-3 and z<3: continue
+			result[Vector2i(x,z)]=[]
+	# Evaluate each feature's footprint once, preserving recipe order in every tile.
+	for feature in features:
+		if feature.kind=="trees": continue
+		var bounds := Recipe.bounds(feature)
+		var expanded := bounds.grow(130)
+		var snapshot: Dictionary=feature.duplicate(true)
+		for z in range(maxi(-8,floori(expanded.position.y/TILE)),mini(7,floori(expanded.end.y/TILE))+1):
+			for x in range(maxi(-8,floori(expanded.position.x/TILE)),mini(7,floori(expanded.end.x/TILE))+1):
+				var key := Vector2i(x,z)
+				if result.has(key) and bounds.intersects(Rect2(Vector2(key)*TILE,Vector2.ONE*TILE).grow(130)):
+					result[key].append(snapshot)
+	return result
 
 func setup(owner_arena: Node) -> void:
 	arena=owner_arena
@@ -104,16 +128,27 @@ func _process(delta: float) -> void:
 			worker=null;pending.push_front(job);push_error("Exterior terrain worker could not start")
 
 func plan() -> void:
+	var started := Time.get_ticks_usec()
 	var steps := select_steps()
+	var changed: bool=feature_revision!=arena.revision
+	if not changed and steps==planned_steps:
+		plan_ms=(Time.get_ticks_usec()-started)/1000.0
+		return
+	if changed:
+		local_features=index_features(arena.features)
+		local_identities.clear()
+		for key in local_features: local_identities[key]=JSON.stringify(local_features[key])
+		feature_revision=arena.revision
+	planned_steps=steps
 	wanted.clear();pending.clear()
 	for key in steps:
-		var local := Recipe.relevant(arena.features,Rect2(Vector2(key)*TILE,Vector2.ONE*TILE).grow(130))
+		var local: Array=local_features[key]
 		var neighbors := {}
 		for z in range(-1,2):
 			for x in range(-1,2):
 				var neighbor: Vector2i=key+Vector2i(x,z)
 				neighbors[neighbor]=steps.get(neighbor,128 if absi(neighbor.x)>=8 or absi(neighbor.y)>=8 else 16)
-		var id: String = (source_tag+arena.terrain_source.base_hash+str(key)+str(neighbors)+JSON.stringify(local)+str(arena.tunnel_radius)+str(arena.roughness)).sha256_text()
+		var id: String = (source_tag+arena.terrain_source.base_hash+str(key)+str(neighbors)+local_identities[key]+str(arena.tunnel_radius)+str(arena.roughness)).sha256_text()
 		var spec := {"key":key,"step":steps[key],"neighbors":neighbors,"features":local,"id":id}
 		wanted[key]=spec
 		if (tiles.has(key) and tiles[key].id==id) or staged.has(id) or resident.has(id) or (worker and job.id==id): continue
@@ -125,6 +160,8 @@ func plan() -> void:
 	for id in staged.keys():
 		if not keep.has(id): staged[id].node.queue_free();staged.erase(id)
 	pending.sort_custom(func(a,b): return tile_distance(a.key,arena.camera.position)<tile_distance(b.key,arena.camera.position))
+	plan_ms=(Time.get_ticks_usec()-started)/1000.0
+	if plan_ms>16.667: print("TERRAIN_LOD_PLAN ms=",plan_ms," recipe_changed=",changed)
 
 static func sample_height(source: RefCounted, point: Vector2, stride: int) -> float:
 	return source.surface_height(point,float(stride))

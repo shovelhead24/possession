@@ -21,13 +21,14 @@ func run() -> void:
 	scene.mark_operation()
 	for i in 120: await physics_frame
 	scene.mark_operation()
-	var rows: Array=[]
+	var rows: Array=[];var frame_rows: Array=[]
 	var file := FileAccess.open(scene.trace_path,FileAccess.READ)
 	while not file.eof_reached():
 		var line := file.get_line()
 		if line.is_empty(): continue
 		var row: Variant=JSON.parse_string(line)
 		if row is Dictionary and row.get("event")=="vehicle_samples": rows.append(row)
+		if row is Dictionary and row.get("event")=="frame_samples": frame_rows.append(row)
 	assert(not rows.is_empty(),"No vehicle telemetry persisted")
 	assert(rows[0].phase=="pre_roll" and rows[0].samples.size()>200,"Missing pre-roll")
 	var count := 0;var max_ms := 0.0;var last_time := 0
@@ -41,5 +42,13 @@ func run() -> void:
 			assert(sample.vehicles[0].wheels.size()==4)
 	assert(count>320 and scene.vehicle_trace.active_id==0)
 	assert(scene.vehicle_trace.history.size()<=600)
+	assert(not frame_rows.is_empty() and frame_rows[0].phase=="pre_roll","Missing frame pre-roll")
+	var frame_count := 0;var frame_time := 0
+	for row in frame_rows:
+		for sample in row.samples:
+			assert(sample.sample_usec>frame_time and sample.frame_ms>0,"Invalid frame timeline")
+			assert(sample.has("draw_calls") and sample.has("terrain_plan_ms"))
+			frame_time=sample.sample_usec;frame_count+=1
+	assert(frame_count>10 and scene.vehicle_trace.frame_history.size()<=600)
 	print("VEHICLE_TRACE_PASS samples=",count," max_sampling_ms=",max_ms," path=",scene.trace_path)
 	quit()

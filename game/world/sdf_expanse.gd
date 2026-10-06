@@ -162,6 +162,8 @@ func _physics_process(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	var wanted := desired()
+	var wanted_set := {}
+	for key in wanted: wanted_set[key]=true
 	# Workers only produce primitive arrays. Start at most one costly install
 	# after the budget is exhausted; a single indivisible upload may exceed it.
 	var install_started := Time.get_ticks_usec()
@@ -170,13 +172,13 @@ func _process(delta: float) -> void:
 		if not job.has("result") and not job.thread.is_alive():
 			job.result=job.thread.wait_to_finish();chunk_generated(job.result)
 		if not job.has("result"): continue
-		if job.revision!=revision or job.key not in wanted:
+		if job.revision!=revision or not wanted_set.has(job.key):
 			stream_jobs.erase(job);continue
 		if installed and Time.get_ticks_usec()-install_started>=stream_install_budget_usec(): continue
 		active_key=job.key;active_revision=job.revision
 		install(job.key,job.result);installed=true;stream_jobs.erase(job)
 	for key in chunks.keys():
-		if key not in wanted:
+		if not wanted_set.has(key):
 			retire_chunk(key)
 	var missing := 0
 	for key in wanted:
@@ -234,7 +236,7 @@ func install(key: Vector2i,result: Dictionary) -> void:
 		var mesh := ArrayMesh.new()
 		var arrays := mesh_arrays(result)
 		var phase := Time.get_ticks_usec()
-		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays,[],result.get("render_lods",{}))
 		upload_ms=(Time.get_ticks_usec()-phase)/1000.0
 		var instance := MeshInstance3D.new()
 		instance.mesh = mesh

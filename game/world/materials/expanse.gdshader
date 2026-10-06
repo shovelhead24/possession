@@ -129,13 +129,16 @@ void fragment() {
 	}
 	vec3 w = pow(abs(n), vec3(4.0));
 	w /= max(w.x + w.y + w.z, 0.0001);
-	float broad = smoothstep(28.0, 60.0, length(p.xz)) * (1.5 * sin(p.x * 0.035) * cos(p.z * 0.028));
-	float basin = 5.0 * exp(-dot((p.xz - vec2(45.0, -80.0)) / vec2(24.0, 28.0), (p.xz - vec2(45.0, -80.0)) / vec2(24.0, 28.0)));
-	float ground_field = p.y - broad + basin;
+	bool stone_bridge = false;
+	if (bridge_enabled && abs(p.x + 65.0) < 29.0 && abs(p.z - 45.0) < 11.0) {
+		float broad = smoothstep(28.0, 60.0, length(p.xz)) * (1.5 * sin(p.x * 0.035) * cos(p.z * 0.028));
+		float basin = 5.0 * exp(-dot((p.xz - vec2(45.0, -80.0)) / vec2(24.0, 28.0), (p.xz - vec2(45.0, -80.0)) / vec2(24.0, 28.0)));
+		stone_bridge = bridge_field(p) < p.y - broad + basin;
+	}
 	ROUGHNESS = 0.95;
 	if (!textured) {
 		ALBEDO = vec3(0.48, 0.55, 0.40);
-	} else if ((bridge_enabled && bridge_field(p) < ground_field && abs(p.x + 65.0) < 29.0 && abs(p.z - 45.0) < 11.0)
+	} else if (stone_bridge
 		|| (overpass_enabled && abs(p.x+154.0)<44.0 && abs(p.z+80.0)<12.0 && (p.y>5.0 || abs(abs(p.x+154.0)-32.0)<3.2))) {
 		ALBEDO = triplanar(limestone, p, n, w, stone_metres).rgb * (overpass_enabled ? 0.72 : 1.0);
 	} else {

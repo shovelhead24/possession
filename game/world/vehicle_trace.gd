@@ -8,6 +8,10 @@ var cursor := 0
 var active_id := 0
 var pending: Array = []
 var previous := {}
+var frame_history: Array=[]
+var frame_cursor := 0
+var pending_frames: Array=[]
+var last_frame_usec := 0
 
 func _ready() -> void:
 	process_physics_priority=100 # Observe after vehicle controllers have stepped.
@@ -29,18 +33,34 @@ func recent(now: int) -> Array:
 	return result
 
 func drain() -> void:
-	if pending.is_empty(): return
-	arena.trace_edit("vehicle_samples",{"marker_id":active_id,"phase":"capture","samples":pending})
-	pending=[]
+	if not pending.is_empty():
+		arena.trace_edit("vehicle_samples",{"marker_id":active_id,"phase":"capture","samples":pending})
+		pending=[]
+	if not pending_frames.is_empty():
+		arena.trace_edit("frame_samples",{"marker_id":active_id,"phase":"capture","samples":pending_frames})
+		pending_frames=[]
 
 func mark(id: int, begin: bool) -> void:
 	if begin:
 		active_id=id
 		arena.trace_edit("vehicle_samples",{"marker_id":id,"phase":"pre_roll","samples":recent(Time.get_ticks_usec())})
+		var frames: Array=[]
+		for offset in frame_history.size():
+			var index := (frame_cursor+offset)%frame_history.size() if frame_history.size()==CAPACITY else offset
+			if Time.get_ticks_usec()-int(frame_history[index].sample_usec)<=HISTORY_USEC: frames.append(frame_history[index])
+		arena.trace_edit("frame_samples",{"marker_id":id,"phase":"pre_roll","samples":frames})
 	else:
 		drain();active_id=0
 
 func _process(_delta: float) -> void:
+	var now := Time.get_ticks_usec()
+	if last_frame_usec and arena.live_kit():
+		var sample := {"sample_usec":now,"frame_ms":(now-last_frame_usec)/1000.0,"cpu_monitor_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"physics_monitor_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000,"draw_calls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"triangles":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),"terrain_plan_ms":arena.terrain_lod.plan_ms if arena.terrain_lod else 0.0}
+		if frame_history.size()<CAPACITY: frame_history.append(sample)
+		else: frame_history[frame_cursor]=sample
+		frame_cursor=(frame_cursor+1)%CAPACITY
+		if active_id: pending_frames.append(sample)
+	last_frame_usec=now
 	drain() # Serialization stays outside the physics callback.
 
 func _physics_process(delta: float) -> void:

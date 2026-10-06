@@ -1,6 +1,12 @@
 extends "res://world/arena_content.gd"
 var kit: Node
 
+func prepare_import_meshes(state: GLTFState, path: String) -> void:
+	if path.get_file() in ["halo_warthog.zip","altay_main_battle_tank_fbx.glb"]:
+		preload("res://world/runtime_mesh_lod.gd").prepare(state,path)
+	elif OS.get_cmdline_user_args().has("--actor-mesh-lods") and path.get_file() in ["lizard_rig.glb","rigged_t-rex_fabulous.glb"]:
+		preload("res://world/runtime_mesh_lod.gd").prepare(state,path,true)
+
 func source_specs() -> Array:
 	var specs := super.source_specs()
 	specs.append(["Altay","res://altay_main_battle_tank_fbx.glb",Vector2(-47,-34),9.0,false])
@@ -52,9 +58,16 @@ func add_entry(title: String, model: Node3D, coord: Vector2, height: float) -> v
 			shape.points=PackedVector3Array([Vector3(-half_width,.38,front),Vector3(half_width,.38,front),Vector3(-half_width,0,rear),Vector3(half_width,0,rear),Vector3(-half_width,.72,front),Vector3(half_width,.72,front),Vector3(-half_width,.72,rear),Vector3(half_width,.72,rear)])
 			collision.shape=shape;collision.position.y=.45;root.add_child(collision)
 			root.setup_tank(model,kit.vehicle_system)
+			var batch=preload("res://world/rigid_mesh_batch.gd")
+			var identity := FileAccess.get_sha256("res://altay_main_battle_tank_fbx.glb")+FileAccess.get_file_as_string("res://world/tank_controller.gd").sha256_text()+FileAccess.get_file_as_string("res://world/tank_finish.gd").sha256_text()
+			batch.combine(model,[],identity+"hull")
+			batch.combine(root.turret,[root.barrel],identity+"turret")
+			batch.combine(root.barrel,[],identity+"barrel")
 		kit.vehicle_system.register_vehicle(root)
 		root.add_child(preload("res://world/vehicle_audio.gd").new())
 		root.add_child(preload("res://world/wheel_dirt.gd").new())
+		var shadow_lod := preload("res://world/vehicle_shadow_lod.gd").new()
+		root.add_child(shadow_lod);shadow_lod.setup(root,patch.camera)
 	else:
 		if title=="Alien": model.rotation.y=PI # Also idempotent for duplicated live models.
 		root=preload("res://world/arena_actor.gd").new();root.name=title.replace("-","")

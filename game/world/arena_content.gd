@@ -3,6 +3,7 @@ extends "res://world/content_gallery.gd"
 var tree_count := 0
 var tree_batches: Array[Dictionary] = []
 var tree_clock := 0.0
+var trees_visible := true
 
 func setup(tile: Node3D) -> void:
 	patch = tile
@@ -90,7 +91,28 @@ func add_entry(title: String, model: Node3D, coord: Vector2, height: float) -> v
 	entries.append({"name":title,"root":root,"model":model,"coord":coord,"height":height,"label":label})
 
 func load_trees() -> void:
-	var source := import_source(ProjectSettings.globalize_path("res://../assets/realistic_fir_trees_pack_lods_gameready.zip").simplify_path())
+	var variants := prepared_tree_meshes()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20261001
+	var names := variants.keys()
+	names.sort()
+	for name in names:
+		var lods: Array=variants[name]
+		add_tree_variant(lods,rng)
+	update_tree_lod()
+
+func prepared_tree_meshes() -> Dictionary:
+	var archive := ProjectSettings.globalize_path("res://../assets/realistic_fir_trees_pack_lods_gameready.zip").simplify_path()
+	var identity := FileAccess.get_sha256(archive)+str(Engine.get_version_info().hex)
+	for path in ["res://world/arena_content.gd","res://world/content_gallery.gd","res://mocks/ring_vibes.gd","res://mocks/tree_foliage.gdshader"]:
+		identity+=FileAccess.get_sha256(path)
+	var cache_path := "user://tree-lods-"+identity.sha256_text()+".res"
+	if FileAccess.file_exists(cache_path):
+		var cached := ResourceLoader.load(cache_path,"",ResourceLoader.CACHE_MODE_IGNORE)
+		if cached and cached.has_meta("variants"):
+			print("TREE_LOD_CACHE hit ",cache_path)
+			return cached.get_meta("variants")
+	var source := import_source(archive)
 	assert(source != null,"Arena fir archive unavailable")
 	var ring: Node3D = patch.ring_background
 	ring._foliage_shader = load("res://mocks/tree_foliage.gdshader")
@@ -100,60 +122,83 @@ func load_trees() -> void:
 	ring._walk_lod_meshes(source,source,regex,variants)
 	source.free()
 	assert(not variants.is_empty(),"Fir archive contains no LOD meshes")
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 20261001
+	var prepared := {}
 	var names := variants.keys()
 	names.sort()
 	for name in names:
 		var lods: Array[Mesh] = []
-		for lod in [1,2,3]:
+		for lod in [0,1,2]:
 			var mesh: ArrayMesh = ring._normalize_mesh(variants[name].get(lod,variants[name].get(0)))
 			assert(mesh != null)
 			lods.append(mesh)
-		var transforms: Array[Transform3D] = []
-		for index in 8:
-			# Small clusters along the arena sides leave its centre and actors readable.
-			var side := -1.0 if (index % 2 == 0) else 1.0
-			var coord := Vector2(side*rng.randf_range(58,82),rng.randf_range(-78,78))
-			var hit := ground_at(coord)
-			if hit.is_empty() or hit.normal.y < 0.75: continue
-			var height := rng.randf_range(7,13)
-			var basis := Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(Vector3.ONE*height)
-			transforms.append(Transform3D(basis,hit.position))
-			tree_count += 1
-			var trunk := StaticBody3D.new()
-			trunk.collision_layer = 2
-			trunk.position = hit.position
-			var shape := CollisionShape3D.new()
-			var cylinder := CylinderShape3D.new()
-			cylinder.radius = 0.2
-			cylinder.height = height*0.45
-			shape.shape = cylinder
-			shape.position.y = cylinder.height*0.5
-			trunk.add_child(shape)
-			patch.add_child(trunk)
-		var batches: Array[MultiMeshInstance3D] = []
-		for mesh in lods:
-			var instance := MultiMeshInstance3D.new()
-			instance.multimesh = MultiMesh.new()
-			instance.multimesh.transform_format = MultiMesh.TRANSFORM_3D
-			instance.multimesh.mesh = mesh
-			instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			patch.add_child(instance)
-			batches.append(instance)
-		tree_batches.append({"transforms":transforms,"batches":batches})
-	update_tree_lod()
+		# Match tactical's atlas-safe far tier: generic full-UV billboards show
+		# the entire atlas as floating trees. Retain the pack's cheap LOD2 mesh.
+		lods.append(lods[2])
+		prepared[name]=lods
+	var cached := Resource.new();cached.set_meta("variants",prepared)
+	var error := ResourceSaver.save(cached,cache_path)
+	if error!=OK: push_warning("Tree LOD cache write failed: "+str(error))
+	print("TREE_LOD_CACHE built variants=",prepared.size()," saved=",error==OK)
+	return prepared
+
+func add_tree_variant(lods: Array, rng: RandomNumberGenerator) -> void:
+	var transforms: Array[Transform3D] = []
+	for index in 8:
+		# Small clusters along the arena sides leave its centre and actors readable.
+		var side := -1.0 if (index % 2 == 0) else 1.0
+		var coord := Vector2(side*rng.randf_range(58,82),rng.randf_range(-78,78))
+		var hit := ground_at(coord)
+		if hit.is_empty() or hit.normal.y < 0.75: continue
+		var height := rng.randf_range(7,13)
+		var basis := Basis(Vector3.UP,rng.randf_range(0,TAU)).scaled(Vector3.ONE*height)
+		transforms.append(Transform3D(basis,hit.position))
+		tree_count += 1
+		var trunk := StaticBody3D.new()
+		trunk.collision_layer = 2
+		trunk.position = hit.position
+		var shape := CollisionShape3D.new()
+		var cylinder := CylinderShape3D.new()
+		cylinder.radius = 0.2
+		cylinder.height = height*0.45
+		shape.shape = cylinder
+		shape.position.y = cylinder.height*0.5
+		trunk.add_child(shape)
+		patch.add_child(trunk)
+	var batches: Array[MultiMeshInstance3D] = []
+	for level in lods.size():
+		var mesh: Mesh=lods[level]
+		var instance := MultiMeshInstance3D.new()
+		instance.multimesh = MultiMesh.new()
+		instance.multimesh.transform_format = MultiMesh.TRANSFORM_3D
+		instance.multimesh.mesh = mesh
+		instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if level==0 else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		instance.visible=trees_visible
+		patch.add_child(instance)
+		batches.append(instance)
+	tree_batches.append({"transforms":transforms,"batches":batches})
+
+func set_trees_visible(value: bool) -> void:
+	trees_visible=value
+	for group in tree_batches:
+		for batch in group.batches: batch.visible=value
+	if value: update_tree_lod()
 
 func update_tree_lod() -> void:
+	if not trees_visible: return
 	for group in tree_batches:
-		var buckets := [[],[],[]]
+		var buckets := [[],[],[],[]]
 		for transform: Transform3D in group.transforms:
 			var distance: float = patch.camera.position.distance_to(transform.origin)
-			buckets[0 if distance < 22 else (1 if distance < 65 else 2)].append(transform)
-		for i in 3:
+			buckets[tree_lod(distance)].append(transform)
+		if group.get("uploaded",[])==buckets: continue
+		group.uploaded=buckets
+		for i in buckets.size():
 			var mm: MultiMesh = group.batches[i].multimesh
 			mm.instance_count = buckets[i].size()
 			for j in buckets[i].size(): mm.set_instance_transform(j,buckets[i][j])
+
+static func tree_lod(distance: float) -> int:
+	return 0 if distance<22 else (1 if distance<65 else (2 if distance<110 else 3))
 
 func _process(delta: float) -> void:
 	tree_clock -= delta

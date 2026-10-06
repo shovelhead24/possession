@@ -1,7 +1,26 @@
 extends SceneTree
 var scene: Node
+var render_times: Array=[]
+var last_render_usec := 0
+
+func record_frame() -> void:
+	var now := Time.get_ticks_usec()
+	if last_render_usec>0: render_times.append((now-last_render_usec)/1000.0)
+	last_render_usec=now
+
+func sample_view(label: String) -> void:
+	for i in 30: await process_frame
+	var samples := [];var last := Time.get_ticks_usec();var total := 0.0
+	for i in 120:
+		await process_frame
+		var now := Time.get_ticks_usec();var ms := (now-last)/1000.0;last=now
+		samples.append(ms);total+=ms
+	samples.sort()
+	print("DRIVE_VIEW_PROFILE ",JSON.stringify({"label":label,"fps":120000.0/total,"p95_ms":samples[114],"draws":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"triangles":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)}))
 
 func _initialize() -> void:
+	Engine.max_fps=0
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	create_timer(600).timeout.connect(func(): push_error("Drive test timed out");quit(1))
 	run.call_deferred()
 
@@ -9,7 +28,7 @@ func run() -> void:
 	var stress := OS.get_cmdline_user_args().has("--stress-course")
 	scene=load("res://world/sdf_stress_course.tscn" if stress else "res://world/sdf_authoring.tscn").instantiate();root.add_child(scene)
 	while not scene.live_kit(): await process_frame
-	while not scene.far_terrain.finished() or scene.ready_frames<3: await process_frame
+	while not scene.far_terrain.finished() or not scene.terrain_lod.finished() or scene.ready_frames<3: await process_frame
 	var kit: Node=scene.live_kit()
 	scene.switch_editor_mode(false);kit.test_vehicle_controls=true;kit.enter_vehicle()
 	var turning := OS.get_cmdline_user_args().has("--turning")
@@ -24,6 +43,8 @@ func run() -> void:
 	var last_tick := Time.get_ticks_usec()
 	var max_tick_gap_ms := 0.0
 	var stage_samples := {}
+	process_frame.connect(record_frame)
+	scene.mark_operation()
 	while Time.get_ticks_msec()-started<(75000 if stress else (35000 if turning else 18000)):
 		await physics_frame
 		ticks+=1;peak=maxf(peak,car.linear_velocity.length())
@@ -46,6 +67,12 @@ func run() -> void:
 		if stress and car.position.z<=-620: break
 	print("STREAM_DRIVE_RESULT ",JSON.stringify({"ticks":ticks,"braking_ticks":braking,"frozen_ticks":frozen,"peak_speed":peak,"ticks_above_43":fast,"max_brake_step":max_brake_change,"resident_chunks":scene.chunks.size(),"power_limited_ticks":limited,"minimum_drive_scale":minimum_drive,"start_position":str(start_position),"end_position":str(car.position),"minimum_z":minimum_z,"stress":stress}))
 	print("STREAM_DRIVE_STAGES ",JSON.stringify({"stages":stage_samples,"max_physics_wall_gap_ms":max_tick_gap_ms,"chunk_profiles":scene.install_profiles}))
+	process_frame.disconnect(record_frame)
+	scene.mark_operation()
+	var total := 0.0;var missed := 0
+	for ms in render_times: total+=ms;missed+=int(ms>16.667)
+	render_times.sort()
+	print("STREAM_DRIVE_FRAMES ",JSON.stringify({"frames":render_times.size(),"fps":render_times.size()*1000.0/total,"p95_ms":render_times[floori(render_times.size()*.95)],"p99_ms":render_times[floori(render_times.size()*.99)],"max_ms":render_times[-1],"over_16_67_ms":missed}))
 	# Sustained steering scrubs speed through tyre physics; test supply separately.
 	if not stress and not require(peak>(40 if turning else 43),"Unexpected speed loss"): return
 	# Power taper is the intended first fallback; report it, do not confuse it
@@ -60,6 +87,19 @@ func run() -> void:
 	if not require(not car.streaming_suspended,"Safeguard failed to recover"): return
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("user://stress-drive-latest.png" if stress else "user://stream-drive-latest.png")
+	if OS.get_cmdline_user_args().has("--drive-ablation"):
+		kit.set_physics_process(false);kit.vehicle_system.set_physics_process(false)
+		scene.set_physics_process(false);car.process_mode=Node.PROCESS_MODE_DISABLED;car.freeze=true
+		while scene.ready_frames<3 or not scene.terrain_lod.finished() or not scene.far_terrain.finished() or not scene.collision_pending.is_empty(): await process_frame
+		await sample_view("full_stopped")
+		scene.ring_background._clouds.hide()
+		await sample_view("no_clouds")
+		scene.sun.shadow_enabled=false
+		await sample_view("no_clouds_or_shadows")
+		scene.ring_background._clouds.show()
+		await sample_view("no_shadows")
+		root.disable_3d=true
+		await sample_view("no_3d")
 	print("STREAM_DRIVE_SAFEGUARDS_PASS" if stress else "STREAM_DRIVE_PASS");quit()
 
 func require(condition: bool, message: String) -> bool:

@@ -66,6 +66,11 @@ mesh snapshot and ray-marched comparison remain available. See
 
 Priority follow-ups:
 
+2026-10-06: [workshop performance investigation](workshop-performance-2026-10-06.md)
+records the recipe-planning fix, cached vehicle LODs, restored tree billboards,
+lighting/shadow changes and frame telemetry. Steady 60 FPS remains unmet; retain
+moving-route frame percentiles as a requirement, not just stationary averages.
+
 Progress 2026-10-04: sampled-field/kernel caching and local section remeshing are
 implemented for the workshop; generated field/mesh state remains on disk.
 The separate [grenade destruction lab](terrain-destruction-lab.md) tests warm

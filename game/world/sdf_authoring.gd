@@ -8,6 +8,10 @@ const CACHE_PATH := "user://sdf-authoring-meshes/"
 var terrain_source: RefCounted
 var terrain_lod: Node3D
 var satellite_stream: Node
+var process_demand: Array[Vector2i]=[]
+var sharing_process_demand := false
+var stream_snapshot_revision := -1
+var stream_snapshot: Array=[]
 
 func recipe_save_path() -> String:
 	return "user://sdf-stress-course.json" if stress_course else SAVE_PATH
@@ -91,6 +95,8 @@ var grenade_cooldown := 0.0
 var crater_queue: Array=[]
 var nature := preload("res://world/workshop_nature.gd").new()
 var painted_trees: Node3D
+var trees_visible := true
+var trees_toggle: CheckButton
 var far_terrain: Node3D
 var vehicle_trace: Node
 var chunk_last_wanted := {}
@@ -173,6 +179,10 @@ func _ready() -> void:
 			push_error("Unified DEM source could not load; retaining protected workshop")
 			terrain_source=null;unified_terrain=false
 	super._ready()
+	# Keep nearby terrain/vehicle shadows without submitting the same detailed
+	# source models to four cascades on the compatibility renderer.
+	sun.directional_shadow_mode=DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance=96.0
 	preload("res://world/materials/expanse_material.gd").apply_nature(terrain.material_override)
 	far_terrain=preload("res://world/workshop_far_terrain.gd").new();add_child(far_terrain);far_terrain.setup(self)
 	if unified_terrain:
@@ -212,6 +222,10 @@ func _ready() -> void:
 	trace_edit("ready",{"path":trace_path})
 	vehicle_trace=preload("res://world/vehicle_trace.gd").new()
 	vehicle_trace.arena=self;add_child(vehicle_trace)
+	if OS.get_cmdline_user_args().has("--terrain-occlusion"):
+		get_viewport().use_occlusion_culling=true
+		var occlusion=preload("res://world/terrain_occlusion.gd").new()
+		occlusion.arena=self;add_child(occlusion)
 	if stress_course: preload("res://world/stress_course.gd").signs(self)
 	set_process(true);set_physics_process(true);set_process_input(true)
 
@@ -267,6 +281,7 @@ func terrain_key_allowed(key: Vector2i) -> bool:
 	return key.x>=-limit and key.x<limit and key.y>=-limit and key.y<limit
 
 func desired() -> Array[Vector2i]:
+	if sharing_process_demand and not process_demand.is_empty(): return process_demand
 	var keys := super.desired()
 	if editing and (brushing or brush_dirty):
 		# Retain resident terrain but do not flood the brush queue with fly/vehicle
@@ -278,18 +293,21 @@ func desired() -> Array[Vector2i]:
 				var key := target+Vector2i(x,z)
 				if terrain_key_allowed(key) and key not in keys: keys.append(key)
 		keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-target).length_squared()<(b-target).length_squared())
+		if sharing_process_demand: process_demand=keys
 		return keys
+	var seen := {}
+	for key in keys: seen[key]=true
 	var centre := key_at(camera.position)
 	for z in range(-2,3):
 		for x in range(-2,3):
 			var key := centre+Vector2i(x,z)
-			if terrain_key_allowed(key) and key not in keys: keys.append(key)
+			if terrain_key_allowed(key) and not seen.has(key): keys.append(key);seen[key]=true
 	if editing and aim_valid:
 		var target := key_at(aim_point)
 		for z in range(-1,2):
 			for x in range(-1,2):
 				var key := target+Vector2i(x,z)
-				if terrain_key_allowed(key) and key not in keys: keys.append(key)
+				if terrain_key_allowed(key) and not seen.has(key): keys.append(key);seen[key]=true
 	var kit := live_kit()
 	if kit:
 		for body in kit.vehicle_system.vehicles:
@@ -306,7 +324,7 @@ func desired() -> Array[Vector2i]:
 				for z in range(-half_width,half_width+1):
 					for x in range(-half_width,half_width+1):
 						var key := centre_key+Vector2i(x,z)
-						if terrain_key_allowed(key) and key not in keys: keys.append(key)
+						if terrain_key_allowed(key) and not seen.has(key): keys.append(key);seen[key]=true
 	if editing and aim_valid:
 		var target := key_at(aim_point)
 		keys.sort_custom(func(a: Vector2i,b: Vector2i): return (a-target).length_squared()<(b-target).length_squared())
@@ -331,7 +349,7 @@ func desired() -> Array[Vector2i]:
 	for key in keys: chunk_last_wanted[key]=now
 	var retained: Array=[]
 	for key in chunk_last_wanted.keys():
-		if key in keys: continue
+		if seen.has(key): continue
 		if now-int(chunk_last_wanted[key])>6000 or not chunks.has(key) or chunks[key].revision!=revision:
 			chunk_last_wanted.erase(key)
 		else: retained.append(key)
@@ -339,6 +357,7 @@ func desired() -> Array[Vector2i]:
 	for i in retained.size():
 		if i<96: keys.append(retained[i])
 		else: chunk_last_wanted.erase(retained[i])
+	if sharing_process_demand: process_demand=keys
 	return keys
 
 func neighborhood_ready(p: Vector3) -> bool:
@@ -386,7 +405,10 @@ func request_crater(p: Vector3, radius: float) -> bool:
 
 func chunk_sampler() -> Callable:
 	# Snapshot on the main thread, never read mutable editor data from a worker.
-	return Recipe.field.bind(features.duplicate(true),terrain_source if unified_terrain else null)
+	# A recipe revision is immutable: all its jobs may share one detached snapshot.
+	if stream_snapshot_revision!=revision:
+		stream_snapshot=features.duplicate(true);stream_snapshot_revision=revision
+	return Recipe.field.bind(stream_snapshot,terrain_source if unified_terrain else null)
 
 static func cached_path(local: Array, origin: Vector3, cells: Vector3i, spacing: float, radius: float, detail: float) -> String:
 	var version := FileAccess.get_file_as_string("res://world/sdf_field_cache.gd").sha256_text()
@@ -410,7 +432,9 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 					if index<0 or index>=data.vertices.size(): valid=false;break
 				if valid and data.get("_field_state") is Dictionary and field_cache.valid_state(data._field_state,cells):
 					field_cache.restore(origin,cells,spacing,radius,detail,data._field_state,base_identity)
-					data.ms=0;data.cached=true;data.profile={"warm_field":true,"base_evaluations":0,"rebuilt_blocks":0,"disk_restore":true,"worker_total_ms":(Time.get_ticks_usec()-started)/1000.0};return data
+					data.ms=0;data.cached=true;data.profile={"warm_field":true,"base_evaluations":0,"rebuilt_blocks":0,"disk_restore":true,"worker_total_ms":(Time.get_ticks_usec()-started)/1000.0}
+					if OS.get_cmdline_user_args().has("--terrain-render-lods"): preload("res://world/terrain_render_lods.gd").prepare(data,path)
+					return data
 	var result := field_cache.build(origin,cells,spacing,local,radius,detail,true,source.base_field if source else Callable(),base_identity)
 	var built := Time.get_ticks_usec()
 	var writer := FileAccess.open(path+".tmp",FileAccess.WRITE)
@@ -419,6 +443,7 @@ func generate(radius: float, detail: float, origin := ORIGIN, cells := CELLS, sp
 		DirAccess.rename_absolute(path+".tmp",path)
 	result.profile.disk_write_ms=(Time.get_ticks_usec()-built)/1000.0
 	result.profile.worker_total_ms=(Time.get_ticks_usec()-started)/1000.0
+	if OS.get_cmdline_user_args().has("--terrain-render-lods"): preload("res://world/terrain_render_lods.gd").prepare(result,path)
 	return result
 
 func chunk_generated(result: Dictionary) -> void:
@@ -432,7 +457,7 @@ func install(key: Vector2i, result: Dictionary) -> void:
 		var started := Time.get_ticks_usec()
 		# Visual feedback is independent of expensive physics construction.
 		var mesh := ArrayMesh.new()
-		if not result.vertices.is_empty(): mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,mesh_arrays(result))
+		if not result.vertices.is_empty(): mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,mesh_arrays(result),[],result.get("render_lods",{}))
 		chunks[key].revision=active_revision;chunks[key].triangles=triangle_count(result)
 		preview_meshes[key]={"mesh":mesh,"parts":result._field_state.parts}
 		trace_edit("mesh_upload",{"key":str(key),"upload_ms":(Time.get_ticks_usec()-started)/1000.0})
@@ -564,6 +589,15 @@ func change(next: Array, remember := true, update_ui := true, input_stamp := 0) 
 	trace_edit("edit_submitted",{"dirty_chunks":preview_expected.size()})
 	notice.text="Edited — Save to keep recipe. Old meshes retained on disk."
 
+func set_trees_visible(value: bool) -> void:
+	trees_visible=value
+	if is_instance_valid(arena_content): arena_content.set_trees_visible(value)
+	if is_instance_valid(painted_trees):
+		painted_trees.visible=value
+		if value: painted_trees.update_lods()
+	if is_instance_valid(trees_toggle): trees_toggle.set_pressed_no_signal(value)
+	trace_edit("tree_visibility",{"visible":value})
+
 func make_panel() -> void:
 	panel=PanelContainer.new();panel.position=Vector2(550,100);panel.size=Vector2(400,480)
 	var canvas := CanvasLayer.new();add_child(canvas);canvas.add_child(panel)
@@ -571,6 +605,9 @@ func make_panel() -> void:
 	var column := VBoxContainer.new();column.size_flags_horizontal=Control.SIZE_EXPAND_FILL;scroll.add_child(column)
 	var title := Label.new();title.text="SDF RECIPE / F1 edit-play";column.add_child(title)
 	play_status=Label.new();play_status.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;column.add_child(play_status)
+	trees_toggle=CheckButton.new();trees_toggle.text="Show trees (F4)";trees_toggle.button_pressed=trees_visible
+	trees_toggle.tooltip_text="Toggle original and painted tree visuals for performance comparison. Trunk collisions remain active."
+	column.add_child(trees_toggle);trees_toggle.toggled.connect(set_trees_visible)
 	var simple_tools := HBoxContainer.new();column.add_child(simple_tools)
 	for kind in ["hill","lower"]:
 		var button := Button.new();button.text="Raise terrain" if kind=="hill" else "Lower terrain"
@@ -1023,6 +1060,8 @@ func _input(event: InputEvent) -> void:
 	if briefing_open(): return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F8:
 		mark_operation();get_viewport().set_input_as_handled();return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F4:
+		set_trees_visible(not trees_visible);get_viewport().set_input_as_handled();return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F3:
 		show_chunks=not show_chunks;return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F1:
@@ -1179,6 +1218,9 @@ func resettle_edited_actors(kit: Node) -> void:
 
 func _process(delta: float) -> void:
 	var started := Time.get_ticks_usec()
+	# Streaming, readiness UI and loading progress consume the same demand in
+	# this synchronous callback; do not rebuild its vehicle corridor three times.
+	sharing_process_demand=true;process_demand.clear()
 	grenade_cooldown=maxf(0,grenade_cooldown-delta)
 	var gap_ms := (started-last_process_usec)/1000.0 if last_process_usec else 0.0
 	last_process_usec=started
@@ -1223,6 +1265,7 @@ func _process(delta: float) -> void:
 	update_loading_screen()
 	if OS.get_cmdline_user_args().has("--authoring-loading-check") and loading_screen and loading_screen.ready_to_enter and not loading_test_started:
 		loading_test_started=true;check_loading_screen.call_deferred()
+	sharing_process_demand=false
 
 func mountain_fits(f: Dictionary) -> bool:
 	if absf(f.x)+f.radius>movement_limit() or absf(f.z)+f.radius>movement_limit():
