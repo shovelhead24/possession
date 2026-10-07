@@ -41,7 +41,7 @@ func terrain_context() -> Dictionary:
 
 func frame_context() -> Dictionary:
 	var car: Node3D=arena.vehicle_kit.car
-	return {"physics_frame":Engine.get_physics_frames(),"interpolation_fraction":Engine.get_physics_interpolation_fraction(),"car_position":vector(car.global_position),"camera_position":vector(arena.camera.global_position),"camera_rotation":vector(arena.camera.global_rotation),"camera_mode":arena.vehicle_kit.menu.settings.camera_mode,"terrain":terrain_context()}
+	return {"physics_frame":Engine.get_physics_frames(),"interpolation_fraction":Engine.get_physics_interpolation_fraction(),"car_position":vector(car.global_position),"car_render_position":vector(car.get_global_transform_interpolated().origin),"camera_position":vector(arena.camera.global_position),"camera_rotation":vector(arena.camera.global_rotation),"camera_mode":arena.vehicle_kit.menu.settings.camera_mode,"terrain":terrain_context()}
 
 func write_event(event: String, data: Dictionary) -> void:
 	if not file: return
@@ -74,7 +74,7 @@ func toggle() -> void:
 		if writer.start(save_events.bind(file))!=OK:
 			writer=null;file=null;status="Capture failed: writer unavailable";return
 		marker_id+=1
-		write_event("capture_begin",{"marker_id":marker_id,"schema":1,"physics_ticks_per_second":Engine.physics_ticks_per_second,"max_fps":Engine.max_fps,"physics_interpolation":ProjectSettings.get_setting("physics/common/physics_interpolation",false),"tuning":arena.vehicle_kit.saved_values})
+		write_event("capture_begin",{"marker_id":marker_id,"schema":1,"physics_ticks_per_second":Engine.physics_ticks_per_second,"max_fps":Engine.max_fps,"physics_interpolation":get_tree().physics_interpolation,"tuning":arena.vehicle_kit.saved_values})
 		mark(marker_id,true)
 		status="RECORDING JITTER · F8: stop and save"
 		print("DRIVE_TRACE_STARTED ",path)

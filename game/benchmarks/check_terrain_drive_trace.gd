@@ -12,6 +12,7 @@ func run() -> void:
 	var scene=load("res://world/terrain_drive.tscn").instantiate()
 	root.add_child(scene)
 	while not scene.ready_to_play: await process_frame
+	while not scene.loading.ready_to_enter: await process_frame
 	scene.loading.close()
 	scene.vehicle_kit.test_controls=true
 	scene.vehicle_kit.test_throttle=0

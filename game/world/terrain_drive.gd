@@ -4,10 +4,14 @@ var streamer: Node
 var jitter_trace: Node
 
 func _ready() -> void:
+	# Enable only for this standalone demo; vehicle visuals and camera must share
+	# the interpolated pose when rendering faster than the 60 Hz physics loop.
+	get_tree().physics_interpolation=true
 	brief_path="res://world/terrain_drive_brief.json"
 	super._ready()
 
 func prepare_content() -> void:
+	camera.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	loading.log_event("Preparing the existing Warthog model, suspension and saved tuning")
 	await get_tree().process_frame
 	vehicle_kit=preload("res://world/terrain_drive_vehicle.gd").new();add_child(vehicle_kit)

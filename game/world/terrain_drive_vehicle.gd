@@ -78,6 +78,7 @@ func place(point: Vector2, yaw: float) -> bool:
 	car.stream_control.reset();car.reverse_engaged=false;car.balanced_braking=false
 	for corner in car.corners: corner.omega=0.0
 	await get_tree().physics_frame
+	car.reset_physics_interpolation()
 	arena.camera.position=car.position+car.basis.z*menu.settings.camera_distance+Vector3.UP*menu.settings.camera_height
 	relocating=false
 	return true
@@ -108,15 +109,17 @@ func handle_input(event: InputEvent) -> bool:
 
 func update_camera(delta: float) -> void:
 	if not initialized: return
+	# Match the renderer's vehicle pose rather than the latest discrete physics pose.
+	var pose := car.get_global_transform_interpolated()
 	var cfg: Dictionary=menu.settings
 	arena.camera.fov=cfg.camera_fov
 	if int(cfg.camera_mode)==1:
-		arena.camera.global_transform=car.global_transform*Transform3D(Basis.from_euler(Vector3(driver_look.y,driver_look.x,0)),seat_position+Vector3(0,.68,-.03))
+		arena.camera.global_transform=pose*Transform3D(Basis.from_euler(Vector3(driver_look.y,driver_look.x,0)),seat_position+Vector3(0,.68,-.03))
 		if driver_model: driver_model.hide()
 	else:
 		if driver_model: driver_model.show()
-		var target := car.position+Vector3.UP*1.4
-		var wanted: Vector3=car.position+car.basis.z*cfg.camera_distance+Vector3.UP*cfg.camera_height
+		var target := pose.origin+Vector3.UP*1.4
+		var wanted: Vector3=pose.origin+pose.basis.z*cfg.camera_distance+Vector3.UP*cfg.camera_height
 		var query := PhysicsRayQueryParameters3D.create(target,wanted,3);query.exclude=[car.get_rid()]
 		var hit := arena.get_world_3d().direct_space_state.intersect_ray(query)
 		if not hit.is_empty(): wanted=hit.position+hit.normal*.25

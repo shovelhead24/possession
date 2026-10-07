@@ -120,3 +120,32 @@ start/stop/restart validated, no dropped batches. Maximum sampling time 0.691 ms
 maximum recorded frame 14.069 ms. This validates capture, not a diagnosis or fix
 for the user's intermittent jitter. Saved camera distance was 6 m at test time
 and was preserved.
+
+### Camera cadence fix (2026-10-07)
+User capture jitter-2026-10-07T16-39-38-53646497.jsonl showed 60 Hz physics
+and 120 FPS rendering with interpolation disabled. Of 1,397 frame transitions,
+698 had no vehicle movement; the other 699 stepped roughly 0.74 m at speed.
+The chase camera advanced each frame, producing alternating relative motion.
+All 699 physics samples had no streaming freeze or braking. Generated count
+stayed zero; 2,248 repeated ground probes all hit, with maximum height difference
+1.073e-6 m. Maximum captured frame time was 13.284 ms.
+
+The standalone driving scene now enables physics interpolation. Both cameras
+use get_global_transform_interpolated(), with automatic camera interpolation off
+to avoid applying it twice. Vehicle recovery resets interpolation history.
+Physics tick rate, suspension and saved vehicle/camera tuning are unchanged.
+F8 now records raw and interpolated vehicle positions and actual runtime
+interpolation state. This follows Godot 4.5's advanced interpolation camera guide:
+https://docs.godotengine.org/en/4.5/tutorials/physics/interpolation/advanced_physics_interpolation.html
+
+Final rendered check passed on the normal driving route at about 44.45 m/s:
+1,320 frame transitions, 660 stationary raw-physics poses but zero stationary
+interpolated poses. P95 relative vehicle/camera displacement per frame fell from
+0.371815 m (raw pose against camera) to 0.009126 m (rendered pose against camera).
+P99 frame time 10.428 ms; maximum 12.357 ms. Driver camera alignment error was zero;
+nearby 50 m recovery reset passed. This targets the measured cadence defect;
+user confirmation is still needed for any remaining visual symptoms.
+
+Test harness corrections: await briefing readiness before dismissing it, skip
+empty JSONL tail lines, and recover onto resident terrain instead of an evicted
+starting tile. Initial harness failures were not counted as successful tests.
