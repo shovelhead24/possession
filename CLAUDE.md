@@ -84,6 +84,18 @@ updating it, and keep the current test goal and controls in workshop_brief.json.
 The desktop shortcut targets this stable script:
 `C:\Users\Bran the builder\Documents\Codex\2026-10-05\read-handoff-2026-10-05-md\outputs\Launch-Terrain-Workshop.ps1`.
 
+### Separate launchers (user update, 2026-10-07)
+The user explicitly requested separate shortcuts for the two terrain efforts.
+Keep **Terrain Workshop** pointed to `res://world/sdf_stress_course.tscn` through
+its existing `2026-10-05/read-handoff-2026-10-05-md/outputs/Launch-Terrain-Workshop.ps1`.
+For the staged demo begun October 6, update **Terrain Demo - Stage 1** through
+`C:\Users\Bran the builder\Documents\Codex\2026-10-06\re\outputs\Launch-Terrain-Demo.ps1`.
+It currently opens `res://world/terrain_baseline.tscn`. This supersedes the rule
+above about reusing Terrain Workshop for every iteration of the new demo.
+Keep separate briefings: `workshop_brief.json` for the older workshop and
+`terrain_baseline_brief.json` for this staged demo. Preserve both single-instance
+guards and their shared launch mutex.
+
 ### Standing local performance-test rule
 Before running a local Godot performance test, inspect running Godot processes
 and ensure the test is the only local Godot instance. Do not benchmark alongside

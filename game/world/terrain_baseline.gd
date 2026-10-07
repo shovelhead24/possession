@@ -40,7 +40,7 @@ func _ready() -> void:
 	var layer := CanvasLayer.new();add_child(layer)
 	hud=Label.new();hud.position=Vector2(16,12);hud.add_theme_color_override("font_shadow_color",Color.BLACK)
 	hud.add_theme_constant_override("shadow_offset_x",1);hud.add_theme_constant_override("shadow_offset_y",1);layer.add_child(hud)
-	loading=Loading.new();add_child(loading)
+	loading=Loading.new();loading.brief_path="res://world/terrain_baseline_brief.json";add_child(loading)
 	build.call_deferred()
 
 func build() -> void:

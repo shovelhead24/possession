@@ -1,0 +1,7 @@
+{
+  "title": "Terrain / Stage 1",
+  "iteration": "2026-10-06 / fresh 3.2 km square DEM terrain",
+  "goal": "Explore the full terrain square, the bridge and the tunnel. Establish a 60 FPS foundation before adding the Warthog. Check the frame-time display while turning and flying across the area.",
+  "changes": "Full-resolution Millstreet DEM, centred on the previous scene's location. Fresh bridge and tunnel recipe. All 256 terrain tiles, distance LODs and full collision are prepared during loading and cached on disk. Basic ground colour and illumination establish the terrain baseline. Next stages: Warthog; backdrop and terrain controls; trees and lighting; models and weapons.",
+  "controls": "WASD fly; hold RMB to look; Space/Ctrl rise/fall; Shift flies faster. 1 overview; 2 beneath bridge; 3 tunnel entrance; 4 whole terrain square. Enter starts after loading; F2 reopens this briefing; Escape releases the mouse. This is a flying inspection camera."
+}

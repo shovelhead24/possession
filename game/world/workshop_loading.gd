@@ -16,10 +16,11 @@ var lines: Array[String]=[]
 var last_progress := ""
 var started := Time.get_ticks_msec()
 var brief: Dictionary
+var brief_path := "res://world/workshop_brief.json"
 
 func _ready() -> void:
 	layer=100
-	brief=JSON.parse_string(FileAccess.get_file_as_string("res://world/workshop_brief.json"))
+	brief=JSON.parse_string(FileAccess.get_file_as_string(brief_path))
 	if get_parent().get("stress_course"):
 		brief.title="SDF stress course — increasing spline density"
 		brief.goal="F1 enters play when terrain is ready. E enters the Warthog; WASD drive, Space brakes, C changes camera. From its spawn near x=-28m, steer toward x=-14m and drive -Z beneath the bridges, through three labelled tiers to z=-604m. F8 begins/ends hitch capture. Save writes only sdf-stress-course.json."
