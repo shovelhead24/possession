@@ -1,7 +1,5 @@
-[gd_scene load_steps=21 format=3 uid="uid://baveer3oax27d"]
+[gd_scene load_steps=19 format=3 uid="uid://baveer3oax27d"]
 
-[ext_resource type="Script" path="res://editor_controller.gd" id="14_editor_ctrl"]
-[ext_resource type="Script" path="res://ancient_structures.gd" id="13_ancient"]
 [ext_resource type="Script" uid="uid://deb05mept3rl7" path="res://player.gd" id="1_f3sb7"]
 [ext_resource type="AudioStream" uid="uid://ri7dlerk05x3" path="res://plasma_rifle.mp3" id="2_fj7yv"]
 [ext_resource type="Script" uid="uid://dlvw61juy2b56" path="res://terrain_manager.gd" id="3_tlwt5"]
@@ -9,34 +7,21 @@
 [ext_resource type="PackedScene" uid="uid://c11xpbdax3vl4" path="res://halo_-_carbine/scene.gltf" id="5_carbine"]
 [ext_resource type="PackedScene" uid="uid://bxpvnpcqydlw6" path="res://halo_railgun_redesigned/scene.gltf" id="6_railgun"]
 [ext_resource type="AudioStream" uid="uid://du8skrifkyur" path="res://quake railgun sound effect.mp3" id="7_railgun_sound"]
-[ext_resource type="PackedScene" path="res://fp_arms/scene.gltf" id="8_fp_arms"]
-[ext_resource type="Script" path="res://fp_arms_controller.gd" id="9_fp_arms_ctrl"]
-[ext_resource type="PackedScene" uid="uid://b6djpqa2ixj86" path="res://enemy/scene.gltf" id="10_enemy"]
-[ext_resource type="Script" path="res://enemy_controller.gd" id="11_enemy_ctrl"]
+[ext_resource type="PackedScene" uid="uid://vcraxapwo04m" path="res://fp_arms/scene.gltf" id="8_fp_arms"]
+[ext_resource type="Script" uid="uid://dc6lxflsarhho" path="res://fp_arms_controller.gd" id="9_fp_arms_ctrl"]
 [ext_resource type="PackedScene" uid="uid://cwarthog123" path="res://warthog.tscn" id="12_warthog"]
+[ext_resource type="Script" uid="uid://cgeym87hcadvo" path="res://ancient_structures.gd" id="13_ancient"]
+[ext_resource type="Script" uid="uid://bpuu5xg6o3g7r" path="res://editor_controller.gd" id="14_editor_ctrl"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_f3sb7"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_fj7yv"]
 
-[sub_resource type="Environment" id="Environment_tlwt5"]
-background_mode = 1
-background_color = Color(0.02, 0.04, 0.10, 1)
-ambient_light_source = 2
-ambient_light_color = Color(0.38, 0.42, 0.52, 1)
-ambient_light_energy = 0.4
-fog_enabled = true
-fog_color = Color(0.52, 0.62, 0.78, 1)
-fog_density = 0.00004
-fog_depth_begin = 5000.0
-fog_depth_end = 9000.0
-
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_weapon"]
 sky_top_color = Color(0.04, 0.07, 0.14, 1)
-sky_horizon_color = Color(0.28, 0.32, 0.40, 1)
-ground_bottom_color = Color(0.08, 0.10, 0.14, 1)
-ground_horizon_color = Color(0.20, 0.24, 0.30, 1)
-sun_angle_max = 30.0
+sky_horizon_color = Color(0.28, 0.32, 0.4, 1)
+ground_bottom_color = Color(0.08, 0.1, 0.14, 1)
+ground_horizon_color = Color(0.2, 0.24, 0.3, 1)
 
 [sub_resource type="Sky" id="Sky_weapon"]
 sky_material = SubResource("ProceduralSkyMaterial_weapon")
@@ -45,7 +30,17 @@ sky_material = SubResource("ProceduralSkyMaterial_weapon")
 background_mode = 2
 sky = SubResource("Sky_weapon")
 ambient_light_source = 3
-ambient_light_energy = 1.0
+
+[sub_resource type="Environment" id="Environment_tlwt5"]
+background_mode = 1
+background_color = Color(0.02, 0.04, 0.1, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.38, 0.42, 0.52, 1)
+ambient_light_energy = 0.4
+fog_enabled = true
+fog_density = 4e-05
+fog_depth_begin = 5000.0
+fog_depth_end = 9000.0
 
 [node name="World" type="Node3D"]
 
@@ -89,7 +84,7 @@ own_world_3d = true
 transparent_bg = true
 handle_input_locally = false
 size = Vector2i(1366, 768)
-render_target_update_mode = 3
+render_target_update_mode = 4
 
 [node name="WeaponWorldEnvironment" type="WorldEnvironment" parent="Player/WeaponViewport/SubViewportContainer/SubViewport"]
 environment = SubResource("Environment_weapon")
@@ -103,18 +98,18 @@ near = 0.01
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, -0.25, -0.5)
 
 [node name="FPArms" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("8_fp_arms")]
-transform = Transform3D(-0.18099334836006, 0.0, 0.0105832144618, 0.0, 0.18130250275135, 0.0, -0.0105832144618, 0.0, -0.18099334836006, -0.29000002145767, 0.19000002741814, 0.44999980926514)
+transform = Transform3D(-0.18099335, 0, 0.010583214, 0, 0.1813025, 0, -0.010583214, 0, -0.18099335, -0.29000002, 0.19000003, 0.4499998)
 script = ExtResource("9_fp_arms_ctrl")
 
 [node name="Carbine" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("5_carbine")]
-transform = Transform3D(0.03492816910148, -0.00105113256723, -0.00197918131016, 0.00105652993079, 0.03498397767544, 0.00006561513146, -0.00197630538605, 0.00012522521138, -0.03494392335415, -0.25700005888939, 0.18000002205372, 0.31000000238419)
+transform = Transform3D(0.03492817, -0.0010511326, -0.0019791813, 0.0010565299, 0.034983978, 6.561513e-05, -0.0019763054, 0.00012522521, -0.034943923, -0.25700006, 0.18000002, 0.31)
 
 [node name="Railgun" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder" instance=ExtResource("6_railgun")]
-transform = Transform3D(0.000000000264243, 0.000000000528486, 0.00350000513717, 0.000000000305977, 0.00350000513717, -0.000000000528486, 0.00350000513717, -0.000000000305977, -0.000000000264243, -0.24999988079071, 0.22999995946884, 0.28999817371368)
+transform = Transform3D(2.64243e-10, 5.28486e-10, 0.0035000052, 3.05977e-10, 0.0035000052, -5.28486e-10, 0.0035000052, -3.05977e-10, -2.64243e-10, -0.24999988, 0.22999996, 0.28999817)
 visible = false
 
 [node name="WeaponOmniKey" type="OmniLight3D" parent="Player/WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.4, 0.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0.5)
 light_energy = 3.0
 omni_range = 3.0
 
@@ -131,7 +126,6 @@ light_energy = 1.4
 transform = Transform3D(0.8980276, 0.14540626, 0.415215, 0, -0.943801, 0.33051446, 0.43993917, -0.2968111, -0.8475593, -3.011, 30, -0.39)
 light_energy = 1.4
 shadow_enabled = true
-shadow_bias = 0.1
 shadow_normal_bias = 1.0
 directional_shadow_max_distance = 300.0
 
@@ -143,13 +137,10 @@ script = ExtResource("14_editor_ctrl")
 
 [node name="TerrainManager" type="Node3D" parent="."]
 script = ExtResource("3_tlwt5")
-use_heightmap = false
-use_custom_terrain = false
 terrain_width = 500.0
 terrain_depth = 500.0
-terrain_height = 400.0
-water_level = 0.12
 biome_type = 4
+water_level = 0.12
 
 [node name="DayNightCycle" type="Node3D" parent="."]
 script = ExtResource("4_aqk2v")

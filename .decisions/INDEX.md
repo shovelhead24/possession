@@ -2,16 +2,20 @@
 
 One line per area file — decisions are the source of truth, this is just a map. Load this, then open only the file(s) you need. Don't grep the whole directory.
 
-- design-laws.md — cross-system laws: six ratified principles; no missions; no authored graphs (precondition-tagged pools, never trees); consumer audit (every simulated quantity names a player consumer, or is coarsened/cut); intensity not valence; observation never rerolls; world never reads knowledge; decomplect; layer-backpropagation; diegetic tools not HUD; interaction-fidelity tiers 0-4 (Fern Rule)
+- design-laws.md — cross-system laws: six ratified principles; chosen commitments (supersedes no-missions), local agency and continuous reflection, scale with intimacy; authored campaign routes now allowed (campaign.md); older content-pool rules amended in scope; consumer audit (every simulated quantity names a player consumer, or is coarsened/cut); intensity not valence; observation never rerolls; world never reads knowledge; decomplect; layer-backpropagation; diegetic tools not HUD; interaction-fidelity tiers 0-4 (Fern Rule)
 - civilization.md — ordinary building interiors are real/continuous (window combat, fire spread); dungeons keep pocket-reality
+- combat.md — ammunition scarcity is the balance lever, not damage numbers: tune mag/reload/supply, reach for the damage field last; `--range` prints rd/kill + kill/mag
 - coop.md — drop-in co-op possesses an existing NPC (proximity-weighted), not a new spawn
 - dialogue.md — LLM dialogue is bake-time only, zero runtime LLM
 - factions.md — living instrumental faction woke the relay; human-survivor faction exists as its own class (with an anti-"default good guys" guard); chain topology stays linear with rare/expensive sea crossings; THE city and the enclave are distinct classes; player is known, never enrolled
-- ending.md — leave-ending mechanism (proximity-easy, vignette-assembled) + presentation (fixed sequence, delayed title, black screen close)
+- ending.md — portal and vignette ending; neutral Stay/Leave costs; legible shared agency (unilateral is a candidate to test); presentation timing serves player experience
 - engine.md — Godot-level gotchas: reload via quit(), not reload_current_scene()
-- knowledge.md — no omniscient map; the knowledge pyramid is the map, the night sky acquires it
+- knowledge.md — imperfect knowledge retained; FOB maps allowed by campaign.md; stationary local hologram proposed
+- progression.md — recovery-not-invention; acquisition not research; shallow crafting; knowledge leads capability; real local power and familiar places remain meaningful across tiers
 - meta.md — the project as a product: renamed Possession → **Shortcut** (names the replay loop, the Ren/film-edit ending, the Displacement, and the irony); "the Cut" kept as a location archetype
 - lore.md — the Displacement (rogue AI, ring-scale portal, explains degradation + the shootdown); two signals (pre-game beacon vs the survivors' relay — the armada answers THEM); reactivatable ancients; Earth zoo
-- rendering.md — texture fidelity baseline: deliberately ~2001/Halo-CE; modern budget spent on scale/lighting, never texels
-- terrain.md — prebaked layered world: bake DAG + gates, recipe-versioned; render-authoritative object placement; CDLOD morphing quadtree (clipmap rejected on measurement) + object-LOD trees; real-DEM splices tiling the ring in three resolution tiers, shader-clamped ocean
+- rendering.md — E3 2000 purple/sky direction and preservation of current haze; texture fidelity baseline: deliberately ~2001/Halo-CE; modern budget spent on scale/lighting, never texels
+- terrain.md — SDF recipe authoring with persistent generated-mesh disk caches by default (explicit housekeeping purges only), including bridge tools; older layered bake policy scoped separately; render-authoritative placement; CDLOD + object LOD; DEM ring splices
 - world.md — ring scale: 3,000 km circumference × 50 km width (2,000 km superseded by the vibe-check mock); day length stays a design value; deep-cross-section surface-concentrated atmosphere
+
+- campaign.md — current 2026-09-12 baseline: authored theatre, simple mission planning/run-and-gun, relay/FOB support routes, physical maps and companion; supersession scopes; prototype before catalogue

@@ -68,6 +68,8 @@ uniform float wall_shadow_soft = 400.0;
 // real 3D sun direction. sun3d below fakes elevation as a constant 0.4, which is fine for the
 // diffuse term it was written for but useless for a shadow test -- that needs true elevation.
 uniform vec3 sun_world = vec3(0.0, 1.0, 0.0);
+uniform bool cached_noise = false;
+uniform sampler2D noise_lattice : filter_linear, repeat_enable;
 
 varying vec3 world_pos;
 varying vec2 _plane_offset;
@@ -82,6 +84,9 @@ float hash2(vec2 p) {
 float vnoise2(vec2 p) {
 	vec2 i = floor(p); vec2 f = fract(p);
 	f = f * f * (3.0 - 2.0 * f);
+	// Cache the random lattice, keeping cubic interpolation, six octaves,
+	// animated domain warp, weather and both lighting models in the shader.
+	if (cached_noise) { return textureLod(noise_lattice,(i+f+vec2(0.5))/512.0,0.0).r; }
 	return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x),
 	           mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
 }
@@ -122,6 +127,9 @@ void vertex() {
 }
 
 void fragment() {
+	float dist = (ring_radius > 0.0) ? abs(_plane_offset.x) : length(_plane_offset);
+	float horizon = 1.0 - smoothstep(plane_half_size * fade_start, plane_half_size, dist);
+	if (horizon <= 0.0 || layer_alpha <= 0.0) { discard; }
 	// noise_stretch elongates cirrus into streaks (x=6 for top layer)
 	vec2 uv = ring_uv * (noise_scale * noise_stretch) + wind_dir * TIME * wind_speed;
 	// slow evolution: shifts the field on a second axis so shapes form and dissolve in place
@@ -149,12 +157,11 @@ void fragment() {
 	float threshold = 1.0 - coverage;
 	float d = smoothstep(threshold - softness, threshold + softness, raw);
 	d *= mix(1.0, 0.8, layer_t);
+	if (d <= 0.0) { discard; }
 
 	// Horizon fade. On the ring this keys off ARC distance only -- the lat extent is bounded by the
 	// habitat walls (which occlude that direction anyway), so fading it too would just cut the deck
 	// short overhead. Flat mode keeps the original radial fade.
-	float dist    = (ring_radius > 0.0) ? abs(_plane_offset.x) : length(_plane_offset);
-	float horizon = 1.0 - smoothstep(plane_half_size * fade_start, plane_half_size, dist);
 
 	// Base cloud colour
 	vec3 base_color = mix(color_bottom, color_top, layer_t + d * 0.15);
@@ -163,13 +170,17 @@ void fragment() {
 	// Gives each cloud puff a lit dome on top and shadowed sides.
 	// NOTE: must sample the WARPED field (uv + warp), matching `raw` above -- sampling the unwarped
 	// field here would light a different shape than the one actually being drawn.
+	// Sun direction with slight upward component (approximate elevation)
+	vec3 sun3d = normalize(vec3(sun_dir_xz.x, 0.4, sun_dir_xz.y));
+	float transmit = exp(-raw * transmit_k);
+	float lighting = under_ambient + transmit * under_transmit * max(0.0, sun3d.y);
+	// From below, the original mix selected only transmission. Avoid the two
+	// six-octave gradient evaluations and top-lighting work that it discarded.
+	if (CAMERA_POSITION_WORLD.y >= world_pos.y) {
 	float e = 0.5;
 	float ndx = fbm(uv + warp + vec2(e, 0.0)) - base_raw;
 	float ndz = fbm(uv + warp + vec2(0.0, e)) - base_raw;
 	vec3 fake_normal = normalize(vec3(-ndx * 10.0, 1.0, -ndz * 10.0));
-
-	// Sun direction with slight upward component (approximate elevation)
-	vec3 sun3d = normalize(vec3(sun_dir_xz.x, 0.4, sun_dir_xz.y));
 	float diffuse = max(0.0, dot(fake_normal, sun3d));
 	// rim-wall shadow across the deck (ring mode only): march toward the sun and see whether we
 	// cross the wall's lat while still below its top.
@@ -192,10 +203,8 @@ void fragment() {
 	lighting_top = smoothstep(0.0, 1.0, lighting_top);   // contrast: darks darker, lights lighter
 	// Under-lit (viewer below the layer -- the usual case): transmitted light, not direct sun.
 	// exp(-thickness) so thin cloud glows and dense cloud settles to a flat grey, never black.
-	float transmit = exp(-raw * transmit_k);
-	float lighting_bottom = under_ambient + transmit * under_transmit * max(0.0, sun3d.y);
-	float viewing_top = step(world_pos.y, CAMERA_POSITION_WORLD.y);   // 1 = camera above the layer
-	float lighting = mix(lighting_bottom, lighting_top, viewing_top);
+	lighting = lighting_top;
+	}
 	base_color *= lighting;
 
 	// Sunset/sunrise: global warm tint on all cloud fragments + directional boost

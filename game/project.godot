@@ -24,6 +24,10 @@ window/size/viewport_height=768
 
 enabled=PackedStringArray("res://addons/cage_editor/plugin.cfg")
 
+[filesystem]
+
+import/blender/enabled=false
+
 [input]
 
 move_forward={

@@ -62,3 +62,59 @@ Key files: `cage_mesh.gd`, `cage_mesh_gizmo.gd`, `cage_panel.gd`, `cage_subdivid
 
 ### Workflow change
 User now runs Claude Code natively on Windows laptop (direct file access — no more git push/pull loop needed for edits). Godot project root is `game/` inside the repo.
+
+### Standing launch rule
+After changing an iteration, always launch the newest relevant playable scene
+for the user before handing it back, unless explicitly told otherwise. Automated
+or headless tests alone are not the user-facing launch. Use a fresh process, not
+scene reload, and say which scene was launched. Never close an existing session
+with potentially unsaved work without permission. If launching fails or requires
+unavailable approval, report that explicitly rather than claiming it is running.
+Keep `game/world/workshop_brief.json` current with the iteration's test goal,
+changes and controls; the workshop loading screen presents this on launch.
+
+### Standing double-click launcher rule
+For every new playable test iteration, update the existing Terrain Workshop
+double-click launcher to point to the newest relevant test scene, project path,
+engine and launch arguments. Keep the same desktop shortcut so the user never
+needs to find a new command or launcher. Preserve its single-instance check,
+existing loading/briefing screen, saved work and persistent caches. Never close
+an existing session automatically. Validate the launcher paths and script after
+updating it, and keep the current test goal and controls in workshop_brief.json.
+The desktop shortcut targets this stable script:
+`C:\Users\Bran the builder\Documents\Codex\2026-10-05\read-handoff-2026-10-05-md\outputs\Launch-Terrain-Workshop.ps1`.
+
+### Separate launchers (user update, 2026-10-07)
+The user explicitly requested separate shortcuts for the two terrain efforts.
+Keep **Terrain Workshop** pointed to `res://world/sdf_stress_course.tscn` through
+its existing `2026-10-05/read-handoff-2026-10-05-md/outputs/Launch-Terrain-Workshop.ps1`.
+For the staged demo begun October 6, update **Terrain Demo** through
+`C:\Users\Bran the builder\Documents\Codex\2026-10-06\re\outputs\Launch-Terrain-Demo.ps1`.
+It currently opens `res://world/terrain_drive.tscn` (the terrain-only baseline is
+retained as `res://world/terrain_baseline.tscn`). This supersedes the rule
+above about reusing Terrain Workshop for every iteration of the new demo.
+Keep separate briefings: `workshop_brief.json` for the older workshop and
+`terrain_baseline_brief.json` / `terrain_drive_brief.json` for the staged scenes. Preserve both single-instance
+guards and their shared launch mutex.
+
+### Standing local performance-test rule
+Before running a local Godot performance test, inspect running Godot processes
+and ensure the test is the only local Godot instance. Do not benchmark alongside
+an existing playtest or editor. Stop only known disposable agent-owned test
+processes; ask before closing a session that may contain unsaved user work.
+Recheck after launch. If isolation cannot be established, defer the test and
+report it rather than presenting shared-load timings as an isolated benchmark.
+
+### Standing terrain cache rule
+The user accepted the simple hold-to-sculpt Raise/Lower controls on 2026-10-04.
+Preserve that behaviour as the baseline when expanding other authoring tools;
+do not redesign or replace it incidentally while changing tunnel controls.
+
+Unless the user explicitly directs otherwise, retain generated terrain meshes on
+disk and stream valid cached results when appropriate. RAM eviction is not disk
+deletion. Do not introduce automatic disk purging or disable persistence by
+default; purging is an explicit housekeeping task, with shipping policy revisited
+later. Recipes remain authoritative; stale caches must never be reused after an
+edit. This does not require generating unvisited areas. See
+`.decisions/terrain.md#sdf-recipe-persistent-cache` and
+`docs/sdf-authoring-plan.md` for the authoring and performance backlog.

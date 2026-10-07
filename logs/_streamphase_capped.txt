@@ -1,0 +1,430 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+
+ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x3840  sat_tex: yes
+ring_vibes: DEM texture 1920x1920, mpp=46.9
+ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
+ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
+ring_vibes: tree pack — 3 variants x 4 LODs loaded
+ring_vibes: far band rebuilt around arc 0 km (527 ms)
+ring_vibes: containment field 1500-4000m on lat -25000
+ring_vibes: containment field 1500-4000m on lat 25000
+ring_vibes: texture compression — s3tc true, bptc true, etc2 true
+ring_vibes: grass pack loaded (1 surfaces)
+ring_vibes: 13674 road centrelines loaded (home + none)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: hedge texture 1024x1024 loaded
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: millstreet — 39008 of 59992 buildings kept (16545 outside the 50km ring width, 4439 on cliffs)
+ring_vibes: big_sur — 10899 of 11348 buildings kept (0 outside the 50km ring width, 449 on cliffs)
+ring_vibes: cape_peninsula — 8019 of 8118 buildings kept (8 outside the 50km ring width, 91 on cliffs)
+ring_vibes: palawan — 6128 of 6215 buildings kept (3 outside the 50km ring width, 84 on cliffs)
+ring_vibes: java_majapahit — 59076 of 59996 buildings kept (38 outside the 50km ring width, 882 on cliffs)
+ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring width, 65 on cliffs)
+ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
+ring_vibes: 143141 OSM buildings loaded (2 styles)
+SELFTEST: 35 patches loaded
+ring_vibes: 15886 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9808 hedge quads
+ring_vibes: buildings in range at arc 84000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to schwarzwald (2.8% arc)
+ring_vibes: far band rebuilt around arc 66 km (611 ms)
+ring_vibes: 70388 road centrelines loaded (home + schwarzwald)
+ring_vibes: 59905 junction cells, 2663105 road cells from 70388 centrelines
+ring_vibes: 15778 trees placed (3 variants x 4 LODs) — 32 standards, 118 off-road, 10776 hedge quads
+ring_vibes: buildings in range at arc 84000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed schwarzwald @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE schwarzwald        worker read=70 filter=2492 sat=2631 detail=328 | main tex=13 roads=4497 trees=1138 bldg=36 hedge=623 (ms)
+SELFTEST  schwarzwald        arc   2.8%  stream=OK (5.3s)  h 1..1277m  sea  0.7%  trees=15778  dens=1.00 hi=1400  wx=fresh
+ring_vibes: tree species -> broadleaf
+ring_vibes: 5617 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8496 hedge quads
+ring_vibes: buildings in range at arc 168000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to cork_city (5.6% arc)
+ring_vibes: far band rebuilt around arc 131 km (522 ms)
+ring_vibes: 33347 road centrelines loaded (home + cork_city)
+ring_vibes: 32287 junction cells, 2574784 road cells from 33347 centrelines
+ring_vibes: 6799 trees placed (3 variants x 4 LODs) — 1478 standards, 5819 off-road, 30004 hedge quads
+ring_vibes: buildings in range at arc 168000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed cork_city @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE cork_city          worker read=105 filter=3232 sat=3087 detail=341 | main tex=10 roads=5034 trees=1319 bldg=52 hedge=896 (ms)
+SELFTEST  cork_city          arc   5.6%  stream=OK (6.5s)  h 1..828m  sea 25.0%  trees=6799   dens=0.30 hi=200  wx=fresh
+ring_vibes: 13383 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9720 hedge quads
+ring_vibes: buildings in range at arc 252000 lat 0 -> style0=63, style1=0
+ring_vibes: jumped to big_sur (8.4% arc)
+ring_vibes: far band rebuilt around arc 197 km (811 ms)
+ring_vibes: 16106 road centrelines loaded (home + big_sur)
+ring_vibes: 15825 junction cells, 1411886 road cells from 16106 centrelines
+ring_vibes: 13399 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9720 hedge quads
+ring_vibes: buildings in range at arc 252000 lat 0 -> style0=63, style1=0
+ring_vibes: streamed big_sur @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE big_sur            worker read=79 filter=2955 sat=3223 detail=354 | main tex=12 roads=2997 trees=1012 bldg=48 hedge=553 (ms)
+SELFTEST  big_sur            arc   8.4%  stream=OK (6.0s)  h 1..1485m  sea 25.3%  trees=13399  dens=0.50 hi=1200  wx=fresh
+ring_vibes: 13065 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9840 hedge quads
+ring_vibes: buildings in range at arc 336000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to wye_valley (11.2% arc)
+ring_vibes: far band rebuilt around arc 328 km (708 ms)
+ring_vibes: 61728 road centrelines loaded (home + wye_valley)
+ring_vibes: 55564 junction cells, 3007176 road cells from 61728 centrelines
+ring_vibes: 12977 trees placed (3 variants x 4 LODs) — 202 standards, 682 off-road, 16976 hedge quads
+ring_vibes: buildings in range at arc 336000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed wye_valley @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE wye_valley         worker read=132 filter=3582 sat=3185 detail=313 | main tex=9 roads=4986 trees=1202 bldg=35 hedge=764 (ms)
+SELFTEST  wye_valley         arc  11.2%  stream=OK (6.8s)  h 1..700m  sea  7.6%  trees=12977  dens=0.50 hi=400  wx=overcast
+ring_vibes: 23421 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9752 hedge quads
+ring_vibes: buildings in range at arc 420000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to dordogne (14.0% arc)
+ring_vibes: far band rebuilt around arc 393 km (505 ms)
+ring_vibes: 49771 road centrelines loaded (home + dordogne)
+ring_vibes: 50259 junction cells, 3664476 road cells from 49771 centrelines
+ring_vibes: 22205 trees placed (3 variants x 4 LODs) — 790 standards, 2875 off-road, 30008 hedge quads
+ring_vibes: buildings in range at arc 420000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed dordogne @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE dordogne           worker read=147 filter=2743 sat=3167 detail=1324 | main tex=6 roads=6470 trees=1582 bldg=58 hedge=921 (ms)
+SELFTEST  dordogne           arc  14.0%  stream=OK (7.0s)  h 1..451m  sea  0.7%  trees=22205  dens=0.85 hi=450  wx=fresh
+ring_vibes: 25100 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9752 hedge quads
+ring_vibes: buildings in range at arc 504000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to vermont (16.8% arc)
+ring_vibes: far band rebuilt around arc 459 km (565 ms)
+ring_vibes: 19118 road centrelines loaded (home + vermont)
+ring_vibes: 18702 junction cells, 1811179 road cells from 19118 centrelines
+ring_vibes: 25100 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9752 hedge quads
+ring_vibes: buildings in range at arc 504000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed vermont @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE vermont            worker read=108 filter=2506 sat=3026 detail=364 | main tex=8 roads=4075 trees=1161 bldg=34 hedge=514 (ms)
+SELFTEST  vermont            arc  16.8%  stream=OK (5.8s)  h 1..928m  sea  3.8%  trees=25100  dens=0.92 hi=1100  wx=fresh
+ring_vibes: tree species -> scrub
+ring_vibes: 125 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8688 hedge quads
+ring_vibes: buildings in range at arc 588000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to mizen_head (19.6% arc)
+ring_vibes: far band rebuilt around arc 524 km (768 ms)
+ring_vibes: 13674 road centrelines loaded (home + mizen_head)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 5426 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8688 hedge quads
+ring_vibes: buildings in range at arc 588000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed mizen_head @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE mizen_head         worker read=143 filter=3499 sat=2783 detail=1506 | main tex=7 roads=1928 trees=802 bldg=77 hedge=474 (ms)
+SELFTEST  mizen_head         arc  19.6%  stream=OK (7.8s)  h 1..800m  sea 64.9%  trees=5426   dens=0.25 hi=300  wx=storm
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8912 hedge quads
+ring_vibes: buildings in range at arc 672000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to camargue (22.4% arc)
+ring_vibes: far band rebuilt around arc 655 km (632 ms)
+ring_vibes: 43795 road centrelines loaded (home + camargue)
+ring_vibes: 39052 junction cells, 2184617 road cells from 43795 centrelines
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8912 hedge quads
+ring_vibes: buildings in range at arc 672000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed camargue @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE camargue           worker read=205 filter=3003 sat=3091 detail=234 | main tex=10 roads=2663 trees=494 bldg=26 hedge=347 (ms)
+SELFTEST  camargue           arc  22.4%  stream=OK (6.3s)  h 1..405m  sea 51.4%  trees=0      dens=0.10 hi=30  wx=fresh
+ring_vibes: 37 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9184 hedge quads
+ring_vibes: buildings in range at arc 756000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to danube_delta (25.2% arc)
+ring_vibes: far band rebuilt around arc 721 km (457 ms)
+ring_vibes: 15575 road centrelines loaded (home + danube_delta)
+ring_vibes: 14761 junction cells, 1292975 road cells from 15575 centrelines
+ring_vibes: 216 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9184 hedge quads
+ring_vibes: buildings in range at arc 756000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed danube_delta @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE danube_delta       worker read=211 filter=2704 sat=2840 detail=1155 | main tex=9 roads=1693 trees=423 bldg=25 hedge=291 (ms)
+SELFTEST  danube_delta       arc  25.2%  stream=OK (6.8s)  h 1..632m  sea 45.1%  trees=216    dens=0.10 hi=40  wx=overcast
+ring_vibes: 3384 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9096 hedge quads
+ring_vibes: buildings in range at arc 840000 lat 0 -> style0=36, style1=0
+ring_vibes: jumped to cape_peninsula (28.0% arc)
+ring_vibes: far band rebuilt around arc 786 km (490 ms)
+ring_vibes: 13674 road centrelines loaded (home + cape_peninsula)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 204 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 9096 hedge quads
+ring_vibes: buildings in range at arc 840000 lat 0 -> style0=37, style1=0
+ring_vibes: streamed cape_peninsula @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE cape_peninsula     worker read=53 filter=1724 sat=2106 detail=92 | main tex=7 roads=1267 trees=430 bldg=21 hedge=283 (ms)
+SELFTEST  cape_peninsula     arc  28.0%  stream=OK (3.8s)  h 1..4222m  sea 78.0%  trees=204    dens=0.15 hi=700  wx=clear
+ring_vibes: buildings in range at arc 924000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to salar_uyuni (30.8% arc)
+ring_vibes: far band rebuilt around arc 918 km (430 ms)
+ring_vibes: 13985 road centrelines loaded (home + salar_uyuni)
+ring_vibes: 13471 junction cells, 1327373 road cells from 13985 centrelines
+ring_vibes: buildings in range at arc 924000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed salar_uyuni @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE salar_uyuni        worker read=28 filter=1279 sat=1100 detail=126 | main tex=6 roads=1375 trees=0 bldg=22 hedge=199 (ms)
+SELFTEST  salar_uyuni        arc  30.8%  stream=OK (2.3s)  h 1..4785m  sea  2.3%  trees=0      dens=0.00 hi=0  wx=cirrus
+ring_vibes: buildings in range at arc 1008000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to scablands (33.6% arc)
+ring_vibes: far band rebuilt around arc 983 km (524 ms)
+ring_vibes: 14748 road centrelines loaded (home + scablands)
+ring_vibes: 14300 junction cells, 1640829 road cells from 14748 centrelines
+ring_vibes: buildings in range at arc 1008000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed scablands @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE scablands          worker read=53 filter=1967 sat=2234 detail=1054 | main tex=5 roads=1706 trees=0 bldg=20 hedge=195 (ms)
+SELFTEST  scablands          arc  33.6%  stream=OK (5.0s)  h 1..4037m  sea  8.3%  trees=0      dens=0.00 hi=0  wx=cirrus
+ring_vibes: tree species -> scrub
+ring_vibes: 4 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8184 hedge quads
+ring_vibes: buildings in range at arc 1092000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to loop_head (36.4% arc)
+ring_vibes: far band rebuilt around arc 1049 km (486 ms)
+ring_vibes: 20223 road centrelines loaded (home + loop_head)
+ring_vibes: 19276 junction cells, 1690132 road cells from 20223 centrelines
+ring_vibes: 5221 trees placed (3 variants x 4 LODs) — 78 standards, 249 off-road, 9668 hedge quads
+ring_vibes: buildings in range at arc 1092000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed loop_head @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE loop_head          worker read=65 filter=2772 sat=2184 detail=193 | main tex=9 roads=1945 trees=513 bldg=21 hedge=312 (ms)
+SELFTEST  loop_head          arc  36.4%  stream=OK (5.0s)  h 1..2255m  sea 53.8%  trees=5221   dens=0.20 hi=250  wx=storm
+ring_vibes: buildings in range at arc 1176000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to monument_valley (39.2% arc)
+ring_vibes: far band rebuilt around arc 1114 km (565 ms)
+ring_vibes: 13674 road centrelines loaded (home + monument_valley)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: buildings in range at arc 1176000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed monument_valley @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE monument_valley    worker read=35 filter=1690 sat=1752 detail=209 | main tex=8 roads=1355 trees=0 bldg=20 hedge=188 (ms)
+SELFTEST  monument_valley    arc  39.2%  stream=OK (3.3s)  h 1..3274m  sea  0.2%  trees=0      dens=0.00 hi=0  wx=cirrus
+ring_vibes: buildings in range at arc 1260000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to atacama (42.0% arc)
+ring_vibes: far band rebuilt around arc 1245 km (420 ms)
+ring_vibes: 14199 road centrelines loaded (home + atacama)
+ring_vibes: 13677 junction cells, 1274756 road cells from 14199 centrelines
+ring_vibes: buildings in range at arc 1260000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed atacama @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE atacama            worker read=31 filter=1345 sat=1466 detail=139 | main tex=7 roads=1351 trees=0 bldg=20 hedge=203 (ms)
+SELFTEST  atacama            arc  42.0%  stream=OK (2.8s)  h 289..5830m  sea  0.0%  trees=0      dens=0.00 hi=0  wx=cirrus
+ring_vibes: tree species -> scrub
+ring_vibes: buildings in range at arc 1344000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to namib_dunes (44.8% arc)
+ring_vibes: far band rebuilt around arc 1311 km (635 ms)
+ring_vibes: 13696 road centrelines loaded (home + namib_dunes)
+ring_vibes: 13140 junction cells, 1152530 road cells from 13696 centrelines
+ring_vibes: buildings in range at arc 1344000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed namib_dunes @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE namib_dunes        worker read=33 filter=1636 sat=1766 detail=617 | main tex=5 roads=1259 trees=0 bldg=21 hedge=189 (ms)
+SELFTEST  namib_dunes        arc  44.8%  stream=OK (3.8s)  h 14..5790m  sea  0.0%  trees=0      dens=0.00 hi=0  wx=cirrus
+ring_vibes: tree species -> broadleaf
+ring_vibes: 10970 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 8388 hedge quads
+ring_vibes: buildings in range at arc 1428000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to guri_dam (47.6% arc)
+ring_vibes: far band rebuilt around arc 1376 km (465 ms)
+ring_vibes: 13920 road centrelines loaded (home + guri_dam)
+ring_vibes: 13377 junction cells, 1273051 road cells from 13920 centrelines
+ring_vibes: 10718 trees placed (3 variants x 4 LODs) — 116 standards, 365 off-road, 10460 hedge quads
+ring_vibes: buildings in range at arc 1428000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed guri_dam @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE guri_dam           worker read=27 filter=1515 sat=2131 detail=517 | main tex=5 roads=1338 trees=602 bldg=20 hedge=324 (ms)
+SELFTEST  guri_dam           arc  47.6%  stream=OK (4.0s)  h 1..1027m  sea  4.3%  trees=10718  dens=0.40 hi=500  wx=monsoon
+ring_vibes: tree species -> palm
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1488000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to palawan (50.4% arc)
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1507 km (517 ms)
+ring_vibes: 13882 road centrelines loaded (home + palawan)
+ring_vibes: 13315 junction cells, 1169529 road cells from 13882 centrelines
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1488000 lat 0 -> style0=0, style1=593
+ring_vibes: streamed palawan @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE palawan            worker read=21 filter=1375 sat=2297 detail=58 | main tex=7 roads=1554 trees=293 bldg=39 hedge=39 (ms)
+SELFTEST  palawan            arc  50.4%  stream=OK (3.3s)  h 1..1508m  sea 79.7%  trees=0      dens=0.90 hi=900  wx=monsoon
+ring_vibes: 1355 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1404000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to mongolia_steppe (53.2% arc)
+ring_vibes: 1328 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1442 km (461 ms)
+ring_vibes: 13716 road centrelines loaded (home + mongolia_steppe)
+ring_vibes: 13167 junction cells, 1259133 road cells from 13716 centrelines
+ring_vibes: 1328 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1404000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed mongolia_steppe @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE mongolia_steppe    worker read=49 filter=1871 sat=2052 detail=935 | main tex=8 roads=1331 trees=181 bldg=20 hedge=37 (ms)
+SELFTEST  mongolia_steppe    arc  53.2%  stream=OK (4.5s)  h 1..1794m  sea  3.6%  trees=1328   dens=0.05 hi=1900  wx=cirrus
+ring_vibes: tree species -> broadleaf
+ring_vibes: 16416 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1320000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to tuscany_hills (56.0% arc)
+ring_vibes: 16482 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1376 km (450 ms)
+ring_vibes: 32640 road centrelines loaded (home + tuscany_hills)
+ring_vibes: 30673 junction cells, 2261110 road cells from 32640 centrelines
+ring_vibes: 16482 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1320000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed tuscany_hills @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE tuscany_hills      worker read=47 filter=2012 sat=2284 detail=233 | main tex=7 roads=2381 trees=460 bldg=20 hedge=86 (ms)
+SELFTEST  tuscany_hills      arc  56.0%  stream=OK (3.8s)  h 1..1580m  sea  4.3%  trees=16482  dens=0.60 hi=700  wx=fresh
+ring_vibes: tree species -> scrub
+ring_vibes: 4631 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1236000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to slea_head (58.8% arc)
+ring_vibes: 4496 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1245 km (467 ms)
+ring_vibes: 13674 road centrelines loaded (home + slea_head)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 210 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1236000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed slea_head @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE slea_head          worker read=60 filter=2662 sat=2230 detail=180 | main tex=7 roads=1480 trees=196 bldg=21 hedge=36 (ms)
+SELFTEST  slea_head          arc  58.8%  stream=OK (4.8s)  h 1..983m  sea 66.7%  trees=210    dens=0.20 hi=350  wx=storm
+ring_vibes: 13882 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1152000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to priests_leap (61.6% arc)
+ring_vibes: 13898 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1180 km (520 ms)
+ring_vibes: 13674 road centrelines loaded (home + priests_leap)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 13898 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1152000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed priests_leap @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE priests_leap       worker read=69 filter=2586 sat=2383 detail=261 | main tex=8 roads=1170 trees=376 bldg=21 hedge=36 (ms)
+SELFTEST  priests_leap       arc  61.6%  stream=OK (4.8s)  h 1..889m  sea 28.6%  trees=13898  dens=0.50 hi=450  wx=overcast
+ring_vibes: tree species -> scrub
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1068000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to cairngorms (64.4% arc)
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1114 km (553 ms)
+ring_vibes: 17262 road centrelines loaded (home + cairngorms)
+ring_vibes: 16465 junction cells, 1458353 road cells from 17262 centrelines
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -1068000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed cairngorms @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE cairngorms         worker read=82 filter=2622 sat=2219 detail=338 | main tex=8 roads=1459 trees=209 bldg=21 hedge=45 (ms)
+SELFTEST  cairngorms         arc  64.4%  stream=OK (4.8s)  h 1..2983m  sea  1.4%  trees=0      dens=0.25 hi=550  wx=storm
+ring_vibes: 6 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -984000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to dolomites (67.2% arc)
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -1049 km (572 ms)
+ring_vibes: 27575 road centrelines loaded (home + dolomites)
+ring_vibes: 25050 junction cells, 1711059 road cells from 27575 centrelines
+ring_vibes: 3 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -984000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed dolomites @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE dolomites          worker read=60 filter=2265 sat=2381 detail=334 | main tex=9 roads=2048 trees=327 bldg=21 hedge=74 (ms)
+SELFTEST  dolomites          arc  67.2%  stream=OK (4.3s)  h 1..3152m  sea  0.3%  trees=3      dens=0.70 hi=2000  wx=fresh
+ring_vibes: 2211 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -900000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to tatra_spruce (70.0% arc)
+ring_vibes: 2240 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -918 km (483 ms)
+ring_vibes: 13674 road centrelines loaded (home + tatra_spruce)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 1598 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -900000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed tatra_spruce @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE tatra_spruce       worker read=63 filter=2422 sat=2377 detail=1256 | main tex=7 roads=1579 trees=311 bldg=34 hedge=57 (ms)
+SELFTEST  tatra_spruce       arc  70.0%  stream=OK (5.3s)  h 1..2375m  sea  0.5%  trees=1598   dens=0.70 hi=1500  wx=fresh
+ring_vibes: 11149 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -816000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to norwegian_fjord (72.8% arc)
+ring_vibes: 11247 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -852 km (720 ms)
+ring_vibes: 17055 road centrelines loaded (home + norwegian_fjord)
+ring_vibes: 16269 junction cells, 1407943 road cells from 17055 centrelines
+ring_vibes: 10386 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -816000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed norwegian_fjord @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE norwegian_fjord    worker read=459 filter=3351 sat=2118 detail=544 | main tex=7 roads=1495 trees=390 bldg=20 hedge=51 (ms)
+SELFTEST  norwegian_fjord    arc  72.8%  stream=OK (5.5s)  h 1..1955m  sea  6.9%  trees=10386  dens=0.60 hi=900  wx=storm
+ring_vibes: 27111 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -732000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to olympic_forest (75.6% arc)
+ring_vibes: 27285 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -786 km (436 ms)
+ring_vibes: 14714 road centrelines loaded (home + olympic_forest)
+ring_vibes: 14061 junction cells, 1344005 road cells from 14714 centrelines
+ring_vibes: 27271 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -732000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed olympic_forest @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE olympic_forest     worker read=61 filter=2208 sat=2375 detail=332 | main tex=9 roads=1425 trees=623 bldg=20 hedge=42 (ms)
+SELFTEST  olympic_forest     arc  75.6%  stream=OK (4.0s)  h 1..2094m  sea 15.1%  trees=27271  dens=1.00 hi=1200  wx=overcast
+ring_vibes: tree species -> broadleaf
+ring_vibes: 16444 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -648000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to borneo_highland (78.4% arc)
+ring_vibes: 17299 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -655 km (509 ms)
+ring_vibes: 15975 road centrelines loaded (home + borneo_highland)
+ring_vibes: 15604 junction cells, 1542343 road cells from 15975 centrelines
+ring_vibes: 11429 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -648000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed borneo_highland @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE borneo_highland    worker read=31 filter=1547 sat=2139 detail=520 | main tex=8 roads=1662 trees=487 bldg=21 hedge=55 (ms)
+SELFTEST  borneo_highland    arc  78.4%  stream=OK (3.3s)  h 1..3555m  sea  5.6%  trees=11429  dens=1.00 hi=2500  wx=monsoon
+ring_vibes: 26337 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -564000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to costa_rica_jungle (81.2% arc)
+ring_vibes: 27422 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -590 km (469 ms)
+ring_vibes: 18108 road centrelines loaded (home + costa_rica_jungle)
+ring_vibes: 17561 junction cells, 1904302 road cells from 18108 centrelines
+ring_vibes: 27422 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -564000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed costa_rica_jungle @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE costa_rica_jungle  worker read=26 filter=1358 sat=2195 detail=519 | main tex=7 roads=1936 trees=657 bldg=22 hedge=55 (ms)
+SELFTEST  costa_rica_jungle  arc  81.2%  stream=OK (3.3s)  h 1..2056m  sea  1.4%  trees=27422  dens=1.00 hi=2000  wx=monsoon
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -480000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to tepui (84.0% arc)
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -524 km (494 ms)
+ring_vibes: 13674 road centrelines loaded (home + tepui)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 319 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -480000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed tepui @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE tepui              worker read=33 filter=1339 sat=2129 detail=492 | main tex=8 roads=1352 trees=267 bldg=20 hedge=37 (ms)
+SELFTEST  tepui              arc  84.0%  stream=OK (3.5s)  h 1..2333m  sea  0.7%  trees=319    dens=0.50 hi=1500  wx=monsoon
+ring_vibes: tree species -> scrub
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -396000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to iceland_highland (86.8% arc)
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -459 km (572 ms)
+ring_vibes: 13674 road centrelines loaded (home + iceland_highland)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 0 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -396000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed iceland_highland @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE iceland_highland   worker read=129 filter=3348 sat=2068 detail=531 | main tex=6 roads=1172 trees=164 bldg=21 hedge=36 (ms)
+SELFTEST  iceland_highland   arc  86.8%  stream=OK (5.5s)  h 97..1517m  sea  0.0%  trees=0      dens=0.02 hi=400  wx=storm
+ring_vibes: 1039 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -312000 lat 0 -> style0=0, style1=0
+ring_vibes: jumped to badlands_sd (89.6% arc)
+ring_vibes: 1007 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -328 km (506 ms)
+ring_vibes: 13674 road centrelines loaded (home + badlands_sd)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 785 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -312000 lat 0 -> style0=0, style1=0
+ring_vibes: streamed badlands_sd @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE badlands_sd        worker read=62 filter=1844 sat=2247 detail=262 | main tex=10 roads=1171 trees=178 bldg=20 hedge=38 (ms)
+SELFTEST  badlands_sd        arc  89.6%  stream=OK (4.0s)  h 1..994m  sea  0.2%  trees=785    dens=0.05 hi=900  wx=cirrus
+ring_vibes: tree species -> palm
+ring_vibes: 26970 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -228000 lat 0 -> style0=0, style1=54
+ring_vibes: jumped to java_majapahit (92.4% arc)
+ring_vibes: 27164 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -262 km (480 ms)
+ring_vibes: 34789 road centrelines loaded (home + java_majapahit)
+ring_vibes: 33866 junction cells, 2545953 road cells from 34789 centrelines
+ring_vibes: 27164 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -228000 lat 0 -> style0=0, style1=54
+ring_vibes: streamed java_majapahit @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE java_majapahit     worker read=35 filter=1495 sat=2510 detail=165 | main tex=7 roads=2608 trees=716 bldg=23 hedge=87 (ms)
+SELFTEST  java_majapahit     arc  92.4%  stream=OK (3.3s)  h 1..2637m  sea  9.0%  trees=27164  dens=1.00 hi=2900  wx=monsoon
+ring_vibes: tree species -> broadleaf
+ring_vibes: 13154 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -144000 lat 0 -> style0=0, style1=20
+ring_vibes: jumped to halong_bay (95.2% arc)
+ring_vibes: 13049 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -197 km (648 ms)
+ring_vibes: 13674 road centrelines loaded (home + halong_bay)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: 11027 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -144000 lat 0 -> style0=0, style1=18
+ring_vibes: streamed halong_bay @ 1536^2 — re-placed objects onto the new tier
+STREAMPHASE halong_bay         worker read=30 filter=1771 sat=2417 detail=106 | main tex=7 roads=1561 trees=431 bldg=21 hedge=36 (ms)
+SELFTEST  halong_bay         arc  95.2%  stream=OK (3.3s)  h 1..1684m  sea 62.5%  trees=11027  dens=0.70 hi=600  wx=monsoon
+ring_vibes: tree species -> scrub
+ring_vibes: 1177 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: buildings in range at arc -60000 lat 0 -> style0=1543, style1=0
+ring_vibes: jumped to lofoten (98.0% arc)
+ring_vibes: 1149 trees placed (3 variants x 4 LODs) — 0 standards, 0 off-road, 0 hedge quads
+ring_vibes: far band rebuilt around arc -66 km (512 ms)
+SELFTEST  lofoten            arc  98.0%  stream=FAIL (12.0s)  h 1..811m  sea 83.5%  trees=1149   dens=0.08 hi=250  wx=storm
+SELFTEST: 34/35 streamed OK
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2514)

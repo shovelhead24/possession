@@ -1,12 +1,15 @@
 # Possession — Pacing & Motivation (without missions)
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 Synthesis doc (2026-07-26). Answers the hardest question the no-missions law provokes: **where does forward momentum, motivation, and progression-feeling come from, if not missions?** The pieces existed across five docs; this assembles them into one model. Nothing here is a new system — it's the composite that was implicit and needed to be explicit.
 
-## The core distinction: assign-and-track vs. offer-and-pass
+## The core distinction: independent events and chosen commitments
 
-A **mission** assigns an objective, tracks its completion, rewards it, and the world waits for the player — which orients the world around the player and kills witnessing-over-heroism (`.decisions/design-laws.md#no-missions`). **Pacing** creates the same forward pull differently: something is happening / reachable / needed; the player may pursue it or not; **it resolves either way.** Both produce momentum. Only missions orient the world around the player. The whole solution is that *directional pull ≠ mission* — missions are just the laziest source of pull.
+The old categorical no-missions rule is superseded by `.decisions/design-laws.md#chosen-commitments` (2026-09-10). The player chooses what to pursue; other actors continue to act and events resolve without waiting. NPC requests, promises, bargains and player-recorded intentions are allowed. A quest-like shape is not itself a defect. Mandatory assignment chains, automatic completion checklists and reward dispensers that make the world revolve around the player remain outside the design.
 
-Litmus test for any proposed content: does it *assign and track* (mission — forbidden), or *offer and pass* (pacing — allowed)? Gemini's "secure power grid → decrypt hub → calibrate node" loop fails this (assigned, tracked, sequential); the Forge-World "grab a boat, reach the headland" reads as pacing (offered, visible, unassigned, resolves-anyway).
+The test is whether the player can understand the opportunity, choose or refuse it, and encounter credible consequences. A person remembering a promise strengthens the independent world. It does not require a general mission framework.
 
 ## Three timescales of pull
 
@@ -22,4 +25,10 @@ Sharpens aesthetic.md's "anticipation" lever. The middle distance must show not 
 
 - The short-term layer is the least proven — needs playtesting to confirm needs+pulse+bone-thrower actually fill the minute-to-minute without a lull. This is where the no-missions bet is riskiest, and the first slice (crash→deer→wolves→ridge, brief §9) is the cheapest test of exactly it.
 - "Progression-feeling" via capability assumes the capability gates are legible (you understand *why* you couldn't reach something and that a tool would fix it). If that legibility fails, medium-term pull collapses into confusion. Ties to knowledge.md.
-- Reputation-as-continuous-mirror (TODO.md, the Far Cry 2 lesson) is a *fourth*, cross-cutting pull — the world visibly reacting to you over time — but its frequency/legibility is still unspecified.
+- Reputation-as-continuous-mirror is a required cross-cutting source of attachment: consequential actions identify a later perceptible response, who can know its cause, and how the player could encounter it. Exact timing remains a playtest question; no universal reaction interval or omniscient praise is implied.
+
+## Rhythm, return and the next design scale
+
+Survival pressure must leave room for curiosity. Long travel needs remembered places, readable routes and changing interpretations, not mandatory encounters per kilometre. Deliberate quiet may be successful play. Revisit a familiar location after gaining a capability and ask whether both its tactical meaning and personal meaning survive.
+
+**Next: define the 30-second gameplay loop.** This is an open design brief, not a requirement for an event every thirty seconds. Describe what a player notices, what alternatives they perceive, what they choose and do, what feedback they receive, and what makes the next decision interesting. These are evaluation questions, not an approved verb sequence. Examine ordinary traversal, danger, social contact and quiet, then test how the same core changes with capability and a second player. Identify what is enjoyable before progression rewards, spectacle or distant narrative payoffs. Set acceptance criteria after that discussion rather than inventing meters, encounters or new systems to fill a time slot.

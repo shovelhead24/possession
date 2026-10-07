@@ -1,14 +1,45 @@
 extends CharacterBody3D
+const Damage = preload("res://damage.gd")
 
-const SPEED = 10.0  # 50% reduced from 20.0
+const SPEED = 10.0  # base walk speed (also the bob reference speed)
 const FLY_SPEED = 100.0
 const FLY_SPRINT_SPEED = 200.0  # Sprint speed while flying (Ctrl key)
 const JUMP_VELOCITY = 8.0
 const SENSITIVITY = 0.003
 const STICK_SENSITIVITY = 2.5  # Radians/sec at full stick deflection
 
+# Walk-mode locomotion — target speeds by stance, with acceleration rather than a snap
+const SPRINT_SPEED = 16.0
+const CROUCH_SPEED = 4.0
+const GROUND_ACCEL = 60.0   # m/s^2 toward target while grounded
+const GROUND_DECEL = 80.0   # faster stop than start
+const AIR_ACCEL = 12.0      # limited air control
+# Sprint costs stamina; drained empty locks sprint out until it regens past the floor
+const STAMINA_MAX = 100.0
+const STAMINA_DRAIN = 25.0    # per second sprinting
+const STAMINA_REGEN = 18.0    # per second recovering
+const STAMINA_SPRINT_MIN = 15.0  # must regen past this before sprint re-engages
+# Fall damage: harmless below _SPEED, ~full health at _LETHAL, linear between
+const FALL_DAMAGE_SPEED = 18.0
+const FALL_DAMAGE_LETHAL = 45.0
+# Crouch capsule/head geometry (standing values captured in _ready)
+const CROUCH_CAPSULE_HEIGHT = 1.2
+const CROUCH_HEAD_Y = -0.1
+const STANCE_LERP = 8.0
+
 var fly_mode = false  # Walk mode by default
 var current_speed: float = 0.0  # Tracked for HUD display
+
+# Locomotion state
+var is_crouching: bool = false
+var is_sprinting: bool = false
+var stance_t: float = 0.0        # 0 = standing, 1 = fully crouched (smoothed)
+var stamina: float = STAMINA_MAX
+var _sprint_exhausted: bool = false
+var current_spread: float = 0.0  # radians half-angle, read by shoot_carbine()
+var _prev_on_floor: bool = true
+var _stand_capsule_height: float = 2.0
+var _stand_head_y: float = 0.5
 var hud_instance: Node = null  # Reference to HUD for updates
 
 # Player health
@@ -34,6 +65,7 @@ var current_weapon: WeaponType = WeaponType.CARBINE
 @export var hud_scene: PackedScene
 @onready var camera = $Head/Camera3D
 @onready var head = $Head
+@onready var collision_shape = $CollisionShape3D
 @onready var weapon_holder = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera/WeaponHolder
 @onready var weapon_camera = $WeaponViewport/SubViewportContainer/SubViewport/WeaponCamera
 @onready var weapon_viewport = $WeaponViewport/SubViewportContainer/SubViewport
@@ -103,6 +135,21 @@ func _ready():
 	# Allow climbing steeper slopes (default is ~45 degrees / 0.785 radians)
 	floor_max_angle = deg_to_rad(70.0)  # Can climb up to 70 degree slopes
 
+	# Ring frame: the island is player-centred with a CONSTANT gravity vector, so "up"
+	# is world +Y here — correct, not approximate. See .decisions/ physbench rationale
+	# (over 500m the ring's up rotates 0.06 deg). Radial gravity would be wrong in this world.
+	up_direction = Vector3.UP
+
+	# Capture standing geometry and take a private copy of the capsule so crouch can
+	# resize it at runtime without mutating the shared scene resource.
+	if collision_shape:
+		if collision_shape.shape:
+			collision_shape.shape = collision_shape.shape.duplicate()
+		if collision_shape.shape is CapsuleShape3D:
+			_stand_capsule_height = collision_shape.shape.height
+	if head:
+		_stand_head_y = head.position.y
+
 	camera.far = 15000.0  # 14km sky dome + margin
 
 	# Store weapon base position for animations
@@ -111,10 +158,10 @@ func _ready():
 		# Set all weapon meshes to layer 2 so only weapon camera sees them
 		_set_layer_recursive(weapon_holder, 2)
 
-	# Resize weapon viewport to match window
-	if weapon_viewport:
-		weapon_viewport.size = get_viewport().size
-		get_viewport().size_changed.connect(_on_viewport_size_changed)
+	# The SubViewportContainer parent has stretch=true, so it already keeps this
+	# SubViewport sized to the full window (and rescales it on resize). Writing the
+	# size here as well is redundant and triggers Godot's "can't change the size of a
+	# SubViewport with a stretching container parent" warning, so leave it to stretch.
 
 	# Load HUD scene if not assigned in inspector
 	if not hud_scene:
@@ -165,10 +212,6 @@ func _on_window_focus_lost():
 
 func _on_window_focus_gained():
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-
-func _on_viewport_size_changed():
-	if weapon_viewport:
-		weapon_viewport.size = get_viewport().size
 
 func _set_layer_recursive(node: Node, layer: int):
 	# Set visual layer on VisualInstance3D nodes (meshes, etc.)
@@ -231,6 +274,15 @@ func _input(event):
 	if event is InputEventKey and event.physical_keycode == KEY_F6 and event.pressed and not event.echo:
 		_weapon_light_mode = (_weapon_light_mode + 1) % 4
 		_apply_weapon_light_mode()
+
+	# F3 — toggle the developer telemetry overlay. Off by default: the player HUD stays
+	# diegetic-minimal (crosshair + vitals only). Position/bearing and perf counters are
+	# not free overlay. See .decisions/design-laws.md#diegetic-tools-not-hud.
+	if event is InputEventKey and event.physical_keycode == KEY_F3 and event.pressed and not event.echo:
+		if hud_instance:
+			var dbg = hud_instance.get_node_or_null("DebugPanel")
+			if dbg:
+				dbg.visible = not dbg.visible
 
 	# F4 — toggle LOD debug colours (white=0 blue=1 green=2 red=3 yellow=4)
 	if event is InputEventKey and event.physical_keycode == KEY_F4 and event.pressed and not event.echo:
@@ -424,8 +476,8 @@ func _physics_process(delta):
 		var direction = (right * input_dir.x + forward * -input_dir.y).normalized()
 
 		# Sprint with Ctrl key while flying
-		var is_sprinting = Input.is_key_pressed(KEY_CTRL)
-		var fly_speed = FLY_SPRINT_SPEED if is_sprinting else FLY_SPEED
+		var fly_sprint = Input.is_key_pressed(KEY_CTRL)
+		var fly_speed = FLY_SPRINT_SPEED if fly_sprint else FLY_SPEED
 
 		# Vertical movement - Space up, Shift down
 		var vertical = 0.0
@@ -442,26 +494,67 @@ func _physics_process(delta):
 			velocity = velocity.move_toward(Vector3.ZERO, fly_speed * 0.5)
 
 	else:
-		# WALK MODE - normal gravity-based movement
+		# WALK MODE — gravity-based movement with acceleration, stance and stamina
 		if not is_on_floor():
 			velocity.y -= gravity * delta
 
-		# Handle jump
-		if Input.is_action_just_pressed("jump") and is_on_floor():
+		var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+
+		# Crouch (Ctrl) — but you can't stand back up under a low ceiling
+		var want_crouch = Input.is_key_pressed(KEY_CTRL)
+		if is_crouching and not want_crouch and not _has_headroom():
+			want_crouch = true
+		is_crouching = want_crouch
+
+		# Sprint (Shift) — forward movement only, gated by stamina
+		if stamina <= 0.0:
+			_sprint_exhausted = true
+		elif stamina >= STAMINA_SPRINT_MIN:
+			_sprint_exhausted = false
+		var wants_sprint = Input.is_key_pressed(KEY_SHIFT) and not is_crouching \
+			and input_dir.y < -0.1 and is_on_floor() and not _sprint_exhausted
+		is_sprinting = wants_sprint and stamina > 0.0
+		if is_sprinting:
+			stamina = max(0.0, stamina - STAMINA_DRAIN * delta)
+		else:
+			stamina = min(STAMINA_MAX, stamina + STAMINA_REGEN * delta)
+
+		# Jump — not while crouched (the shrunk capsule would clip on takeoff)
+		if Input.is_action_just_pressed("jump") and is_on_floor() and not is_crouching:
 			velocity.y = JUMP_VELOCITY
 
-		# Get input direction
-		var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+		# Target speed by stance, approached with acceleration rather than snapped
+		var target_speed = SPEED
+		if is_crouching:
+			target_speed = CROUCH_SPEED
+		elif is_sprinting:
+			target_speed = SPRINT_SPEED
 
-		if direction:
-			velocity.x = direction.x * SPEED
-			velocity.z = direction.z * SPEED
+		var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+		var horiz = Vector3(velocity.x, 0.0, velocity.z)
+		if direction.length() > 0.01:
+			var accel = GROUND_ACCEL if is_on_floor() else AIR_ACCEL
+			horiz = horiz.move_toward(direction * target_speed, accel * delta)
 		else:
-			velocity.x = move_toward(velocity.x, 0, SPEED)
-			velocity.z = move_toward(velocity.z, 0, SPEED)
+			var decel = GROUND_DECEL if is_on_floor() else AIR_ACCEL
+			horiz = horiz.move_toward(Vector3.ZERO, decel * delta)
+		velocity.x = horiz.x
+		velocity.z = horiz.z
+
+		_update_spread()
+
+	# Smoothly resolve crouch capsule/camera height every frame
+	_update_stance(delta)
+
+	# Fall damage: sample the approach speed before move_and_slide resolves the landing
+	var was_on_floor = _prev_on_floor
+	var impact_speed = -velocity.y if velocity.y < 0.0 else 0.0
 
 	move_and_slide()
+
+	if not fly_mode and is_on_floor() and not was_on_floor:
+		_apply_fall_damage(impact_speed)
+	_prev_on_floor = is_on_floor()
 
 	# Track current speed for HUD display
 	current_speed = velocity.length()
@@ -473,22 +566,88 @@ func _physics_process(delta):
 	if weapon_holder:
 		weapon_holder.visible = not fly_mode and _zoom_index == 0
 
+func _update_stance(delta: float) -> void:
+	# Lerp toward the crouch pose; force standing whenever we're flying.
+	var target = 1.0 if (is_crouching and not fly_mode) else 0.0
+	stance_t = move_toward(stance_t, target, delta * STANCE_LERP)
+	if collision_shape and collision_shape.shape is CapsuleShape3D:
+		collision_shape.shape.height = lerp(_stand_capsule_height, CROUCH_CAPSULE_HEIGHT, stance_t)
+		# Keep the capsule bottom planted: drop the centre by half the height removed.
+		collision_shape.position.y = lerp(0.0, (CROUCH_CAPSULE_HEIGHT - _stand_capsule_height) * 0.5, stance_t)
+	if head:
+		head.position.y = lerp(_stand_head_y, CROUCH_HEAD_Y, stance_t)
+
+func _has_headroom() -> bool:
+	# Is there clearance to stand up? Ray straight up to the standing capsule top.
+	var space = get_world_3d().direct_space_state
+	var from = global_position
+	var to = from + Vector3.UP * (_stand_capsule_height * 0.5 + 0.15)
+	var q = PhysicsRayQueryParameters3D.create(from, to)
+	q.exclude = [self]
+	return space.intersect_ray(q).is_empty()
+
+func _update_spread() -> void:
+	# Stance and motion set the shot cone read by shoot_carbine().
+	var spread = 0.020            # standing, still
+	if is_crouching:
+		spread = 0.006            # crouched is tightest
+	elif is_sprinting:
+		spread = 0.055            # sprinting is loosest
+	spread += Vector2(velocity.x, velocity.z).length() * 0.0015  # moving widens it
+	if not is_on_floor():
+		spread += 0.04            # airborne is worst
+	current_spread = spread
+
+func _apply_spread(dir: Vector3, spread: float) -> Vector3:
+	if spread <= 0.0:
+		return dir
+	var cam_basis = camera.global_transform.basis
+	return dir.rotated(cam_basis.y, randf_range(-spread, spread)) \
+			  .rotated(cam_basis.x, randf_range(-spread, spread)).normalized()
+
+func _apply_fall_damage(impact_speed: float) -> void:
+	if impact_speed <= FALL_DAMAGE_SPEED:
+		return
+	var t = clamp((impact_speed - FALL_DAMAGE_SPEED) / (FALL_DAMAGE_LETHAL - FALL_DAMAGE_SPEED), 0.0, 1.0)
+	take_damage(t * max_health)
+
 func update_hud():
 	if not hud_instance:
 		return
 
-	var coords_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/CoordsLabel")
+	# Vitals are the only always-on overlay. Stamina surfaces only when it isn't full —
+	# you feel exertion, you don't stare at a bar. See design-laws.md#diegetic-tools-not-hud.
+	var stamina_label = hud_instance.get_node_or_null("Vitals/VBoxContainer/StaminaLabel")
+	if stamina_label:
+		if fly_mode or stamina >= STAMINA_MAX - 0.5:
+			stamina_label.visible = false
+		else:
+			stamina_label.visible = true
+			stamina_label.text = "STA %d%%" % int(stamina)
+			stamina_label.add_theme_color_override("font_color",
+				Color(1.0, 0.35, 0.25) if _sprint_exhausted else Color(0.9, 0.9, 0.4))
+
+	# Everything below is developer telemetry, hidden behind F3. Skip the whole gather when
+	# the panel is closed so the counters cost nothing in normal play.
+	var dbg = hud_instance.get_node_or_null("DebugPanel")
+	if not dbg or not dbg.visible:
+		return
+
+	var coords_label = hud_instance.get_node_or_null("DebugPanel/VBoxContainer/CoordsLabel")
 	if coords_label:
 		var pos = global_position
 		coords_label.text = "X: %.0f  Y: %.0f  Z: %.0f" % [pos.x, pos.y, pos.z]
 
-	var speed_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/SpeedLabel")
+	var speed_label = hud_instance.get_node_or_null("DebugPanel/VBoxContainer/SpeedLabel")
 	if speed_label:
-		var mode_text = "FLY" if fly_mode else "WALK"
-		var sprint_text = " [SPRINT]" if fly_mode and Input.is_key_pressed(KEY_CTRL) else ""
-		speed_label.text = "%s%s: %.1f m/s" % [mode_text, sprint_text, current_speed]
+		if fly_mode:
+			var fly_sprint = " [SPRINT]" if Input.is_key_pressed(KEY_CTRL) else ""
+			speed_label.text = "FLY%s: %.1f m/s" % [fly_sprint, current_speed]
+		else:
+			var stance = "CROUCH" if is_crouching else ("SPRINT" if is_sprinting else "WALK")
+			speed_label.text = "%s: %.1f m/s   STA %d%%" % [stance, current_speed, int(stamina)]
 
-	var debug_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/DebugLabel")
+	var debug_label = hud_instance.get_node_or_null("DebugPanel/VBoxContainer/DebugLabel")
 	if debug_label:
 		update_debug_stats(debug_label)
 
@@ -699,10 +858,11 @@ func shoot_carbine():
 		var bullet_offset = Vector3(0.2, -0.2, -1.5)
 		spawn_position = global_position + global_transform.basis * bullet_offset
 
-	# Cast ray from camera through center of screen
+	# Cast ray from camera through centre of screen, perturbed by stance-based spread
 	var viewport_center = get_viewport().get_visible_rect().size / 2
 	var ray_origin = camera.project_ray_origin(viewport_center)
-	var ray_end = ray_origin + camera.project_ray_normal(viewport_center) * 1000
+	var ray_dir = _apply_spread(camera.project_ray_normal(viewport_center), current_spread)
+	var ray_end = ray_origin + ray_dir * 1000
 
 	# Perform raycast
 	var space_state = get_world_3d().direct_space_state
@@ -905,13 +1065,14 @@ func update_nearby_props():
 
 # ============== PLAYER HEALTH SYSTEM ==============
 
-func take_damage(amount: float):
+func take_damage(amount: float, zone: String = ""):
 	if is_dead:
 		return
 
+	amount = Damage.resolve(amount, zone)
 	health -= amount
 	health = max(health, 0)
-	print("Player: Took ", amount, " damage! Health: ", health, "/", max_health)
+	print("Player: Took ", amount, " damage (", Damage.zone_mult(zone), "x ", zone if zone != "" else Damage.DEFAULT_ZONE, ")! Health: ", health, "/", max_health)
 
 	# Flash screen red
 	flash_damage_effect()
@@ -945,7 +1106,7 @@ func update_health_display():
 	if not hud_instance:
 		return
 
-	var health_label = hud_instance.get_node_or_null("InfoPanel/VBoxContainer/HealthLabel")
+	var health_label = hud_instance.get_node_or_null("Vitals/VBoxContainer/HealthLabel")
 	if not health_label:
 		return
 
@@ -957,7 +1118,7 @@ func update_health_display():
 	elif health_percent < 0.6:
 		color = Color.YELLOW
 
-	health_label.text = "HP: %d/%d" % [int(health), int(max_health)]
+	health_label.text = "HP %d" % int(health)
 	health_label.add_theme_color_override("font_color", color)
 
 func die():

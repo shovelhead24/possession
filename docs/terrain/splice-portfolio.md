@@ -86,13 +86,15 @@ The Batch-4 caveat ("character can drift out of the biome at 4× the footprint")
 | Patch | Scouted @ ~22 km | Measured @ 84 km | Verdict |
 |---|---|---|---|
 | `ebro_delta` | p99 **37 m**, flat delta plain | **1..1209 m** | Box has re-acquired the Els Ports foothills — *exactly* the failure the 2026-07-23 re-centring fixed. |
-| `savannah` | p99 **21 m**, confirmed flat | **1..406 m** | Picks up inland relief; no longer the flat coastal-grid read. |
+| `savannah` | p99 **21 m**, confirmed flat | **1..406 m** raw | **CORRECTED 2026-08-18:** the 406 m is a <1% Terrarium decode-artifact spike, not real terrain — the honest p1–p99 relief at 84 km is only **24.8 m** (slope_med 0.2°) and the imagery is a flat coastal metropolis. Savannah did NOT drift; it stays flat. (Contrast `ebro_delta`, whose 1195 m relief and slope_p95 17.7° are real foothills.) |
 | `slea_head` | 69% sea | 69.3% sea | Unchanged — coastal headlands survive widening well. |
 | `mongolia_steppe` | 1302–1749 m | 1178–1795 m | Essentially unchanged; open steppe is uniform at both scales. |
 
 **Rule this establishes:** small, tightly-framed features (delta plains, city footprints, single valleys) do **not** survive a 4× widening — the surrounding region reasserts itself. Broad, uniform landscapes (steppe, open coast, dune fields) do. Any patch whose value comes from being *flat* or *small* needs its centre re-chosen at the target footprint, not just re-fetched at it.
 
 Affected patches currently in the ring: `ebro_delta` and `savannah` are serving terrain that no longer matches their catalogued character. Not corrected yet — the fix is re-centring, which is a scouting decision.
+
+**RESOLVED 2026-08-18:** the coastal batch already retired both from the ring — neither appears in `ring_vibes.gd`'s `PATCHES` any more, and the ring is 35/35 unique. `ebro_delta`'s drift was real, so its Delta-marsh slot is now covered by `camargue` (relief 133 m) and `danube_delta` (157 m), both measured flat at the full 84 km footprint — large deltas survive the widening; only small tightly-framed ones like the Ebro fail. `savannah` was actually *still flat* at 84 km (see the corrected verdict above) but was dropped as the redundant Metro/city patch (`cork_city` covers that biome) when the coastal batch rebalanced the ring toward centred-on-water patches — leaving Metro/city thin at one, a known cost.
 
 ### Coverage after Batch 4
 

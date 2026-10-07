@@ -1,4 +1,5 @@
 extends Node3D
+const Damage = preload("res://damage.gd")
 
 # Enemy AI controller with pathfinding, combat, and health system
 
@@ -128,10 +129,15 @@ func setup_hitbox():
 	# Connect signals
 	hitbox.area_entered.connect(_on_hitbox_area_entered)
 
+const STAND_HEIGHT := 1.8  # hitbox capsule is 180 units at 0.01 scale
+
 func _on_hitbox_area_entered(area: Area3D):
 	# Bullets are Area3D with damage property
 	if "damage" in area:
-		take_damage(area.damage)
+		# Locate the hit on the body: bullet height above the enemy's feet -> zone.
+		var rel_height: float = area.global_position.y - global_position.y
+		var zone := Damage.classify(rel_height, STAND_HEIGHT)
+		take_damage(area.damage, zone)
 
 func store_original_materials(node: Node):
 	if node is MeshInstance3D:
@@ -314,12 +320,13 @@ func attack_player():
 	if current_state != State.DEAD:
 		can_attack = true
 
-func take_damage(amount: float):
+func take_damage(amount: float, zone: String = ""):
 	if current_state == State.DEAD:
 		return
 
+	amount = Damage.resolve(amount, zone)
 	health -= amount
-	print("Enemy: Took ", amount, " damage! Health: ", health, "/", max_health)
+	print("Enemy: Took ", amount, " ", zone if zone != "" else Damage.DEFAULT_ZONE, " damage! Health: ", health, "/", max_health)
 
 	# Flash red to indicate damage
 	flash_damage()

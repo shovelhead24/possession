@@ -1,5 +1,8 @@
 # Possession — Combat & AI
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 The most-built side of the codebase (April sprint). Mostly needs consolidation and a squad/terrain layer, not a rewrite.
 
 ## What Exists

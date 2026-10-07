@@ -1,0 +1,5 @@
+.godot/
+**/*.png
+**/*.blend1
+**/__pycache__/
+

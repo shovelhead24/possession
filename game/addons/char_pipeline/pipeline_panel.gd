@@ -30,7 +30,7 @@ const BIPED_BONES := {
 }
 
 var _body_plan: String = "biped"
-var _recipe: CharacterRecipe = CharacterRecipe.new()
+var _recipe: Recipe = Recipe.new()
 var _slot_buttons: Dictionary = {}   # slot -> Button
 var _part_library: Dictionary = {}   # body_plan -> [PartDef, ...]
 var _status_label: Label
@@ -174,7 +174,7 @@ func _scan_dir(path: String) -> void:
 
 func _on_body_plan_changed(idx: int) -> void:
 	_body_plan = ["biped", "quadruped"][idx]
-	_recipe = CharacterRecipe.new()
+	_recipe = Recipe.new()
 	_recipe.body_plan = _body_plan
 	_refresh_recipe_ui()
 
@@ -237,11 +237,11 @@ func _export_scene() -> void:
 	if _recipe.parts.is_empty():
 		_set_status("Recipe is empty — assign at least one part.")
 		return
-	# Inject bone names from the slot map before assembling
+	# Inject default bone sockets from the slot map before assembling
 	for slot in _recipe.parts:
 		var part: PartDef = _recipe.parts[slot]
-		if part.bone_name == "" and BIPED_BONES.has(slot):
-			part.bone_name = BIPED_BONES[slot]
+		if part.socket == "" and BIPED_BONES.has(slot):
+			part.socket = BIPED_BONES[slot]
 
 	var root := CharacterAssembler.assemble(_recipe)
 	if not root:

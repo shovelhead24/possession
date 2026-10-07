@@ -1,0 +1,324 @@
+[
+  {
+    "id": "weapons-spear",
+    "category": "weapons",
+    "key": "spear",
+    "complex": false,
+    "source": "\t\"spear\": {\n\t\t\"purpose\": \"the spear — hits first from outside their reach; miss and you are wide open\",\n\t\t\"cls\": \"melee\", \"muzzle\": 0.0, \"damage\": 55.0,\n\t\t\"reach\": 2.6, \"windup_s\": 0.42, \"commit_s\": 0.70, \"arc_deg\": 25.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 1.10, \"mag\": 0, \"reload_s\": 0.0, \"spread_mrad\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-blade",
+    "category": "weapons",
+    "key": "blade",
+    "complex": false,
+    "source": "\t\"blade\": {\n\t\t\"purpose\": \"the blade — quick and forgiving, but you have to be close enough to be hit back\",\n\t\t\"cls\": \"melee\", \"muzzle\": 0.0, \"damage\": 38.0,\n\t\t\"reach\": 1.3, \"windup_s\": 0.22, \"commit_s\": 0.28, \"arc_deg\": 70.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 0.55, \"mag\": 0, \"reload_s\": 0.0, \"spread_mrad\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-club",
+    "category": "weapons",
+    "key": "club",
+    "complex": false,
+    "source": "\t\"club\": {\n\t\t\"purpose\": \"the club — slow, heavy, sweeps a crowd; the swing owns you once it starts\",\n\t\t\"cls\": \"melee\", \"muzzle\": 0.0, \"damage\": 62.0,\n\t\t\"reach\": 1.5, \"windup_s\": 0.58, \"commit_s\": 0.85, \"arc_deg\": 120.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 1.35, \"mag\": 0, \"reload_s\": 0.0, \"spread_mrad\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-improvised",
+    "category": "weapons",
+    "key": "improvised",
+    "complex": false,
+    "source": "\t\"improvised\": {\n\t\t\"purpose\": \"whatever was to hand — short, weak, and better than open palms\",\n\t\t\"cls\": \"melee\", \"muzzle\": 0.0, \"damage\": 18.0,\n\t\t\"reach\": 1.0, \"windup_s\": 0.30, \"commit_s\": 0.45, \"arc_deg\": 50.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 0.70, \"mag\": 0, \"reload_s\": 0.0, \"spread_mrad\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-rock",
+    "category": "weapons",
+    "key": "rock",
+    "complex": false,
+    "source": "\t\"rock\": {\n\t\t\"purpose\": \"a rock — free, silent, always available, and barely a weapon\",\n\t\t\"cls\": \"thrown\", \"muzzle\": 22.0, \"drag_k\": 0.0009, \"mass_g\": 400.0, \"damage\": 12.0,\n\t\t\"blast_r\": 0.0, \"fuse_s\": 0.0, \"lob_mrad\": 785.0, \"spread_mrad\": 12.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 1.4, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-javelin",
+    "category": "weapons",
+    "key": "javelin",
+    "complex": false,
+    "source": "\t\"javelin\": {\n\t\t\"purpose\": \"the thrown spear — flat, fast and heavy; one you have to go and pick up again\",\n\t\t\"cls\": \"thrown\", \"muzzle\": 28.0, \"drag_k\": 0.0004, \"mass_g\": 800.0, \"damage\": 48.0,\n\t\t\"blast_r\": 0.0, \"fuse_s\": 0.0, \"lob_mrad\": 500.0, \"spread_mrad\": 8.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 2.0, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-grenade",
+    "category": "weapons",
+    "key": "grenade",
+    "complex": false,
+    "source": "\t\"grenade\": {\n\t\t\"purpose\": \"the fragmentation charge — a timed decision, not an aimed one\",\n\t\t\"cls\": \"thrown\", \"muzzle\": 20.0, \"drag_k\": 0.0011, \"mass_g\": 450.0, \"damage\": 90.0,\n\t\t\"blast_r\": 6.0, \"fuse_s\": 4.0, \"lob_mrad\": 785.0, \"spread_mrad\": 15.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 1.6, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-molotov",
+    "category": "weapons",
+    "key": "molotov",
+    "complex": false,
+    "source": "\t\"molotov\": {\n\t\t\"purpose\": \"burning fuel — denies the ground rather than killing what is standing on it\",\n\t\t\"cls\": \"thrown\", \"muzzle\": 17.0, \"drag_k\": 0.0014, \"mass_g\": 700.0, \"damage\": 25.0,\n\t\t\"blast_r\": 4.5, \"fuse_s\": 0.0, \"lob_mrad\": 785.0, \"spread_mrad\": 18.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 1.8, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-sticky",
+    "category": "weapons",
+    "key": "sticky",
+    "complex": false,
+    "source": "\t\"sticky\": {\n\t\t\"purpose\": \"the sticky charge — short, heavy, and meant for something that is not moving\",\n\t\t\"cls\": \"thrown\", \"muzzle\": 15.0, \"drag_k\": 0.0012, \"mass_g\": 1200.0, \"damage\": 160.0,\n\t\t\"blast_r\": 3.5, \"fuse_s\": 2.5, \"lob_mrad\": 600.0, \"spread_mrad\": 20.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 2.4, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-sling",
+    "category": "weapons",
+    "key": "sling",
+    "complex": false,
+    "source": "\t\"sling\": {\n\t\t\"purpose\": \"the sling — ammunition is any stone; everything else about it is a penalty\",\n\t\t\"cls\": \"tensioned\", \"muzzle\": 40.0, \"drag_k\": 0.0008, \"mass_g\": 60.0, \"damage\": 22.0,\n\t\t\"draw_s\": 1.6, \"hold_s\": 0.6, \"hold_mrad\": 9.0,\n\t\t\"spread_mrad\": 9.0, \"bloom_mrad\": 0.0, \"bloom_max\": 0.0, \"settle_s\": 0.5,\n\t\t\"recoil\": 0.0, \"recover_s\": 0.1, \"rpm\": 0.0, \"cycle_s\": 2.2, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-bow",
+    "category": "weapons",
+    "key": "bow",
+    "complex": false,
+    "source": "\t\"bow\": {\n\t\t\"purpose\": \"the bow — quiet, quick to loose, and you feel every second you hold it drawn\",\n\t\t\"cls\": \"tensioned\", \"muzzle\": 62.0, \"drag_k\": 0.0005, \"mass_g\": 32.0, \"damage\": 46.0,\n\t\t\"draw_s\": 0.9, \"hold_s\": 1.8, \"hold_mrad\": 4.0,\n\t\t\"spread_mrad\": 3.2, \"bloom_mrad\": 0.0, \"bloom_max\": 0.0, \"settle_s\": 0.5,\n\t\t\"recoil\": 0.0, \"recover_s\": 0.1, \"rpm\": 0.0, \"cycle_s\": 1.7, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-crossbow",
+    "category": "weapons",
+    "key": "crossbow",
+    "complex": false,
+    "source": "\t\"crossbow\": {\n\t\t\"purpose\": \"the crossbow — holds itself at full draw, and makes you pay for it in reload\",\n\t\t\"cls\": \"tensioned\", \"muzzle\": 92.0, \"drag_k\": 0.0004, \"mass_g\": 40.0, \"damage\": 68.0,\n\t\t\"draw_s\": 3.4, \"hold_s\": 999.0, \"hold_mrad\": 0.0,\n\t\t\"spread_mrad\": 1.6, \"bloom_mrad\": 0.0, \"bloom_max\": 0.0, \"settle_s\": 0.5,\n\t\t\"recoil\": 0.0, \"recover_s\": 0.1, \"rpm\": 0.0, \"cycle_s\": 4.0, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-speargun",
+    "category": "weapons",
+    "key": "speargun",
+    "complex": false,
+    "source": "\t\"speargun\": {\n\t\t\"purpose\": \"the speargun — one heavy shot, and it works where powder does not\",\n\t\t\"cls\": \"tensioned\", \"muzzle\": 34.0, \"drag_k\": 0.0006, \"mass_g\": 900.0, \"damage\": 85.0,\n\t\t\"draw_s\": 2.8, \"hold_s\": 999.0, \"hold_mrad\": 0.0,\n\t\t\"spread_mrad\": 2.4, \"bloom_mrad\": 0.0, \"bloom_max\": 0.0, \"settle_s\": 0.5,\n\t\t\"recoil\": 0.0, \"recover_s\": 0.1, \"rpm\": 0.0, \"cycle_s\": 3.6, \"mag\": 0, \"reload_s\": 0.0,\n\t},"
+  },
+  {
+    "id": "weapons-musket",
+    "category": "weapons",
+    "key": "musket",
+    "complex": false,
+    "source": "\t\"musket\": {\n\t\t\"purpose\": \"the musket — one shot, then you are holding a stick for fifteen seconds\",\n\t\t\"cls\": \"chemical\", \"muzzle\": 450.0, \"drag_k\": 0.0009, \"mass_g\": 28.0, \"damage\": 78.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 0.9, \"mag\": 1, \"reload_s\": 15.0,\n\t\t\"spread_mrad\": 4.5, \"bloom_mrad\": 0.0, \"bloom_max\": 0.0, \"settle_s\": 1.0,\n\t\t\"recoil\": 9.0, \"recover_s\": 1.1,\n\t},"
+  },
+  {
+    "id": "weapons-bolt_action",
+    "category": "weapons",
+    "key": "bolt_action",
+    "complex": false,
+    "source": "\t\"bolt_action\": {\n\t\t\"purpose\": \"the bolt-action — the most accurate thing anyone on the ring can build by hand\",\n\t\t\"cls\": \"chemical\", \"muzzle\": 820.0, \"drag_k\": 0.00030, \"mass_g\": 11.0, \"damage\": 82.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 1.5, \"mag\": 5, \"reload_s\": 4.0,\n\t\t\"spread_mrad\": 0.35, \"bloom_mrad\": 0.4, \"bloom_max\": 1.2, \"settle_s\": 1.2,\n\t\t\"recoil\": 6.0, \"recover_s\": 0.9,\n\t},"
+  },
+  {
+    "id": "weapons-smg",
+    "category": "weapons",
+    "key": "smg",
+    "complex": false,
+    "source": "\t\"smg\": {\n\t\t\"purpose\": \"the SMG — wins every argument inside a room and loses all of them outside it\",\n\t\t\"cls\": \"chemical\", \"muzzle\": 380.0, \"drag_k\": 0.0008, \"mass_g\": 8.0, \"damage\": 22.0,\n\t\t\"rpm\": 900.0, \"cycle_s\": 0.0, \"mag\": 32, \"reload_s\": 2.0,\n\t\t\"spread_mrad\": 1.8, \"bloom_mrad\": 2.6, \"bloom_max\": 14.0, \"settle_s\": 0.45,\n\t\t\"recoil\": 2.0, \"recover_s\": 0.22,\n\t},"
+  },
+  {
+    "id": "weapons-lmg",
+    "category": "weapons",
+    "key": "lmg",
+    "complex": false,
+    "source": "\t\"lmg\": {\n\t\t\"purpose\": \"the LMG — fires until the barrel glows, which is sooner than the belt runs out\",\n\t\t\"cls\": \"chemical\", \"muzzle\": 840.0, \"drag_k\": 0.00032, \"mass_g\": 12.0, \"damage\": 38.0,\n\t\t\"rpm\": 650.0, \"cycle_s\": 0.0, \"mag\": 100, \"reload_s\": 6.5,\n\t\t\"spread_mrad\": 1.2, \"bloom_mrad\": 1.1, \"bloom_max\": 7.0, \"settle_s\": 0.8,\n\t\t\"recoil\": 3.4, \"recover_s\": 0.35,\n\t\t\"heat_per_shot\": 2.2, \"heat_max\": 100.0, \"cool_rate\": 14.0, \"overheat_lock_s\": 4.0,\n\t},"
+  },
+  {
+    "id": "weapons-autocannon",
+    "category": "weapons",
+    "key": "autocannon",
+    "complex": false,
+    "source": "\t\"autocannon\": {\n\t\t\"purpose\": \"the autocannon — a vehicle weapon; carrying it is the whole cost\",\n\t\t\"cls\": \"chemical\", \"muzzle\": 1020.0, \"drag_k\": 0.00022, \"mass_g\": 240.0, \"damage\": 155.0,\n\t\t\"rpm\": 220.0, \"cycle_s\": 0.0, \"mag\": 20, \"reload_s\": 7.0,\n\t\t\"spread_mrad\": 1.0, \"bloom_mrad\": 3.0, \"bloom_max\": 10.0, \"settle_s\": 1.0,\n\t\t\"recoil\": 14.0, \"recover_s\": 0.8,\n\t\t\"heat_per_shot\": 5.0, \"heat_max\": 100.0, \"cool_rate\": 10.0, \"overheat_lock_s\": 6.0,\n\t},"
+  },
+  {
+    "id": "weapons-beam_rifle",
+    "category": "weapons",
+    "key": "beam_rifle",
+    "complex": false,
+    "source": "\t\"beam_rifle\": {\n\t\t\"purpose\": \"the beam rifle — point at it and it is hit; the ring stops mattering entirely\",\n\t\t\"cls\": \"energy\", \"muzzle\": 0.0, \"damage\": 60.0, \"beam\": false, \"charge_s\": 0.9,\n\t\t\"falloff_m\": 600.0, \"spread_mrad\": 0.25, \"bloom_mrad\": 0.0, \"bloom_max\": 0.0, \"settle_s\": 1.0,\n\t\t\"recoil\": 0.0, \"recover_s\": 0.1, \"rpm\": 0.0, \"cycle_s\": 1.4, \"mag\": 0, \"reload_s\": 0.0,\n\t\t\"heat_per_shot\": 26.0, \"heat_max\": 100.0, \"cool_rate\": 11.0, \"overheat_lock_s\": 5.0,\n\t},"
+  },
+  {
+    "id": "weapons-cutter",
+    "category": "weapons",
+    "key": "cutter",
+    "complex": false,
+    "source": "\t\"cutter\": {\n\t\t\"purpose\": \"the cutting beam — continuous, brutal, and only at arm's length\",\n\t\t\"cls\": \"energy\", \"muzzle\": 0.0, \"damage\": 140.0, \"beam\": true, \"charge_s\": 0.0,\n\t\t\"falloff_m\": 14.0, \"spread_mrad\": 0.1, \"bloom_mrad\": 0.0, \"bloom_max\": 0.0, \"settle_s\": 1.0,\n\t\t\"recoil\": 0.0, \"recover_s\": 0.1, \"rpm\": 0.0, \"cycle_s\": 0.05, \"mag\": 0, \"reload_s\": 0.0,\n\t\t\"heat_per_shot\": 12.0, \"heat_max\": 100.0, \"cool_rate\": 18.0, \"overheat_lock_s\": 3.5,\n\t},"
+  },
+  {
+    "id": "weapons-mortar",
+    "category": "weapons",
+    "key": "mortar",
+    "complex": false,
+    "source": "\t\"mortar\": {\n\t\t\"purpose\": \"the mortar — drops rounds behind cover; you will not be carrying much else\",\n\t\t\"cls\": \"guided\", \"muzzle\": 150.0, \"drag_k\": 0.0005, \"mass_g\": 3200.0, \"damage\": 130.0,\n\t\t\"steered\": false, \"arm_m\": 60.0, \"bulk\": 9.0, \"salvo\": 1, \"salvo_gap_s\": 0.0,\n\t\t\"blast_r\": 9.0, \"lob_mrad\": 1240.0, \"spread_mrad\": 6.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 5.0, \"mag\": 1, \"reload_s\": 4.0,\n\t},"
+  },
+  {
+    "id": "weapons-rocket",
+    "category": "weapons",
+    "key": "rocket",
+    "complex": false,
+    "source": "\t\"rocket\": {\n\t\t\"purpose\": \"the shoulder rocket — flat, fast, and armed too late to save you up close\",\n\t\t\"cls\": \"guided\", \"muzzle\": 190.0, \"drag_k\": 0.0004, \"mass_g\": 2600.0, \"damage\": 210.0,\n\t\t\"steered\": false, \"arm_m\": 25.0, \"bulk\": 6.0, \"salvo\": 1, \"salvo_gap_s\": 0.0,\n\t\t\"blast_r\": 6.5, \"lob_mrad\": 60.0, \"spread_mrad\": 4.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 3.0, \"mag\": 1, \"reload_s\": 5.5,\n\t},"
+  },
+  {
+    "id": "weapons-mlrs",
+    "category": "weapons",
+    "key": "mlrs",
+    "complex": false,
+    "source": "\t\"mlrs\": {\n\t\t\"purpose\": \"the backpack MLRS — twelve rockets and no way to run while wearing it\",\n\t\t\"cls\": \"guided\", \"muzzle\": 170.0, \"drag_k\": 0.00045, \"mass_g\": 2200.0, \"damage\": 95.0,\n\t\t\"steered\": true, \"arm_m\": 90.0, \"bulk\": 14.0, \"salvo\": 12, \"salvo_gap_s\": 0.22,\n\t\t\"blast_r\": 5.0, \"lob_mrad\": 900.0, \"spread_mrad\": 11.0,\n\t\t\"rpm\": 0.0, \"cycle_s\": 8.0, \"mag\": 12, \"reload_s\": 14.0,\n\t},"
+  },
+  {
+    "id": "weapons-carbine",
+    "category": "weapons",
+    "key": "carbine",
+    "complex": false,
+    "source": "\t\"carbine\": {\n\t\t# FOR: the baseline everything else is measured against. It already exists as a model with FP\n\t\t# arms, so it is the one weapon where \"does the table match how it feels\" can actually be asked.\n\t\t\"purpose\": \"the carbine — the reference weapon; every other row is an argument against this one\",\n\t\t\"cls\": \"chemical\", \"muzzle\": 900.0, \"drag_k\": 0.00035, \"mass_g\": 8.0,\n\t\t\"rpm\": 700.0, \"cycle_s\": 0.0, \"mag\": 30, \"reload_s\": 2.3,\n\t\t\"spread_mrad\": 0.7, \"bloom_mrad\": 1.5, \"bloom_max\": 8.0, \"settle_s\": 0.5,\n\t\t\"recoil\": 2.6, \"recover_s\": 0.28, \"damage\": 34.0, \"pellets\": 1,\n\t},"
+  },
+  {
+    "id": "vehicles-box",
+    "category": "vehicles",
+    "key": "box",
+    "complex": false,
+    "source": "\t\"box\": {\n\t\t# FOR: the runabout you always have. Light and quick to turn on the tarmac, but the first\n\t\t# vehicle you own and the one you WANT to trade up from once the road runs out -- it washes\n\t\t# out badly off the carriageway, which is the whole reason the warthog exists.\n\t\t\"purpose\": \"the runabout you start with — nimble on-road, washes out in the rough\",\n\t\t\"loco\": \"wheeled\", \"mass\": 1200.0, \"power\": 9.0, \"brake\": 12.0, \"top\": 22.0, \"reverse\": -6.0,\n\t\t\"drag\": 0.35, \"offroad_drag\": 0.55, \"turn\": 1.5, \"offroad_turn\": 0.45,\n\t\t\"grip_speed\": 12.0, \"ride\": 0.40, \"wheel_r\": 0.45, \"length\": 4.2, \"tint\": Color(0.33, 0.36, 0.30),\n\t\t\"susp_travel\": 0.34, \"susp_stiff\": 34.0, \"susp_damp\": 6.0, \"susp_sag\": 0.55,\n\t},"
+  },
+  {
+    "id": "vehicles-warthog",
+    "category": "vehicles",
+    "key": "warthog",
+    "complex": false,
+    "source": "\t\"warthog\": {\n\t\t# FOR: the off-roader. Heavier and more powerful, softer springs, keeps its grip where the\n\t\t# box lets go -- so it measures worse on the road and far better off it, which is the whole\n\t\t# point of having more than one: they must not read the same on the proving course.\n\t\t\"purpose\": \"the off-roader — heavy and sure-footed where the box lets go\",\n\t\t\"loco\": \"wheeled\", \"mass\": 2400.0, \"power\": 12.0, \"brake\": 14.0, \"top\": 27.0, \"reverse\": -7.0,\n\t\t\"drag\": 0.30, \"offroad_drag\": 0.34, \"turn\": 1.3, \"offroad_turn\": 0.20,\n\t\t\"grip_speed\": 14.0, \"ride\": 0.55, \"wheel_r\": 0.52, \"length\": 5.2, \"tint\": Color(0.40, 0.44, 0.28),\n\t\t\"susp_travel\": 0.46, \"susp_stiff\": 26.0, \"susp_damp\": 5.0, \"susp_sag\": 0.55,\n\t},"
+  },
+  {
+    "id": "vehicles-sportscar",
+    "category": "vehicles",
+    "key": "sportscar",
+    "complex": false,
+    "source": "\t\"sportscar\": {\n\t\t# FOR: eating the tarmac between towns. Fastest thing on a road and the most punished off it --\n\t\t# low, stiff, wide slicks that need speed to bite and find nothing in the dirt. The reason you\n\t\t# stay on the carriageway; the opposite end of the axis from the tractor.\n\t\t\"purpose\": \"the road car — devours tarmac, helpless the moment the road ends\",\n\t\t\"loco\": \"wheeled\", \"mass\": 1050.0, \"power\": 16.0, \"brake\": 18.0, \"top\": 42.0, \"reverse\": -6.0,\n\t\t\"drag\": 0.22, \"offroad_drag\": 0.95, \"turn\": 1.8, \"offroad_turn\": 0.75, \"recipe\": \"sport\",\n\t\t\"grip_speed\": 18.0, \"ride\": 0.26, \"wheel_r\": 0.34, \"length\": 4.4, \"tint\": Color(0.55, 0.18, 0.16),\n\t\t\"susp_travel\": 0.18, \"susp_stiff\": 48.0, \"susp_damp\": 8.0, \"susp_sag\": 0.50,\n\t},"
+  },
+  {
+    "id": "vehicles-sixby",
+    "category": "vehicles",
+    "key": "sixby",
+    "complex": false,
+    "source": "\t\"sixby\": {\n\t\t# FOR: going where the warthog hesitates. Six wheels, tall and slow, barely registers the road\n\t\t# ending -- keeps almost all its grip and speed off the tarmac. Ponderous to turn; you point it\n\t\t# and it goes. (Placeholder box shows four wheels for now; the geometry is a mesh job.)\n\t\t\"purpose\": \"the heavy 6x6 — slow and unstoppable, hardly notices the road ending\",\n\t\t\"loco\": \"wheeled\", \"mass\": 4200.0, \"power\": 14.0, \"brake\": 16.0, \"top\": 24.0, \"reverse\": -6.0,\n\t\t\"drag\": 0.34, \"offroad_drag\": 0.22, \"turn\": 1.0, \"offroad_turn\": 0.12, \"recipe\": \"flatbed\",\n\t\t\"grip_speed\": 12.0, \"ride\": 0.70, \"wheel_r\": 0.62, \"length\": 7.0, \"tint\": Color(0.52, 0.44, 0.30),\n\t\t\"susp_travel\": 0.55, \"susp_stiff\": 30.0, \"susp_damp\": 6.0, \"susp_sag\": 0.55,\n\t},"
+  },
+  {
+    "id": "vehicles-bike",
+    "category": "vehicles",
+    "key": "bike",
+    "complex": false,
+    "source": "\t\"bike\": {\n\t\t# FOR: the scout. Lightest, sharpest-turning, bites at low speed so it flicks between obstacles;\n\t\t# quick off the line but nervous everywhere -- decent in the rough only because it is small, not\n\t\t# because it is planted. The vehicle you take to look, not to fight.\n\t\t\"purpose\": \"the scout bike — nimblest and quickest to turn, twitchy and fragile\",\n\t\t\"loco\": \"wheeled\", \"mass\": 220.0, \"power\": 14.0, \"brake\": 13.0, \"top\": 34.0, \"reverse\": -4.0,\n\t\t\"drag\": 0.28, \"offroad_drag\": 0.60, \"turn\": 2.4, \"offroad_turn\": 0.55,\n\t\t\"grip_speed\": 8.0, \"ride\": 0.35, \"wheel_r\": 0.33, \"length\": 2.1, \"tint\": Color(0.18, 0.18, 0.22),\n\t\t\"susp_travel\": 0.30, \"susp_stiff\": 30.0, \"susp_damp\": 5.0, \"susp_sag\": 0.50,\n\t},"
+  },
+  {
+    "id": "vehicles-tractor",
+    "category": "vehicles",
+    "key": "tractor",
+    "complex": false,
+    "source": "\t\"tractor\": {\n\t\t# FOR: the workhorse. Slowest top speed of the lot and it does not care -- huge lugged tyres\n\t\t# give it the best grip off the tarmac of anything wheeled, so it plods across ploughed ground\n\t\t# the sportscar would bog in. Torque over speed; the honest opposite of the road car.\n\t\t\"purpose\": \"the tractor — crawls, but crosses soft ground nothing else will\",\n\t\t\"loco\": \"wheeled\", \"mass\": 3200.0, \"power\": 10.0, \"brake\": 12.0, \"top\": 12.0, \"reverse\": -4.0,\n\t\t\"drag\": 0.40, \"offroad_drag\": 0.18, \"turn\": 1.2, \"offroad_turn\": 0.10, \"recipe\": \"tractor\",\n\t\t\"grip_speed\": 6.0, \"ride\": 0.75, \"wheel_r\": 0.80, \"length\": 4.0, \"tint\": Color(0.30, 0.45, 0.20),\n\t\t\"susp_travel\": 0.40, \"susp_stiff\": 24.0, \"susp_damp\": 5.0, \"susp_sag\": 0.60,\n\t},"
+  },
+  {
+    "id": "vehicles-hauler",
+    "category": "vehicles",
+    "key": "hauler",
+    "complex": false,
+    "source": "\t\"hauler\": {\n\t\t# FOR: moving mass down a road. Longest and heaviest, a wide turning arc and weak brakes for its\n\t\t# weight, and it washes out almost as badly as the sportscar the instant it leaves the tarmac --\n\t\t# a load has no traction in dirt. The reason roads matter; needs room and hates the rough.\n\t\t\"purpose\": \"the articulated hauler — road-bound freight, ponderous and wide-turning\",\n\t\t\"loco\": \"wheeled\", \"mass\": 14000.0, \"power\": 11.0, \"brake\": 10.0, \"top\": 26.0, \"reverse\": -4.0,\n\t\t\"drag\": 0.30, \"offroad_drag\": 0.85, \"turn\": 0.7, \"offroad_turn\": 0.55, \"recipe\": \"flatbed\",\n\t\t\"grip_speed\": 16.0, \"ride\": 0.60, \"wheel_r\": 0.55, \"length\": 14.0, \"tint\": Color(0.30, 0.36, 0.46),\n\t\t\"susp_travel\": 0.35, \"susp_stiff\": 40.0, \"susp_damp\": 7.0, \"susp_sag\": 0.60,\n\t},"
+  },
+  {
+    "id": "vehicles-crawler",
+    "category": "vehicles",
+    "key": "crawler",
+    "complex": false,
+    "source": "\t\"crawler\": {\n\t\t# FOR: the ground everything else refuses. Slow, heavy, and utterly indifferent to whether it\n\t\t# is on a road -- it plods up the steep, broken patches (where --align says the slope actually\n\t\t# bites) that stop wheels dead. You take it not to travel but to go somewhere untravellable.\n\t\t\"purpose\": \"the tracked crawler — slow and road-blind, climbs the broken ground wheels can't\",\n\t\t\"loco\": \"tracked\", \"mass\": 9000.0, \"power\": 9.0, \"brake\": 12.0, \"top\": 9.0, \"reverse\": -4.0,\n\t\t\"drag\": 0.35, \"offroad_drag\": 0.0, \"turn\": 1.4, \"offroad_turn\": 0.0, \"recipe\": \"turret\",\n\t\t\"grip_speed\": 0.0, \"ride\": 0.55, \"wheel_r\": 0.50, \"length\": 6.5, \"tint\": Color(0.34, 0.36, 0.32),\n\t\t\"susp_travel\": 0.30, \"susp_stiff\": 40.0, \"susp_damp\": 7.0, \"susp_sag\": 0.55,\n\t},"
+  },
+  {
+    "id": "vehicles-skiff",
+    "category": "vehicles",
+    "key": "skiff",
+    "complex": false,
+    "source": "\t\"skiff\": {\n\t\t# FOR: the water and the flats. Fast and frictionless over the sea, the salt pans and the\n\t\t# carriageway alike -- the one vehicle that makes the coastal patches (palawan 5% drivable,\n\t\t# cape 8%, lofoten 10%) reachable. Helpless on a hill: point it up a grade and it wallows,\n\t\t# point it across one and it slides. You take it to the coast, never to the mountains.\n\t\t\"purpose\": \"the hover skiff — crosses water and flats at speed, wallows and slides on any slope\",\n\t\t\"loco\": \"hover\", \"mass\": 800.0, \"power\": 11.0, \"brake\": 10.0, \"top\": 30.0, \"reverse\": -6.0,\n\t\t\"drag\": 0.30, \"offroad_drag\": 0.0, \"turn\": 1.3, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 1.40, \"wheel_r\": 0.45, \"length\": 4.6, \"tint\": Color(0.24, 0.40, 0.46),\n\t\t\"lift\": 1.0, \"buoyancy\": 0.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-launch",
+    "category": "vehicles",
+    "key": "launch",
+    "complex": false,
+    "source": "\t\"launch\": {\n\t\t# FOR: crossing open water fast, and being punished for it in a sea. Gets over plane_speed,\n\t\t# climbs onto its own bow wave and sheds most of its drag -- then skates through every turn\n\t\t# (high drift) and pitches hard on the swell because a planing hull slams rather than parts.\n\t\t# Shallow draft, so it can be driven right up a beach before it grounds.\n\t\t\"purpose\": \"the planing launch — fast over open water, skates through turns, slams in a swell\",\n\t\t\"loco\": \"boat\", \"mass\": 1400.0, \"power\": 8.0, \"brake\": 4.0, \"top\": 26.0, \"reverse\": -4.0,\n\t\t\"drag\": 0.55, \"offroad_drag\": 0.0, \"turn\": 1.1, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 6.0, \"ride\": 0.55, \"wheel_r\": 0.45, \"length\": 6.0, \"tint\": Color(0.72, 0.70, 0.64),\n\t\t\"lift\": 0.0, \"buoyancy\": 1.0, \"draft\": 0.8, \"plane_speed\": 9.0, \"drift\": 0.8,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-barge",
+    "category": "vehicles",
+    "key": "barge",
+    "complex": false,
+    "source": "\t\"barge\": {\n\t\t# FOR: the opposite argument. A displacement hull makes a wave and is held down by it, so it has\n\t\t# no plane to climb onto and `top` is a hard ceiling however long you hold the throttle. In\n\t\t# exchange the swell barely moves it and it tracks straight (low drift). Deep draft: it grounds\n\t\t# a long way off the beach, which is what makes shallow water a real obstacle rather than\n\t\t# scenery -- and the reason the coastal patches need reading as depth, not as \"sea\".\n\t\t\"purpose\": \"the displacement barge — slow, deep, unbothered by swell; grounds far off the beach\",\n\t\t\"loco\": \"boat\", \"mass\": 9000.0, \"power\": 2.2, \"brake\": 1.6, \"top\": 8.0, \"reverse\": -2.0,\n\t\t\"drag\": 0.30, \"offroad_drag\": 0.0, \"turn\": 0.55, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 3.0, \"ride\": 0.70, \"wheel_r\": 0.45, \"length\": 14.0, \"tint\": Color(0.36, 0.33, 0.28),\n\t\t\"lift\": 0.0, \"buoyancy\": 1.0, \"draft\": 2.4, \"plane_speed\": 0.0, \"drift\": 0.25,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-strider",
+    "category": "vehicles",
+    "key": "strider",
+    "complex": true,
+    "source": "\t\"strider\": {\n\t\t# FOR: the ground even the crawler refuses -- steep, stepped, broken terrain where tracks lose\n\t\t# purchase. Legs place feet: it climbs onto a kerb, strides over a washboard, and holds its pace\n\t\t# up a slope that washes out anything wheeled. Slow and exposed, but nothing is unreachable to it.\n\t\t# The chassis the mounts and mechs are built on.\n\t\t\"purpose\": \"the legged strider — climbs and steps over ground no wheel or track will cross\",\n\t\t\"loco\": \"legged\", \"mass\": 1600.0, \"power\": 10.0, \"brake\": 12.0, \"top\": 11.0, \"reverse\": -4.0,\n\t\t\"drag\": 0.35, \"offroad_drag\": 0.0, \"turn\": 1.6, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 1.20, \"wheel_r\": 0.45, \"length\": 3.4, \"tint\": Color(0.42, 0.34, 0.40),\n\t\t\"step_height\": 0.9, \"gait\": 2.4,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-horse",
+    "category": "vehicles",
+    "key": "horse",
+    "complex": true,
+    "source": "\t\"horse\": {\n\t\t# FOR: covering open ground FAST when there is no road -- the legged answer to the sportscar, but\n\t\t# alive. It out-runs every wheeled vehicle cross-country in a sprint, then blows: hold the gallop and\n\t\t# it winds itself down to a walk until it recovers, so distance is paced, not floored. And it is not\n\t\t# fully yours -- a wolf pack closing (press [J] in DRIVE) spooks it into bolting where you didn't ask.\n\t\t\"purpose\": \"the horse — fastest thing off-road in a sprint, but it tires and it spooks\",\n\t\t\"loco\": \"legged\", \"mass\": 600.0, \"power\": 15.0, \"brake\": 11.0, \"top\": 18.0, \"reverse\": -3.0,\n\t\t\"drag\": 0.40, \"offroad_drag\": 0.0, \"turn\": 1.9, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 1.50, \"wheel_r\": 0.45, \"length\": 2.4, \"tint\": Color(0.36, 0.24, 0.16),\n\t\t\"step_height\": 0.5, \"gait\": 2.8,\n\t\t\"stamina\": 14.0, \"winded_top\": 6.0, \"spooks\": true,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-elephant",
+    "category": "vehicles",
+    "key": "elephant",
+    "complex": true,
+    "source": "\t\"elephant\": {\n\t\t# FOR: going through, not around. Where the horse flees and the wheeled rows detour, the elephant\n\t\t# holds a straight line and the obstacle gives way -- hedgerows and saplings go down under it. Slow,\n\t\t# heavy, unhurried; you take it to make a path, not to make time.\n\t\t\"purpose\": \"the elephant — slow and unstoppable, flattens hedgerows and small trees in its path\",\n\t\t\"loco\": \"legged\", \"mass\": 5200.0, \"power\": 8.0, \"brake\": 9.0, \"top\": 7.5, \"reverse\": -2.5,\n\t\t\"drag\": 0.45, \"offroad_drag\": 0.0, \"turn\": 0.9, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 2.6, \"wheel_r\": 0.45, \"length\": 6.0, \"tint\": Color(0.44, 0.42, 0.40),\n\t\t\"step_height\": 1.2, \"gait\": 4.6, \"trample\": 4.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-mech_biped",
+    "category": "vehicles",
+    "key": "mech_biped",
+    "complex": true,
+    "source": "\t\"mech_biped\": {\n\t\t# FOR: the war-walker at soldier scale -- roughly a tall man, so it goes where infantry goes but\n\t\t# armoured and stepping. Tall legs give it the highest step of anything but the quad: it climbs onto\n\t\t# a wall or a roof a strider only steps over. Quicker and lighter than the giant; the skirmisher of\n\t\t# the legged rows, sitting between the strider's civilian chassis and the quad's fortress.\n\t\t\"purpose\": \"the biped mech — man-scale war walker, climbs onto walls and roofs, agile for its armour\",\n\t\t\"loco\": \"legged\", \"mass\": 3600.0, \"power\": 12.0, \"brake\": 13.0, \"top\": 13.0, \"reverse\": -4.0,\n\t\t\"drag\": 0.35, \"offroad_drag\": 0.0, \"turn\": 1.5, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 2.0, \"wheel_r\": 0.45, \"length\": 3.0, \"tint\": Color(0.30, 0.32, 0.34),\n\t\t\"step_height\": 1.5, \"gait\": 3.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-mech_quad",
+    "category": "vehicles",
+    "key": "mech_quad",
+    "complex": true,
+    "source": "\t\"mech_quad\": {\n\t\t# FOR: the 15m end of the scale -- a four-legged walking fortress. Vast mass makes it ponderous and\n\t\t# slow to turn, but its stride steps clean over walls, hedgerows and small buildings that stop every\n\t\t# other vehicle, and it never washes out or slides. The heaviest thing in the roster (past the\n\t\t# hauler); you take it not to travel but to be the terrain other things route around.\n\t\t\"purpose\": \"the quad mech — a 15m walking fortress, strides over walls and buildings, slow and unstoppable\",\n\t\t\"loco\": \"legged\", \"mass\": 42000.0, \"power\": 9.0, \"brake\": 9.0, \"top\": 6.0, \"reverse\": -2.0,\n\t\t\"drag\": 0.45, \"offroad_drag\": 0.0, \"turn\": 0.6, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 6.5, \"wheel_r\": 0.45, \"length\": 15.0, \"tint\": Color(0.26, 0.27, 0.29),\n\t\t\"step_height\": 3.2, \"gait\": 7.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-suit",
+    "category": "vehicles",
+    "key": "suit",
+    "complex": true,
+    "source": "\t\"suit\": {\n\t\t# FOR: the bridge between driving and walking -- the capability you keep when the vehicles run out.\n\t\t# Slow flat-out but it JUMPS onto ledges and over gaps nothing else clears, and SPRINTS in bursts;\n\t\t# lands hard, so a big drop costs speed. You wear it to go on foot where a vehicle cannot follow.\n\t\t\"purpose\": \"the powered suit — you ARE the vehicle: jump onto ledges, sprint in bursts, land hard\",\n\t\t\"loco\": \"legged\", \"mass\": 320.0, \"power\": 16.0, \"brake\": 16.0, \"top\": 12.0, \"reverse\": -5.0,\n\t\t\"drag\": 0.35, \"offroad_drag\": 0.0, \"turn\": 2.6, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 1.1, \"wheel_r\": 0.45, \"length\": 1.2, \"tint\": Color(0.36, 0.38, 0.42),\n\t\t\"step_height\": 0.6, \"gait\": 1.8,\n\t\t\"jump\": 3.2, \"sprint\": 2.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-duck",
+    "category": "vehicles",
+    "key": "duck",
+    "complex": false,
+    "source": "\t\"duck\": {\n\t\t# FOR: never swapping vehicle at the waterline. It drives down a beach, floats off, motors across the\n\t\t# shallows and climbs out the far side -- the one craft that makes a coastal patch one continuous drive\n\t\t# rather than a car for the dry half and a boat for the wet. Ducks just under the surface, no deeper.\n\t\t\"purpose\": \"the amphibian — drives straight across the waterline, land to sea to land, ducks just under\",\n\t\t\"loco\": \"sub\", \"mass\": 1600.0, \"power\": 9.0, \"brake\": 10.0, \"top\": 14.0, \"reverse\": -5.0,\n\t\t\"drag\": 0.45, \"offroad_drag\": 0.0, \"turn\": 1.4, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 0.55, \"wheel_r\": 0.45, \"length\": 5.4, \"tint\": Color(0.30, 0.42, 0.38),\n\t\t\"buoyancy\": 1.0, \"draft\": 0.6, \"dive_max\": 2.5,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-sub",
+    "category": "vehicles",
+    "key": "sub",
+    "complex": false,
+    "source": "\t\"sub\": {\n\t\t# FOR: going DOWN. Slow and heavy on the surface and reluctant on land (it can crawl out but hates it),\n\t\t# it earns its place submerged -- the only vehicle that descends to the synthesised seabed and moves\n\t\t# along it, so the deep water every other class treats as a flat lid becomes somewhere to go. The reason\n\t\t# the seabed had to be synthesised at all; without a floor it would be a boat that can sink.\n\t\t\"purpose\": \"the submersible — slow on top, but the only thing that dives to the seabed and runs along it\",\n\t\t\"loco\": \"sub\", \"mass\": 12000.0, \"power\": 5.0, \"brake\": 6.0, \"top\": 9.0, \"reverse\": -3.0,\n\t\t\"drag\": 0.40, \"offroad_drag\": 0.0, \"turn\": 1.0, \"offroad_turn\": 0.0,\n\t\t\"grip_speed\": 0.0, \"ride\": 0.50, \"wheel_r\": 0.45, \"length\": 11.0, \"tint\": Color(0.20, 0.28, 0.34),\n\t\t\"buoyancy\": 1.0, \"draft\": 2.0, \"dive_max\": 55.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-rotor",
+    "category": "vehicles",
+    "key": "rotor",
+    "complex": true,
+    "source": "\t\"rotor\": {\n\t\t# FOR: going straight up and standing still in the air. It hovers, climbs vertically and pivots on the\n\t\t# spot, reaching a ledge or rooftop no wheel or wing can -- the flyer for tight, slow, precise work.\n\t\t\"purpose\": \"the rotary — hovers, climbs vertically, pivots in place; slow but goes anywhere and waits there\",\n\t\t\"loco\": \"air\", \"mass\": 2400.0, \"power\": 8.0, \"brake\": 8.0, \"top\": 28.0, \"reverse\": -6.0,\n\t\t\"drag\": 0.45, \"offroad_drag\": 0.0, \"turn\": 1.3, \"offroad_turn\": 0.0, \"recipe\": \"rotor\",\n\t\t\"grip_speed\": 0.0, \"ride\": 0.6, \"wheel_r\": 0.5, \"length\": 9.0, \"tint\": Color(0.28, 0.30, 0.34),\n\t\t\"lift\": 1.0, \"stall_speed\": 0.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-airplane",
+    "category": "vehicles",
+    "key": "airplane",
+    "complex": true,
+    "source": "\t\"airplane\": {\n\t\t# FOR: covering ground fast. It must keep flying speed or the wing stalls, and it banks through a wide\n\t\t# turn, but nothing else on the ring crosses a 3,000 km circumference at this pace -- the long-haul flyer.\n\t\t\"purpose\": \"the fixed-wing — fast and far, but must hold airspeed or stall and banks through a wide turn\",\n\t\t\"loco\": \"air\", \"mass\": 3200.0, \"power\": 12.0, \"brake\": 6.0, \"top\": 90.0, \"reverse\": 0.0,\n\t\t\"drag\": 0.12, \"offroad_drag\": 0.0, \"turn\": 1.1, \"offroad_turn\": 0.0, \"recipe\": \"wing\",\n\t\t\"grip_speed\": 40.0, \"ride\": 0.5, \"wheel_r\": 0.5, \"length\": 11.0, \"tint\": Color(0.40, 0.40, 0.44),\n\t\t\"lift\": 1.0, \"stall_speed\": 30.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  },
+  {
+    "id": "vehicles-lifter",
+    "category": "vehicles",
+    "key": "lifter",
+    "complex": true,
+    "source": "\t\"lifter\": {\n\t\t# FOR: getting OUT. Neither row above can -- their lift dies with the air just over the rim wall, which is the\n\t\t# ceiling working as designed, not a bug. This one carries thrusters (rcs), so as the wing gives up the\n\t\t# reaction control takes over and the same stick keeps flying it. The trade is that it is a poor\n\t\t# aircraft: heavy, draggy, a high stall speed and a wide turn, all of which stop mattering the moment\n\t\t# the air does. Down low the airplane beats it everywhere; over the wall it is the only thing still flying.\n\t\t\"purpose\": \"the lifter — a mediocre aeroplane and the only craft that keeps flying once the air runs out\",\n\t\t\"loco\": \"air\", \"mass\": 9000.0, \"power\": 16.0, \"brake\": 6.0, \"top\": 120.0, \"reverse\": 0.0,\n\t\t\"drag\": 0.22, \"offroad_drag\": 0.0, \"turn\": 0.7, \"offroad_turn\": 0.0, \"recipe\": \"wing\",\n\t\t\"grip_speed\": 60.0, \"ride\": 0.7, \"wheel_r\": 0.6, \"length\": 16.0, \"tint\": Color(0.52, 0.50, 0.46),\n\t\t\"lift\": 0.85, \"stall_speed\": 45.0, \"rcs\": 7.0,\n\t\t\"susp_travel\": 0.0, \"susp_stiff\": 0.0, \"susp_damp\": 0.0, \"susp_sag\": 0.0,\n\t},"
+  }
+]

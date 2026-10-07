@@ -1,10 +1,13 @@
 # Possession — Simulation Architecture
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 The runtime half of the world: bake layers produce *space* (terrain.md), this stack produces *time*. Extracted from progression.md 2026-07-19. Sibling docs: [knowledge.md](knowledge.md) (the player's pyramid), [dialogue.md](dialogue.md) (baked voice), [operators.md](operators.md) (operator registry).
 
 ## Runtime Layer Stack — the player-POV sandbox (PROPOSED 2026-07-18)
 
-No missions, architecturally enforced: the bake DAG ends where player time begins; this mirror stack runs live:
+Independent events and chosen commitments (`.decisions/design-laws.md#chosen-commitments`): the bake DAG ends where player time begins; this mirror stack runs live. NPC requests and player promises can be ordinary facts and intentions without a separate assignment/completion/reward layer:
 
 - **R0 — persistent facts:** player impact, deaths, taken objects — the only durable world mutations (selective persistence). **Datomic precedent (2026-07-26):** independently reinvented Rich Hickey's Datomic model — facts as immutable, accretive tuples (entity, attribute, value, cause, transaction), never updated/deleted, only superseded. `.decisions/`'s SUPERSEDED-not-deleted discipline and K4 staleness (a timestamped observation vs. current `fact_version`) are already exactly Datomic's "as of" time-travel query, independently arrived at. Worth borrowing explicitly: **one universal fact tuple shape across every system** (terrain edits, faction events, inventory, not just knowledge/rumor) rather than bespoke per-system fact representations — a uniform shape means one generic "why"/"since when" query mechanism works everywhere. Also generalizes staleness beyond the player: any entity with a personal as-of pointer into the fact log can honestly disagree with another (two guards in the same room, one just back from months away) for free, same mechanism as K4.
 - **R1 — pressures:** derived from facts, decay and propagate
@@ -13,7 +16,7 @@ No missions, architecturally enforced: the bake DAG ends where player time begin
 - **R4 — encounters:** only where actions intersect a player's bubble — views into the simulation, never content
 - **R5 — arc director:** the authored spine scheduled as *inevitabilities on world logic*, indifferent to player readiness, minimally gated for finishability only. Not missions — weather.
 
-Player-facing surface: the **self-authored journal** — pins are player-authored goals; the bone-thrower reads pins as signal for where to leak information and tilt generation. The world never assigns; it answers in gradients. Per-player in co-op.
+Player-facing surface: the **self-authored journal** records intentions, observations and freely chosen promises. The bone-thrower may read pins as signal; world simulation never reads the player knowledge pyramid. NPCs can ask or bargain, but their actions do not wait for acceptance or a completion checkbox. A promise is a fact known to its participants, not privileged access to the player journal. Per-player knowledge remains distinct in co-op.
 
 ## Tempo — pacing as shared clocks (PROPOSED 2026-07-19)
 
@@ -85,3 +88,7 @@ Bake writes habitat, never animals (L1 spring → L2 moisture → L3 meadow pock
 - **Precondition audit for negotiable inevitabilities:** for each scheduled default, verify an honest causal chain exists in the sim (interceptable preconditions) — else it's a cutscene in simulation clothes. This is a bake-gate for *time*; define the audit checklist.
 - **Player-state model shared by conductor + bone-thrower:** aggression and stagnation are read by both — design the observable set once, not twice.
 - **Cycle length bounds:** the arc counts in day/night cycles; pacing math and moment staging both constrain day length — capture bounds when #9 mocks test the terminator sweep.
+
+## Consequences the player can recognise — adopted 2026-09-10
+
+Independent history and local agency coexist. Interceptable local outcomes remain responsive to player action even around an inevitable major event. Persistent consequences name a plausible later consumer: an informed NPC's behavior, changed access, a place's condition or a traceable rumor. Do not simulate universal acknowledgement, guarantee positive responses, or wait until the ending to reveal that a consequential interaction mattered. No new simulation layer is required by this rule; use the smallest representation that demonstrates the experience.

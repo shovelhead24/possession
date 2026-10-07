@@ -36,7 +36,11 @@ $settings = New-ScheduledTaskSettingsSet `
 
 # repeat forever from a start a minute out, so the first firing is soon but not instant
 $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
-    -RepetitionInterval (New-TimeSpan -Minutes 30)
+    -RepetitionInterval (New-TimeSpan -Minutes 10)
+# 10 minutes, not 30. Measured over 54 runs: a productive tick works for a median of 7 minutes
+# (range 3-12) and then the machine sat idle for the remaining 23. The lock makes overlap a non-event
+# -- a firing that lands on a running tick just logs "skip: a run started N min ago" and exits -- so
+# a shorter interval buys latency, not parallelism, and adds no new failure mode.
 
 function Register($name, $file, $desc) {
     $action = New-ScheduledTaskAction -Execute "powershell.exe" `

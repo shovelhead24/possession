@@ -1,0 +1,32 @@
+extends "res://test_trex_behavior.gd"
+
+func run() -> void:
+	var arena=TestArena.new();arena.kit=TestKit.new();arena.add_child(arena.kit);root.add_child(arena)
+	arena.walker=CharacterBody3D.new();arena.walker.position=Vector3(10000,0,10000);arena.add_child(arena.walker)
+	var manager=TestRange.new();root.add_child(manager)
+	var predator=preload("res://trex.gd").new();predator.arena=arena;predator.manager=manager;arena.add_child(predator)
+	predator.set_physics_process(false);predator.set_process(false)
+	var sound=predator.sounds;sound.set_process(false)
+	assert(sound.bank.size()==7,"Missing sound files")
+	assert(sound.bank.step.get_length()>.8 and sound.bank.step.get_length()<.83,"Footstep must be a single trimmed impact")
+	for clip in sound.bank.values(): assert(not clip.stereo and clip.get_length()>0,"Positional clip should be nonempty mono")
+	sound.sample_feet(.1,[1.2,.65],[Vector3.ZERO,Vector3.ZERO],true)
+	sound.sample_feet(.1,[.65,.65],[Vector3.ZERO,Vector3.ZERO],true)
+	assert(sound.events.get("step",0)==1,"Foot landing should play once")
+	sound.sample_feet(.5,[1.2,1.2],[Vector3.ZERO,Vector3.ZERO],false)
+	sound.sample_feet(.1,[.65,.65],[Vector3.ZERO,Vector3.ZERO],false)
+	assert(sound.events.get("step",0)==1,"Stationary feet must remain silent")
+	sound.alert();sound.voice.stop();sound.alert()
+	assert(sound.events.get("roar",0)+sound.events.get("roar_alt",0)==1,"Roar cooldown failed")
+	sound.hurt();sound.hurt();assert(sound.events.pain==1,"Pain sound spammed")
+	sound.bite();assert(sound.voice.stream==sound.bank.bite,"Bite sound did not interrupt vocal")
+	sound.events.clear();sound.airborne=[false,false]
+	for frame in 420:
+		predator.skeleton.reset_bone_poses()
+		predator.animator.seek(fmod(frame/30.0,101.0/30.0),true)
+		predator._physics_process(1.0/30.0)
+		predator.grounding._process_modification()
+		sound._process(1.0/30.0)
+	assert(sound.events.get("step",0)>=2,"Real animation did not produce footfalls")
+	print("PASS: seven mono clips, single footstep trim, stationary silence, vocal cooldowns, bite priority; real animation footfalls=",sound.events.get("step",0))
+	arena.free();manager.free();quit()

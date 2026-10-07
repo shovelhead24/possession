@@ -1,0 +1,20 @@
+extends SceneTree
+const State = preload("res://mission_state.gd")
+func _init() -> void:
+	var s = State.new()
+	assert(not s.request_support(), "No comms must deny support")
+	s.select_approach("VALLEY")
+	s.select_approach("INVALID")
+	assert(s.approach == "VALLEY")
+	s.advance_relay()
+	assert(not s.connected())
+	s.advance_relay()
+	assert(not s.connected())
+	s.advance_relay()
+	assert(s.connected() and s.request_support())
+	s.support_available = false
+	assert(not s.request_support() and s.connected(), "Supply and comms are independent")
+	s.interrupt_link()
+	assert(not s.connected() and s.approach == "VALLEY", "Link loss must preserve local planning state")
+	print("PASS: route validity, relay sequence, comms gate, support availability, retained knowledge")
+	quit(0)

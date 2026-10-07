@@ -10,13 +10,13 @@ Laws a future session could violate silently — the core reason this log exists
 
 ### principles-ratified — The six brainstorm principles are law
 **Date:** 2026-07-19
-**Status:** active
+**Status:** AMENDED 2026-09-12 by campaign.md#authored-theatre (see current scope there)
 **Decision:** Ratified as a set (closes brief D1): (1) simulate the player's relationship to the world, not the world; (2) we do not simulate detail — we acknowledge it; (3) the Fern Rule — interaction fidelity ≤ visual fidelity × system importance; (4) a low-fidelity cell is a promise of possibility, not a place; (5) encounters are not content — they are consequences; (6) the world never rewards the player directly — it reshapes opportunity gradients.
 **Why:** Proposed April 2026, they silently governed everything designed in the July restart (bake pipeline, realization, tempo, knowledge). Two days of building on them without strain is the ratification test passed.
 
 ### no-missions — No mission/quest layer, ever
 **Date:** 2026-07-19
-**Status:** active
+**Status:** SUPERSEDED 2026-09-10 by chosen-commitments
 **Decision:** No mission system in any form. Player goals are self-authored (journal pins); the world responds with opportunity gradients (bone-thrower) and scheduled inevitabilities (arc director), never assignments. See simulation.md.
 **Why:** Architecturally, bake produces space and runtime produces time — missions fit neither. Thematically, a mission is the world orienting around the player, which deletes witnessing-over-heroism. The moment docs repeat "no quest trigger" like a drumbeat.
 
@@ -52,7 +52,7 @@ Laws a future session could violate silently — the core reason this log exists
 
 ### no-authored-graphs — Content is precondition-tagged pools, never authored trees or graphs
 **Date:** 2026-07-29
-**Status:** active
+**Status:** AMENDED 2026-09-12 by campaign.md#authored-theatre (see current scope there)
 **Decision:** No dialogue trees, quest graphs, or behaviour trees-as-content. Content is authored as a **pool of fragments tagged with preconditions**, selected at runtime by a seeded pick against live facts. No nodes, no edges, no traversal.
 **Why:** Hand-authoring cost scales with branch count, and this project is bounded by what one person plus AI assistance can build — a branching structure large enough to feel alive is exactly the thing the budget cannot pay for, and the failure is silent (you find out late, having built half of it). The pool pattern is already established in two places rather than being new: the dialogue bake and the ending-vignette assembly both do precisely this. Pools also degrade gracefully — an under-populated pool yields repetition, whereas an under-populated tree yields dead ends.
 **Corollary:** consequence systems inherit this. "The world returns your actions to you" (`docs/draws.md` returning draws) must be pools + preconditions + provenance, never an authored consequence graph.
@@ -75,3 +75,21 @@ Laws a future session could violate silently — the core reason this log exists
 **Status:** active
 **Decision:** Closes brief D1b. Every object's allowed interaction is capped by `Interaction Fidelity ≤ Visual Fidelity × System Importance`. Five tiers, by purpose: 0 static signal (read-only, e.g. distant skyline) · 1 passive reactivity (1-2 non-persistent animation states, e.g. fern bends and resets) · 2 binary interaction (2-3 states, may persist locally, e.g. door open/closed) · 3 stateful system node (multiple states, memory, feeds other systems, e.g. generator, camp) · 4 narrative/system anchor (rare, highly legible, e.g. relay pylon). The Fern Rule is tier 1's worked example: low-poly + background-importance means bend/rustle/shadow-disturb only — never health, damage, harvesting, or AI attention hooks. Frame budget scales with tier (0 frames at tier 0 up through richer blending at tier 3+, detailed in research/chatgpt-brainstorm-2026-04.md).
 **Why:** Already load-bearing before ratification — it's the reasoning behind "no harvestable ferns" and every "acknowledge, don't simulate" call so far. Ratifying it as a constraint (not a system to build) costs nothing now and forecloses scope leaks later: an artist can't accidentally promise interactivity a background asset can't back up.
+
+### chosen-commitments — Independent world, voluntary commitments
+**Date:** 2026-09-10
+**Status:** AMENDED 2026-09-12 by campaign.md#authored-theatre (see current scope there)
+**Decision:** Supersedes the categorical `no-missions` ban. Judge an encounter by choice, causality and world independence, not whether it resembles a quest. NPCs may ask for help, make bargains and remember promises. Players may accept, refuse, abandon or record a commitment in their own journal. Other actors continue pursuing their needs; no mandatory assignment chain, automatic completion checklist or world waiting for the player. A promised payment or gift must come from an actor's means and motives, not an abstract reward dispenser. No general quest-system implementation is mandated by this amendment. Existing precondition-pool and no-authored-content-graph constraints remain.
+**Why:** Personal obligations create attachment without making the universe player-centred. The six principles' reward language concerns the world's directing machinery, not a ban on human reciprocity. Historical references to `no-missions` now mean this boundary unless explicitly marked superseded.
+
+### local-agency — History is independent; particular lives can change
+**Date:** 2026-09-10
+**Status:** active
+**Decision:** Witnessing limits the player's control over the largest events, not every consequence. Actions can change a person's survival, trust, access, companionship or a place's condition. Surface those consequences during play through attributable behavior and world changes; the final montage cannot be their first meaningful acknowledgement. Knowledge remains imperfect: only actors with plausible information respond, and silence or delayed consequences are legitimate.
+**Why:** An indifferent universe needs local attachment for its scale and losses to matter. For each designed consequential interaction, identify what changes, who could know, and where the player could later recognise it. This is an acceptance requirement, not a universal reaction timer or guaranteed praise.
+
+### scale-with-intimacy — Quiet and ordinary life carry the spectacle
+**Date:** 2026-09-10
+**Status:** active
+**Decision:** Reachable scale must be composed with memorable places, ordinary encounters, anticipation and returns. Settlements may become places of attachment, not merely vistas to pass. Survival stays shallow enough to leave room for looking, listening and freely chosen detours. Not every animal or journey must become a resource transaction; preserve the deer moment's null-write and the Fern Rule.
+**Why:** Repeated maintenance and uniformly empty distance can destroy awe even in a fully functioning world. Quiet is a valid experience, not a signal that the director must insert an event.

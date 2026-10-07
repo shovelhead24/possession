@@ -1,4 +1,5 @@
 extends Node3D
+const RingFrame = preload("res://world/ring_frame.gd")
 
 # VehicleDef is preloaded, not referenced by class_name. A `class_name` only resolves once the
 # Godot EDITOR has registered it in the global class cache, and this project runs headless --
@@ -89,6 +90,7 @@ var _wall_shadow_soft := 220.0      # penumbra width at the wall-shadow edge, me
 var sun_speed_idx := 1
 var sun_angle := 0.35             # radians around ring plane; 0 = noon at camera
 var sun_paused := false
+var _shot_hold_cam := false       # --silhouette pins the camera; stop the chase cam fighting it
 
 var _cam: Camera3D
 var _hud: Label
@@ -491,6 +493,13 @@ func _ready() -> void:
 	_build_dem_texture()
 	_load_patches()
 
+	# Physics bake-off runs in a clean world -- it must NOT build the ring, whose _process/_input
+	# reference _mat/_clouds we never create here. DEM is already loaded (the terrain scenario needs
+	# _terrain_h), so bail straight into the harness. See _physbench_run.
+	if OS.get_cmdline_user_args().has("--physbench"):
+		_physbench_run()
+		return
+
 	_cam = Camera3D.new()
 	_cam.position = Vector3(0, 120, 0)
 	_cam.near = 0.5
@@ -799,8 +808,7 @@ func _radius() -> float:
 
 # Ring-space to local: theta=0 under camera, floor y=0, spinward = +x, lat = z.
 func _ring_pos(theta: float, lat: float, h: float) -> Vector3:
-	var r: float = _radius() - h
-	return Vector3(r * sin(theta), _radius() - r * cos(theta), lat)
+	return RingFrame.position(theta * _radius(), h, lat, _radius())
 
 func _surface_pos(arc: float, lat: float) -> Vector3:
 	return _ring_pos(arc / _radius(), lat, _terrain_h(arc, lat))
@@ -1498,6 +1506,314 @@ func _weapon_def(name: String) -> WeaponDef:
 	return wd
 
 # ---------------------------------------------------------------------------
+# PHYSICS BAKE-OFF. `-- --physbench`
+#
+# The measuring device, built BEFORE choosing an engine -- the same discipline as --proving and
+# --range: an identical scripted scenario per engine, one comparable table, believe the numbers over
+# the impression. Nothing here decides Godot Physics vs Jolt; it makes the decision measurable.
+#
+# The engine is switched in Project Settings (physics/3d/physics_engine), not in code -- so you run
+# this once per engine and diff the two tables. The harness only reports which engine is active.
+#
+# Six scenarios (TASKS.md):
+#   rest    50-box stack, 60s, undisturbed          -> drift/jitter of a settled solver
+#   shift   the same stack, origin teleported 500m   -> THE DECIDER: how much an engine flinches when
+#           every body is rebased (invalidating contact caches). Nobody benchmarks this; a
+#           player-centred island MUST rebase, so it is the number that actually matters here.
+#   terrain boxes dropped on the real home DEM        -> is HeightMapShape3D collision even supported,
+#           and how far do bodies penetrate/settle
+#   slope   a box on 5/15/30 deg                      -> do bodies creep (friction solver)
+#   count   ramp non-sleeping boxes until the physics  -> capacity headroom on the Intel UHD target
+#           STEP exceeds 16ms (step time, not frame time -- isolates the engine from the renderer)
+#   repeat  run a drop twice, compare final transforms -> determinism, which every harness here needs
+#
+# WHY STEP TIME NOT FRAME TIME for count: this is a physics bake-off. Performance.TIME_PHYSICS_PROCESS
+# is the engine's own step cost, uncontaminated by rendering -- which is also why physbench runs in a
+# bare world with the ring unbuilt.
+# ---------------------------------------------------------------------------
+const PB_STACK := 50              # rest/shift stack height (TASKS.md: "50-box stack")
+const PB_REST_SECS := 60.0        # TASKS.md: "60s"
+const PB_SHIFT_SECS := 60.0
+const PB_SHIFT_INTERVAL := 2.0    # TASKS.md: "teleported 500m every 2s"
+const PB_SHIFT_DIST := 500.0
+const PB_SETTLE := 3.0            # ignore this opening window when reading residual jitter
+const PB_BOX := 1.0              # cube edge, m
+const PB_COUNT_MS := 16.0        # count scenario stops when the physics step exceeds this
+const PB_COUNT_CAP := 3000       # hard cap so a strong engine still terminates the ramp
+
+func _physbench_run() -> void:
+	# the ring was never built (see _ready); its per-frame callbacks would null-deref on _mat/_clouds
+	set_process(false)
+	set_process_input(false)
+	set_process_unhandled_input(false)
+	# a camera so a windowed run shows the stack -- not needed for the measurement itself
+	_cam = Camera3D.new()
+	_cam.far = 5000.0
+	add_child(_cam)
+	_cam.look_at_from_position(Vector3(38, 32, 38), Vector3(0, 24, 0), Vector3.UP)
+	_cam.make_current()
+	await get_tree().create_timer(0.5).timeout
+
+	var engine := str(ProjectSettings.get_setting("physics/3d/physics_engine", "DEFAULT"))
+	var hz := Engine.physics_ticks_per_second
+	print("\nPHYSICS BAKE-OFF — engine: %s  (%d Hz)  target: Intel UHD" % [engine, hz])
+	print("switch engines in Project Settings > physics/3d/physics_engine, rerun, diff the tables\n")
+	print("%-9s %7s %9s %9s %8s %7s %-4s %s" % [
+		"scenario", "bodies", "drift m", "jitter", "penet m", "ms", "det", "note"])
+
+	await _pb_rest()
+	await _pb_shift()
+	await _pb_terrain()
+	await _pb_slope()
+	await _pb_count()
+	await _pb_repeat()
+
+	print("\nPHYSBENCH done")
+	get_tree().quit()
+
+func _pb_row(scen: String, bodies: String, drift: String, jitter: String, penet: String,
+		ms: String, det: String, note: String) -> void:
+	print("%-9s %7s %9s %9s %8s %7s %-4s %s" % [scen, bodies, drift, jitter, penet, ms, det, note])
+
+func _pb_dt() -> float:
+	return 1.0 / float(Engine.physics_ticks_per_second)
+
+func _pb_make_floor(tilt_deg := 0.0, size := 400.0) -> StaticBody3D:
+	var sb := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(size, 4.0, size)   # top face sits at local y = +2
+	cs.shape = box
+	sb.add_child(cs)
+	sb.rotation = Vector3(0, 0, deg_to_rad(tilt_deg))
+	add_child(sb)
+	return sb
+
+func _pb_make_box(pos: Vector3, sleepable := true) -> RigidBody3D:
+	var rb := RigidBody3D.new()
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(PB_BOX, PB_BOX, PB_BOX)
+	cs.shape = box
+	rb.add_child(cs)
+	rb.can_sleep = sleepable
+	add_child(rb)
+	rb.global_position = pos
+	return rb
+
+func _pb_stack(n: int, base_y: float, sleepable := true) -> Array:
+	# vertically aligned cubes with a hair of gap, resting on a floor whose top is at base_y
+	var boxes := []
+	for i in n:
+		var y := base_y + PB_BOX * 0.5 + float(i) * (PB_BOX + 0.002)
+		boxes.append(_pb_make_box(Vector3(0, y, 0), sleepable))
+	return boxes
+
+func _pb_teleport(body: Node3D, d: Vector3) -> void:
+	# rebase: teleport at the SERVER level so contact caches invalidate (that cost is the whole point
+	# of the shift scenario). Static floor moves by node transform, which is enough for it.
+	if body is RigidBody3D:
+		var rid: RID = (body as RigidBody3D).get_rid()
+		var st: Transform3D = PhysicsServer3D.body_get_state(rid, PhysicsServer3D.BODY_STATE_TRANSFORM)
+		st.origin += d
+		PhysicsServer3D.body_set_state(rid, PhysicsServer3D.BODY_STATE_TRANSFORM, st)
+	else:
+		body.global_position += d
+
+func _pb_clear(nodes: Array) -> void:
+	for n in nodes:
+		if is_instance_valid(n):
+			n.queue_free()
+
+func _pb_run_stack(boxes: Array, secs: float, shift_dist: float, ground: StaticBody3D) -> Dictionary:
+	# drift = worst horizontal wander of the top box from where it started (rebase offset removed);
+	# jitter = worst body speed once settled; ms = mean physics step time over the run.
+	var top: Node3D = boxes[boxes.size() - 1]
+	var offset := Vector3.ZERO
+	var start: Vector3 = top.global_position
+	var drift := 0.0
+	var jitter := 0.0
+	var ms_sum := 0.0
+	var ms_n := 0
+	var t := 0.0
+	var since := 0.0   # first rebase waits one interval, so the stack settles before it is shoved
+	while t < secs:
+		if shift_dist > 0.0 and since >= PB_SHIFT_INTERVAL:
+			since -= PB_SHIFT_INTERVAL
+			var d := Vector3(-shift_dist, 0.0, 0.0)
+			for b in boxes:
+				_pb_teleport(b, d)
+			_pb_teleport(ground, d)
+			offset += d
+		await get_tree().physics_frame   # the teleport above syncs to the node on this step
+		var dt := _pb_dt()
+		t += dt
+		since += dt
+		var horiz: Vector3 = top.global_position - offset - start
+		drift = maxf(drift, Vector2(horiz.x, horiz.z).length())
+		if t > PB_SETTLE:
+			for b in boxes:
+				jitter = maxf(jitter, (b as RigidBody3D).linear_velocity.length())
+		ms_sum += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+		ms_n += 1
+	return {"drift": drift, "jitter": jitter, "ms": ms_sum / maxf(1.0, float(ms_n))}
+
+func _pb_rest() -> void:
+	var ground := _pb_make_floor()
+	var boxes := _pb_stack(PB_STACK, 2.0)
+	var r := await _pb_run_stack(boxes, PB_REST_SECS, 0.0, ground)
+	_pb_row("rest", str(PB_STACK), "%.3f" % r["drift"], "%.4f" % r["jitter"], "-",
+		"%.2f" % r["ms"], "-", "60s undisturbed")
+	_pb_clear(boxes); _pb_clear([ground])
+	await get_tree().physics_frame
+
+func _pb_shift() -> void:
+	var ground := _pb_make_floor()
+	var boxes := _pb_stack(PB_STACK, 2.0)
+	var r := await _pb_run_stack(boxes, PB_SHIFT_SECS, PB_SHIFT_DIST, ground)
+	_pb_row("shift", str(PB_STACK), "%.3f" % r["drift"], "%.4f" % r["jitter"], "-",
+		"%.2f" % r["ms"], "-", "500m rebase /2s — DECIDER")
+	_pb_clear(boxes); _pb_clear([ground])
+	await get_tree().physics_frame
+
+func _pb_hf_sample(data: PackedFloat32Array, N: int, lx: float, lz: float) -> float:
+	# height at local (lx,lz) using the EXACT mapping HeightMapShape3D uses, so penetration is
+	# measured against the collision surface itself rather than a re-derived DEM coordinate
+	var fi := clampf(lx + float(N - 1) * 0.5, 0.0, float(N - 1) - 0.001)
+	var fj := clampf(lz + float(N - 1) * 0.5, 0.0, float(N - 1) - 0.001)
+	var i0 := int(fi); var j0 := int(fj)
+	var tx := fi - float(i0); var tz := fj - float(j0)
+	var h00 := data[j0 * N + i0]
+	var h10 := data[j0 * N + i0 + 1]
+	var h01 := data[(j0 + 1) * N + i0]
+	var h11 := data[(j0 + 1) * N + i0 + 1]
+	return lerpf(lerpf(h00, h10, tx), lerpf(h01, h11, tx), tz)
+
+func _pb_terrain() -> void:
+	if _dem_hf_w <= 0:
+		_pb_row("terrain", "-", "-", "-", "-", "-", "-", "no DEM loaded — skipped")
+		return
+	# a 64m patch of the real home DEM (arc/lat 0 = Millstreet) as a HeightMapShape3D, 1m grid
+	var N := 64
+	var data := PackedFloat32Array()
+	data.resize(N * N)
+	var c := N / 2
+	for j in N:
+		for i in N:
+			data[j * N + i] = _terrain_h(float(i - c), float(c - j))
+	var hm := HeightMapShape3D.new()
+	hm.map_width = N
+	hm.map_depth = N
+	hm.map_data = data
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	cs.shape = hm
+	body.add_child(cs)
+	add_child(body)   # at origin, so shape heights are absolute world Y
+	var center_h := _pb_hf_sample(data, N, 0.0, 0.0)
+	var boxes := []
+	for gx in range(-2, 3):
+		for gz in range(-2, 3):
+			boxes.append(_pb_make_box(Vector3(float(gx) * 4.0, center_h + 8.0, float(gz) * 4.0)))
+	var t := 0.0
+	while t < 8.0:
+		await get_tree().physics_frame
+		t += _pb_dt()
+	var max_pen := 0.0
+	var fell := false
+	for b in boxes:
+		var p: Vector3 = (b as Node3D).global_position
+		if p.y < center_h - 50.0:
+			fell = true
+		var surf := _pb_hf_sample(data, N, p.x, p.z)
+		max_pen = maxf(max_pen, surf - (p.y - PB_BOX * 0.5))
+	var note := "heightfield collision OK"
+	if fell:
+		note = "BODIES FELL THROUGH — hf unsupported?"
+	_pb_row("terrain", str(boxes.size()), "-", "-", "%.3f" % max_pen, "-", "-", note)
+	_pb_clear(boxes); _pb_clear([body])
+	await get_tree().physics_frame
+
+func _pb_slope() -> void:
+	# a box dropped onto 5/15/30 deg, creep measured AFTER a 1s settle so the drop-in isn't counted
+	for ang in [5.0, 15.0, 30.0]:
+		var ground := _pb_make_floor(ang)
+		# floor rotated +ang about Z maps local up (0,1,0) -> world (-sin, cos, 0); place the box just
+		# above the tilted top face along THAT normal, or it spawns inside the slab and gets ejected
+		var n := Vector3(-sin(deg_to_rad(ang)), cos(deg_to_rad(ang)), 0.0)
+		var box := _pb_make_box(n * (2.0 + PB_BOX * 0.5 + 0.02))
+		var t := 0.0
+		var settled := box.global_position
+		var creep := 0.0
+		while t < 10.0:
+			await get_tree().physics_frame
+			t += _pb_dt()
+			if t < 1.0:
+				settled = box.global_position
+			else:
+				creep = maxf(creep, box.global_position.distance_to(settled))
+		_pb_row("slope", "1", "%.3f" % creep, "-", "-", "-", "-", "%d° creep over 9s" % int(ang))
+		_pb_clear([box]); _pb_clear([ground])
+		await get_tree().physics_frame
+
+func _pb_count() -> void:
+	# ramp non-sleeping boxes (sleeping ones leave the solver and would never reach the ceiling)
+	var ground := _pb_make_floor(0.0, 400.0)
+	var boxes := []
+	var ms := 0.0
+	while boxes.size() < PB_COUNT_CAP:
+		for k in 50:
+			var i := boxes.size()
+			var gx := float((i % 24) - 12) * 1.4
+			var gz := float((i / 24) % 24 - 12) * 1.4
+			var gy := 24.0 + float(i / 576) * 1.4
+			boxes.append(_pb_make_box(Vector3(gx, gy, gz), false))
+		var t := 0.0
+		var acc := 0.0
+		var samples := 0
+		while t < 1.0:
+			await get_tree().physics_frame
+			t += _pb_dt()
+			if t > 0.5:
+				acc += Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0
+				samples += 1
+		ms = acc / maxf(1.0, float(samples))
+		if ms > PB_COUNT_MS:
+			break
+	_pb_row("count", str(boxes.size()), "-", "-", "-", "%.2f" % ms, "-",
+		">%.0fms physics step (cap %d)" % [PB_COUNT_MS, PB_COUNT_CAP])
+	_pb_clear(boxes); _pb_clear([ground])
+	await get_tree().physics_frame
+
+func _pb_repeat() -> void:
+	# same drop twice from identical init; determinism means the final transforms match bitwise
+	var finals := [[], []]
+	for run in 2:
+		var ground := _pb_make_floor()
+		var boxes := _pb_stack(12, 2.0)
+		var t := 0.0
+		while t < 6.0:
+			await get_tree().physics_frame
+			t += _pb_dt()
+		for b in boxes:
+			finals[run].append((b as Node3D).global_transform)
+		_pb_clear(boxes); _pb_clear([ground])
+		# let the freed bodies leave the server before the next run rebuilds, or the second run
+		# starts against stale contacts and the determinism check is meaningless
+		for _f in 3:
+			await get_tree().physics_frame
+	var identical := true
+	var max_delta := 0.0
+	for i in finals[0].size():
+		var a: Transform3D = finals[0][i]
+		var b: Transform3D = finals[1][i]
+		if a != b:
+			identical = false
+		max_delta = maxf(max_delta, a.origin.distance_to(b.origin))
+	_pb_row("repeat", "12", "-", "-", "-", "-", "YES" if identical else "NO",
+		"2 runs, maxΔ=%.4fm" % max_delta)
+
+# ---------------------------------------------------------------------------
 # FIRING RANGE (TASKS.md, "Build this before any weapon"). The proving-ground lesson applied to
 # weapons: feel is measurable, and a table that compares is worth more than a set of separate
 # impressions. Identical course per weapon, seeded, so re-running it means something.
@@ -1682,7 +1998,7 @@ func _range_run() -> void:
 	if want.is_empty():
 		want = WEAPON_ROWS.keys()
 	print("RANGE  ring R=%.0fm  omega=%.6f rad/s  surface %.0f m/s" % [_radius(), _omega(), _omega() * _radius()])
-	print("%-10s %-9s %6s %6s %7s %7s %8s %8s %7s" % ["weapon", "range", "cold%", "burst%", "group", "drop", "flight", "spin-dif", "ttk"])
+	print("%-10s %-9s %6s %6s %7s %7s %8s %8s %7s %7s %8s" % ["weapon", "range", "cold%", "burst%", "group", "drop", "flight", "spin-dif", "ttk", "rd/kill", "kill/mag"])
 	for wname in want:
 		if not WEAPON_ROWS.has(wname):
 			print("RANGE skip %s (no such weapon)" % wname)
@@ -1834,16 +2150,28 @@ func _range_run() -> void:
 				var burst_t: float = burst * shot_dt
 				sustained = burst / maxf(burst_t + wd.overheat_lock_s, 0.001) * 60.0
 			var ttk_s := "  --  "
+			var need := 0.0
 			if hit_frac > 0.0:
 				# rounds needed at THIS hit rate, paced by the cycle and by reloads
-				var need: float = ceil(RANGE_TARGET_HP / maxf(wd.damage, 0.001)) / hit_frac
+				need = ceil(RANGE_TARGET_HP / maxf(wd.damage, 0.001)) / hit_frac
 				var ttk: float = need * shot_dt + floor(need / maxf(float(wd.mag), 1.0)) * wd.reload_s 					+ float(fs.get("t", 0.0))
 				ttk_s = "%5.2fs" % ttk
+			# AMMO ECONOMY -- the scarcity read. What a kill COSTS in rounds (need, at this hit rate) and how
+			# many kills a full magazine buys before the reload window. This is where balance is meant to
+			# live: two weapons with the same ttk are not the same weapon if one dries in three kills and
+			# the other in thirty. See .decisions/combat.md#ammunition-is-the-balance-lever. mag 0 (bows,
+			# single launchers) pays per shot, not per magazine, so kill/mag is left blank for them.
+			var rdkill_s := "  --  "
+			var killmag_s := "   --   "
+			if need > 0.0:
+				rdkill_s = "%6.1f" % need
+				if wd.mag > 0:
+					killmag_s = "%7.1f" % (float(wd.mag) / need)
 			# no hits means no time-to-kill. Clamping the hit rate to 0.001 to avoid the divide printed
 			# 487s, which reads as a slow weapon rather than as a weapon that cannot reach.
-			print("%-10s %7.0fm %5.0f%% %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s" % [
+			print("%-10s %7.0fm %5.0f%% %5.0f%% %6.2fm %6.2fm %7.3fs %7.2fm %7s %7s %8s" % [
 				wname, dist, cold_frac * 100.0, hit_frac * 100.0, worst, drop_s,
-				float(fs.get("t", 0.0)), drop_a - drop_s, ttk_s])
+				float(fs.get("t", 0.0)), drop_a - drop_s, ttk_s, rdkill_s, killmag_s])
 	# THE VERTICAL SHOT. The item says long shots "drift sideways"; they do not, and this is the test
 	# that shows why. Coriolis is -2*omega x v, and omega points along the SPIN AXIS -- so for anyone
 	# standing on the floor, the deflection is always in the ARC-radial plane and never across the
@@ -1929,7 +2257,7 @@ func _shot_run() -> void:
 	var oi := args.find("--only")
 	if oi >= 0 and oi + 1 < args.size() and not args[oi + 1].begins_with("--"):
 		only = Array(args[oi + 1].split(","))
-	var want_vehicles := args.has("--vehicles")
+	var want_vehicles := args.has("--vehicles") or args.has("--silhouette")
 	var wi := args.find("--wall")
 	if wi >= 0 and wi + 1 < args.size():
 		wall_top_h = float(args[wi + 1])
@@ -1949,6 +2277,42 @@ func _shot_run() -> void:
 	# UNCAP THE FRAME TIMER. With vsync on, _measure_frame_ms can only ever report 16.6ms and every
 	# scene alike reads "60 fps" -- it would be timing the wait, not the work.
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+
+	# DEPLOYABLES (`--deployables`). Player-placed objects -- mines, sensors, a tripod turret -- placed,
+	# saved, reloaded, and shot silhouette-style at home. Opt-in and self-contained (it quits after), so
+	# it never rides along on a landscape run. Proves the "placed, then persistent" pair on screen: the
+	# nodes framed here are the ones read back from the save file, not the ones just built.
+	if args.has("--deployables"):
+		await _deployable_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
+
+	# STRUCTURES (`--structures`). Extends the vehicle SILHOUETTE framing to the built environment --
+	# houses (gable, meru) and the dock port -- which had no "does this read" device: the ground framing
+	# carries no buildings and from air a door is sub-pixel (2026-08-16 journal). Opt-in, self-contained,
+	# quits after -- so it never taxes a landscape run.
+	if args.has("--structures"):
+		await _structure_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
+
+	# SEAM (`--seam`). Edge-feather comparison strip: parks a low view across an arc-adjacent patch
+	# ownership boundary and shoots the SAME frame at several `patch_blend_km` widths for a human to
+	# choose from. Opt-in, self-contained, quits after -- so it never rides a landscape run. The width
+	# is NOT picked here (TASKS.md: "Do not pick the width unattended").
+	if args.has("--seam"):
+		await _seam_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
 
 	for pname in want:
 		var idx := _patch_names.find(pname)
@@ -2107,13 +2471,24 @@ func _shot_run() -> void:
 				pname, shot["n"],
 				RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
 				await _measure_frame_ms(), path])
+	# WEAPONS (`--weapons`). The same silhouette question as the vehicles -- "does a musket read as a
+	# musket, an SMG as an SMG" -- but weapons are held, not driven, so this parade floats each one above
+	# home terrain against clean sky rather than entering DRIVE. Opt-in, and it quits after, so it never
+	# taxes a landscape run.
+	if args.has("--weapons"):
+		await _weapon_parade(dir)
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
 	# VEHICLES. The patch loop above never enters DRIVE, so an imported car model could be sideways,
 	# giant or underground and no frame would catch it. Enter DRIVE at home, let the chase cam settle,
 	# and shoot each vehicle from behind -- the framing that shows orientation, scale and grounding.
 	# OPT-IN (`--vehicles`): this is a whole-roster parade, and it was running on every landscape
 	# question anybody asked.
 	if not want_vehicles:
-		print("SHOT vehicles skipped (pass --vehicles for the roster parade)")
+		print("SHOT vehicles skipped (pass --vehicles for the roster parade, --silhouette for the recipe read)")
 		if _hud: _hud.visible = true
 		if _perf: _perf.visible = true
 		get_tree().quit()
@@ -2126,6 +2501,26 @@ func _shot_run() -> void:
 	_cam.position = cpos + _ring_up(cpos) * 6.0
 	for _k in 30:
 		await get_tree().process_frame
+	# SILHOUETTE PARADE (`--silhouette`). The rear-quarter chase framing below cannot answer the one
+	# question the vehicle recipes exist to pass -- "does this read as a tractor / a helicopter" -- and
+	# it was being used for exactly that (2026-08-16 journal): every subject ~5% of frame, at distance,
+	# in failing light, with a fir tree parked dead centre in most frames. This framing instead sits the
+	# camera at a fixed offset from each vehicle's own bounding SPHERE (so length does not change how
+	# much of frame it fills), shoots side-on and front three-quarter, clears the scatter within a small
+	# radius so nothing stands in front, and lights the visible face rather than backlighting it.
+	if args.has("--silhouette"):
+		sun_angle = 0.5   # a high mid-morning at home (arc ~0): clean daylight, not the parade's dusk
+		for vi in _vehicles.size():
+			_select_vehicle(vi)
+			for _k in 16:
+				await get_tree().process_frame   # let the suspension settle the body onto the ground
+			await _shoot_silhouette(vi, dir)
+		_shot_hold_cam = false
+		if _hud: _hud.visible = true
+		if _perf: _perf.visible = true
+		print("SHOTS done")
+		get_tree().quit()
+		return
 	for vi in _vehicles.size():
 		_select_vehicle(vi)
 		for _k in 24:
@@ -2147,6 +2542,307 @@ func _shot_run() -> void:
 	if _perf: _perf.visible = true
 	print("SHOTS done")
 	get_tree().quit()
+
+func _seam_parade(dir: String) -> void:
+	# EDGE-FEATHER COMPARISON STRIP (TASKS.md "Edge feathering at patch boundaries"). Parks a low view
+	# across an arc-adjacent patch ownership boundary and shoots the SAME frame at several
+	# `patch_blend_km` widths, so a human can pick the width by looking. The width is NOT chosen here.
+	#
+	# The seam shot is between two ARRAY-tier splice patches: the home DEM and the one streamed hires
+	# patch both WIN before the feather branch in sample_h_raw, so leaving them on would draw an
+	# un-feathered surface on one side of the boundary. Force both off for the run -- nothing is placed
+	# or driven for a parked screenshot, so this has no other effect. _hires_poll re-enables hires when
+	# a stream lands, so re-assert it (and the width) every capture.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	if _patch_rects.size() < 2:
+		print("SHOT seam: need >=2 patches, have %d" % _patch_rects.size())
+		return
+	var circ: float = CIRCUMFERENCES[c_idx]
+	var rad := _radius()
+	# arc-adjacent pair: patch 0 and its nearest neighbour by arc -- the same "nearest" that
+	# _clip_patch_overlap uses to set ownership, so their shared boundary is exactly halfway between.
+	var a := 0
+	var b := -1
+	var best := circ
+	for j in _patch_rects.size():
+		if j == a:
+			continue
+		var d: float = absf(wrapf(_patch_rects[j].x - _patch_rects[a].x, -circ * 0.5, circ * 0.5))
+		if d < best:
+			best = d
+			b = j
+	if b < 0:
+		print("SHOT seam: no neighbour found")
+		return
+	var ra: Vector4 = _patch_rects[a]
+	var d_ab: float = wrapf(_patch_rects[b].x - ra.x, -circ * 0.5, circ * 0.5)   # signed arc a->b
+	var to_b: float = signf(d_ab)
+	var seam_arc: float = ra.x + d_ab * 0.5                                       # ownership boundary
+	var seam_lat: float = ra.y
+	# Frame from ABOVE, offset back over the lower side, looking down at the boundary. The camera must
+	# clear the feathered ground at EVERY width: the feather raises the low side toward the high side
+	# inside the band, so a low camera ends up underground at wide blend (found the hard way -- the 3km
+	# frame of the first low pass showed the camera under a risen surface). A weighted average is bounded
+	# by the two sides, so max(h_a,h_b)+400m clears it at all widths and a down-look lights the terrain
+	# instead of silhouetting it. Narrow FOV magnifies the ~km-scale band.
+	var h_a: float = _terrain_h(seam_arc - to_b * 60.0, seam_lat)      # a's side height
+	var h_b: float = _terrain_h(seam_arc + to_b * 60.0, seam_lat)      # neighbour's side height
+	var to_low: float = to_b if h_b < h_a else -to_b                   # arc dir toward the lower side
+	var cam_arc: float = seam_arc + to_low * 1600.0
+	var cam_pos := _ring_pos(cam_arc / rad, seam_lat, maxf(h_a, h_b) + 400.0)
+	var tgt_pos := _ring_pos(seam_arc / rad, seam_lat, (h_a + h_b) * 0.5)   # boundary point, mid-height
+	var up := _ring_up(cam_pos)
+	sun_paused = true
+	sun_angle = fposmod(-seam_arc / rad + 0.45, TAU)   # put THIS arc in mid-morning
+	_cam.fov = 50.0
+	_cam.global_position = cam_pos
+	_cam.look_at(tgt_pos, up)
+	var na := str(_patch_names[a])
+	var nb := str(_patch_names[b])
+	print("SHOT seam: %s|%s boundary @ %.1f%% arc, step here=%.1fm there=%.1fm" % [na, nb,
+		100.0 * seam_arc / circ, _terrain_h(seam_arc - to_b * 50.0, seam_lat),
+		_terrain_h(seam_arc + to_b * 50.0, seam_lat)])
+	# let the CDLOD bubble retile around the parked camera. The recenter is throttled (_band_cd up to
+	# 1.5s) and blocked the frame the camera teleports (_cam_speed spikes), so wait on the clock.
+	await get_tree().create_timer(3.0).timeout
+	_cam.global_position = cam_pos                     # re-assert in case a mode tick nudged it
+	_cam.look_at(tgt_pos, up)
+	for km in [0.0, 1.0, 2.0, 3.0]:
+		for m in _mats:
+			m.set_shader_parameter("use_dem", false)
+			m.set_shader_parameter("hires_valid", false)
+			m.set_shader_parameter("patch_blend_km", km)
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		var path := "%s/seam_%s-%s_%dkm.png" % [dir, na, nb, int(km)]
+		get_viewport().get_texture().get_image().save_png(path)
+		print("SHOT seam %s|%s blend=%dkm  %s" % [na, nb, int(km), path])
+	for m in _mats:
+		m.set_shader_parameter("patch_blend_km", 0.0)   # leave the feather off
+	_shot_hold_cam = false
+
+func _shoot_silhouette(vi: int, dir: String) -> void:
+	# Two framings per vehicle -- side-on and front three-quarter -- each parked at a fixed offset from
+	# the subject's bounding SPHERE. The sphere (not the box) makes the fit independent of view angle and
+	# of which axis is longest, so a 4m box and a 12m airplane both fill the frame the same. See the
+	# 2026-08-16 journal entry that this framing fell out of; it is the multiplier that lets every recipe
+	# after it be judged on "does it read".
+	_shot_hold_cam = true
+	# Clear the scatter in a small radius so nothing stands between camera and subject (the fir-tree-dead-
+	# centre problem). Reuse the trample set: mark near trees down and rebuild the LOD buckets, which
+	# already skip downed indices. Cheap on repeat -- every vehicle parks at the same spot, so after the
+	# first pass the guard finds them already down and does no rebuild.
+	var cpos := _car.global_position
+	var cleared := 0
+	for i in _tree_ground.size():
+		if not _tree_down.has(i) and cpos.distance_squared_to(_tree_ground[i]) < 30.0 * 30.0:
+			_tree_down[i] = true
+			cleared += 1
+	if cleared > 0:
+		_update_tree_lod(true)
+	var local := _model_aabb(_car)
+	var xf := _car.global_transform
+	var basis := xf.basis.orthonormalized()          # strip any body pitch/roll drift's scale, keep facing
+	var center := xf * local.get_center()
+	var up := _ring_up(center)
+	var rad: float = maxf(0.5 * local.size.length(), 0.5)
+	# Sun not behind the subject: shoot from whichever flank the sun lights, so the near face reads as
+	# form rather than a flat backlit shadow. to_sun is world-space near the home arc, where the parade is.
+	var to_sun := RingFrame.sun_direction(sun_angle, sun_tilt)
+	var side: float = 1.0 if basis.x.dot(to_sun) >= 0.0 else -1.0
+	var fov := 42.0                                  # narrow: less perspective stretch on a close subject
+	var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.15   # margin so the silhouette clears the edges
+	var vname: String = _vehicles[vi]["name"]
+	# local -Z is the vehicle's forward (see _make_warthog); +y lifts the eye so the roofline reads
+	var views := [
+		{"n": "side", "off": Vector3(side, 0.16, 0.0)},
+		{"n": "tq", "off": Vector3(side * 0.82, 0.28, -0.55)},
+	]
+	for v in views:
+		var off: Vector3 = (v["off"] as Vector3).normalized()
+		_cam.fov = fov
+		_cam.global_position = center + (basis * off) * dist
+		_cam.look_at(center, up)
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+		var path := "%s/sil_%s_%s.png" % [dir, vname, v["n"]]
+		get_viewport().get_texture().get_image().save_png(path)
+		print("SHOT sil %-10s %-4s tris=%-6d scene=%-7d %s  %s" % [vname, str(v["n"]),
+			_node_tris(_car) if _car != null else 0,
+			RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
+			await _measure_frame_ms(8), path])
+	_shot_hold_cam = false
+
+func _weapon_parade(dir: String) -> void:
+	# Build each weapon from its recipe, float it above home terrain against sky, and shoot it side-on and
+	# front three-quarter off its own bounding sphere -- the same clean framing the vehicle silhouettes
+	# use, so length does not change how much of frame the subject fills. This is the "does it read"
+	# device for the weapon recipes; the answer is entirely visual, so it has to be looked at, not counted.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	sun_angle = 0.5                                       # high mid-morning at home: clean daylight
+	var r := _radius()
+	var anchor := _ring_pos(0.0, 0.0, _terrain_h(0.0, 0.0) + 50.0)   # 50m up at home arc, above the scatter
+	var up := _ring_up(anchor)
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	for wn in WEAPON_ROWS.keys():
+		var node := _make_weapon(str(wn))
+		add_child(node)
+		node.global_position = anchor
+		var local := _model_aabb(node)
+		var center := node.global_transform * local.get_center()
+		var basis := node.global_transform.basis.orthonormalized()
+		var rad: float = maxf(0.5 * local.size.length(), 0.15)
+		var side: float = 1.0 if basis.x.dot(to_sun) >= 0.0 else -1.0
+		var fov := 40.0
+		var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.2
+		# local -Z is the muzzle line; +y lifts the eye so the top line (sight/stock) reads
+		for v in [{"n": "side", "off": Vector3(side, 0.12, 0.0)}, {"n": "tq", "off": Vector3(side * 0.82, 0.24, -0.55)}]:
+			var off: Vector3 = (v["off"] as Vector3).normalized()
+			_cam.fov = fov
+			_cam.global_position = center + (basis * off) * dist
+			_cam.look_at(center, up)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+			var path := "%s/weapon_%s_%s.png" % [dir, wn, v["n"]]
+			get_viewport().get_texture().get_image().save_png(path)
+			print("SHOT weapon %-12s %-4s recipe=%-10s tris=%-5d %s" % [wn, str(v["n"]),
+				_weapon_recipe_key(str(wn)), _node_tris(node), path])
+		node.queue_free()
+		await get_tree().process_frame
+	_shot_hold_cam = false
+
+func _deployable_parade(dir: String) -> void:
+	# The "placed, then persistent" proof, on screen. Place one of each deployable near home on the
+	# ground, SAVE the list, then RELOAD it and build only what came back from the file -- so the frames
+	# below are evidence the round-trip works, not just that the meshes exist. Each is framed side-on and
+	# three-quarter off its own bounding sphere, the same clean silhouette device the weapons parade uses.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	sun_angle = 0.5                                       # high mid-morning at home: clean daylight
+	var r := _radius()
+	# Place one of each, spaced along the strip so they don't overlap, then persist and read back.
+	var placed := [
+		Deployables.make_placement("mine",   0.0, -4.0, 0.0),
+		Deployables.make_placement("sensor", 0.0,  0.0, 0.0),
+		Deployables.make_placement("turret", 0.0,  4.0, 0.6),
+	]
+	Deployables.save(placed)
+	var loaded: Array = Deployables.load()
+	print("SHOT deployables: placed %d, saved to %s, reloaded %d" % [placed.size(), Deployables.SAVE_PATH, loaded.size()])
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	for p in loaded:
+		var key := str(p["key"])
+		var arc := float(p["arc"])
+		var lat := float(p["lat"])
+		var node := Deployables.build(key)
+		add_child(node)
+		# Sit it ON the terrain and stand it up along ring-up (local +Y = up), yawed by the placement.
+		var pos := _ring_pos(arc / r, lat, _terrain_h(arc, lat))
+		var up := _ring_up(pos)
+		var right := up.cross(Vector3(0.0, 0.0, 1.0)).normalized()
+		var basis := Basis(up, float(p["yaw"])) * Basis(right, up, right.cross(up))
+		node.global_transform = Transform3D(basis, pos)
+		# Clear the scatter around this spot so no fir tree stands between camera and subject -- the same
+		# device _shoot_silhouette uses (mark near trees down, rebuild the LOD buckets, which skip downed).
+		# The parade claims "the clean silhouette device" but only borrowed the camera offset, not this;
+		# without it the ground-placed sensor/turret shoot straight through a fir. Accumulates across the
+		# loop, so overlapping clears help later subjects.
+		var cleared := 0
+		for i in _tree_ground.size():
+			if not _tree_down.has(i) and pos.distance_squared_to(_tree_ground[i]) < 30.0 * 30.0:
+				_tree_down[i] = true
+				cleared += 1
+		if cleared > 0:
+			_update_tree_lod(true)
+		var local := _model_aabb(node)
+		var center := node.global_transform * local.get_center()
+		var nbasis := node.global_transform.basis.orthonormalized()
+		var rad: float = maxf(0.5 * local.size.length(), 0.4)
+		var side: float = 1.0 if nbasis.x.dot(to_sun) >= 0.0 else -1.0
+		var fov := 40.0
+		var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.2
+		# local -Z is the facing (the turret barrel points -Z); +y lifts the eye so the top line reads
+		for v in [{"n": "side", "off": Vector3(side, 0.14, 0.0)}, {"n": "tq", "off": Vector3(side * 0.82, 0.26, -0.55)}]:
+			var off: Vector3 = (v["off"] as Vector3).normalized()
+			_cam.fov = fov
+			_cam.global_position = center + (nbasis * off) * dist
+			_cam.look_at(center, up)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+			var path := "%s/deployable_%s_%s.png" % [dir, key, v["n"]]
+			get_viewport().get_texture().get_image().save_png(path)
+			print("SHOT deployable %-8s %-4s tris=%-5d %s" % [key, str(v["n"]), _node_tris(node), path])
+		node.queue_free()
+		await get_tree().process_frame
+	_shot_hold_cam = false
+
+func _structure_parade(dir: String) -> void:
+	# The vehicle SILHOUETTE framing, pointed at the built environment. Each building recipe (gable, meru)
+	# and each structure recipe (the dock port) is floated above home terrain against clean sky and shot
+	# side-on and front three-quarter off its own bounding SPHERE -- so a ~1m house and a ~340m dock both
+	# fill the frame -- the same "does it read" device the weapon and deployable parades borrow. Front is
+	# local +Z here (door, chimney flue and veranda all sit on the front face), so the three-quarter view
+	# offsets toward +Z to stand the camera on the door side rather than behind the house.
+	_shot_hold_cam = true
+	if _hud: _hud.visible = false
+	if _perf: _perf.visible = false
+	sun_angle = 0.5                                       # high mid-morning at home: clean daylight
+	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	var bmats := _building_materials()
+	# Subjects tagged by kind: a building is a bare baked Mesh (wrap it in a MeshInstance3D), a structure
+	# is an already-baked Node3D. Both stand local +Y along ring-up and carry their front on +Z.
+	var subjects: Array = []
+	for recipe in BUILDING_RECIPES:
+		var mesh := _bake_building_mesh(recipe["parts"], bmats)
+		if mesh == null:
+			continue
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		subjects.append({"kind": "building", "name": str(recipe["name"]), "node": mi})
+	for key in STRUCTURE_RECIPES.keys():
+		subjects.append({"kind": "structure", "name": str(key), "node": _build_structure(str(key))})
+	for subj in subjects:
+		var node: Node3D = subj["node"]
+		add_child(node)
+		# Size the subject first, then float it clear of the terrain by its own radius -- a 340m dock must
+		# not sink into the ground the way a 1m house would not notice. Stand local +Y along ring-up
+		# (buildings model ground at y=0 up; the dock's spine reaches along local +Y toward the axis).
+		var pre := _model_aabb(node)
+		var rad0: float = maxf(0.5 * pre.size.length(), 0.4)
+		var base := _ring_pos(0.0, 0.0, _terrain_h(0.0, 0.0) + 40.0 + rad0)
+		var up := _ring_up(base)
+		var right := up.cross(Vector3(0.0, 0.0, 1.0)).normalized()
+		node.global_transform = Transform3D(Basis(right, up, right.cross(up)), base)
+		var local := _model_aabb(node)
+		var center := node.global_transform * local.get_center()
+		var basis := node.global_transform.basis.orthonormalized()
+		var rad: float = maxf(0.5 * local.size.length(), 0.4)
+		# Sun not behind the subject: shoot from whichever flank the sun lights, so the near face reads as
+		# form rather than a flat backlit shadow -- the same choice _shoot_silhouette makes.
+		var side: float = 1.0 if basis.x.dot(to_sun) >= 0.0 else -1.0
+		var fov := 42.0
+		var dist: float = rad / sin(deg_to_rad(fov * 0.5)) * 1.15
+		# +Z is the front face; the three-quarter offsets toward +Z (not -Z as the vehicle/weapon parades
+		# do) so the camera stands on the door/veranda side. The dock is radially symmetric, so it does not
+		# care which way front points.
+		for v in [{"n": "side", "off": Vector3(side, 0.16, 0.0)}, {"n": "tq", "off": Vector3(side * 0.82, 0.28, 0.55)}]:
+			var off: Vector3 = (v["off"] as Vector3).normalized()
+			_cam.fov = fov
+			_cam.global_position = center + (basis * off) * dist
+			_cam.look_at(center, up)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+			var path := "%s/%s_%s_%s.png" % [dir, subj["kind"], subj["name"], v["n"]]
+			get_viewport().get_texture().get_image().save_png(path)
+			print("SHOT %-9s %-6s %-4s tris=%-5d %s" % [subj["kind"], subj["name"], str(v["n"]), _node_tris(node), path])
+		node.queue_free()
+		await get_tree().process_frame
+	_shot_hold_cam = false
 
 func _align_sweep() -> void:
 	# `-- --align` sweeps a GRID of sample points across every patch and checks that the CPU and the
@@ -2301,6 +2997,8 @@ func _hires_decode(idx: int) -> void:
 	# WORKER THREAD. Only touches FileAccess + Image (both thread-safe in Godot 4); the texture is
 	# created by the main thread in _hires_poll(). Result is handed over via _hires_result.
 	var out := {"idx": idx, "ok": false}
+	var ms := {"read": 0.0, "filter": 0.0, "sat": 0.0, "detail": 0.0}   # per-phase cost, see _hires_poll STREAMPHASE
+	var t0 := Time.get_ticks_usec()
 	var base: String = "res://mocks/dem/%s" % _patch_names[idx]   # NOT PATCHES[idx], see _patch_meta
 	if FileAccess.file_exists(base + ".r16") and FileAccess.file_exists(base + ".json"):
 		var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(base + ".json"))
@@ -2308,6 +3006,7 @@ func _hires_decode(idx: int) -> void:
 		var h := int(meta["h"])
 		var hs := float(meta.get("h_scale", 16.0))
 		var raw := FileAccess.get_file_as_bytes(base + ".r16")
+		ms["read"] = float(Time.get_ticks_usec() - t0) / 1000.0
 		if raw.size() >= w * h * 2:
 			var res: int = mini(HIRES_RES, mini(w, h))
 			var floats := PackedFloat32Array()
@@ -2333,6 +3032,8 @@ func _hires_decode(idx: int) -> void:
 			out["field"] = floats
 			out["res"] = res
 			out["ok"] = true
+			ms["filter"] = float(Time.get_ticks_usec() - t0) / 1000.0 - float(ms["read"])
+			var t_sat := Time.get_ticks_usec()
 			if FileAccess.file_exists(base + "_sat.dat"):
 				var ci := Image.new()
 				if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
@@ -2351,15 +3052,24 @@ func _hires_decode(idx: int) -> void:
 						ci.compress(Image.COMPRESS_BPTC, Image.COMPRESS_SOURCE_SRGB)
 					out["col"] = ci
 					out["col_bytes"] = ci.get_data().size()
+			ms["sat"] = float(Time.get_ticks_usec() - t_sat) / 1000.0
 			# full-res gradient normals, same asset the home patch uses. These were generated for
 			# every patch all along (export_to_game.py always writes them) and simply never loaded,
 			# which is why only the starting area had fine relief.
+			var t_det := Time.get_ticks_usec()
 			if FileAccess.file_exists(base + "_detail.dat"):
 				var di := Image.new()
 				if di.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_detail.dat")) == OK:
-					di.resize(hires_tex_res, hires_tex_res, Image.INTERPOLATE_LANCZOS)
+					# Never upsample, same as sat above -- every _detail.dat source is <=6400^2, so
+					# resizing to a flat 8192^2 was the biggest stream phase and invented no relief.
+					# hires_tex_res is a CAP (see its decl), not a target.
+					var dtgt: int = mini(hires_tex_res, mini(di.get_width(), di.get_height()))
+					if di.get_width() != dtgt or di.get_height() != dtgt:
+						di.resize(dtgt, dtgt, Image.INTERPOLATE_LANCZOS)
 					di.convert(Image.FORMAT_RGB8)
 					out["detail"] = di
+			ms["detail"] = float(Time.get_ticks_usec() - t_det) / 1000.0
+	out["ms"] = ms
 	_hires_result = out
 
 func _hires_poll() -> void:
@@ -2372,6 +3082,7 @@ func _hires_poll() -> void:
 		var r: Dictionary = _hires_result
 		_hires_result = {}
 		if r.get("ok", false) and int(r.get("idx", -1)) == _hires_pending:
+			var t_tex := Time.get_ticks_usec()
 			_hires_tex = ImageTexture.create_from_image(r["img"])
 			_hires_col_tex = ImageTexture.create_from_image(r["col"]) if r.has("col") else null
 			_tex_bytes = int(r.get("col_bytes", 0))
@@ -2397,6 +3108,7 @@ func _hires_poll() -> void:
 				m.set_shader_parameter("hires_own", _patch_own[_hires_idx])
 				m.set_shader_parameter("hires_offset", _patch_offset[_hires_idx])
 				m.set_shader_parameter("hires_valid", true)
+			var ms_tex := float(Time.get_ticks_usec() - t_tex) / 1000.0
 			# A landed stream CHANGES WHAT _terrain_h ANSWERS -- the hires tier now wins where the
 			# 512^2 array did, and the two disagree by whatever detail the array threw away. Anything
 			# already placed against the old tier is now at the wrong height, which is trees and the
@@ -2404,14 +3116,33 @@ func _hires_poll() -> void:
 			# The centrelines must follow the stream too, or the ribbon and the tree-clearing stay
 			# pinned to the home patch wherever you drive -- the shot harness already does this, live
 			# play did not.
+			var ms_roads := 0.0
 			if _roadline_patch != _hires_idx:
 				_roadline_patch = _hires_idx
+				var t_r := Time.get_ticks_usec()
 				_load_roadlines()
+				ms_roads = float(Time.get_ticks_usec() - t_r) / 1000.0
+			var t_tr := Time.get_ticks_usec()
 			_scatter_trees()
+			var ms_trees := float(Time.get_ticks_usec() - t_tr) / 1000.0
+			var t_b := Time.get_ticks_usec()
 			_refill_buildings(true)
+			var ms_bldg := float(Time.get_ticks_usec() - t_b) / 1000.0
+			var t_h := Time.get_ticks_usec()
 			_build_hedge_ribbon()
+			var ms_hedge := float(Time.get_ticks_usec() - t_h) / 1000.0
 			print("ring_vibes: streamed %s @ %d^2%s — re-placed objects onto the new tier" % [
 				_patch_names[_hires_idx], _hires_res, "" if _hires_col_tex else " (no imagery)"])
+			# --selftest instrument (TASKS: which phase eats the 12s stream budget). worker phases ride
+			# over in r["ms"]; the adopt phases are timed above on the main thread. Gated so it does not
+			# noise up live play / the shot & proving harnesses.
+			if "--selftest" in OS.get_cmdline_user_args() or "--streamprobe" in OS.get_cmdline_user_args():
+				var wm: Dictionary = r.get("ms", {})
+				print("STREAMPHASE %-18s worker read=%.0f filter=%.0f sat=%.0f detail=%.0f | main tex=%.0f roads=%.0f trees=%.0f bldg=%.0f hedge=%.0f (ms)" % [
+					_patch_names[_hires_idx],
+					float(wm.get("read", 0.0)), float(wm.get("filter", 0.0)),
+					float(wm.get("sat", 0.0)), float(wm.get("detail", 0.0)),
+					ms_tex, ms_roads, ms_trees, ms_bldg, ms_hedge])
 		_hires_pending = -1
 		return
 	# idle: does the camera's current patch differ from what's resident?
@@ -2472,6 +3203,15 @@ func _patch_floor(field: PackedFloat32Array) -> float:
 	s.sort()
 	return s[int(float(s.size()) * 0.02)]
 
+func _patch_preview(base: String) -> Image:
+	if FileAccess.file_exists(base + "_sat.dat"):
+		var ci := Image.new()
+		if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
+			ci.resize(PATCH_COL_RES, PATCH_COL_RES, Image.INTERPOLATE_LANCZOS)
+			ci.convert(Image.FORMAT_RGB8)
+			return ci
+	return null
+
 func _load_patches() -> void:
 	# each splice is resampled to PATCH_RES^2 and stacked into one Texture2DArray; a CPU copy is
 	# kept alongside so _terrain_h returns exactly what the shader draws (render-authoritative
@@ -2495,13 +3235,8 @@ func _load_patches() -> void:
 		# real imagery if the pipeline has fetched it; a flat tint plate stands in until then, so a
 		# half-finished fetch still renders (the array needs every layer present and same-size).
 		var cimg: Image = null
-		if FileAccess.file_exists(base + "_sat.dat"):
-			var ci := Image.new()
-			if ci.load_png_from_buffer(FileAccess.get_file_as_bytes(base + "_sat.dat")) == OK:
-				ci.resize(PATCH_COL_RES, PATCH_COL_RES, Image.INTERPOLATE_LANCZOS)
-				ci.convert(Image.FORMAT_RGB8)
-				cimg = ci
-				any_col = true
+		cimg = _patch_preview(base)
+		any_col = any_col or cimg != null
 		if cimg == null:
 			cimg = Image.create(PATCH_COL_RES, PATCH_COL_RES, false, Image.FORMAT_RGB8)
 			cimg.fill(p["tint"])
@@ -3090,50 +3825,11 @@ func _build_walls() -> void:
 	# cyan rectangle pasted on the sky, the same failure as the tree billboards. A docking port is the
 	# one piece of builders' architecture the player ever gets close to, so it has to read as built:
 	# a spine along the approach axis, a docking collar you aim INTO, and radial struts that give the
-	# eye something to judge range and roll against. Still placeholder geometry, but dimensional --
-	# roughly 300 triangles, authored directly per substrate.md gate 5.
-	var port := Node3D.new()
+	# eye something to judge range and roll against. Placeholder but dimensional (~200 triangles) --
+	# now a STRUCTURE_RECIPES entry (data, not inline welds) baked to one mesh, the same spine/collar/
+	# struts expressed like the vehicle/building/weapon recipes, per substrate.md gate 5.
+	var port := _build_structure("dock")
 	add_child(port)
-	var hull := StandardMaterial3D.new()
-	hull.albedo_color = Color(0.30, 0.33, 0.38)
-	hull.metallic = 0.6
-	hull.roughness = 0.45
-	var lamp := StandardMaterial3D.new()
-	lamp.albedo_color = Color(0.20, 0.55, 0.75)
-	lamp.emission_enabled = true
-	lamp.emission = Color(0.5, 0.9, 1.0)
-	lamp.emission_energy_multiplier = 1.1   # 3.0 blew the panels to flat white against black sky
-	# spine: the structure continues toward the axis, so it reads as the bottom of something much larger
-	var spine := MeshInstance3D.new()
-	var sbm := BoxMesh.new()
-	sbm.size = Vector3(26.0, 320.0, 26.0)
-	spine.mesh = sbm
-	spine.material_override = hull
-	# the collar is the capture point, so the spine runs UP from it toward the axis rather than
-	# straddling it -- otherwise you soft-capture into the middle of a girder
-	spine.position = Vector3(0.0, 172.0, 0.0)
-	port.add_child(spine)
-	# collar: eight segments around the approach axis -- the ring you fly into, and the thing that
-	# makes roll and range legible at a glance
-	for i in 8:
-		var a := TAU * float(i) / 8.0
-		var seg := MeshInstance3D.new()
-		var cbm := BoxMesh.new()
-		cbm.size = Vector3(34.0, 12.0, 12.0)
-		seg.mesh = cbm
-		seg.material_override = hull if i % 2 == 0 else lamp
-		seg.position = Vector3(sin(a) * 62.0, 0.0, cos(a) * 62.0)
-		seg.rotation.y = -a
-		port.add_child(seg)
-		# strut back to the spine
-		var strut := MeshInstance3D.new()
-		var tbm := BoxMesh.new()
-		tbm.size = Vector3(52.0, 5.0, 5.0)
-		strut.mesh = tbm
-		strut.material_override = hull
-		strut.position = Vector3(sin(a) * 34.0, 0.0, cos(a) * 34.0)
-		strut.rotation.y = -a
-		port.add_child(strut)
 	# Orient the spine along RING UP (toward the axis), not world up. They coincide at DOCK_ARC 0 and
 	# nowhere else, so building the basis properly means moving the port later is a constant change
 	# rather than a bug. Basis() takes COLUMNS.
@@ -3164,7 +3860,7 @@ func _process(delta: float) -> void:
 	var period: float = SUN_PERIODS[sun_speed_idx]
 	if period > 0.0 and not sun_paused:
 		sun_angle = fmod(sun_angle + TAU * delta / period, TAU)
-	var to_sun := Vector3(sin(sun_angle), cos(sun_angle) * cos(sun_tilt), cos(sun_angle) * sin(sun_tilt))
+	var to_sun := RingFrame.sun_direction(sun_angle, sun_tilt)
 	# day/night is only "to_sun.y" as a global scalar when the camera sits near arc=0 (spawn) --
 	# the terrain's OWN lighting (and the ring-in-sky element) correctly varies by arc position via
 	# dot(normal(theta), to_sun), which is what makes the far side of the ring show a genuinely
@@ -3176,7 +3872,9 @@ func _process(delta: float) -> void:
 	# and evaluating the SAME formula there keeps everything consistent regardless of position.
 	var r_now := _radius()
 	var cam_theta := atan2(_cam.global_position.x, r_now - _cam.global_position.y)
-	var local_lit := clampf(-sin(cam_theta) * to_sun.x + cos(cam_theta) * to_sun.y, 0.0, 1.0)
+	var local_up := RingFrame.up(cam_theta * r_now, r_now)
+	_sky_mat.set_shader_parameter("local_up", local_up)
+	var local_lit := clampf(local_up.dot(to_sun), 0.0, 1.0)
 	var sun_theta := atan2(-to_sun.x, to_sun.y)   # arc position most face-on to the sun; mirrors ring_sky.gdshader
 	_dbg_cam_theta_deg = rad_to_deg(cam_theta)
 	_dbg_sun_theta_deg = rad_to_deg(sun_theta)
@@ -3240,7 +3938,7 @@ func _process(delta: float) -> void:
 	# bright at "night" off ambient alone while the manually-lit terrain correctly went near-black.
 	# Scale it down at night so everything dims together. Max raised (0.4 -> 0.65) -- daytime overall
 	# read as "way too dark".
-	_env.ambient_light_energy = lerpf(0.12, 0.8, day)
+	_env.ambient_light_energy = lerpf(lerpf(0.12, 0.8, day), 0.04, _space)
 	_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
 	if _wall_mat:
 		_wall_mat.set_shader_parameter("sky_color", Vector3(sky.r, sky.g, sky.b))
@@ -4194,112 +4892,169 @@ func _fill_mm(mmi: MultiMeshInstance3D, xfs: Array) -> void:
 # instead, so the offset is applied here per patch rather than baked into the file.
 # ---------------------------------------------------------------------------
 
-func _plinth(st: SurfaceTool, quad: Callable, e: float) -> void:
-	# An undercroft dropping a full building-height below the floor. Buildings are placed on the
-	# HIGHEST corner of their footprint so nothing is buried; that leaves the downhill side in the
-	# air, and this fills it. Which is also what hillside buildings actually do -- cut into the
-	# slope at the back, stand on stone or stilts at the front. Invisible on flat ground.
-	var base := Color(0.34, 0.31, 0.28)
-	quad.call(Vector3(-e, -1.0, e), Vector3(e, -1.0, e), Vector3(e, 0.02, e), Vector3(-e, 0.02, e), base)
-	quad.call(Vector3(e, -1.0, -e), Vector3(-e, -1.0, -e), Vector3(-e, 0.02, -e), Vector3(e, 0.02, -e), base)
-	quad.call(Vector3(e, -1.0, e), Vector3(e, -1.0, -e), Vector3(e, 0.02, -e), Vector3(e, 0.02, e), base)
-	quad.call(Vector3(-e, -1.0, -e), Vector3(-e, -1.0, e), Vector3(-e, 0.02, e), Vector3(-e, 0.02, -e), base)
-
-func _house_mesh() -> ArrayMesh:
-	# Unit house: footprint 1x1 in x/z, total height 1, walls to 0.72, gable ridge along z.
-	# Instance transforms scale it to real width/depth/height, so one mesh covers every building.
-	# Vertex colours carry wall-vs-roof; per-instance colour tints the whole thing for variety.
-	#
-	# Winding defines the normals here (generate_normals at the end) rather than both being
-	# asserted separately -- stating them independently is how you get geometry that is lit
-	# correctly and culled inside out, or vice versa. See the shader-winding note in
-	# .decisions/terrain.md: never hand-assert a normal and a winding and hope they agree.
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var wall := Color(0.82, 0.80, 0.75)
-	var roof := Color(0.30, 0.29, 0.31)
-	var wt := 0.72
-	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
-		for v in [a, c, b, a, d, c]:
-			st.set_color(col)
-			st.add_vertex(v)
-	var tri := func(a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
-		for v in [a, c, b]:
-			st.set_color(col)
-			st.add_vertex(v)
-	# walls, each wound as seen from OUTSIDE the house
-	quad.call(Vector3(-0.5, 0, 0.5), Vector3(0.5, 0, 0.5), Vector3(0.5, wt, 0.5), Vector3(-0.5, wt, 0.5), wall)
-	quad.call(Vector3(0.5, 0, -0.5), Vector3(-0.5, 0, -0.5), Vector3(-0.5, wt, -0.5), Vector3(0.5, wt, -0.5), wall)
-	quad.call(Vector3(0.5, 0, 0.5), Vector3(0.5, 0, -0.5), Vector3(0.5, wt, -0.5), Vector3(0.5, wt, 0.5), wall)
-	quad.call(Vector3(-0.5, 0, -0.5), Vector3(-0.5, 0, 0.5), Vector3(-0.5, wt, 0.5), Vector3(-0.5, wt, -0.5), wall)
-	# roof planes, ridge along z at x=0
-	quad.call(Vector3(-0.5, wt, 0.5), Vector3(0.0, 1.0, 0.5), Vector3(0.0, 1.0, -0.5), Vector3(-0.5, wt, -0.5), roof)
-	quad.call(Vector3(0.0, 1.0, 0.5), Vector3(0.5, wt, 0.5), Vector3(0.5, wt, -0.5), Vector3(0.0, 1.0, -0.5), roof)
-	# gable ends
-	tri.call(Vector3(-0.5, wt, 0.5), Vector3(0.5, wt, 0.5), Vector3(0.0, 1.0, 0.5), wall)
-	tri.call(Vector3(0.5, wt, -0.5), Vector3(-0.5, wt, -0.5), Vector3(0.0, 1.0, -0.5), wall)
-	_plinth(st, quad, 0.5)
-	st.generate_normals()
-	return st.commit()
-
-func _joglo_mesh() -> ArrayMesh:
-	# Javanese domestic form: low walls under a big tiered roof. That ratio -- wall almost nothing,
-	# roof almost everything -- is what reads as South-East Asian at a glance, far more than any
-	# ornament would at this distance. Lower hip skirt overhangs the walls; steep pyramid above.
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var wall := Color(0.74, 0.70, 0.62)
-	var roof := Color(0.26, 0.19, 0.15)
-	var wt := 0.30            # wall top -- deliberately low
-	var eave := 0.62          # skirt overhang half-extent
-	var mid := 0.30           # where the skirt meets the upper pyramid
-	var midy := 0.58
-	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
-		for v in [a, c, b, a, d, c]:
-			st.set_color(col)
-			st.add_vertex(v)
-	var tri := func(a: Vector3, b: Vector3, c: Vector3, col: Color) -> void:
-		for v in [a, c, b]:
-			st.set_color(col)
-			st.add_vertex(v)
-	# walls
-	quad.call(Vector3(-0.42, 0, 0.42), Vector3(0.42, 0, 0.42), Vector3(0.42, wt, 0.42), Vector3(-0.42, wt, 0.42), wall)
-	quad.call(Vector3(0.42, 0, -0.42), Vector3(-0.42, 0, -0.42), Vector3(-0.42, wt, -0.42), Vector3(0.42, wt, -0.42), wall)
-	quad.call(Vector3(0.42, 0, 0.42), Vector3(0.42, 0, -0.42), Vector3(0.42, wt, -0.42), Vector3(0.42, wt, 0.42), wall)
-	quad.call(Vector3(-0.42, 0, -0.42), Vector3(-0.42, 0, 0.42), Vector3(-0.42, wt, 0.42), Vector3(-0.42, wt, -0.42), wall)
-	# lower hip skirt: outer ring at eave height, inner ring at midy
-	var e := 0.34
-	quad.call(Vector3(-eave, e, eave), Vector3(eave, e, eave), Vector3(mid, midy, mid), Vector3(-mid, midy, mid), roof)
-	quad.call(Vector3(eave, e, -eave), Vector3(-eave, e, -eave), Vector3(-mid, midy, -mid), Vector3(mid, midy, -mid), roof)
-	quad.call(Vector3(eave, e, eave), Vector3(eave, e, -eave), Vector3(mid, midy, -mid), Vector3(mid, midy, mid), roof)
-	quad.call(Vector3(-eave, e, -eave), Vector3(-eave, e, eave), Vector3(-mid, midy, mid), Vector3(-mid, midy, -mid), roof)
-	# steep upper pyramid
-	var apex := Vector3(0, 1.0, 0)
-	tri.call(Vector3(-mid, midy, mid), Vector3(mid, midy, mid), apex, roof)
-	tri.call(Vector3(mid, midy, -mid), Vector3(-mid, midy, -mid), apex, roof)
-	tri.call(Vector3(mid, midy, mid), Vector3(mid, midy, -mid), apex, roof)
-	tri.call(Vector3(-mid, midy, -mid), Vector3(-mid, midy, mid), apex, roof)
-	_plinth(st, quad, 0.42)
-	st.generate_normals()
-	return st.commit()
-
 func _build_buildings() -> void:
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.roughness = 0.92
-	mat.metallic_specular = 0.1
+	# One MultiMesh per BUILDING_RECIPE (index = style): the recipe kitbashes a unit building from
+	# named-socket parts via the SHARED assembler -- the same one the vehicles use, the payoff of the
+	# Skeleton3D unlock -- then MeshBaker merges it to one mesh so a settlement of that style stays a
+	# handful of draw calls, not twelve nodes per house. Per-biome part sets are just different recipes
+	# (gable + door + chimney vs joglo + veranda), which is how java stops looking like cork.
 	_bldg_mmi = []
-	for m in [_house_mesh(), _joglo_mesh()]:
+	var mats := _building_materials()
+	for recipe in BUILDING_RECIPES:
+		var mesh := _bake_building_mesh(recipe["parts"], mats)
+		if mesh == null:
+			push_warning("ring_vibes: building recipe '%s' baked nothing" % recipe.get("name", "?"))
+			continue
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
 		mm.use_colors = true
-		mm.mesh = m
-		mm.mesh.surface_set_material(0, mat)
+		mm.mesh = mesh
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mmi)
 		_bldg_mmi.append(mmi)
+
+func _building_materials() -> Dictionary:
+	# One shared StandardMaterial3D per part colour. vertex_color_use_as_albedo is what lets the
+	# per-building MultiMesh tint (cols[si] in _refill_buildings) keep multiplying the albedo, exactly
+	# as it did when wall/roof colour lived in vertex colours -- moving it to material albedo changes
+	# nothing on screen for the walls and roofs, it just lets MeshBaker group parts by material.
+	var defs := {
+		"base":   Color(0.34, 0.31, 0.28),
+		"wall":   Color(0.82, 0.80, 0.75),
+		"roof":   Color(0.30, 0.29, 0.31),
+		"trim":   Color(0.22, 0.20, 0.18),
+		"wall_j": Color(0.74, 0.70, 0.62),
+		"roof_j": Color(0.26, 0.19, 0.15),
+	}
+	var mats := {}
+	for k in defs:
+		var m := StandardMaterial3D.new()
+		m.albedo_color = defs[k]
+		m.roughness = 0.92
+		m.metallic_specular = 0.1
+		m.vertex_color_use_as_albedo = true
+		mats[k] = m
+	return mats
+
+func _bake_building_mesh(specs: Array, mats: Dictionary) -> Mesh:
+	# Build a unit chassis with named sockets, hang the parts via the shared assembler, bake to one
+	# mesh, keep the mesh and throw the scaffolding away. Runs entirely out of the SceneTree -- the
+	# assembler and baker only walk parent chains, so no node is ever visible on its own.
+	var chassis := Node3D.new()
+	_add_building_sockets(chassis)
+	var recipe := Recipe.new()
+	recipe.body_plan = "building"
+	for spec: Dictionary in specs:
+		var pd := PartDef.new()
+		pd.slot = spec["slot"]
+		pd.socket = spec["socket"]
+		pd.mesh = _building_part_mesh(spec, mats)
+		pd.offset_position = spec.get("pos", Vector3.ZERO)
+		pd.offset_rotation_degrees = spec.get("rot", Vector3.ZERO)
+		recipe.parts[spec["slot"]] = pd
+	CharacterAssembler.apply(chassis, recipe)
+	var baked := MeshBaker.bake(chassis)
+	var mesh: Mesh = baked.mesh if baked else null
+	chassis.free()
+	return mesh
+
+func _add_building_sockets(chassis: Node3D) -> void:
+	# The five named mounts the item calls for. Unit space: footprint is [-0.5,0.5], ground at y=0,
+	# +z is the front. wall/roof/chimney anchor at the origin (the part's own pos/size places it);
+	# door and veranda anchor on the front face, where they belong.
+	var sockets := {
+		"wall":    Vector3(0, 0, 0),
+		"roof":    Vector3(0, 0, 0),
+		"door":    Vector3(0, 0, 0.5),
+		"chimney": Vector3(0, 0, 0),
+		"veranda": Vector3(0, 0, 0.5),
+	}
+	for n in sockets:
+		var s := Node3D.new()
+		s.name = n
+		s.position = sockets[n]
+		chassis.add_child(s)
+
+func _building_part_mesh(spec: Dictionary, mats: Dictionary) -> Mesh:
+	# One generator per part: a tinted box for walls/plinth/door/chimney/veranda, or one of the two
+	# roof forms. Same framing as the vehicle recipes -- a small kit of shapes over a shared chassis.
+	var mat: Material = mats.get(spec.get("mat", "wall"), mats["wall"])
+	var size: Vector3 = spec.get("size", Vector3.ONE)
+	match spec.get("shape", "box"):
+		"gable":
+			return _gable_roof_mesh(size.x * 0.5, size.z * 0.5, size.y, mat)
+		"joglo":
+			return _joglo_roof_mesh(mat)
+		_:
+			var bm := BoxMesh.new()
+			bm.size = size
+			bm.material = mat
+			return bm
+
+func _gable_roof_mesh(hw: float, hz: float, ridge: float, mat: Material) -> ArrayMesh:
+	# Pitched roof, base at y=0 (sits on the wall top via the recipe's pos.y), ridge along z at x=0.
+	# Winding defines the normals (generate_normals at the end) -- see the shader-winding note in
+	# .decisions/terrain.md, never hand-assert a normal and a winding and hope they agree.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+		for v in [a, c, b, a, d, c]:
+			st.add_vertex(v)
+	var tri := func(a: Vector3, b: Vector3, c: Vector3) -> void:
+		for v in [a, c, b]:
+			st.add_vertex(v)
+	quad.call(Vector3(-hw, 0, hz), Vector3(0, ridge, hz), Vector3(0, ridge, -hz), Vector3(-hw, 0, -hz))
+	quad.call(Vector3(0, ridge, hz), Vector3(hw, 0, hz), Vector3(hw, 0, -hz), Vector3(0, ridge, -hz))
+	tri.call(Vector3(-hw, 0, hz), Vector3(hw, 0, hz), Vector3(0, ridge, hz))
+	tri.call(Vector3(hw, 0, -hz), Vector3(-hw, 0, -hz), Vector3(0, ridge, -hz))
+	st.generate_normals()
+	st.set_material(mat)
+	return st.commit()
+
+func _joglo_roof_mesh(mat: Material) -> ArrayMesh:
+	# Meru / joglo: a STACK of progressively smaller hip roofs, base at y=0. Each tier slopes up-and-in
+	# (the roof pitch), then the next tier's eave flares back out and up (the overhang), so the
+	# silhouette is the pagoda zigzag -- in, out, in, out -- not one smooth cap, which is what a tiered
+	# temple reads as. Every ring-to-ring band is built by the same band() helper with the winding the
+	# old skirt used, so generate_normals() lands them all outward whether a band slopes in or out (see
+	# the shader-winding note in .decisions/terrain.md -- never hand-assert a normal and a winding).
+	# Base overhang (0.62) and footprint are unchanged from the old skirt; sits on the 0.30 wall top.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var quad := func(a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+		for v in [a, c, b, a, d, c]:
+			st.add_vertex(v)
+	var tri := func(a: Vector3, b: Vector3, c: Vector3) -> void:
+		for v in [a, c, b]:
+			st.add_vertex(v)
+	var corners := func(w: float, y: float) -> Array:
+		return [Vector3(-w, y, w), Vector3(w, y, w), Vector3(w, y, -w), Vector3(-w, y, -w)]
+	# One four-sided band between a lower square ring (half-width w0 at y0) and an upper ring (w1 at y1).
+	var band := func(w0: float, y0: float, w1: float, y1: float) -> void:
+		var lo: Array = corners.call(w0, y0)
+		var hi: Array = corners.call(w1, y1)
+		for i in 4:
+			quad.call(lo[i], lo[(i + 1) % 4], hi[(i + 1) % 4], hi[i])
+	# (half-width, height) rings bottom -> top, alternating eave (wide) and shoulder (narrow): each
+	# eave is narrower than the one below but wider than the shoulder just under it, so the profile
+	# re-widens at every tier -- three overhanging tiers rising to a finial.
+	var rings := [
+		Vector2(0.62, 0.02), Vector2(0.34, 0.20),   # tier 1: eave -> shoulder
+		Vector2(0.48, 0.24), Vector2(0.26, 0.42),   # tier 2: flared eave -> shoulder
+		Vector2(0.36, 0.46), Vector2(0.15, 0.62),   # tier 3: flared eave -> shoulder
+	]
+	for i in range(rings.size() - 1):
+		band.call(rings[i].x, rings[i].y, rings[i + 1].x, rings[i + 1].y)
+	# Cap the top shoulder ring to the finial point.
+	var apex := Vector3(0, 0.78, 0)
+	var top: Array = corners.call(rings[-1].x, rings[-1].y)
+	for i in 4:
+		tri.call(top[i], top[(i + 1) % 4], apex)
+	st.generate_normals()
+	st.set_material(mat)
+	return st.commit()
 
 func _load_bldg_file(name: String, arc_off: float, lat_off: float, style: int) -> int:
 	var path := "res://mocks/dem/%s_bldg.dat" % name
@@ -4598,27 +5353,41 @@ func _make_car(d: VehicleDef = null) -> Node3D:
 	# the wheels stay under the corners at any size. Pass no def and it reproduces the original box.
 	var length: float = d.length if d else 4.2
 	var tint: Color = d.tint if d else Color(0.33, 0.36, 0.30)
+	# Rotorcraft chassis (TASKS.md "Rotor fuselage"): the blade fix read, but a long low box on four
+	# wheels under it still read as a flatbed truck with a propeller bolted on. A helicopter is a SHORT,
+	# TALL fuselage sitting on SKIDS -- the length lives in a thin tail boom, not the cabin -- so the
+	# rotor gets its own body proportions and skids in place of wheels. The recipe below lifts the mast
+	# and blades onto the raised top and hangs the boom + tail rotor off the back.
+	var is_rotor := d != null and d.recipe == "rotor"
 	var wz: float = length / 3.0
 	_wheels = []
 	var root := Node3D.new()
 	var body := MeshInstance3D.new()
 	var bm := BoxMesh.new()
-	bm.size = Vector3(2.0, 1.0, length)
+	bm.size = Vector3(2.0, 2.2, 4.6) if is_rotor else Vector3(2.0, 1.0, length)
 	body.mesh = bm
 	var bmat := StandardMaterial3D.new()
 	bmat.albedo_color = tint
 	body.material_override = bmat
-	body.position.y = 0.9
+	body.position.y = 1.6 if is_rotor else 0.9
 	root.add_child(body)
 	var glass := MeshInstance3D.new()
 	var gm := BoxMesh.new()
-	gm.size = Vector3(1.7, 0.5, 1.1)
+	gm.size = Vector3(1.7, 0.6, 1.3) if is_rotor else Vector3(1.7, 0.5, 1.1)
 	glass.mesh = gm
 	var gmat := StandardMaterial3D.new()
 	gmat.albedo_color = Color(0.45, 0.75, 0.80)  # frutiger windscreen, obviously
-	glass.position = Vector3(0, 1.55, -0.12 * length)
+	glass.position = Vector3(0, 1.9, 1.7) if is_rotor else Vector3(0, 1.55, -0.12 * length)
 	glass.material_override = gmat
 	root.add_child(glass)
+	if is_rotor:
+		_add_skids(root)
+		add_child(root)
+		if d and d.recipe != "":
+			_add_vehicle_sockets(root, length)
+			_apply_recipe(root, d.recipe)
+			MeshBaker.bake(root)             # no wheels: whole chassis (body + skids + parts) is static
+		return root
 	var wmat := StandardMaterial3D.new()
 	wmat.albedo_color = Color(0.10, 0.10, 0.10)
 	for wp in [Vector3(-1.05, 0.45, wz), Vector3(1.05, 0.45, wz), Vector3(-1.05, 0.45, -wz), Vector3(1.05, 0.45, -wz)]:
@@ -4648,7 +5417,161 @@ func _make_car(d: VehicleDef = null) -> Node3D:
 		_wheels.append({"pivot": pivot, "mesh": wheel, "front": wp.z > 0.0, "offset": wp,
 			"rest": wheel.transform.basis, "axle": _wheel_axle(wheel)})
 	add_child(root)
+	# Kitbash pass. A recipe hangs a few shared parts off the chassis sockets so the identical box
+	# reads as a cab-and-bed, a turret, a rotor or a wing -- visible variety for the cost of a handful
+	# of parts, not twenty-one models. Then bake: the chassis parts merge to one mesh (draw-call cost
+	# is the whole reason to bake before shipping the roster), while the wheels stay dynamic to roll
+	# and steer. Rows with no recipe are byte-for-byte the old box.
+	if d and d.recipe != "":
+		_add_vehicle_sockets(root, length)
+		_apply_recipe(root, d.recipe)
+		for w in _wheels:
+			(w["pivot"] as Node).add_to_group(MeshBaker.SKIP_GROUP)
+		MeshBaker.bake(root)
 	return root
+
+func _add_vehicle_sockets(root: Node3D, length: float) -> void:
+	# Named Node3D mounts the shared parts attach to (see VEHICLE_RECIPES). Body-relative: the box top
+	# face is y=1.4, the nose is +z and the tail is -z, so a socket scales with the chassis length.
+	var sockets := {
+		"cab":    Vector3(0, 1.4, 0.10 * length),
+		"bed":    Vector3(0, 1.4, -0.22 * length),
+		"turret": Vector3(0, 1.5, 0.0),
+		"nose":   Vector3(0, 1.05, 0.42 * length),
+		"tail":   Vector3(0, 1.5, -0.42 * length),
+		"wing":   Vector3(0, 1.35, 0.0),
+	}
+	for n in sockets:
+		var s := Node3D.new()
+		s.name = n
+		s.position = sockets[n]
+		root.add_child(s)
+
+func _add_skids(root: Node3D) -> void:
+	# Helicopter landing skids in place of the four wheels (TASKS.md "Rotor fuselage"): two fore-aft
+	# tubes low under the fuselage on short cross-struts. Static geometry, so they bake into the chassis
+	# with the body -- no _wheels entry, which the registration/suspension path already treats as a
+	# valid wheel-less state (the warthog registers empty). Local origin is ground level, so the tube
+	# bottoms sit near y=0 the way the wheel bottoms did.
+	var smat := StandardMaterial3D.new()
+	smat.albedo_color = Color(0.16, 0.16, 0.18)
+	for sx in [-0.85, 0.85]:
+		var skid := MeshInstance3D.new()
+		var sc := CylinderMesh.new()
+		sc.radial_segments = 8
+		sc.rings = 1
+		sc.height = 3.8
+		sc.top_radius = 0.09
+		sc.bottom_radius = 0.09
+		sc.material = smat
+		skid.mesh = sc
+		skid.rotation_degrees = Vector3(90, 0, 0)   # lay the tube fore-aft (along Z)
+		skid.position = Vector3(sx, 0.12, 0.0)
+		root.add_child(skid)
+		for sz in [-1.2, 1.2]:
+			var strut := MeshInstance3D.new()
+			var stm := BoxMesh.new()
+			stm.size = Vector3(0.12, 0.5, 0.12)
+			stm.material = smat
+			strut.mesh = stm
+			strut.position = Vector3(sx, 0.37, sz)  # skid top (~0.2) up to the fuselage bottom (~0.5)
+			root.add_child(strut)
+
+func _apply_recipe(root: Node3D, recipe_name: String) -> void:
+	# Reuse the character kitbash machinery for vehicles: build a Recipe of PartDefs from the named
+	# spec and hang them off the chassis sockets via CharacterAssembler, now unlocked from Skeleton3D
+	# (its socket is a Node3D by name). This is the payoff of that unlock -- one assembler, two consumers.
+	var specs: Array = VEHICLE_RECIPES.get(recipe_name, [])
+	if specs.is_empty():
+		return
+	var recipe := Recipe.new()
+	recipe.body_plan = "vehicle"
+	for spec: Dictionary in specs:
+		var pd := PartDef.new()
+		pd.slot = spec["slot"]
+		pd.socket = spec["socket"]
+		pd.mesh = _recipe_mesh(spec)
+		pd.offset_position = spec.get("pos", Vector3.ZERO)
+		pd.offset_rotation_degrees = spec.get("rot", Vector3.ZERO)
+		recipe.parts[spec["slot"]] = pd
+	CharacterAssembler.apply(root, recipe)
+
+func _recipe_mesh(spec: Dictionary) -> Mesh:
+	# One shared generator makes every vehicle part -- a tinted box or a 12-segment cylinder. The
+	# roster is a set of these over a common chassis, not forty meshes; same framing as the trees.
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = spec.get("tint", Color(0.3, 0.3, 0.3))
+	var size: Vector3 = spec.get("size", Vector3.ONE)
+	if spec.get("kind", "box") == "cyl":
+		var cm := CylinderMesh.new()
+		cm.radial_segments = 12
+		cm.rings = 1
+		cm.height = size.y
+		cm.top_radius = size.x * 0.5
+		cm.bottom_radius = size.x * 0.5
+		cm.material = mat
+		return cm
+	var bm := BoxMesh.new()
+	bm.size = size
+	bm.material = mat
+	return bm
+
+# WEAPONS. Same framing as vehicles and buildings, third consumer of the unlocked assembler: a tech
+# tree from a sharpened stick to a backpack MLRS is not 22 weapon models, it is a receiver with named
+# sockets (barrel/sight/magazine/grip/stock) plus a handful of parts over the top -- so a musket and an
+# SMG read as related-but-not-the-same at a glance, which is the whole point of the tree being a shape
+# argument as much as a stats one. WEAPON_ROWS stays pure mechanics; the shape is chosen from it here.
+func _make_weapon(name: String) -> Node3D:
+	var root := Node3D.new()
+	root.name = "weapon_" + name
+	_add_weapon_sockets(root)
+	_apply_weapon_recipe(root, _weapon_recipe_key(name))
+	MeshBaker.bake(root)                       # a gun is static: one mesh, not a part per draw call
+	return root
+
+func _add_weapon_sockets(root: Node3D) -> void:
+	# The named mount points a recipe hangs parts on. Local frame: forward (muzzle) is -Z, up is +Y,
+	# origin at the grip/trigger. These are the "receiver with barrel/stock/sight/magazine sockets" the
+	# item asks for -- the reusable interface every weapon shape is written against.
+	var sockets := {
+		"body":     Vector3(0, 0.0,    0.0),
+		"barrel":   Vector3(0, 0.012, -0.20),
+		"sight":    Vector3(0, 0.075, -0.02),
+		"magazine": Vector3(0, -0.065, -0.02),
+		"grip":     Vector3(0, -0.070,  0.11),
+		"stock":    Vector3(0, 0.0,     0.22),
+	}
+	for n in sockets:
+		var s := Node3D.new()
+		s.name = n
+		s.position = sockets[n]
+		root.add_child(s)
+
+func _apply_weapon_recipe(root: Node3D, key: String) -> void:
+	var specs: Array = WEAPON_RECIPES.get(key, WEAPON_RECIPES["chemical"])
+	var recipe := Recipe.new()
+	recipe.body_plan = "weapon"
+	for spec: Dictionary in specs:
+		var pd := PartDef.new()
+		pd.slot = spec["slot"]
+		pd.socket = spec["socket"]
+		pd.mesh = _recipe_mesh(spec)          # same tinted box|cyl generator the vehicles use
+		pd.offset_position = spec.get("pos", Vector3.ZERO)
+		pd.offset_rotation_degrees = spec.get("rot", Vector3.ZERO)
+		recipe.parts[spec["slot"]] = pd
+	CharacterAssembler.apply(root, recipe)
+
+func _weapon_recipe_key(name: String) -> String:
+	# Most specific wins: a name-level shape (musket vs the carbine both being `chemical`) beats the
+	# mechanics-class default. A couple of rows whose SHAPE family differs from their mechanics class
+	# are aliased -- a thrown javelin is a spear, a speargun looks like a crossbow.
+	if WEAPON_RECIPES.has(name):
+		return name
+	const ALIAS := {"javelin": "spear", "speargun": "crossbow"}
+	if ALIAS.has(name):
+		return ALIAS[name]
+	var cls := str(WEAPON_ROWS.get(name, {}).get("cls", "chemical"))
+	return cls if WEAPON_RECIPES.has(cls) else "chemical"
 
 # THE AXLE IS THE SHORTEST AXIS OF THE WHEEL. Derived, not assumed: the procedural cylinder spins
 # about its own Y, an imported GLTF wheel about whatever axis the artist modelled it on, and the code
@@ -4874,7 +5797,7 @@ const VEHICLE_ROWS := {
 		# stay on the carriageway; the opposite end of the axis from the tractor.
 		"purpose": "the road car — devours tarmac, helpless the moment the road ends",
 		"loco": "wheeled", "mass": 1050.0, "power": 16.0, "brake": 18.0, "top": 42.0, "reverse": -6.0,
-		"drag": 0.22, "offroad_drag": 0.95, "turn": 1.8, "offroad_turn": 0.75,
+		"drag": 0.22, "offroad_drag": 0.95, "turn": 1.8, "offroad_turn": 0.75, "recipe": "sport",
 		"grip_speed": 18.0, "ride": 0.26, "wheel_r": 0.34, "length": 4.4, "tint": Color(0.55, 0.18, 0.16),
 		"susp_travel": 0.18, "susp_stiff": 48.0, "susp_damp": 8.0, "susp_sag": 0.50,
 	},
@@ -4884,7 +5807,7 @@ const VEHICLE_ROWS := {
 		# and it goes. (Placeholder box shows four wheels for now; the geometry is a mesh job.)
 		"purpose": "the heavy 6x6 — slow and unstoppable, hardly notices the road ending",
 		"loco": "wheeled", "mass": 4200.0, "power": 14.0, "brake": 16.0, "top": 24.0, "reverse": -6.0,
-		"drag": 0.34, "offroad_drag": 0.22, "turn": 1.0, "offroad_turn": 0.12,
+		"drag": 0.34, "offroad_drag": 0.22, "turn": 1.0, "offroad_turn": 0.12, "recipe": "flatbed",
 		"grip_speed": 12.0, "ride": 0.70, "wheel_r": 0.62, "length": 7.0, "tint": Color(0.52, 0.44, 0.30),
 		"susp_travel": 0.55, "susp_stiff": 30.0, "susp_damp": 6.0, "susp_sag": 0.55,
 	},
@@ -4904,7 +5827,7 @@ const VEHICLE_ROWS := {
 		# the sportscar would bog in. Torque over speed; the honest opposite of the road car.
 		"purpose": "the tractor — crawls, but crosses soft ground nothing else will",
 		"loco": "wheeled", "mass": 3200.0, "power": 10.0, "brake": 12.0, "top": 12.0, "reverse": -4.0,
-		"drag": 0.40, "offroad_drag": 0.18, "turn": 1.2, "offroad_turn": 0.10,
+		"drag": 0.40, "offroad_drag": 0.18, "turn": 1.2, "offroad_turn": 0.10, "recipe": "tractor",
 		"grip_speed": 6.0, "ride": 0.75, "wheel_r": 0.80, "length": 4.0, "tint": Color(0.30, 0.45, 0.20),
 		"susp_travel": 0.40, "susp_stiff": 24.0, "susp_damp": 5.0, "susp_sag": 0.60,
 	},
@@ -4914,7 +5837,7 @@ const VEHICLE_ROWS := {
 		# a load has no traction in dirt. The reason roads matter; needs room and hates the rough.
 		"purpose": "the articulated hauler — road-bound freight, ponderous and wide-turning",
 		"loco": "wheeled", "mass": 14000.0, "power": 11.0, "brake": 10.0, "top": 26.0, "reverse": -4.0,
-		"drag": 0.30, "offroad_drag": 0.85, "turn": 0.7, "offroad_turn": 0.55,
+		"drag": 0.30, "offroad_drag": 0.85, "turn": 0.7, "offroad_turn": 0.55, "recipe": "flatbed",
 		"grip_speed": 16.0, "ride": 0.60, "wheel_r": 0.55, "length": 14.0, "tint": Color(0.30, 0.36, 0.46),
 		"susp_travel": 0.35, "susp_stiff": 40.0, "susp_damp": 7.0, "susp_sag": 0.60,
 	},
@@ -4929,7 +5852,7 @@ const VEHICLE_ROWS := {
 		# bites) that stop wheels dead. You take it not to travel but to go somewhere untravellable.
 		"purpose": "the tracked crawler — slow and road-blind, climbs the broken ground wheels can't",
 		"loco": "tracked", "mass": 9000.0, "power": 9.0, "brake": 12.0, "top": 9.0, "reverse": -4.0,
-		"drag": 0.35, "offroad_drag": 0.0, "turn": 1.4, "offroad_turn": 0.0,
+		"drag": 0.35, "offroad_drag": 0.0, "turn": 1.4, "offroad_turn": 0.0, "recipe": "turret",
 		"grip_speed": 0.0, "ride": 0.55, "wheel_r": 0.50, "length": 6.5, "tint": Color(0.34, 0.36, 0.32),
 		"susp_travel": 0.30, "susp_stiff": 40.0, "susp_damp": 7.0, "susp_sag": 0.55,
 	},
@@ -5125,7 +6048,7 @@ const VEHICLE_ROWS := {
 		# spot, reaching a ledge or rooftop no wheel or wing can -- the flyer for tight, slow, precise work.
 		"purpose": "the rotary — hovers, climbs vertically, pivots in place; slow but goes anywhere and waits there",
 		"loco": "air", "mass": 2400.0, "power": 8.0, "brake": 8.0, "top": 28.0, "reverse": -6.0,
-		"drag": 0.45, "offroad_drag": 0.0, "turn": 1.3, "offroad_turn": 0.0,
+		"drag": 0.45, "offroad_drag": 0.0, "turn": 1.3, "offroad_turn": 0.0, "recipe": "rotor",
 		"grip_speed": 0.0, "ride": 0.6, "wheel_r": 0.5, "length": 9.0, "tint": Color(0.28, 0.30, 0.34),
 		"lift": 1.0, "stall_speed": 0.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
@@ -5135,7 +6058,7 @@ const VEHICLE_ROWS := {
 		# turn, but nothing else on the ring crosses a 3,000 km circumference at this pace -- the long-haul flyer.
 		"purpose": "the fixed-wing — fast and far, but must hold airspeed or stall and banks through a wide turn",
 		"loco": "air", "mass": 3200.0, "power": 12.0, "brake": 6.0, "top": 90.0, "reverse": 0.0,
-		"drag": 0.12, "offroad_drag": 0.0, "turn": 1.1, "offroad_turn": 0.0,
+		"drag": 0.12, "offroad_drag": 0.0, "turn": 1.1, "offroad_turn": 0.0, "recipe": "wing",
 		"grip_speed": 40.0, "ride": 0.5, "wheel_r": 0.5, "length": 11.0, "tint": Color(0.40, 0.40, 0.44),
 		"lift": 1.0, "stall_speed": 30.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
@@ -5148,12 +6071,327 @@ const VEHICLE_ROWS := {
 		# the air does. Down low the airplane beats it everywhere; over the wall it is the only thing still flying.
 		"purpose": "the lifter — a mediocre aeroplane and the only craft that keeps flying once the air runs out",
 		"loco": "air", "mass": 9000.0, "power": 16.0, "brake": 6.0, "top": 120.0, "reverse": 0.0,
-		"drag": 0.22, "offroad_drag": 0.0, "turn": 0.7, "offroad_turn": 0.0,
+		"drag": 0.22, "offroad_drag": 0.0, "turn": 0.7, "offroad_turn": 0.0, "recipe": "wing",
 		"grip_speed": 60.0, "ride": 0.7, "wheel_r": 0.6, "length": 16.0, "tint": Color(0.52, 0.50, 0.46),
 		"lift": 0.85, "stall_speed": 45.0, "rcs": 7.0,
 		"susp_travel": 0.0, "susp_stiff": 0.0, "susp_damp": 0.0, "susp_sag": 0.0,
 	},
 }
+
+# KITBASH RECIPES. A recipe is a small set of shared parts hung off the chassis sockets; a VehicleDef's
+# `recipe` field names one. This is the vehicles half of the "40 vehicles is not 40 models" framing --
+# six recipes turn eight identical boxes into eight silhouettes, and a new one is a data row, not a mesh
+# job. Each spec: slot (unique in the recipe), socket (a chassis Node3D by name), kind (box|cyl), size,
+# pos/rot offset from the socket, tint. Parts merge into the baked chassis; only the wheels stay dynamic.
+const VEHICLE_RECIPES := {
+	# flatbed -- a cab up front and a low cargo bed with a headboard behind (sixby, hauler).
+	"flatbed": [
+		{"slot": "cab",   "socket": "cab", "kind": "box", "size": Vector3(1.9, 1.0, 1.5),  "pos": Vector3(0, 0.5, 0),    "tint": Color(0.30, 0.32, 0.30)},
+		{"slot": "bed",   "socket": "bed", "kind": "box", "size": Vector3(2.0, 0.35, 2.2), "pos": Vector3(0, 0.18, 0),   "tint": Color(0.24, 0.24, 0.22)},
+		{"slot": "board", "socket": "bed", "kind": "box", "size": Vector3(2.0, 0.8, 0.16), "pos": Vector3(0, 0.55, 1.1), "tint": Color(0.24, 0.24, 0.22)},
+	],
+	# sport -- a rear wing on struts and a front splitter; reads fast from the chase camera behind.
+	"sport": [
+		{"slot": "wing",     "socket": "tail", "kind": "box", "size": Vector3(1.9, 0.08, 0.5), "pos": Vector3(0, 0.45, 0),     "tint": Color(0.12, 0.12, 0.13)},
+		{"slot": "strutL",   "socket": "tail", "kind": "box", "size": Vector3(0.1, 0.45, 0.1), "pos": Vector3(-0.7, 0.22, 0),  "tint": Color(0.12, 0.12, 0.13)},
+		{"slot": "strutR",   "socket": "tail", "kind": "box", "size": Vector3(0.1, 0.45, 0.1), "pos": Vector3(0.7, 0.22, 0),   "tint": Color(0.12, 0.12, 0.13)},
+		{"slot": "splitter", "socket": "nose", "kind": "box", "size": Vector3(2.0, 0.06, 0.6), "pos": Vector3(0, -0.35, 0.2),  "tint": Color(0.10, 0.10, 0.10)},
+	],
+	# tractor -- a tall narrow cab, an exhaust stack and a rear implement bar.
+	"tractor": [
+		{"slot": "cab",   "socket": "cab", "kind": "box", "size": Vector3(1.4, 1.4, 1.3),  "pos": Vector3(0, 0.7, -0.4),  "tint": Color(0.26, 0.40, 0.18)},
+		{"slot": "stack", "socket": "cab", "kind": "cyl", "size": Vector3(0.18, 0.9, 0.18), "pos": Vector3(0.6, 0.7, 0.7), "tint": Color(0.15, 0.15, 0.15)},
+		{"slot": "tool",  "socket": "bed", "kind": "box", "size": Vector3(2.2, 0.5, 0.3),   "pos": Vector3(0, 0.0, -0.6),  "tint": Color(0.50, 0.45, 0.20)},
+	],
+	# turret -- a hull-top ring, a drum and a barrel (crawler); the military read.
+	"turret": [
+		{"slot": "ring",   "socket": "turret", "kind": "cyl", "size": Vector3(1.4, 0.25, 1.4), "pos": Vector3(0, 0.12, 0),  "tint": Color(0.30, 0.32, 0.30)},
+		{"slot": "drum",   "socket": "turret", "kind": "cyl", "size": Vector3(1.1, 0.5, 1.1),  "pos": Vector3(0, 0.5, 0),   "tint": Color(0.28, 0.30, 0.28)},
+		{"slot": "barrel", "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 1.8, 0.18),"pos": Vector3(0, 0.55, 1.0),"rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.20)},
+	],
+	# rotor -- a helicopter, not a truck with a propeller. Its chassis is the SHORT, TALL fuselage on
+	# skids built in _make_car (is_rotor), so this recipe sits the mast + crossed THIN main blades on
+	# the raised top (fuselage top y~2.7), runs a thin tail BOOM off the back, and puts a small tail
+	# rotor at the boom's end. The read is a thin blade line held aloft over a tall cabin, plus boom and
+	# tail rotor -- a rotorcraft side-on, where the old wide flat disc photographed as a patio table.
+	"rotor": [
+		{"slot": "mast",    "socket": "turret", "kind": "cyl", "size": Vector3(0.18, 0.8, 0.18), "pos": Vector3(0, 1.6, 0),   "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "bladeA",  "socket": "turret", "kind": "box", "size": Vector3(5.5, 0.06, 0.3),  "pos": Vector3(0, 2.0, 0),   "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "bladeB",  "socket": "turret", "kind": "box", "size": Vector3(0.3, 0.06, 5.5),  "pos": Vector3(0, 2.0, 0),   "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "boom",    "socket": "tail",   "kind": "box", "size": Vector3(0.32, 0.4, 2.2),  "pos": Vector3(0, 0.2, 0.9), "tint": Color(0.28, 0.30, 0.34)},
+		{"slot": "tbladeA", "socket": "tail",   "kind": "box", "size": Vector3(0.05, 1.4, 0.22), "pos": Vector3(0.3, 0.2, 0), "tint": Color(0.14, 0.14, 0.16)},
+		{"slot": "tbladeB", "socket": "tail",   "kind": "box", "size": Vector3(0.05, 0.22, 1.4), "pos": Vector3(0.3, 0.2, 0), "tint": Color(0.14, 0.14, 0.16)},
+	],
+	# wing -- two swept wings and a tail fin; the fixed-wing read (airplane, lifter).
+	"wing": [
+		{"slot": "wingL", "socket": "wing", "kind": "box", "size": Vector3(5.5, 0.12, 1.4), "pos": Vector3(-3.2, 0, 0), "tint": Color(0.40, 0.40, 0.44)},
+		{"slot": "wingR", "socket": "wing", "kind": "box", "size": Vector3(5.5, 0.12, 1.4), "pos": Vector3(3.2, 0, 0),  "tint": Color(0.40, 0.40, 0.44)},
+		{"slot": "fin",   "socket": "tail", "kind": "box", "size": Vector3(0.12, 1.2, 1.0), "pos": Vector3(0, 0.6, 0),  "tint": Color(0.40, 0.40, 0.44)},
+	],
+}
+
+# Building recipes, index = building style (see _load_bldg_file: 0 = gable, 1 = meru). Same shape as
+# VEHICLE_RECIPES: a list of parts, each a shape hung on a named socket at an offset. Per-biome
+# variety is a different part set, not a different mesh -- gable gets a door and a chimney, meru gets
+# a veranda. Unit space: footprint [-0.5,0.5], ground at y=0, +z front; the instance transform scales
+# it to the real footprint. `size.y` on a gable is the ridge rise above the wall top.
+const BUILDING_RECIPES := [
+	{
+		"name": "gable",
+		"parts": [
+			{"slot": "plinth", "socket": "wall",    "shape": "box",   "mat": "base",  "size": Vector3(1.0, 1.0, 1.0),    "pos": Vector3(0, -0.5, 0)},
+			{"slot": "walls",  "socket": "wall",    "shape": "box",   "mat": "wall",  "size": Vector3(1.0, 0.72, 1.0),   "pos": Vector3(0, 0.36, 0)},
+			{"slot": "pitch",  "socket": "roof",    "shape": "gable", "mat": "roof",  "size": Vector3(1.0, 0.28, 1.0),   "pos": Vector3(0, 0.72, 0)},
+			{"slot": "front",  "socket": "door",    "shape": "box",   "mat": "trim",  "size": Vector3(0.22, 0.5, 0.06),  "pos": Vector3(0, 0.25, 0)},
+			{"slot": "flue",   "socket": "chimney", "shape": "box",   "mat": "trim",  "size": Vector3(0.14, 0.55, 0.14), "pos": Vector3(0.24, 0.95, -0.18)},
+		],
+	},
+	{
+		"name": "meru",
+		"parts": [
+			{"slot": "plinth", "socket": "wall",    "shape": "box",   "mat": "base",   "size": Vector3(0.84, 1.0, 0.84),  "pos": Vector3(0, -0.5, 0)},
+			{"slot": "walls",  "socket": "wall",    "shape": "box",   "mat": "wall_j", "size": Vector3(0.84, 0.30, 0.84), "pos": Vector3(0, 0.15, 0)},
+			{"slot": "tier",   "socket": "roof",    "shape": "joglo", "mat": "roof_j", "size": Vector3.ONE,               "pos": Vector3(0, 0.30, 0)},
+			{"slot": "porch",  "socket": "veranda", "shape": "box",   "mat": "roof_j", "size": Vector3(0.7, 0.06, 0.34),  "pos": Vector3(0, 0.24, 0.05)},
+		],
+	},
+]
+
+# Weapon shapes, keyed by mechanics class (the default) with name-level overrides where a row's SHAPE
+# should differ from its class-mate (musket vs carbine, both `chemical`). Same spec shape as
+# VEHICLE_RECIPES: a tinted box|cyl hung on a named socket at an offset. A `cyl` size is
+# Vector3(diameter, length, _) and a rot(90,0,0) lays it along the barrel line (-Z), exactly as the
+# vehicle turret barrel does. Colours are just tints; a gun of 6 parts bakes to a handful of surfaces.
+const WEAPON_RECIPES := {
+	# --- CHEMICAL PROJECTILE: the carbine, the reference every other row is measured against. The full
+	# receiver -- barrel + handguard + iron sight + box magazine + pistol grip + stock -- is the shape
+	# the rest are variations on. (carbine and bolt_action both fall here.)
+	"chemical": [
+		{"slot": "receiver",  "socket": "body",     "kind": "box", "size": Vector3(0.050, 0.095, 0.32), "pos": Vector3(0, 0, 0),        "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.028, 0.34, 0.028), "pos": Vector3(0, 0, -0.12),    "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "handguard", "socket": "barrel",   "kind": "box", "size": Vector3(0.050, 0.050, 0.18), "pos": Vector3(0, -0.006, 0.05), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "sight",     "socket": "sight",    "kind": "box", "size": Vector3(0.014, 0.032, 0.05), "pos": Vector3(0, 0, 0),        "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "magazine",  "socket": "magazine", "kind": "box", "size": Vector3(0.038, 0.140, 0.065),"pos": Vector3(0, -0.06, 0),    "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "grip",      "socket": "grip",     "kind": "box", "size": Vector3(0.036, 0.110, 0.050),"pos": Vector3(0, -0.05, 0),    "rot": Vector3(14, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",     "socket": "stock",    "kind": "box", "size": Vector3(0.038, 0.085, 0.20), "pos": Vector3(0, -0.015, 0.08),"tint": Color(0.11, 0.11, 0.12)},
+	],
+	# musket -- a very long barrel, a full WOODEN stock fore and aft, NO magazine and no pistol grip.
+	# Reads as "old and single-shot" against the carbine at a glance, which is the whole exercise.
+	"musket": [
+		{"slot": "lock",      "socket": "body",   "kind": "box", "size": Vector3(0.040, 0.060, 0.16), "pos": Vector3(0, 0, 0),        "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "barrel",    "socket": "barrel", "kind": "cyl", "size": Vector3(0.024, 0.74, 0.024), "pos": Vector3(0, 0.006, -0.33), "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "forestock", "socket": "barrel", "kind": "box", "size": Vector3(0.045, 0.050, 0.50), "pos": Vector3(0, -0.02, -0.16),"tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "butt",      "socket": "stock",  "kind": "box", "size": Vector3(0.042, 0.085, 0.30), "pos": Vector3(0, -0.03, 0.10), "tint": Color(0.34, 0.20, 0.09)},
+	],
+	# smg -- short barrel, a long stick magazine, a stubby folding stock. The close-quarters read.
+	"smg": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.045, 0.085, 0.22), "pos": Vector3(0, 0, 0),      "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",   "socket": "barrel",   "kind": "cyl", "size": Vector3(0.024, 0.12, 0.024), "pos": Vector3(0, 0, -0.02),  "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "sight",    "socket": "sight",    "kind": "box", "size": Vector3(0.012, 0.028, 0.04), "pos": Vector3(0, 0, 0),      "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "magazine", "socket": "magazine", "kind": "box", "size": Vector3(0.030, 0.220, 0.055),"pos": Vector3(0, -0.10, 0.02),"tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "grip",     "socket": "grip",     "kind": "box", "size": Vector3(0.034, 0.100, 0.045),"pos": Vector3(0, -0.045, 0), "rot": Vector3(10, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.028, 0.050, 0.14), "pos": Vector3(0, -0.005, 0.02),"tint": Color(0.20, 0.20, 0.22)},
+	],
+	# lmg -- heavy long barrel, a big box magazine, a bipod. Reads as "supported and belt-hungry".
+	"lmg": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.065, 0.110, 0.38), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",   "socket": "barrel",   "kind": "cyl", "size": Vector3(0.038, 0.48, 0.038), "pos": Vector3(0, 0, -0.18),   "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "boxmag",   "socket": "magazine", "kind": "box", "size": Vector3(0.100, 0.130, 0.150),"pos": Vector3(0, -0.05, 0.02),"tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "bipodL",   "socket": "barrel",   "kind": "box", "size": Vector3(0.012, 0.22, 0.012), "pos": Vector3(-0.05, -0.13, 0.24), "rot": Vector3(0, 0, 22),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "bipodR",   "socket": "barrel",   "kind": "box", "size": Vector3(0.012, 0.22, 0.012), "pos": Vector3(0.05, -0.13, 0.24),  "rot": Vector3(0, 0, -22), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "sight",    "socket": "sight",    "kind": "box", "size": Vector3(0.014, 0.030, 0.05), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.045, 0.090, 0.20), "pos": Vector3(0, -0.02, 0.08),"tint": Color(0.34, 0.20, 0.09)},
+	],
+	# autocannon -- a vehicle weapon carried by hand: a very long thick barrel with a muzzle brake and a
+	# heavy feed. The "this is too much gun" read.
+	"autocannon": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.100, 0.150, 0.46), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "barrel",   "socket": "barrel",   "kind": "cyl", "size": Vector3(0.060, 0.82, 0.060), "pos": Vector3(0, 0, -0.36),   "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "brake",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.090, 0.10, 0.090), "pos": Vector3(0, 0, -0.76),   "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "feed",     "socket": "magazine", "kind": "box", "size": Vector3(0.130, 0.160, 0.18), "pos": Vector3(0, -0.02, 0.06),"tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.060, 0.100, 0.20), "pos": Vector3(0, -0.02, 0.06),"tint": Color(0.11, 0.11, 0.12)},
+	],
+	# --- DIRECTED ENERGY: a receiver with an emitter and cooling coils where a barrel and magazine sit,
+	# and a battery cell where a box mag would be. (beam_rifle and cutter both fall here.)
+	"energy": [
+		{"slot": "receiver", "socket": "body",     "kind": "box", "size": Vector3(0.050, 0.100, 0.30), "pos": Vector3(0, 0, 0),       "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "emitter",  "socket": "barrel",   "kind": "cyl", "size": Vector3(0.050, 0.22, 0.050), "pos": Vector3(0, 0, -0.10),   "rot": Vector3(90, 0, 0), "tint": Color(0.25, 0.55, 0.62)},
+		{"slot": "coilA",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.075, 0.02, 0.075), "pos": Vector3(0, 0, -0.02),   "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "coilB",    "socket": "barrel",   "kind": "cyl", "size": Vector3(0.075, 0.02, 0.075), "pos": Vector3(0, 0, -0.14),   "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "cell",     "socket": "magazine", "kind": "box", "size": Vector3(0.050, 0.100, 0.12), "pos": Vector3(0, -0.045, 0.04),"tint": Color(0.25, 0.55, 0.62)},
+		{"slot": "grip",     "socket": "grip",     "kind": "box", "size": Vector3(0.036, 0.100, 0.05), "pos": Vector3(0, -0.045, 0),  "rot": Vector3(14, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "stock",    "socket": "stock",    "kind": "box", "size": Vector3(0.040, 0.080, 0.18), "pos": Vector3(0, -0.015, 0.06),"tint": Color(0.11, 0.11, 0.12)},
+	],
+	# --- MELEE default (improvised): a short haft and a small head. spear/club/blade override below.
+	"melee": [
+		{"slot": "haft", "socket": "body",   "kind": "cyl", "size": Vector3(0.028, 0.50, 0.028), "pos": Vector3(0, 0, -0.02), "rot": Vector3(90, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "head", "socket": "barrel", "kind": "box", "size": Vector3(0.050, 0.090, 0.06), "pos": Vector3(0, 0, -0.06), "tint": Color(0.20, 0.20, 0.22)},
+	],
+	# spear -- a long thin shaft and a leaf point at the tip (javelin aliases to this).
+	"spear": [
+		{"slot": "shaft", "socket": "body",   "kind": "cyl", "size": Vector3(0.024, 1.30, 0.024), "pos": Vector3(0, 0, -0.15), "rot": Vector3(90, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "point", "socket": "barrel", "kind": "box", "size": Vector3(0.020, 0.05, 0.20),  "pos": Vector3(0, 0, -0.60), "tint": Color(0.42, 0.43, 0.47)},
+	],
+	# club -- a thin handle and a fat heavy head at the end.
+	"club": [
+		{"slot": "haft", "socket": "body",   "kind": "cyl", "size": Vector3(0.032, 0.46, 0.032), "pos": Vector3(0, 0, 0.02),  "rot": Vector3(90, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "head", "socket": "barrel", "kind": "cyl", "size": Vector3(0.150, 0.18, 0.150), "pos": Vector3(0, 0, -0.02), "rot": Vector3(90, 0, 0), "tint": Color(0.30, 0.29, 0.27)},
+	],
+	# blade -- a handle, a cross-guard and a long flat blade.
+	"blade": [
+		{"slot": "handle", "socket": "body",   "kind": "box", "size": Vector3(0.028, 0.038, 0.12), "pos": Vector3(0, 0, 0.14),  "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "guard",  "socket": "body",   "kind": "box", "size": Vector3(0.100, 0.028, 0.028),"pos": Vector3(0, 0, 0.06),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "blade",  "socket": "barrel", "kind": "box", "size": Vector3(0.014, 0.090, 0.50), "pos": Vector3(0, 0, -0.18), "tint": Color(0.42, 0.43, 0.47)},
+	],
+	# --- TENSIONED default (sling): a small pouch on two cords. bow/crossbow override; speargun aliases
+	# to crossbow.
+	"tensioned": [
+		{"slot": "pouch", "socket": "body", "kind": "box", "size": Vector3(0.050, 0.030, 0.09), "pos": Vector3(0, -0.20, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "cordL", "socket": "body", "kind": "box", "size": Vector3(0.006, 0.40, 0.006), "pos": Vector3(-0.03, 0, 0), "rot": Vector3(0, 0, 8),  "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "cordR", "socket": "body", "kind": "box", "size": Vector3(0.006, 0.40, 0.006), "pos": Vector3(0.03, 0, 0),  "rot": Vector3(0, 0, -8), "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# bow -- held vertically: a grip, two forward-curved limbs, a string. The D-shape reads on sight.
+	"bow": [
+		{"slot": "grip",   "socket": "body", "kind": "box", "size": Vector3(0.032, 0.14, 0.03),  "pos": Vector3(0, 0, 0),      "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "upper",  "socket": "body", "kind": "box", "size": Vector3(0.020, 0.42, 0.02),  "pos": Vector3(0, 0.26, 0),   "rot": Vector3(20, 0, 0),  "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "lower",  "socket": "body", "kind": "box", "size": Vector3(0.020, 0.42, 0.02),  "pos": Vector3(0, -0.26, 0),  "rot": Vector3(-20, 0, 0), "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "string", "socket": "body", "kind": "box", "size": Vector3(0.006, 0.90, 0.006), "pos": Vector3(0, 0, 0.10),   "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# crossbow -- a stock along the aim line, a horizontal prod and string across the front, a bolt on the
+	# rail (speargun aliases here).
+	"crossbow": [
+		{"slot": "stock",  "socket": "body",   "kind": "box", "size": Vector3(0.038, 0.05, 0.46), "pos": Vector3(0, 0, 0.06),   "tint": Color(0.34, 0.20, 0.09)},
+		{"slot": "prod",   "socket": "barrel", "kind": "box", "size": Vector3(0.680, 0.02, 0.03), "pos": Vector3(0, 0, -0.14),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "string", "socket": "barrel", "kind": "box", "size": Vector3(0.500, 0.006, 0.006),"pos": Vector3(0, 0, 0.02),  "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "bolt",   "socket": "body",   "kind": "box", "size": Vector3(0.012, 0.012, 0.40),"pos": Vector3(0, 0.04, -0.06),"tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "grip",   "socket": "grip",   "kind": "box", "size": Vector3(0.034, 0.09, 0.045),"pos": Vector3(0, -0.04, 0),  "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# --- GUIDED / INDIRECT default (rocket): a long launch tube with a fatter warhead nose. mortar/mlrs
+	# override.
+	"guided": [
+		{"slot": "tube",     "socket": "body",   "kind": "cyl", "size": Vector3(0.090, 0.88, 0.090), "pos": Vector3(0, 0, -0.08), "rot": Vector3(90, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "warhead",  "socket": "barrel", "kind": "cyl", "size": Vector3(0.110, 0.14, 0.110), "pos": Vector3(0, 0, -0.30), "rot": Vector3(90, 0, 0), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "sight",    "socket": "sight",  "kind": "box", "size": Vector3(0.020, 0.05, 0.03),  "pos": Vector3(0, 0.03, 0.10),"tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "grip",     "socket": "grip",   "kind": "box", "size": Vector3(0.036, 0.10, 0.05),  "pos": Vector3(0, -0.05, 0), "rot": Vector3(14, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+	],
+	# mortar -- a steeply tilted tube on a baseplate with a bipod. The indirect-fire read.
+	"mortar": [
+		{"slot": "tube",   "socket": "body", "kind": "cyl", "size": Vector3(0.080, 0.66, 0.080), "pos": Vector3(0, 0.16, -0.02), "rot": Vector3(112, 0, 0), "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "plate",  "socket": "body", "kind": "box", "size": Vector3(0.260, 0.03, 0.26),  "pos": Vector3(0, -0.30, 0.14), "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "bipodL", "socket": "body", "kind": "box", "size": Vector3(0.014, 0.40, 0.014), "pos": Vector3(-0.08, -0.10, 0.10), "rot": Vector3(24, 0, 18),  "tint": Color(0.42, 0.43, 0.47)},
+		{"slot": "bipodR", "socket": "body", "kind": "box", "size": Vector3(0.014, 0.40, 0.014), "pos": Vector3(0.08, -0.10, 0.10),  "rot": Vector3(24, 0, -18), "tint": Color(0.42, 0.43, 0.47)},
+	],
+	# mlrs -- a backpack box behind a cluster of four launch tubes. The "you are wearing the launcher" read.
+	"mlrs": [
+		{"slot": "pack",  "socket": "body",   "kind": "box", "size": Vector3(0.340, 0.36, 0.16), "pos": Vector3(0, 0, 0.10),  "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "tubeA", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(-0.10, 0.10, -0.05), "rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "tubeB", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(0.10, 0.10, -0.05),  "rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "tubeC", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(-0.10, -0.02, -0.05),"rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+		{"slot": "tubeD", "socket": "barrel", "kind": "cyl", "size": Vector3(0.090, 0.34, 0.090),"pos": Vector3(0.10, -0.02, -0.05), "rot": Vector3(90, 0, 0), "tint": Color(0.20, 0.20, 0.22)},
+	],
+	# --- THROWN default (grenade/rock/molotov/sticky): a compact hand object, not a long arm at all --
+	# which IS the distinction the tree wants to read.
+	"thrown": [
+		{"slot": "body", "socket": "body", "kind": "cyl", "size": Vector3(0.075, 0.12, 0.075), "pos": Vector3(0, 0, 0),    "tint": Color(0.11, 0.11, 0.12)},
+		{"slot": "top",  "socket": "body", "kind": "cyl", "size": Vector3(0.030, 0.05, 0.030), "pos": Vector3(0, 0.08, 0), "tint": Color(0.42, 0.43, 0.47)},
+	],
+}
+
+# STRUCTURE RECIPES. Fourth consumer of the Skeleton3D-unlocked assembler (characters, vehicles,
+# buildings, weapons -- now structures). The dock port was spine + collar + struts welded inline;
+# this is the same three pieces expressed as DATA, per the item. Everything is static relative to
+# the core axis, so the assembled kitbash bakes to one mesh (one surface per material). A `ring`
+# field radially repeats a part `count` times around the core at `radius`, facing outward, and can
+# alternate to a second material (`alt_mat`) on odd segments -- that lit-panel alternation is what
+# makes roll and range legible on the collar. `mat` names a material from _structure_materials.
+const STRUCTURE_RECIPES := {
+	# dock -- an axis-structure docking port. A spine reaching on toward the ring axis (so it reads as
+	# the bottom of something much larger), a capture collar of eight segments you aim INTO, and radial
+	# struts tying the collar back to the spine. Core-local frame: +y toward the axis; the caller
+	# orients the whole thing along ring-up. Geometry matches the old inline weld exactly.
+	"dock": [
+		{"slot": "spine",  "socket": "core", "kind": "box", "size": Vector3(26.0, 320.0, 26.0), "pos": Vector3(0.0, 172.0, 0.0), "mat": "hull"},
+		{"slot": "collar", "socket": "core", "kind": "box", "size": Vector3(34.0, 12.0, 12.0),   "pos": Vector3.ZERO, "mat": "hull", "ring": {"count": 8, "radius": 62.0, "alt_mat": "lamp"}},
+		{"slot": "strut",  "socket": "core", "kind": "box", "size": Vector3(52.0, 5.0, 5.0),      "pos": Vector3.ZERO, "mat": "hull", "ring": {"count": 8, "radius": 34.0}},
+	],
+}
+
+func _structure_materials() -> Dictionary:
+	# One shared instance per material, so the baker groups every part into just two surfaces. hull is
+	# the girderwork; lamp is the emissive panel that alternates around the collar. Same values the
+	# inline dock port used, so the render is unchanged -- only the authoring moved to data.
+	var hull := StandardMaterial3D.new()
+	hull.albedo_color = Color(0.30, 0.33, 0.38)
+	hull.metallic = 0.6
+	hull.roughness = 0.45
+	var lamp := StandardMaterial3D.new()
+	lamp.albedo_color = Color(0.20, 0.55, 0.75)
+	lamp.emission_enabled = true
+	lamp.emission = Color(0.5, 0.9, 1.0)
+	lamp.emission_energy_multiplier = 1.1   # 3.0 blew the panels to flat white against black sky
+	return {"hull": hull, "lamp": lamp}
+
+func _build_structure(key: String) -> Node3D:
+	# Assemble a named structure recipe onto a core chassis via the SHARED assembler, then bake the
+	# static kitbash to one mesh -- a handful of surfaces, not a node per strut. Returns the root; the
+	# caller positions and orients it (the dock is stood up along ring-up toward the axis).
+	var root := Node3D.new()
+	root.name = "structure_" + key
+	var core := Node3D.new()
+	core.name = "core"
+	root.add_child(core)
+	_apply_structure_recipe(root, key)
+	MeshBaker.bake(root)
+	return root
+
+func _apply_structure_recipe(root: Node3D, key: String) -> void:
+	var specs: Array = STRUCTURE_RECIPES.get(key, [])
+	var mats := _structure_materials()
+	var recipe := Recipe.new()
+	recipe.body_plan = "structure"
+	for spec: Dictionary in specs:
+		var ring: Dictionary = spec.get("ring", {})
+		if ring.is_empty():
+			_add_structure_part(recipe, spec["slot"], spec, spec.get("pos", Vector3.ZERO), Vector3.ZERO, spec.get("mat", "hull"), mats)
+			continue
+		# Radially repeat this part around the core axis, one PartDef per segment (unique slot), each
+		# facing outward (rotation.y = -a, matching the old `seg.rotation.y = -a`).
+		var count: int = ring.get("count", 1)
+		var radius: float = ring.get("radius", 0.0)
+		var alt: String = ring.get("alt_mat", "")
+		for i in count:
+			var a := TAU * float(i) / float(count)
+			var pos: Vector3 = spec.get("pos", Vector3.ZERO) + Vector3(sin(a) * radius, 0.0, cos(a) * radius)
+			var mat_key: String = alt if (alt != "" and i % 2 == 1) else spec.get("mat", "hull")
+			_add_structure_part(recipe, "%s_%d" % [spec["slot"], i], spec, pos, Vector3(0.0, -rad_to_deg(a), 0.0), mat_key, mats)
+	CharacterAssembler.apply(root, recipe)
+
+func _add_structure_part(recipe: Recipe, slot: String, spec: Dictionary, pos: Vector3, rot: Vector3, mat_key: String, mats: Dictionary) -> void:
+	var pd := PartDef.new()
+	pd.slot = slot
+	pd.socket = spec.get("socket", "core")
+	pd.mesh = _structure_part_mesh(spec, mats.get(mat_key, mats["hull"]))
+	pd.offset_position = pos
+	pd.offset_rotation_degrees = rot
+	recipe.parts[slot] = pd
+
+func _structure_part_mesh(spec: Dictionary, mat: Material) -> Mesh:
+	# tinted box | 12-segment cylinder, same generator shape as the vehicle/weapon parts but drawing its
+	# material from the shared _structure_materials set (so parts merge to one surface per material).
+	var size: Vector3 = spec.get("size", Vector3.ONE)
+	if spec.get("kind", "box") == "cyl":
+		var cm := CylinderMesh.new()
+		cm.radial_segments = 12
+		cm.rings = 1
+		cm.height = size.y
+		cm.top_radius = size.x * 0.5
+		cm.bottom_radius = size.x * 0.5
+		cm.material = mat
+		return cm
+	var bm := BoxMesh.new()
+	bm.size = size
+	bm.material = mat
+	return bm
 
 func _build_vehicle_defs() -> void:
 	# Turn each data row into a typed VehicleDef, applying the row over the resource's defaults.
@@ -6063,9 +7301,12 @@ func _drive_tick(delta: float) -> void:
 	# framing it had on the surface. _dive is 0 for every other class, so this is a no-op for them.
 	# lift the chase cam with a climbing flyer so it keeps its framing instead of craning up at the aircraft;
 	# _altitude is 0 for every non-air class, so this is a no-op for them (as _dive is for non-subs).
-	var cam_target: Vector3 = cam_ground + cam_up * (5.0 - _dive + _altitude)
-	_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-6.0 * delta))
-	_cam.look_at(pos + up * 2.0, up)
+	# --silhouette drives the parade but frames each vehicle off its own bounding box from a pinned
+	# camera; the chase cam must not drag it back behind the car mid-shot.
+	if not _shot_hold_cam:
+		var cam_target: Vector3 = cam_ground + cam_up * (5.0 - _dive + _altitude)
+		_cam.position = _cam.position.lerp(cam_target, 1.0 - exp(-6.0 * delta))
+		_cam.look_at(pos + up * 2.0, up)
 	_hud_timer += delta
 	if _hud_timer > 0.25:
 		_hud_timer = 0.0

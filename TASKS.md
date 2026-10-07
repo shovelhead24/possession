@@ -1,80 +1,24 @@
-﻿# Work queue
+# Active queue — first operation
 
-Durable queue for scheduled/resumed sessions. The cron schedule dies with a session; this file
-doesn't. A session that wakes takes the **top unchecked item**, does it, ticks it, commits.
+2026-09-12. The previous catalogue queue is archived at docs/archive/TASKS-before-first-operation.md. The Windows model worker is disabled and paused; it is not executing this list. See docs/brief.md and docs/first-operation.md.
 
-Rules:
-- One item per wake. Finish it or leave a note saying where it stopped.
-- Read images before changing biome numbers. `tools/dem/patch_census.py` proposes; the image decides.
-- **Every screenshot session gets an entry in `logs/shots/JOURNAL.md`** — what it was taken to
-  check, what was actually there, what tasks fell out. Shots go in a timestamped folder and are
-  never overwritten. A shot with no stated purpose is not worth taking.
-- Never re-centre or refetch a patch unprompted — that destroys the old one.
-- Don't write more docs unless the item asks for one.
+- [ ] Capture current in-game haze as the scale reference; assemble annotated E3 2000 references and an outdoor sky/world look-development scene with purple accents. Test a mostly static painterly sky with subtle motion and spatially correct ring landmarks before production art.
+- [ ] Audit and calibrate the common material/export/review-render pipeline using fixed reference objects before any further autonomous art production. Separate technical failures, art revisions and reviewer disagreement; retain comparable evidence.
+- [x] Build a standalone Godot FOB/map/relay greybox harness, using existing project conventions without depending on the terrain demo. See prototypes/first-operation/README.md; free-flight fixture, not a combat slice.
+- [ ] Prototype a physical planning table/projector with two routes, relay coverage, selected-route feedback and legible unknown/offline states.
+- [ ] Prototype a modular FOB layout with planning, rearm and deployment locations at player scale.
+- [ ] Prototype relay/console states and communications-dependent support acknowledgement; avoid a circular support prerequisite.
+- [ ] Define and test two enemy behaviour roles and the minimal player movement/weapon/defence set in a two-approach courtyard. Catalogue reach and combat values are provisional.
+- [ ] Test one short authored aftermath and record the local changes it preserves; do not settle global campaign timing by accident.
+- [ ] Test companion acknowledgements, bounded translation and an optional stop-to-view local hologram against FOB-only map access.
+- [ ] Observe fresh-player readability, combat enjoyment, co-op use and target-hardware performance; record failures before expanding scope.
+- [ ] Once interactions are stable, specify and create the production FOB, relay and projector meshes/materials with calibrated review criteria.
+- [ ] Redesign the unattended queue for approved bounded work only; add phase-specific failures and an infrastructure-stop condition before considering re-enablement.
 
----
+Existing exports remain in the isolated asset-production checkout. No assets are deleted or merged by this planning change. Holographic maps require runtime visuals and interaction; a GLB plus two screenshots cannot establish completion.
 
-## Vehicles — the 40+ programme
+Prototype progress (2026-09-12): physical route selection, relay states, support acknowledgement, material swatches and a proposed moving sky are available in prototypes/first-operation. The remaining unchecked items include integration and readability work; the sky and Blender review pipeline are not approved. Fourth-failure global stop installed and tested; unattended production remains disabled pending diagnosis and approved job contracts.
 
-Framing, because this only works one way. **40 vehicles is not 40 models.** It is a small set of
-locomotion models, each parameterised, with generated or kitbashed meshes over the top. Done as
-bespoke assets it is forty art tasks and it never ships; done as ~7 movement classes x parameters
-it is a fortnight and the count falls out for free. Same argument as the tree species: the project
-already generates its houses, hedges, palms and textures.
+Tactical fixture (2026-09-12): prototypes/first-operation/VALLEY.md now provides grounded walking, a ridge/gully route and enterable relay buildings. Collision and sightline checks pass. Existing asset integration, DEM/metadata integration and actual combat remain pending.
 
-Prerequisite for everything below.
-
-### Cross-cutting
-- [ ] **Where vehicles COME from.** Found, salvaged, stolen, traded. Ties into the draws work:
-      a vehicle two valleys away is a reason to go there.
-      BLOCKED (2026-08-13): `docs/draws.md` exists as design but there is no draws or settlement
-      system in the engine at all, so this would mean inventing salvage/trade/ownership from scratch
-      rather than wiring up something that exists. Needs the draws work first.
-## Weapons, HUD and on-foot — the tech-tree programme
-
-Same framing as the vehicles, for the same reason. **A tech tree from a sharpened stick to a
-backpack MLRS is not 40 weapon models.** It is ~7 mechanics classes, each parameterised, with
-placeholder shapes over the top. Mechanics first: a weapon that looks right and feels wrong is
-worse than a grey box that feels right, and feel is measurable.
-
-The carbine already exists as a model with FP arms (`.decisions/` and `assets/`), so this is about
-behaviour, not art.
-
-### Mechanics classes (each is a parameter set, not a weapon)
-- [ ] **Deployable** — mines, sensors, a tripod turret. Placed, then persistent.
-
-### The tree itself
-- [ ] **Progression rules.** The player ARRIVES from a spacefaring civilisation and gets stripped of
-      it (`the-toll` in docs/vignettes.md). The tree is therefore about RECOVERING capability, not
-      inventing it -- a spear is what you use when they took your rifle. That inverts the usual
-      shape and is worth exploiting.
-- [ ] **Ammunition and scarcity** as the real balance lever, not damage numbers.
-- [ ] **Where weapons come from** — found, salvaged, traded, taken. Same hook as the vehicles;
-      ties into draws.
-
-### On foot
-- [ ] **FPS controls proper.** WALK mode is a camera with a speed. Needs: acceleration, crouch,
-      sprint with a cost, jump, fall damage, stance affecting spread, and the ring frame handled
-      correctly (up points at the axis, which the camera already does and the movement does not).
-- [ ] **HUD.** Currently a debug wall of text. Needs a real one -- and per
-      `.decisions/design-laws.md#diegetic-tools-not-hud`, **information must be a physical ownable
-      tool, not free overlay**. Ammo count comes from looking at the weapon; bearing comes from a
-      compass you found. That law makes this design work, not just layout work.
-- [ ] **Damage model** — locational, on the player and on NPCs, shared with the creature system that
-      already exists.
-
-- 8192 refetch: running via the Startup task. ~36 patches left of awake time.
-- Roads fetch: running. Hedgerows everywhere depends on it.
-
-- Coastal batch, ring now 35/35 unique
-- Atmosphere exit, star rotation on the sun's axis
-- Roads: trees off carriageway, hedge ribbon, verge
-- Height tier box-filtering; `--align` reports 0/4235 mismatches
-- S3TC/BPTC compression, `[U]`
-- `[Y]` probe, `patch_census.py`
-
----
-
-**Completed items live in `TASKS-done.md`.** They were 88% of this file (679 of 768 lines) and the
-unattended tick re-read all of it every 30 minutes to find one unchecked line. Keep this file to the
-open queue; write the "what actually happened" notes into the archive or the commit message.
+Arena kit (2026-09-12): automatic mouse look, existing arms, seven local weapons, two imported vehicles with provisional drive/exit controls, and range targets are integrated. See prototypes/first-operation/INTEGRATION.md for DEM composition and cloud continuity plans. Original vehicle handling, full weapon mechanics, animation calibration, terrain-data integration and the painterly cloud pass remain open.

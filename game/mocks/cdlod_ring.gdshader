@@ -44,6 +44,12 @@ uniform vec4 patch_tint[40];   // fallback colour for patches whose imagery hasn
 // sea level are shifted down to a common low floor; coastal patches get 0 so coastlines survive.
 uniform float patch_offset[40];
 uniform float ring_circumference = 3000000.0;
+// EDGE FEATHER, off by default (see TASKS.md "Edge feathering at patch boundaries"). 0 = the hard
+// ownership pick in sample_h_raw, i.e. today's behaviour exactly. >0 = blend half-width in KM: near a
+// patch edge, sample every patch whose extent covers the point and lerp by metres-inside-ownership so
+// adjacent patches meet without a step. Set ONLY during `-- --shots --seam` to shoot a comparison
+// strip; the width is a human's to choose by looking, not baked here.
+uniform float patch_blend_km = 0.0;
 // Streamed high-res tier: the ONE patch the camera is currently inside, decoded on a worker thread
 // and swapped in here. 512^2 over an 84km patch is 164 m/px -- fine for scenery you fly past, mush
 // for ground you stand on. hires_valid stays false until a decode lands, so the array tier covers.
@@ -169,6 +175,8 @@ varying vec2 v_tile_uv;   // repeating drape UV for the beyond-DEM fallback (sam
 varying vec3 v_world_pos;
 varying float v_height;   // metres above the ring floor (v_h is normalised, no good for shadowing)
 varying vec2 v_ring;      // (arc, lat) -- needed in fragment for the splice-patch lookup
+uniform bool authored_patch_enabled = false;
+uniform vec4 authored_patch_rect = vec4(0.0); // center arc/lat, half extents
 varying float v_depth;    // metres below sea level (>0 = underwater); from the UNCLAMPED height
 
 float hash12(vec2 p) {
@@ -261,6 +269,36 @@ float sample_h_raw(vec2 wxz) {
 		return (texture(hires_tex, rect_uv(hires_rect, wxz)).r + hires_offset) * dem_scale;
 	}
 	// 3. secondary splices placed around the arc
+	if (patch_blend_km > 0.0) {
+		// EDGE FEATHER (off by default). Partition-of-unity over every patch whose SAMPLING extent
+		// covers this point, weighted by metres-inside-ownership ramped across +/-blend of the edge.
+		// Adjacent patches' sampling extents already overlap ~7km, so both have a defined height in the
+		// band and meet without the ownership step; any weight the patches leave unclaimed falls to the
+		// procedural fallback, feathering patch<->procedural edges the same way. As blend->0 each point
+		// sits in exactly one ownership window (weight 1) and this collapses to the hard pick below.
+		float blend = patch_blend_km * 1000.0;
+		float wsum = 0.0;
+		float hsum = 0.0;
+		for (int i = 0; i < 40; i++) {
+			if (i >= patch_count) { break; }
+			vec4 r = patch_rect[i];
+			float d_arc = wxz.x - r.x;
+			d_arc -= ring_circumference * floor(d_arc / ring_circumference + 0.5);
+			if (abs(d_arc) >= r.z || abs(wxz.y - r.y) >= r.w) { continue; }   // outside sampling extent
+			float s = min(patch_own[i] - abs(d_arc), r.w - abs(wxz.y - r.y)); // metres inside ownership
+			float w = clamp(s / (2.0 * blend) + 0.5, 0.0, 1.0);
+			if (w <= 0.0) { continue; }
+			float h = (texture(patch_tex, vec3(rect_uv(r, wxz), float(i))).r + patch_offset[i]) * dem_scale;
+			wsum += w;
+			hsum += w * h;
+		}
+		if (wsum > 0.0) {
+			float wp = max(1.0 - wsum, 0.0);                                 // procedural fills the rest
+			float hp = texture(heightmap, wxz / feature).r * disp;
+			return (hsum + wp * hp) / (wsum + wp);
+		}
+		return texture(heightmap, wxz / feature).r * disp;
+	}
 	int pi = patch_at(wxz);
 	if (pi >= 0) {
 		return (texture(patch_tex, vec3(patch_uv(pi, wxz), float(pi))).r + patch_offset[pi]) * dem_scale;
@@ -336,6 +374,10 @@ void vertex() {
 }
 
 void fragment() {
+	if (authored_patch_enabled && abs(v_ring.x-authored_patch_rect.x) < authored_patch_rect.z
+			&& abs(v_ring.y-authored_patch_rect.y) < authored_patch_rect.w) {
+		discard; // fixed authored mesh owns this region, including lowered terrain
+	}
 	// beyond the walls' lat position -> never rendered at all (was a vertex-space sink before,
 	// which folded into a visible "wall" of geometry at the tile straddling the boundary — clean
 	// discard instead, per-fragment, no folded geometry).

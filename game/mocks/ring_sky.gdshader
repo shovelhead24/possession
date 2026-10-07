@@ -10,6 +10,7 @@ shader_type sky;
 // layer (see mocks/ring_clouds.gd) instead of a stylized sky-dome hack.
 
 uniform vec3 to_sun = vec3(0.0, 1.0, 0.0);
+uniform vec3 local_up = vec3(0.0, 1.0, 0.0);
 uniform float day : hint_range(0.0, 1.0) = 1.0;   // 0 = night, 1 = day
 uniform vec3 day_zenith : source_color = vec3(0.20, 0.42, 0.72);
 uniform vec3 day_horizon : source_color = vec3(0.62, 0.74, 0.86);
@@ -35,7 +36,7 @@ float hash21(vec2 p) {
 
 void sky() {
 	vec3 dir = normalize(EYEDIR);
-	float up = dir.y;
+	float up = dot(dir, normalize(local_up));
 	vec3 zenith = mix(night_zenith, day_zenith, day);
 	vec3 horizon = mix(night_horizon, day_horizon, day);
 	vec3 col = mix(horizon, zenith, smoothstep(-0.05, 0.65, up));

@@ -7,6 +7,21 @@ One entry per `--shots` run. Convention, from 2026-08-09:
 - **Saw** — what was actually there, including things not being looked for.
 - **Fell out** — tasks created or closed as a result.
 
+**Which tool answers the question.** A screenshot answers *does it read* -- a judgement about
+appearance that no number substitutes for: does the rim wall dominate the horizon, does the swell
+look like water, is that a docking port or a cyan rectangle. Telemetry answers *does it work* --
+drop, group size, time-to-kill, triangle count. The whole weapons programme (six mechanics classes)
+was built without a single screenshot, correctly, because none of it is visible. Shooting a picture
+to answer a measurable question is the expensive way to get a worse answer.
+
+**When a shot shows something wrong, INSTRUMENT before re-shooting.** This is where the cost
+actually goes. On 2026-08-13, eleven shot runs and 78 images answered about four questions, because
+the loop was: change a value, shoot, squint, change another. The containment field took three runs
+of guessing and was then solved in one by tinting CDLOD water magenta so the shader had to say
+whether it was drawing that surface at all. A probe that makes the code confess beats another look.
+A run is a Godot launch of 3-8 minutes plus the tokens to read the images; two of those buys a lot
+of thinking.
+
 Shots live in `logs/shots/<YYYYMMDD_HHMM>[_label]/`. They are never overwritten — earlier runs
 destroyed the previous evidence every time, which defeated the point of keeping them.
 
@@ -253,3 +268,335 @@ looks like on approach.
   each frame, right for procedural cylinders and wrong for imported ones, and for imported wheels the
   steer write then wiped the roll. The axle is now derived from geometry (shortest local AABB axis).
 
+---
+
+## 2026-08-16 — vehicle recipes, first look (`--shots millstreet --vehicles`)
+
+**Looking for:** whether the kitbash recipe system (4d6dec1) actually produces different silhouettes,
+or whether the twenty-one recipe-less rows still photograph the same. This is the first
+run-verification of that item — the tick that wrote it could not launch Godot, same gate as the three
+items before it.
+
+**Saw:**
+- **The mechanism works.** `sixby` (flatbed) reads as a genuine cab-and-bed: tall dark cab, tan bed
+  behind it. Against `box` (no recipe — a low flat slab) that is real variety off shared parts, and
+  the wheels stayed separate through the bake as intended.
+- **`rotor` does not read.** It is a solid octagonal plate sitting on a stalk above the body: a
+  mushroom, or a patio table. No mast, no blades, and the disc is far too large relative to the
+  chassis. It is the clearest failure in the set and the one recipe that actively misleads.
+- **`airplane` reads adequately** — flat plank wings crossing a body. Crude, but unmistakably a
+  winged thing, which is all a placeholder owes.
+- **`tractor` is distinguished mainly by TINT, not shape.** A green box with a slightly taller cab.
+  It passes the "is it different" test and fails the "is it a tractor" one.
+- Reference point: `warthog`, which has a bespoke imported mesh, reads instantly. That is the bar,
+  and the gap between it and the generated recipes is mostly about part shapes, not the system.
+
+**Fell out:**
+- **The rotor recipe needs a mast and thin blades, not a disc.** Silhouette-first (aesthetic.md):
+  the thing that says "helicopter" is a thin horizontal line high above a body, not a filled plate.
+- **The parade framing does not answer the question it is used for.** Every vehicle is shot
+  rear-quarter, at distance, occupying roughly 5% of frame, in failing light — and the same fir tree
+  sits dead centre, directly in front of the subject, in most of the 22 frames. I could just about
+  judge these silhouettes; I should not have had to. A silhouette question wants a close, side-on,
+  unobstructed framing against clean sky. That is a harness change, not a vehicle change, and it
+  belongs to whoever next touches `_shot_run` — deliberately not done here because a queue tick was
+  live inside `ring_vibes.gd` at the time.
+- Confirmed `--shots` cannot run headless: it captures from a live viewport, so `--headless` writes
+  black frames. Now stated in the tick prompt.
+
+---
+
+## 2026-08-16 — building recipes: no regression, new parts unconfirmed (two runs)
+
+**Looking for:** whether the building recipe rewrite (16b6479) still renders correctly, and whether
+the new per-biome parts are actually there — gable gains a door + chimney, meru gains a veranda.
+The tick that wrote it could not launch Godot, and recorded
+`--shots millstreet,java_majapahit --only ground` as the command to confirm it.
+
+**Saw:**
+- **That recorded command does not show a single building.** `millstreet ground` is a hedge-lined
+  road looking away from the settlement; `java_majapahit ground` puts the camera clipped underneath
+  some large flat plane with palm trunks passing through it. Zero buildings in either frame. The
+  verification command the tick wrote for its own work does not verify it.
+- Re-shot with `--only air`, which does contain them. **java_majapahit is a dense settlement** —
+  hundreds of buildings with distinct roofs, instanced across the valley, per-building tint varying.
+  `millstreet` shows scattered light structures across the fields.
+- So: **no regression.** Buildings render, the MultiMesh instancing path still works through the
+  bake, tint survived the move from vertex-colour to material albedo, and no roof is inside-out at
+  a scale where an inverted normal would show as a black facet.
+- **The new parts are NOT confirmed.** A door, a chimney and a veranda are not resolvable from the
+  air framing's altitude. Nothing in the harness gets close enough to a building to see them.
+
+**Fell out:**
+- Third independent instance today of the same defect: **the harness has landscape framings being
+  reused for object questions they cannot answer** (vehicle parade, building `ground`, building
+  `air`). Already queued as the `_shot_run` framing task, which a tick picked up at 11:51. Whatever
+  that task builds should cover BUILDINGS as well as vehicles — a close, unobstructed framing on a
+  single instance of a thing, not just a roster parade.
+- Building recipes should be treated as "renders, unverified in detail" until such a framing exists.
+  Do not tick that verification note off on the strength of these two runs.
+
+---
+
+## 2026-08-16 — the silhouette framing itself (`--shots millstreet --silhouette`)
+
+**Looking for:** whether the new `--silhouette` framing actually answers the "does it read"
+question the parade could not — close, side-on, unobstructed, clean daylit sky, lit face — for the
+whole roster. This is verification of the FRAMING (the multiplier), not a judgement of any one
+recipe. The tick that wrote `--silhouette` never ran Godot; this is its first run.
+
+**Saw:** it does exactly what it was built to do. Each subject is parked to fill the frame off its
+own bounding sphere (a 5m box and a 12m airplane fill it the same), shot side-on and front
+three-quarter, with the near flank sun-lit — form, not a backlit shadow. The 30m scatter clear
+worked: nothing stands in front of any subject (the fir-tree-dead-centre problem is gone; some
+grass tufts remain on the ground but obstruct nothing). Against the parade's ~5%-of-frame dusk
+rear-quarters this is a different instrument.
+- `sixby` reads instantly as cab-and-bed; `warthog` (bespoke ref) is razor-sharp — the bar.
+- `airplane` tq: crossed plank wings, unmistakably winged.
+- `box` (no recipe): a plain slab, framed identically — the honest control.
+- `rotor`: the framing makes the known failure unarguable — a solid octagonal disc on a stalk, a
+  patio table, no mast, no blades. Exactly the next queue item's diagnosis, now trivially legible.
+- Cost stayed modest: baked chassis + separate wheels, `sil` tris 312–528 for the generated
+  recipes, warthog 19600 (its imported mesh). Frame times 8–14ms.
+
+**Fell out:**
+- The framing task is done and verified; ticked. Every recipe item after it can now be judged on a
+  close, clean read instead of squinting at a parade.
+- The building-recipe follow-up (2026-08-16 note: "cover BUILDINGS as well") is still open — this
+  pass is vehicles/roster only, matching the item's own text. A single-instance building framing is
+  a separate item, not folded in here.
+- The rotor recipe is confirmed the clearest failure and is the next queued item.
+
+
+## 2026-08-16 — rotor recipe re-read after the blade fix (`--shots millstreet --silhouette --label rotor_read`)
+
+**Looking for:** whether the rewritten `rotor` entry (solid 7.0 disc → two crossed thin blade
+boxes on a short mast, tail disc → a small blade cross) now reads as a rotorcraft under the same
+silhouette framing that made the old failure unarguable. Judgement of ONE recipe, on the framing
+proven the prior run.
+
+**Saw:** it reads. `sil_rotor_side.png` — a thin horizontal blade line held ~1m above the body on a
+short mast, plus a tail-rotor "+" at the stern; no plate, no patio table. `sil_rotor_tq.png` shows
+the crossed blades from above-quarter, unmistakably a rotor plane. Radius is smaller than the old
+disc (5.5 span vs 7.0) so it no longer overhangs the chassis like a mushroom cap. Cost stayed in
+the generated-recipe band (baked chassis + 4 wheels). The cyan box on the body is the harness
+selection marker — present on every subject (checked the tractor frame), not part of the recipe.
+
+**Fell out:**
+- Rotor item done + ticked.
+- Tractor sub-note (bundled in that item) left unchanged: under this clean framing its tall cab +
+  exhaust stack + rear implement bar already read as a distinct shape; the "told apart by tint"
+  call came from the old dusk parade where shapes weren't legible. No follow-up spun out.
+
+
+## 2026-08-16 — weapon recipes, first read (`--shots millstreet --only ground --weapons --label weapons`)
+
+**Looking for:** whether the new weapon recipe system (a receiver with barrel/sight/magazine/grip/
+stock sockets + a `--weapons` silhouette parade) makes the 22-row roster read as distinct shapes —
+specifically the item's own test, that "a musket and an SMG read as related-but-not-the-same at a
+glance." First run of a thing built this tick; needed a look, not a number.
+
+**Saw:** it reads, across every family.
+- carbine (`chemical`): receiver, top sight, barrel + handguard forward, box mag + pistol grip below,
+  stock behind — the textbook rifle the rest are variations on.
+- musket: long steel barrel, full WOODEN fore/butt stock, no mag, no pistol grip — unmistakably older
+  and longer than the carbine. (One cosmetic gap between butt and lock at the wrist; reads fine.)
+- smg: compact receiver, short barrel, a dominant long stick magazine straight down, short folding
+  stock. Related to the carbine but obviously the close-quarters cousin. **The named test passes.**
+- bow: vertical D — string + two forward-curved wooden limbs + grip. crossbow/speargun: horizontal
+  prod across a stock. grenade & the thrown family: a small canister with a fuze cap, clearly a hand
+  object, not a long arm. mlrs: backpack box + tube cluster. All distinct at a glance.
+- Cost modest and baked: `tris` 36 (blade/sling) to 300 (mlrs); firearms ~108–180. One mesh per
+  weapon, per the bake rule.
+- Recipe mapping correct in the log: spear/javelin→spear, speargun→crossbow, carbine/bolt_action→
+  chemical, beam_rifle/cutter→energy, rock/grenade/molotov/sticky→thrown.
+
+**Fell out:**
+- Weapon-recipes item done + ticked.
+- Minor cosmetic: the musket's buttstock leaves a ~9cm gap to the lock (socket offsets), and the
+  parade floats each weapon against distant terrain rather than clean sky (looking level at 50m). Both
+  legible as-is; not worth a follow-up item unless a later pass wants presentation-grade frames.
+
+
+## 2026-08-16 — structure recipes, dock port on screen (`--shots millstreet --only dock --label structure_dock`)
+
+**Looking for:** whether the dock port, converted from an inline spine+collar+struts weld to a
+`STRUCTURE_RECIPES` data entry (baked to one mesh via the shared assembler), still renders correctly.
+The conversion was written by a prior tick that died dirty before running it — committed as wip
+(232ce38), item left unticked. This run is the missing verification: does the recipe-built dock read
+as the built structure it did before, or did the assembler/bake path break the geometry?
+
+**Saw:** it reads, identical to the old hand-welded port.
+- **Spine** — the dark hull-grey girder reaching up toward the axis, running off the top of frame:
+  "the bottom of something much larger," as intended.
+- **Collar** — the horizontal ring across the middle, with the emissive **cyan lamp panels
+  alternating with dark hull segments** exactly as the old `i % 2` did. The alternation is what makes
+  roll and range legible, and it survived the vertex-colour→shared-material move cleanly.
+- **Struts** — the shorter members tying the collar back to the spine, visible between the lit panels
+  and the central spine.
+- One baked mesh (two surfaces: hull + lamp). Frame tris 115660 total, ~32 fps on the Intel UHD; the
+  port itself is the placeholder ~200-tri geometry, the rest is the settlement behind it.
+- No GDScript errors at scene load — the `_build_structure`→`CharacterAssembler.apply`→`MeshBaker.bake`
+  path (fourth consumer of the Skeleton3D-unlocked assembler) runs clean.
+
+**Fell out:**
+- Structure-recipes item done + ticked. The recipe format (radial `ring` repeat with `count`/`radius`/
+  `alt_mat`) is in place for "whatever else gets hand-built next"; nothing else is hand-built to
+  convert right now, so the forward half of the item is groundwork, not outstanding work.
+
+---
+
+## 2026-08-16 — deployables: placed, then persistent (`--deployables`, two runs)
+
+**Looking for:** whether the deployable system (`game/pipeline/deployables.gd`, fifth consumer of the
+Skeleton3D-unlocked assembler) actually works and reads — mine, sensor, tripod turret. It was built
+by a prior tick, with a selftest and a `--deployables` parade, but never RUN, so the item stood
+unticked. Two questions: does the placed→save→reload→build round-trip work on screen (the "then
+persistent" half), and do the three read as three distinct silhouettes.
+
+**Saw:**
+- **Selftest PASS** (`-s res://tests/deployables_test.gd`): every recipe builds to one baked mesh with
+  real geometry; a 3-placement list survives a save/load round-trip byte-for-byte; a bad key is
+  filtered on save so it never resurrects as an unbuildable ghost.
+- **Round-trip proven on screen:** the parade prints `placed 3, saved to user://deployables.json,
+  reloaded 3`, and the framed nodes are built from the *reloaded* list, not the ones just placed.
+- **Mine** reads as intended — a low dark drum, a yellow hazard band, a stub trigger prong. "Low disc."
+- **Turret** reads unambiguously as a tripod — three splayed legs to a hub, a body, a barrel out -Z.
+- **Sensor** reads as tall-and-thin — ground stake, thin mast, housing, a glowing cyan dish canted
+  skyward, distinct from the dark turret mast. Exactly the three-way silhouette contrast the recipes
+  aim for; none of the three could be confused for another at a glance.
+
+**Fell out:**
+- **First run: half the frames were shot straight through a fir tree** (sensor side + tq, turret tq).
+  The parade *claimed* "the same clean silhouette device" but had only borrowed the camera-offset
+  trick — not the scatter-clear that `_shoot_silhouette` does. Fixed in this tick: the parade now
+  marks near trees down within 30 m of each placement and rebuilds the LOD buckets, same mechanism.
+  Second run: all six frames clean. This is the fourth instance of the standing defect (landscape/
+  parade framings reused for object questions) — but here the fix was three lines of reuse, not a new
+  framing, so no new item; the already-queued "extend `--silhouette` to buildings and structures" item
+  is the general form.
+- Deployable item done + ticked. "Placed, then persistent" is the whole novel part and it is verified
+  both headless (selftest) and on screen (round-trip parade). Wiring deployables into actual player
+  placement (an input to drop one, a HUD affordance) is a gameplay item, not part of this one.
+
+---
+
+## 2026-08-17 — silhouette extended to buildings and structures (`--structures`, one run)
+
+**Looking for:** the vehicle silhouette framing had no way to answer "does this read" for the built
+environment — the ground framing carries no buildings and from air a door is sub-pixel (2026-08-16,
+below). Extend the same device (`_structure_parade`, `--structures`) to one of each building style
+(gable, meru) and the dock structure, each floated above home terrain and shot side-on and front
+three-quarter off its own bounding sphere so a ~1m house and a ~340m dock both fill the frame. Then
+USE it: confirm the gable's door and chimney, and the meru's veranda, are actually there.
+
+**Saw:** all six frames landed; every subject filled the frame regardless of scale, none occluded
+(floating 40m+ up clears the scatter without a trample pass).
+- **Gable — door ✓, chimney ✓.** The front three-quarter shows the door as a dark recessed slab on
+  the front face and the chimney flue standing off the ridge; the pitched gable end reads. A house.
+- **Meru — veranda ✓.** The dark plank projects from the front face in both views, unmistakable.
+- **Dock — reads as a docking port.** Spine reaching up, an eight-segment capture collar with the
+  lit-panel alternation (cyan emissive on odd segments), radial struts tying collar to spine. The
+  bounding-sphere fit pulled the camera ~500m back so the whole 340m of it framed cleanly.
+
+**Fell out:**
+- Item done + ticked ("Extend `--silhouette` to buildings and structures").
+- **The meru's tiered joglo roof does not read as tiered** — from both angles the roof is a flat pale
+  cap, not the stacked pagoda tiers `_joglo_roof_mesh` is meant to give. The veranda (what this item
+  asked to confirm) is fine; the roof read is a separate "does it read" gap. Queued as a follow-up.
+- **Background is terrain, not clean sky.** Consistent with the weapon/deployable parades (which also
+  float over home and look roughly level), and the subjects read clearly against it, so left as-is
+  rather than re-pitching the established camera. Noted in case a later pass wants higher contrast.
+
+---
+
+## 2026-08-17 — rotor fuselage read (`--silhouette`, one run)
+
+**Looking for:** the blade fix (5afe963) made the mast/main-blades/tail-rotor read as rotorcraft
+parts, but the body under them was still the shared long-low box on four wheels, so the whole read as
+a flatbed truck with a propeller bolted on. The "rotor fuselage" item asked for a SHORT, TALL fuselage
+on skids instead. That code was written in a prior tick (committed in the wip `ffc3422`) but never
+run or ticked. Ran the vehicle silhouette parade to see whether the new body + skids reads as a
+helicopter: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots millstreet
+--silhouette --label rotor_fuselage` (wrapper accepted; script parse-checked clean first).
+
+**Saw:** `logs/shots/20260817_0325_rotor_fuselage/sil_rotor_{side,tq}.png`, tris=300, one baked mesh.
+- **Reads as a helicopter, both angles.** Side-on: a tall boxy cabin, the mast + main-blade line held
+  above the roofline, a thin tail boom running back to a tail-rotor cross, and two skids as feet under
+  the fuselage — not wheels. Three-quarter: the crossed main blades sit clearly aloft on the mast, the
+  tail-rotor cross stands off the boom, skids underneath. Nothing about it says "truck" any more.
+- The item's named failure ("long low bed on four wheels") is gone; the swap to `Vector3(2.0,2.2,4.6)`
+  + `_add_skids` did the job.
+
+**Fell out:**
+- Item done + ticked ("Rotor fuselage").
+- The cabin is still a plain box — boxy rather than the tapered/tadpole profile a real light helicopter
+  has. It reads unambiguously as a rotorcraft so this is not worth an item, but noted in case a later
+  aesthetic pass sweeps the whole roster's proportions. Tractor sub-note (told apart by tint) is out of
+  scope for this item, unchanged.
+
+---
+
+## 2026-08-17 — meru roof tiers, and the roof was never rendering (`--structures`, three runs)
+
+**Looking for:** the `--structures` run flagged the meru's joglo roof as a flat pale cap, not the
+stacked pagoda tiers `_joglo_roof_mesh` is meant to give. Rebuilt `_joglo_roof_mesh` as a stack of
+three overhanging hip tiers (each slopes up-and-in, the next eave flares back out) to a finial —
+same known-good winding as the old skirt, so `generate_normals()` lands every band outward — then
+re-shot: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots --structures --label
+meru_tiers`.
+
+**Saw:** the FIRST run of the new geometry still showed a bare box, meru **tris=36** (= base 12 +
+wall_j 12 + veranda 12, i.e. NO roof). Instrumented and found the real cause: **the meru roof has
+never rendered.** `_joglo_roof_mesh` commits fine (1 surface, 44 faces), but `MeshBaker` merges by
+material and the roof shares `roof_j` with the veranda, which is a `BoxMesh`. `SurfaceTool.append_from`
+silently DROPS a surface whose vertex format differs from what the bucket already holds — the roof
+(pos+normal, no UV) vs the veranda box (pos+normal+tangent+UV) — so whichever loses the format race is
+gone with no error. The gable roof only ever worked because its `roof` material is unshared. The
+journal's earlier "flat pale cap" was the pale sky-lit **wall top**, not the roof at all.
+- Fixed in `mesh_baker.gd`: replaced `append_from` with `_merge_surface`, which re-adds every vertex by
+  hand at a fixed (position, normal, uv) format, immune to source-format differences. `bake_test` still
+  PASS; vehicles/weapons/deployables/structures buckets are single-format so their output is unchanged.
+- After the fix, meru **tris=80** (roof 44 + veranda 12 + walls 12 + plinth 12). `logs/shots/
+  20260817_0738_meru_tiers/building_meru_{side,tq}.png` read unambiguously as a **three-tier pagoda** —
+  wide overhanging bottom tier, narrower middle, narrower top, finial point — correctly lit from both
+  angles (no inside-out faces), the veranda plank still present. Not a box-with-a-plank any more.
+
+**Fell out:**
+- Item done + ticked ("Meru roof reads as a flat cap, not tiers").
+- The `append_from` format-drop was a latent trap for the whole kit system: any recipe that hangs a
+  hand-built (SurfaceTool) part on the same material as a primitive-mesh (box/cyl) part would lose the
+  hand-built one silently. The baker fix closes it generally, not just for the meru. No follow-up item —
+  the fix is the general one, and `bake_test` guards it.
+
+---
+
+## 2026-08-18 — detail-normal cap loses no relief (before/after, dolomites)
+
+**Looking for:** the streaming-decode shrink (item "Streaming decode is ~12s per patch") capped the
+detail-normal resize to `min(hires_tex_res, source dims)` instead of upsampling every patch to 8192².
+The item flags this as VISUAL — it is the fine-relief normal map — and forbids shipping it as a blind
+number change, so: does capping to the source resolution cost any visible relief? A/B on one high-relief
+patch: `scripts/godot.cmd --path game res://mocks/ring_vibes.tscn -- --shots dolomites --only ground,air
+--label detailcap_after` (capped HEAD), then the same run with the resize temporarily reverted to the old
+unconditional `resize(8192,8192)` (`--label detailcap_before`), then restored via `git checkout`.
+
+**Saw:** `20260818_0825_detailcap_after/` vs `20260818_0828_detailcap_before/`, ground and air, are
+**pixel-for-pixel indistinguishable** — same ridgelines, snow patches, flank shading, forest micro-detail,
+and the ring rising in the ground frame. No softening, no lost relief. Matches the analytical argument:
+every `_detail.dat` source is ≤6400², so the old code was LANCZOS-*upsampling* to 8192², which invents no
+information; sampling the native-res texture in the shader gives the same lighting. The cap is strictly
+more faithful (native source vs interpolated), never less.
+Numbers alongside (the `--selftest` re-measure, `logs/_streamphase_capped.txt`): the `detail` worker phase
+fell from the diagnosed **3000–8300ms** to **58–1506ms** — no longer the dominant phase — and the stream
+pass rate went **26–28/35 → 34/35**. So the cost was genuinely shrunk, not moved.
+
+**Fell out:**
+- Item "Streaming decode is ~12s per patch — shrink it" ticked (lever 1 shipped by a prior tick, verified
+  here numerically + visually).
+- `borneo_highland`'s 20.5s `sat` spike from the diagnosis did NOT recur (2139ms this run); its `_sat.dat`
+  is 116MB, large but not over-large (dolomites' is 140MB and decodes at 2381ms). Transient cold-touch,
+  not a mis-refetched canvas — lever (2) closed, no action.
+- `lofoten` is the one remaining FAIL (12.0s). Root cause found from file sizes, not jitter: its `.r16` is
+  **78.6MB (6144×6400)**, 3–7× every other patch's heightfield, so the O(source-pixels) `filter` phase
+  alone blows the budget. Over-large *source*, refetch-class → new follow-up item, not touched here.

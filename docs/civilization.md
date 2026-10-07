@@ -1,5 +1,8 @@
 # Possession — Civilization: Tech Recovery & City Cost
 
+> Current planning baseline (2026-09-12): [core conception](core-conception.md), [campaign and agency](campaign-and-agency.md), [information and companion](information-and-companion.md), and [first operation](first-operation.md) govern new work. The area notes below preserve earlier design and implementation history. Conflicting no-mission/no-authored-graph rules, sky-only map claims, medieval/unarmed-first requirements and exploration-only slice priorities are superseded. Theatre timing remains open; major history is authored. Unrelated implementation facts and technical constraints remain applicable.
+
+
 New area doc (2026-07-22). Answers two linked questions: how uneven post-collapse technology gets distributed across the ring without being random or hand-placed, and how a "city" is affordable in dev time, tokens, and potato-hardware budget. Companion to [factions.md](factions.md) (politics/identity) — this doc is representation/tech-level/rendering cost.
 
 ## The Reframe — PROPOSED

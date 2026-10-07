@@ -1,0 +1,117 @@
+Godot Engine v4.5.1.stable.official.f62fdbde1 - https://godotengine.org
+OpenGL API 3.3.0 - Build 31.0.101.2137 - Compatibility - Using Device: Intel - Intel(R) UHD Graphics
+
+ring_vibes: DEM loaded — Millstreet (Cork-Kerry route) (Terrarium z12) 3840x3840  sat_tex: yes
+ring_vibes: DEM texture 1920x1920, mpp=46.9
+ring_vibes: 35 patch(es) clipped to non-overlapping arc windows
+ring_vibes: 35 splice patches @ 512^2 heights + 512^2 imagery -> ["schwarzwald", "cork_city", "big_sur", "wye_valley", "dordogne", "vermont", "mizen_head", "camargue", "danube_delta", "cape_peninsula", "salar_uyuni", "scablands", "loop_head", "monument_valley", "atacama", "namib_dunes", "guri_dam", "palawan", "mongolia_steppe", "tuscany_hills", "slea_head", "priests_leap", "cairngorms", "dolomites", "tatra_spruce", "norwegian_fjord", "olympic_forest", "borneo_highland", "costa_rica_jungle", "tepui", "iceland_highland", "badlands_sd", "java_majapahit", "halong_bay", "lofoten"]
+ring_vibes: tree pack — 3 variants x 4 LODs loaded
+ring_vibes: far band rebuilt around arc 0 km (493 ms)
+ring_vibes: containment field 1500-4000m on lat -25000
+ring_vibes: containment field 1500-4000m on lat 25000
+ring_vibes: texture compression — s3tc true, bptc true, etc2 false
+ring_vibes: grass pack loaded (1 surfaces)
+ring_vibes: 13674 road centrelines loaded (home + none)
+ring_vibes: 13123 junction cells, 1138319 road cells from 13674 centrelines
+ring_vibes: hedge texture 1024x1024 loaded
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: millstreet — 39008 of 59992 buildings kept (16545 outside the 50km ring width, 4439 on cliffs)
+ring_vibes: big_sur — 10899 of 11348 buildings kept (0 outside the 50km ring width, 449 on cliffs)
+ring_vibes: cape_peninsula — 8019 of 8118 buildings kept (8 outside the 50km ring width, 91 on cliffs)
+ring_vibes: palawan — 6128 of 6215 buildings kept (3 outside the 50km ring width, 84 on cliffs)
+ring_vibes: java_majapahit — 59076 of 59996 buildings kept (38 outside the 50km ring width, 882 on cliffs)
+ring_vibes: halong_bay — 2119 of 2184 buildings kept (0 outside the 50km ring width, 65 on cliffs)
+ring_vibes: lofoten — 17892 of 21589 buildings kept (85 outside the 50km ring width, 3612 on cliffs)
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
+ring_vibes: 143141 OSM buildings loaded (2 styles)
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
+ring_vibes: warped to home (0.0% arc)
+SHOT millstreet: framed on a road, 37m from the settlement
+SHOT millstreet: 6 framings ["ground", "road", "air", "rim", "dock", "rimtop"]
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11652 hedge quads
+ring_vibes: buildings in range at arc 56 lat 36 -> style0=852, style1=0
+      TRIS  trees 237478, buildings 46008, hedges 23304, grass 11656, terrain ~55296 (108 nodes), far band 96000   accounted 469742
+SHOT millstreet         ground  tris=472348  27.8ms (36 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/millstreet_ground.png
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11652 hedge quads
+ring_vibes: buildings in range at arc 56 lat 36 -> style0=852, style1=0
+      TRIS  trees 232649, buildings 46008, hedges 23304, grass 11656, terrain ~55296 (108 nodes), far band 96000   accounted 464913
+SHOT millstreet         road    tris=473238  23.8ms (42 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/millstreet_road.png
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11652 hedge quads
+ring_vibes: buildings in range at arc 56 lat 36 -> style0=852, style1=0
+      TRIS  trees 108436, buildings 46008, hedges 23304, grass 11656, terrain ~43008 (84 nodes), far band 96000   accounted 328412
+SHOT millstreet         air     tris=323276  11.3ms (88 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/millstreet_air.png
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11652 hedge quads
+ring_vibes: buildings in range at arc 56 lat 36 -> style0=852, style1=0
+      TRIS  trees 232930, buildings 46008, hedges 23304, grass 11656, terrain ~55296 (108 nodes), far band 96000   accounted 465194
+SHOT millstreet         rim     tris=290219  27.8ms (36 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/millstreet_rim.png
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 9532 hedge quads
+ring_vibes: buildings in range at arc -260 lat 0 -> style0=734, style1=0
+ring_vibes: far band rebuilt around arc -66 km (504 ms)
+      TRIS  trees 0, buildings 39636, hedges 19064, grass 14648, terrain ~18432 (36 nodes), far band 96000   accounted 187780
+SHOT millstreet         dock    tris=115660  27.8ms (36 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/millstreet_dock.png
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 8436 hedge quads
+ring_vibes: buildings in range at arc 56 lat 22500 -> style0=359, style1=0
+ring_vibes: 27380 trees placed (3 variants x 4 LODs) — 136 standards, 456 off-road, 8436 hedge quads
+      TRIS  trees 109520, buildings 19386, hedges 16872, grass 14864, terrain ~25600 (50 nodes), far band 96000   accounted 282242
+ring_vibes: far band rebuilt around arc 0 km (461 ms)
+SHOT millstreet         rimtop  tris=18048  39.6ms (25 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/millstreet_rimtop.png
+ring_vibes: 27109 trees placed (3 variants x 4 LODs) — 244 standards, 743 off-road, 11308 hedge quads
+ring_vibes: buildings in range at arc 0 lat 0 -> style0=839, style1=0
+ring_vibes: warped to home (0.0% arc)
+ring_vibes: warthog model loaded (5.2m long, scale 0.967)
+SHOT sil box        side tris=312    scene=189022   12.9ms (78 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_box_side.png
+SHOT sil box        tq   tris=312    scene=277198   10.3ms (97 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_box_tq.png
+ring_vibes: far band rebuilt around arc -66 km (467 ms)
+SHOT sil warthog    side tris=19600  scene=292535   13.2ms (76 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_warthog_side.png
+SHOT sil warthog    tq   tris=19600  scene=289140   10.4ms (97 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_warthog_tq.png
+SHOT sil sportscar  side tris=360    scene=284545   12.7ms (79 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_sportscar_side.png
+SHOT sil sportscar  tq   tris=360    scene=277878   10.1ms (99 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_sportscar_tq.png
+ring_vibes: far band rebuilt around arc 0 km (463 ms)
+SHOT sil sixby      side tris=348    scene=189768   12.6ms (80 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_sixby_side.png
+SHOT sil sixby      tq   tris=348    scene=277282    9.6ms (104 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_sixby_tq.png
+SHOT sil bike       side tris=312    scene=174327   13.3ms (75 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_bike_side.png
+SHOT sil bike       tq   tris=312    scene=270288    9.5ms (105 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_bike_tq.png
+ring_vibes: far band rebuilt around arc -66 km (453 ms)
+SHOT sil tractor    side tris=408    scene=284474   13.3ms (75 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_tractor_side.png
+SHOT sil tractor    tq   tris=408    scene=278274    9.7ms (103 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_tractor_tq.png
+SHOT sil hauler     side tris=348    scene=296683   13.0ms (77 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_hauler_side.png
+SHOT sil hauler     tq   tris=348    scene=272713   10.0ms (100 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_hauler_tq.png
+ring_vibes: far band rebuilt around arc 0 km (458 ms)
+SHOT sil crawler    side tris=528    scene=169249   13.1ms (76 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_crawler_side.png
+SHOT sil crawler    tq   tris=528    scene=264246    9.9ms (101 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_crawler_tq.png
+SHOT sil skiff      side tris=312    scene=175569   13.3ms (75 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_skiff_side.png
+SHOT sil skiff      tq   tris=312    scene=264018    9.9ms (101 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_skiff_tq.png
+ring_vibes: far band rebuilt around arc -66 km (448 ms)
+SHOT sil launch     side tris=312    scene=263113   14.3ms (70 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_launch_side.png
+SHOT sil launch     tq   tris=312    scene=264670   10.1ms (99 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_launch_tq.png
+SHOT sil barge      side tris=312    scene=290014   13.9ms (72 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_barge_side.png
+SHOT sil barge      tq   tris=312    scene=272677    9.7ms (103 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_barge_tq.png
+ring_vibes: far band rebuilt around arc 0 km (443 ms)
+SHOT sil strider    side tris=312    scene=169282   12.3ms (81 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_strider_side.png
+SHOT sil strider    tq   tris=312    scene=257181   10.3ms (97 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_strider_tq.png
+SHOT sil horse      side tris=312    scene=167004   12.6ms (79 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_horse_side.png
+SHOT sil horse      tq   tris=312    scene=253812    9.5ms (106 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_horse_tq.png
+ring_vibes: far band rebuilt around arc -66 km (451 ms)
+SHOT sil elephant   side tris=312    scene=267661   13.0ms (77 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_elephant_side.png
+SHOT sil elephant   tq   tris=312    scene=264670    9.7ms (103 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_elephant_tq.png
+SHOT sil mech_biped side tris=312    scene=262368   12.3ms (81 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_mech_biped_side.png
+SHOT sil mech_biped tq   tris=312    scene=257813    9.4ms (107 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_mech_biped_tq.png
+ring_vibes: far band rebuilt around arc 0 km (456 ms)
+SHOT sil mech_quad  side tris=312    scene=202150   13.6ms (73 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_mech_quad_side.png
+SHOT sil mech_quad  tq   tris=312    scene=273276    9.5ms (106 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_mech_quad_tq.png
+SHOT sil suit       side tris=312    scene=140860   12.8ms (78 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_suit_side.png
+SHOT sil suit       tq   tris=312    scene=253579    9.4ms (106 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_suit_tq.png
+SHOT sil duck       side tris=312    scene=172309   13.1ms (76 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_duck_side.png
+SHOT sil duck       tq   tris=312    scene=263902    9.4ms (106 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_duck_tq.png
+ring_vibes: far band rebuilt around arc -66 km (457 ms)
+SHOT sil sub        side tris=312    scene=261372   13.9ms (72 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_sub_side.png
+SHOT sil sub        tq   tris=312    scene=276741   10.5ms (95 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_sub_tq.png
+SHOT sil rotor      side tris=300    scene=295580   13.9ms (72 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_rotor_side.png
+SHOT sil rotor      tq   tris=300    scene=265939    9.6ms (104 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_rotor_tq.png
+ring_vibes: far band rebuilt around arc 0 km (465 ms)
+SHOT sil airplane   side tris=348    scene=196968   14.2ms (71 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_airplane_side.png
+SHOT sil airplane   tq   tris=348    scene=270860    9.2ms (109 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_airplane_tq.png
+SHOT sil lifter     side tris=348    scene=225956   13.3ms (75 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_lifter_side.png
+SHOT sil lifter     tq   tris=348    scene=290067    9.2ms (108 fps)  res://../logs/shots/20260817_0325_rotor_fuselage/sil_lifter_tq.png
+SHOTS done
