@@ -13,6 +13,19 @@ var frame_cursor := 0
 var pending_frames: Array=[]
 var last_frame_usec := 0
 
+func write_event(event: String, data: Dictionary) -> void:
+	arena.trace_edit(event,data)
+
+func traced_vehicles() -> Array:
+	var kit: Node=arena.live_kit()
+	return kit.vehicle_system.vehicles if is_instance_valid(kit) and is_instance_valid(kit.vehicle_system) else []
+
+func terrain_context() -> Dictionary:
+	return {"editing":arena.editing,"jobs":arena.stream_jobs.size(),"resident_chunks":arena.chunks.size()}
+
+func frame_context() -> Dictionary:
+	return {"terrain_plan_ms":arena.terrain_lod.plan_ms if arena.terrain_lod else 0.0}
+
 func _ready() -> void:
 	process_physics_priority=100 # Observe after vehicle controllers have stepped.
 
@@ -34,28 +47,29 @@ func recent(now: int) -> Array:
 
 func drain() -> void:
 	if not pending.is_empty():
-		arena.trace_edit("vehicle_samples",{"marker_id":active_id,"phase":"capture","samples":pending})
+		write_event("vehicle_samples",{"marker_id":active_id,"phase":"capture","samples":pending})
 		pending=[]
 	if not pending_frames.is_empty():
-		arena.trace_edit("frame_samples",{"marker_id":active_id,"phase":"capture","samples":pending_frames})
+		write_event("frame_samples",{"marker_id":active_id,"phase":"capture","samples":pending_frames})
 		pending_frames=[]
 
 func mark(id: int, begin: bool) -> void:
 	if begin:
 		active_id=id
-		arena.trace_edit("vehicle_samples",{"marker_id":id,"phase":"pre_roll","samples":recent(Time.get_ticks_usec())})
+		write_event("vehicle_samples",{"marker_id":id,"phase":"pre_roll","samples":recent(Time.get_ticks_usec())})
 		var frames: Array=[]
 		for offset in frame_history.size():
 			var index := (frame_cursor+offset)%frame_history.size() if frame_history.size()==CAPACITY else offset
 			if Time.get_ticks_usec()-int(frame_history[index].sample_usec)<=HISTORY_USEC: frames.append(frame_history[index])
-		arena.trace_edit("frame_samples",{"marker_id":id,"phase":"pre_roll","samples":frames})
+		write_event("frame_samples",{"marker_id":id,"phase":"pre_roll","samples":frames})
 	else:
 		drain();active_id=0
 
 func _process(_delta: float) -> void:
 	var now := Time.get_ticks_usec()
-	if last_frame_usec and arena.live_kit():
-		var sample := {"sample_usec":now,"frame_ms":(now-last_frame_usec)/1000.0,"cpu_monitor_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"physics_monitor_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000,"draw_calls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"triangles":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),"terrain_plan_ms":arena.terrain_lod.plan_ms if arena.terrain_lod else 0.0}
+	if last_frame_usec and not traced_vehicles().is_empty():
+		var sample := {"sample_usec":now,"frame_ms":(now-last_frame_usec)/1000.0,"cpu_monitor_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"physics_monitor_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000,"draw_calls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"triangles":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)}
+		sample.merge(frame_context())
 		if frame_history.size()<CAPACITY: frame_history.append(sample)
 		else: frame_history[frame_cursor]=sample
 		frame_cursor=(frame_cursor+1)%CAPACITY
@@ -65,10 +79,10 @@ func _process(_delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	var started := Time.get_ticks_usec()
-	var kit: Node=arena.live_kit()
-	if not is_instance_valid(kit) or not is_instance_valid(kit.vehicle_system): return
+	var vehicles := traced_vehicles()
+	if vehicles.is_empty(): return
 	var bodies: Array=[]
-	for body in kit.vehicle_system.vehicles:
+	for body in vehicles:
 		var wheels: Array=[]
 		var corners: Variant=body.get("corners")
 		if corners is Array:
@@ -89,8 +103,13 @@ func _physics_process(delta: float) -> void:
 						probe.collider_id=hit.collider_id
 				wheels.append({"index":i,"grounded":grounded,"contact":vector(contact) if grounded else null,"normal":vector(c.get("trace_normal",Vector3.ZERO)),"collider_id":c.get("trace_collider",0),"travel":c.travel,"travel_delta":float(c.travel)-float(old.get("travel",c.travel)),"compression":c.compression,"omega":c.get("omega",0),"slip":c.get("slip",0),"same_point_probe":probe})
 				previous[key]={"grounded":grounded,"contact":contact,"travel":c.travel}
+				wheels[-1].merge(c.get("trace_forces",{}))
 		var limit: float=body.stream_speed_limit
 		bodies.append({"id":body.get_instance_id(),"name":str(body.name),"position":vector(body.global_position),"velocity":vector(body.linear_velocity),"angular_velocity":vector(body.angular_velocity),"speed_limit":limit if is_finite(limit) else null,"stream_braking":body.stream_braking,"suspended":body.streaming_suspended,"frozen":body.freeze,"controlled":body.controlled,"throttle":body.throttle,"turn":body.turn,"braking":body.braking,"balanced_braking":body.balanced_braking,"wheels":wheels})
 		bodies[-1].stream_brake_amount=body.stream_brake_amount
 		bodies[-1].stream_drive_scale=body.stream_drive_scale
-	remember({"sample_usec":started,"physics_frame":Engine.get_physics_frames(),"delta":delta,"editing":arena.editing,"jobs":arena.stream_jobs.size(),"resident_chunks":arena.chunks.size(),"vehicles":bodies,"sampling_ms":(Time.get_ticks_usec()-started)/1000.0})
+		bodies[-1].rotation=vector(body.global_rotation)
+		bodies[-1].chassis_contacts=body.get_contact_count()
+	var sample := {"sample_usec":started,"physics_frame":Engine.get_physics_frames(),"delta":delta,"vehicles":bodies,"sampling_ms":(Time.get_ticks_usec()-started)/1000.0}
+	sample.merge(terrain_context())
+	remember(sample)

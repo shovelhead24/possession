@@ -95,3 +95,28 @@ The intermediate 123 ms outlier was not reproduced in the two subsequent runs;
 its cause remains unproven. Do not claim that collision splitting explained it.
 The final result covers these routes and durations, not all possible slopes,
 flight speeds, terrain edits or long-session conditions.
+
+### F8 suspension jitter capture (2026-10-07)
+F8 starts and stops a separate JSONL capture with five seconds of preceding history.
+The HUD shows recording, finishing and saved states. The session launcher writes
+into its outputs/jitter-traces directory; direct scene launches default to
+user://terrain-drive-traces. Each capture gets a new file and normal exit flushes
+an active capture. No vehicle tuning or forces were changed.
+
+The shared workshop flight recorder supplies bounded physics/frame histories and
+same-point terrain probes. Additional fields record spring/damper/bump-stop loads,
+wheel ray endpoints, compression/travel, contact collider/normal, chassis contact
+count/pose/velocity, camera pose, physics frame, terrain worker/queue/cache counters
+and upload phase timestamps. Correlate downward velocity and compression/load
+changes with stable-point probe heights before attributing movement to generation.
+A repeated render pose without a physics step can also distinguish camera/render
+cadence from physical motion. A physics-frame sample observes controller state;
+it is not a substep solver impulse trace.
+
+JSON serialization and disk writes run on a background thread with a bounded
+queue and reported drop count. Final focused rendered test: 601 physics samples,
+1,179 frame samples, 300 physics samples of pre-roll, four wheels validated,
+start/stop/restart validated, no dropped batches. Maximum sampling time 0.691 ms;
+maximum recorded frame 14.069 ms. This validates capture, not a diagnosis or fix
+for the user's intermittent jitter. Saved camera distance was 6 m at test time
+and was preserved.

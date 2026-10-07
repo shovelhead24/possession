@@ -14,6 +14,7 @@ var front_power_percent := 50.0
 var front_brake_percent := 50.0
 var controlled := false
 var recovery_floor := -35.0
+var trace_suspension := false
 var suspension_exclusions: Array[RID]=[]
 var balanced_braking := false
 var reverse_engaged := false
@@ -163,6 +164,8 @@ func _physics_process(dt: float) -> void:
 		ray.collision_mask=1|4
 		var hit=space.intersect_ray(ray)
 		c.grounded=false
+		if trace_suspension:
+			c.trace_forces={"spring_force":0.0,"damper_force":0.0,"bump_force":0.0,"load":0.0,"target_y":null,"contact_up_speed":null,"ray_from":[origin.x,origin.y,origin.z],"ray_to":[ray.to.x,ray.to.y,ray.to.z]}
 		c.trace_normal=hit.get("normal",Vector3.ZERO);c.trace_collider=hit.get("collider_id",0)
 		var compression:=0.0
 		if not hit.is_empty() and hit.normal.dot(up)>.25:
@@ -173,6 +176,8 @@ func _physics_process(dt: float) -> void:
 			var contact_v=linear_velocity+angular_velocity.cross(lever-global_basis*center_of_mass)
 			var load=clampf(compression*spring_rate-contact_v.dot(up)*damping,0,18000)
 			if target_y>bump.hub.y: load+=minf((target_y-bump.hub.y)*60000,12000)
+			if trace_suspension:
+				c.trace_forces.merge({"spring_force":compression*spring_rate,"damper_force":-contact_v.dot(up)*damping,"bump_force":minf(maxf(0,target_y-bump.hub.y)*60000,12000),"load":load,"target_y":target_y,"bump_height":bump.hub.y,"contact_up_speed":contact_v.dot(up)},true)
 			apply_force(up*load,lever)
 			forces_applied+=1
 			var forward=-global_basis.z
