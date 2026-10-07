@@ -19,6 +19,8 @@ var last_frame := 0
 var worker: Thread
 var stress_course := false
 var diagnostic := false
+var brief_path := "res://world/terrain_baseline_brief.json"
+var tile_entries := {}
 
 func _ready() -> void:
 	diagnostic=OS.get_cmdline_user_args().has("--baseline-profile")
@@ -40,7 +42,7 @@ func _ready() -> void:
 	var layer := CanvasLayer.new();add_child(layer)
 	hud=Label.new();hud.position=Vector2(16,12);hud.add_theme_color_override("font_shadow_color",Color.BLACK)
 	hud.add_theme_constant_override("shadow_offset_x",1);hud.add_theme_constant_override("shadow_offset_y",1);layer.add_child(hud)
-	loading=Loading.new();loading.brief_path="res://world/terrain_baseline_brief.json";add_child(loading)
+	loading=Loading.new();loading.brief_path=brief_path;add_child(loading)
 	build.call_deferred()
 
 func build() -> void:
@@ -57,12 +59,13 @@ func build() -> void:
 			if error!=OK: push_error("Terrain worker failed");get_tree().quit(1);return
 			while worker.is_alive(): await get_tree().process_frame
 			var data: Dictionary=worker.wait_to_finish();worker=null
-			install_tile(data)
+			install_tile(data,Vector2i(x,z))
 			loading.bar.value=100.0*tiles.size()/256
 			loading.status.text="Terrain %d / 256 tiles — %d reused from disk" % [tiles.size(),cache_hits]
 			if tiles.size()%32==0: loading.log_event(loading.status.text)
 			await get_tree().process_frame
 	set_view(1)
+	await prepare_content()
 	ready_to_play=true
 	print("BASELINE_READY ",JSON.stringify({"tiles":tiles.size(),"cache_hits":cache_hits,"full_triangles":total_triangles,"coarsest_triangles":lod_triangles,"loading_seconds":(Time.get_ticks_msec()-loading_started)/1000.0,"extent_m":3200,"source_spacing_m":source.metadata.m_per_px}))
 	if diagnostic:
@@ -71,7 +74,10 @@ func build() -> void:
 		loading.capture_ready()
 	last_frame=Time.get_ticks_usec()
 
-func install_tile(data: Dictionary) -> void:
+func prepare_content() -> void:
+	pass
+
+func install_tile(data: Dictionary, key := Vector2i.ZERO) -> void:
 	var arrays := [];arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX]=data.vertices;arrays[Mesh.ARRAY_NORMAL]=data.normals;arrays[Mesh.ARRAY_INDEX]=data.indices
 	var mesh := ArrayMesh.new();mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays,[],data.render_lods)
@@ -80,6 +86,7 @@ func install_tile(data: Dictionary) -> void:
 	# Collision uses exactly the full-detail rendered surface; LOD changes only distant indices.
 	var body := StaticBody3D.new();var shape := CollisionShape3D.new()
 	shape.shape=mesh.create_trimesh_shape();body.add_child(shape);add_child(body)
+	tile_entries[key]={"visual":node,"body":body}
 	tiles.append(node);cache_hits+=int(data.cached);total_triangles+=data.indices.size()/3
 	var least: int=data.indices.size()
 	for indices in data.render_lods.values(): least=mini(least,indices.size())
@@ -93,6 +100,9 @@ func set_view(index: int) -> void:
 		3: camera.position=Vector3(-15,source.features[2].y,-100);target=Vector3(180,camera.position.y,-100)
 		4: camera.position=Vector3(1400,1200,1400);target=Vector3.ZERO
 	camera.look_at(target)
+
+func fly_bounds() -> Rect2:
+	return Rect2(Vector2(-1600,-1600),Vector2(3200,3200))
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -119,7 +129,8 @@ func _process(delta: float) -> void:
 		direction=camera.basis*direction
 		direction.y+=float(Input.is_physical_key_pressed(KEY_SPACE))-float(Input.is_physical_key_pressed(KEY_CTRL))
 		camera.position+=direction.limit_length()*delta*(180 if Input.is_physical_key_pressed(KEY_SHIFT) else 45)
-		camera.position.x=clampf(camera.position.x,-1598,1598);camera.position.z=clampf(camera.position.z,-1598,1598)
+		var bounds := fly_bounds()
+		camera.position.x=clampf(camera.position.x,bounds.position.x+2,bounds.end.x-2);camera.position.z=clampf(camera.position.z,bounds.position.y+2,bounds.end.y-2)
 		camera.position.y=maxf(camera.position.y,source.surface_height(Vector2(camera.position.x,camera.position.z))+2)
 	hud_clock+=delta
 	if hud_clock<.25: return

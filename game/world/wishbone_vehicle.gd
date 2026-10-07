@@ -13,6 +13,7 @@ var brake_strength := 950.0
 var front_power_percent := 50.0
 var front_brake_percent := 50.0
 var controlled := false
+var recovery_floor := -35.0
 var suspension_exclusions: Array[RID]=[]
 var balanced_braking := false
 var reverse_engaged := false
@@ -217,5 +218,5 @@ func _physics_process(dt: float) -> void:
 		var middle=mount.lerp(seat,.5)
 		rod(c.links[5],mount,middle);rod(c.links[6],middle,seat)
 		rod(c.links[7],mount,seat)
-	if global_position.y < -35:
+	if global_position.y < recovery_floor:
 		global_transform=Transform3D(Basis.IDENTITY,Vector3(-17,2,9));linear_velocity=Vector3.ZERO;angular_velocity=Vector3.ZERO

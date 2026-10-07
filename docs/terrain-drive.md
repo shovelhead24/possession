@@ -1,0 +1,97 @@
+# Staged demo: Warthog and terrain expansion
+
+Scene: `res://world/terrain_drive.tscn`, built on the accepted terrain-only scene.
+The previous stress workshop and terrain-only baseline remain separate scenes.
+Only the new session's launcher should advance to this iteration.
+
+## Exact Warthog configuration
+
+Uses the existing archived Warthog model, runtime mesh-LOD importer, 4.8 m model
+normalization, material preparation, collision-box dimensions, articulated
+Wishbone controller, 0.18 m track extension, 0.14 m mount raise, 0.48 m centre of
+mass, seated driver, vehicle audio and wheel effects. Its menu reads the same
+`user://vehicle_tuning.cfg`, with the same tactical fallback path. All saved
+physics/camera keys are checked against actual loaded values at startup.
+
+At implementation time the saved configuration is: spring 28,000; damping 2,300;
+travel 0.28; grip 1.45; steering 32/23 degrees with response 3.5; drive 4,000 N per
+wheel; top speed 45 m/s; brake torque 2,000; front power 35%; front braking 80%;
+chase view, distance 5.25 m, height 3.6 m, FOV 73, smoothing 5.5. These are user
+settings, not newly selected tuning values. Camera modes retain the existing
+transforms, smoothing and collision ray checks. The turret remains a visual
+part of the source vehicle; weapon functionality belongs to a later stage.
+
+The old controller's recovery plane defaults to -35 m as before. The new scene
+disables that fixed plane because valid DEM ground can lie below it. R instead
+raycasts onto loaded terrain and freezes across the pose reset, avoiding a
+physics synchronization overwrite. Vehicle forces and speed tuning are unchanged.
+
+## Expanding terrain
+
+The initial 3.2 km square still loads before entry. A 16×16 demand window follows
+the car (or inspection camera), within the native DEM's valid bounds. A parked
+car retains a 3×3 support pocket. Hysteresis retains nearby old tiles, with a
+400-resident ceiling; old disk caches are never deleted on RAM eviction.
+
+One worker generates/loads primitive mesh arrays and expanded collision faces.
+Main-thread publication has one render-upload phase and four smaller collision
+shape phases, then a physics-tick readiness handoff. Triangles are partitioned
+whole by centroid into four groups; no triangle is removed or moved. The worker
+prepares these groups, and no worker creates PhysicsServer resources.
+LOD indices remain cached. Existing tiles remain intact during new-tile work.
+
+The same collision-supply speed controller scans up to 640 m ahead. Missing
+coverage reduces safe supply speed and can brake; missing immediate wheel-area
+coverage freezes the body, retaining velocity for recovery. These safeguards
+are not replaced with a reduced top-speed setting.
+
+`profile_terrain_drive.gd` runs parked, beneath-bridge, outward cold and repeated
+warm routes at 1280×800 / 120 FPS cap / Compatibility. Steering guidance only
+exists in the benchmark. It verifies actual start poses, all 17 saved settings,
+speed, cold builds, disk reuse, residency, frame-time distributions, ray agreement
+between mesh and collision across quadrant joins, and forced starvation/recovery.
+`--cold-cache-tag=<unique-tag>` gives exterior tiles an
+isolated cache namespace; the original square retains its original cache key.
+No existing cache is purged to obtain a cold result.
+
+## Controls
+
+WASD drive, Space brake, C camera, RMB look, Home centre look, E fly/drive,
+R recover onto current loaded ground, F5 original vehicle setup, F2 briefing.
+Inspection flight retains WASD, Space/Ctrl and Shift. This iteration adds no
+terrain editing UI, backdrop, trees, expanded lighting or weapon logic.
+
+The initial unguided benchmark wandered instead of repeating its route; it is
+not warm-cache validation. A guided test then exposed a pose reset being
+overwritten by physics synchronization; the fixed reset is now explicitly
+asserted. One intermediate warm test recorded a 123 ms outlier; it did not recur
+in the next instrumented run, and its cause is not established. The instrumented
+run identified smaller 17–19 ms frames as whole-tile collision installation
+(13–15 ms main-thread work). That evidence motivated the four-part installation.
+
+## Final validation, 7 October 2026
+
+One Godot 4.5.1 Compatibility instance, Intel UHD, 1280×800, 120 FPS cap, vsync
+off. Initial square loaded from its retained cache; exterior used a fresh
+diagnostic namespace. Rendering and installation ran together during driving.
+
+| Sample | Seconds | FPS | p99 ms | Maximum ms | Cold / cached tiles |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Parked | 12 | 120.01 | 9.252 | 11.305 | 0 / 0 |
+| Drive beneath bridge | 10 | 120.16 | 9.707 | 11.219 | 15 / 0 |
+| Cold outward drive | 65 | 120.01 | 9.492 | 11.182 | 300 / 0 |
+| Fully cached return route | 65 | 120.01 | 9.607 | 11.192 | 0 / 192 |
+
+All 18,245 measured frames were below 16.667 ms. Cold driving reached 44.999 m/s
+and x=4056 m, well beyond the original +1600 m boundary. No unexpected freeze,
+supply brake or power-limiting ticks occurred in any sample. Forced starvation
+froze the vehicle and restored it safely. All 17 saved configuration values
+matched; start/reset positions persisted. Maximum resident count was 288 of the
+400 ceiling. Main-thread installation phases peaked at 5.336 ms, versus roughly
+15 ms before splitting collision. Raycasts across streamed collider quadrant
+joins matched full-detail mesh intersections within 0.000016 m.
+
+The intermediate 123 ms outlier was not reproduced in the two subsequent runs;
+its cause remains unproven. Do not claim that collision splitting explained it.
+The final result covers these routes and durations, not all possible slopes,
+flight speeds, terrain edits or long-session conditions.

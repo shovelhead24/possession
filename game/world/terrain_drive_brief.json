@@ -1,0 +1,7 @@
+{
+  "title": "Terrain / Warthog and expansion",
+  "iteration": "2026-10-07 / stage 2",
+  "goal": "Drive the existing Warthog beyond the initial 3.2 km terrain square. Terrain is generated ahead, kept on disk and reused when revisited. Target at least 60 FPS, with the tested 120 FPS cap retained.",
+  "changes": "Same Warthog source model, articulated suspension, physics tuning and saved camera configuration as the previous terrain workshop. Terrain extends within the native DEM coverage, keeps a bounded area resident and preserves collision-supply safeguards. New mesh uploads and collision creation are paced separately. Weapons, trees, backdrop and expanded lighting remain later stages.",
+  "controls": "WASD drive; Space brake; C chase/driver camera; hold RMB to look; Home centres look. E switches between driving and inspection flight. R places the Warthog upright on loaded ground at its current location. F5 opens the existing vehicle setup; F2 opens this brief. In flight: WASD, Space/Ctrl vertical, Shift faster. Enter starts when ready."
+}
