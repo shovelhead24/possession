@@ -1,7 +1,7 @@
 {
-  "title": "Terrain / first ringworld backdrop",
-  "iteration": "2026-10-07 / stage 3a",
-  "goal": "Inspect the distant terrain, ring and sky while driving. Check the horizon in all directions and watch for scenery covering the playable terrain or appearing during tile streaming. Target 60 FPS; cap remains 120 FPS.",
-  "changes": "Adds the previous workshop ring geometry, coarse DEM scenery, satellite previews, containment walls and sky. A moving ownership mask hides scenery beneath published driving tiles. The existing Warthog, saved tuning, camera interpolation, terrain caches and foreground lighting are preserved. Clouds, terrain controls, trees, expanded lighting and weapons remain later stages.",
+  "title": "Terrain / satellite surface and ringworld",
+  "iteration": "2026-10-07 / stage 3b",
+  "goal": "Inspect the real satellite imagery on the driving terrain. Check field and road alignment, distant transitions and driving performance. The full 8192-pixel source covers about 90 km, or 11 m per pixel.",
+  "changes": "Replaces the plain green ground with the existing full-resolution Millstreet satellite image. Mipmaps and compressed texture caching keep it practical at the 120 FPS cap. The same image is shared with the home backdrop. Warthog settings, terrain geometry, collision and saved caches are retained. Fine grass/rock surface detail is a later refinement.",
   "controls": "WASD drive; Space brake; C chase/driver camera; hold RMB to look; Home centres look. E switches between driving and inspection flight. R places the Warthog upright on loaded ground at its current location. F5 opens the existing vehicle setup; F2 opens this brief. In flight: WASD, Space/Ctrl vertical, Shift faster. Enter starts when ready. F8 starts/stops jitter capture, including the preceding five seconds of suspension, contact, camera and frame history. Logs are saved automatically."
 }

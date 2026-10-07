@@ -59,6 +59,7 @@ func setup(owner_arena: Node3D) -> void:
 	_mat = ShaderMaterial.new()
 	var shader := Shader.new()
 	var source := FileAccess.get_file_as_string("res://mocks/ring_vibes.gdshader")
+	source=source.replace("sat_tex : source_color, filter_linear;", "sat_tex : source_color, filter_linear_mipmap_anisotropic;")
 	source = source.replace("uniform vec3 to_sun", "uniform float arena_extent = 96.0;\nuniform vec3 to_sun")
 	# Use ring coordinates, not world X: the antipodal ring also has X near zero.
 	source = source.replace("void fragment() {", "void fragment() {\n\tfloat local_arc = UV.x - ring_circumference * floor(UV.x / ring_circumference + 0.5);\n\tif (max(abs(local_arc), abs(UV.y)) < arena_extent) { discard; }")
@@ -94,6 +95,11 @@ func setup(owner_arena: Node3D) -> void:
 	_env.background_mode = Environment.BG_SKY
 	for i in _patch_names.size(): _preview_queue.append(i)
 	preview_total = _preview_queue.size() + 1
+	if arena.satellite_texture:
+		# Share the full-resolution home image with the driving surface.
+		_mat.set_shader_parameter("sat_tex",arena.satellite_texture)
+		_mat.set_shader_parameter("has_sat",true)
+		home_pending=false;previews_loaded=1
 	background_ready = true
 	_update_arena_light()
 	print("ARENA_RING ready circumference=", CIRCUMFERENCES[c_idx], " width=", WIDTHS[w_idx], " patches=", _patch_names.size())

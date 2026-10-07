@@ -179,3 +179,25 @@ terrain. It waits for briefing screenshot readiness before entering. The
 `--no-drive-backdrop` argument supports a baseline launch; normal play includes
 scenery. A unique `--cold-cache-tag` measures cold exterior generation without
 purging caches. Final measurements are in this session's BACKDROP-STAGE-3A.md.
+
+### Full-resolution satellite surface (2026-10-07)
+The accepted ring backdrop is followed by the existing 8192×8192 Millstreet
+satellite image on the driving terrain. At 90.0288 km coverage this is about
+10.99 m per pixel: real fields/roads and colour variation, not grass-scale detail.
+World X/Z maps through the same DEM camera-pixel origin and north/south sign;
+geometry, terrain cache identities and collision are unchanged. Authored bridge
+and tunnel surfaces currently inherit this top-down drape too.
+
+`terrain_drive_satellite.gd` decodes on the loading worker, generates mipmaps and
+compresses to S3TC. The 44,739,256-byte image is cached under user://terrain-satellite
+using source modification time, byte length and processing-version identity.
+The ImageTexture is shared with the home backdrop. Initial and streamed tiles
+use the same material; the shader requires no new mesh UV data or extra pass.
+The plain terrain-only baseline keeps its existing StandardMaterial3D.
+`--no-drive-satellite` retains a diagnostic plain-green comparison.
+
+`profile_drive_satellite.gd` compares plain/satellite material in four directions
+and drives 35 seconds with streaming. `--satellite-smoke` checks the cached path
+and captures chase/overview views. The session SATELLITE-STAGE-3B.md records the
+measurements. Finer close-range grass/rock and dedicated structure materials
+remain separate visual refinements.

@@ -3,6 +3,7 @@ var vehicle_kit: Node
 var streamer: Node
 var jitter_trace: Node
 var backdrop: Node3D
+var satellite_texture: Texture2D
 
 func _ready() -> void:
 	# Enable only for this standalone demo; vehicle visuals and camera must share
@@ -12,6 +13,16 @@ func _ready() -> void:
 	super._ready()
 
 func prepare_content() -> void:
+	if not OS.get_cmdline_user_args().has("--no-drive-satellite"):
+		loading.log_event("Preparing full-resolution satellite imagery and mipmaps")
+		worker=Thread.new()
+		worker.start(preload("res://world/terrain_drive_satellite.gd").load_image)
+		while worker.is_alive(): await get_tree().process_frame
+		var satellite: Image=worker.wait_to_finish();worker=null
+		if satellite:
+			satellite_texture=ImageTexture.create_from_image(satellite)
+			material=preload("res://world/terrain_drive_satellite.gd").create_material(satellite_texture,source.metadata)
+			for entry in tile_entries.values(): entry.visual.material_override=material
 	if not OS.get_cmdline_user_args().has("--no-drive-backdrop"):
 		loading.log_event("Preparing distant DEM scenery and the existing ringworld")
 		backdrop=preload("res://world/terrain_drive_backdrop.gd").new();add_child(backdrop)

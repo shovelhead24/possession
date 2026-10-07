@@ -12,7 +12,7 @@ var cache_hits := 0
 var total_triangles := 0
 var lod_triangles := 0
 var loading_started := 0
-var material: StandardMaterial3D
+var material: Material
 var hud_clock := 0.0
 var frame_times: Array[float]=[]
 var last_frame := 0
@@ -36,8 +36,8 @@ func _ready() -> void:
 	environment.environment.ambient_light_energy=.65;add_child(environment)
 	var sun := DirectionalLight3D.new();sun.rotation_degrees=Vector3(-48,-30,0)
 	sun.light_energy=1.0;sun.shadow_enabled=false;add_child(sun)
-	material=StandardMaterial3D.new();material.albedo_color=Color(.38,.46,.25)
-	material.roughness=1.0
+	var plain_material := StandardMaterial3D.new();plain_material.albedo_color=Color(.38,.46,.25)
+	plain_material.roughness=1.0;material=plain_material
 	camera=Camera3D.new();camera.far=6000;camera.near=.2;camera.fov=75;add_child(camera);camera.make_current()
 	var layer := CanvasLayer.new();add_child(layer)
 	hud=Label.new();hud.position=Vector2(16,12);hud.add_theme_color_override("font_shadow_color",Color.BLACK)
