@@ -1,7 +1,7 @@
 {
-  "title": "Terrain / satellite surface and ringworld",
-  "iteration": "2026-10-07 / stage 3b",
-  "goal": "Inspect the real satellite imagery on the driving terrain. Check field and road alignment, distant transitions and driving performance. The full 8192-pixel source covers about 90 km, or 11 m per pixel.",
-  "changes": "Replaces the plain green ground with the existing full-resolution Millstreet satellite image. Mipmaps and compressed texture caching keep it practical at the 120 FPS cap. The same image is shared with the home backdrop. Warthog settings, terrain geometry, collision and saved caches are retained. Fine grass/rock surface detail is a later refinement.",
+  "title": "Terrain / curved satellite surface and ringworld",
+  "iteration": "2026-10-07 / stage 3c",
+  "goal": "Drive across the satellite terrain and verify that the close collision/detail tiles stay attached to the curved ringworld and its distant DEM scenery. The full 8192-pixel source covers about 90 km, or 11 m per pixel.",
+  "changes": "The playable terrain, collision, satellite mapping, camera and Warthog gravity now share the ring coordinate frame used by the DEM backdrop. This removes the elevated far-terrain band visible after long drives. Saved Warthog tuning and cache contents are retained; curved terrain gets a separate cache identity. Fine grass/rock surface detail is a later refinement.",
   "controls": "WASD drive; Space brake; C chase/driver camera; hold RMB to look; Home centres look. E switches between driving and inspection flight. R places the Warthog upright on loaded ground at its current location. F5 opens the existing vehicle setup; F2 opens this brief. In flight: WASD, Space/Ctrl vertical, Shift faster. Enter starts when ready. F8 starts/stops jitter capture, including the preceding five seconds of suspension, contact, camera and frame history. Logs are saved automatically."
 }

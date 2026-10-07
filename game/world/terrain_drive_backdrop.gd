@@ -123,8 +123,9 @@ func _far_terrain_h(arc: float, lat: float) -> float:
 	# Canonicalise BEFORE every source lookup, not just the fade-distance test.
 	arc=canonical_arc(arc)
 	if is_instance_valid(arena) and arena.source and maxf(absf(arc),absf(lat))<=NEAR_EXTENT:
-		var h: float=arena.source.surface_height(Vector2(arc,lat),128.0)
-		return h-2.0*_radius()*pow(sin(arc/_radius()*.5),2)
+		# Close streamed tiles and background scenery share the same ring-space
+		# altitude. Do not flatten this local tier before _ring_pos bends it.
+		return arena.source.surface_height(Vector2(arc,lat),128.0)
 	var distance := maxf(absf(arc),absf(lat))
 	return lerpf(-0.25, super._far_terrain_h(arc,lat), smoothstep(arena_extent*1.7,maxf(3500,arena_extent*3),distance))
 
@@ -207,9 +208,7 @@ func _build_near_band(arcs: Array[float], lateral: Array[float]) -> void:
 		for lat in zs:
 			var point := _ring_pos(arc/_radius(),lat,_far_terrain_h(arc,lat))
 			if arena.source:
-				point=Vector3(arc,arena.source.surface_height(Vector2(arc,lat),128.0),lat)
-				if absf(arc)==arena_extent: point.y=aligned_edge_height(arena.source,Vector2(arc,lat),true)
-				elif absf(lat)==arena_extent: point.y=aligned_edge_height(arena.source,Vector2(arc,lat),false)
+				point=_ring_pos(arc/_radius(),lat,arena.source.surface_height(Vector2(arc,lat),128.0))
 			# Fine boundary vertices lie on the actual coarse edge segments, not
 			# on a different sampled curve: no stitching job or hidden cracks.
 			if absf(arc)==NEAR_EXTENT: point=boundary_vertex(arc,lat,lateral,false)

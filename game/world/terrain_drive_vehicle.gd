@@ -1,5 +1,6 @@
 extends Node
 ## Same source preparation, Wishbone controller, saved tuning and cameras as workshop.
+const Ring = preload("res://world/terrain_drive_ring.gd")
 var arena: Node3D
 var car: RigidBody3D
 var vehicles: Array=[]
@@ -66,20 +67,22 @@ func setup(owner_arena: Node3D) -> void:
 
 func place(point: Vector2, yaw: float) -> bool:
 	var h: float=arena.source.surface_height(point)
-	var ray := PhysicsRayQueryParameters3D.create(Vector3(point.x,h+200,point.y),Vector3(point.x,h-200,point.y),1)
+	var estimated := Ring.point(point.x,h,point.y)
+	var up := Ring.up_at(estimated)
+	var ray := PhysicsRayQueryParameters3D.create(estimated+up*200,estimated-up*200,1)
 	var hit := arena.get_world_3d().direct_space_state.intersect_ray(ray)
 	if hit.is_empty(): return false
 	# Let the physics server freeze before changing pose; otherwise its next sync
 	# can overwrite a teleport requested between physics ticks.
 	relocating=true;car.set_stream_ready(false)
 	await get_tree().physics_frame
-	car.global_transform=Transform3D(Basis(Vector3.UP,yaw),hit.position+Vector3.UP*.3)
+	car.global_transform=Transform3D(Ring.tangent_basis(hit.position,yaw),hit.position+up*.3)
 	car.linear_velocity=Vector3.ZERO;car.angular_velocity=Vector3.ZERO;car.stream_velocity=Vector3.ZERO;car.stream_angular=Vector3.ZERO
 	car.stream_control.reset();car.reverse_engaged=false;car.balanced_braking=false
 	for corner in car.corners: corner.omega=0.0
 	await get_tree().physics_frame
 	car.reset_physics_interpolation()
-	arena.camera.position=car.position+car.basis.z*menu.settings.camera_distance+Vector3.UP*menu.settings.camera_height
+	arena.camera.position=car.position+car.basis.z*menu.settings.camera_distance+Ring.up_at(car.position)*menu.settings.camera_height
 	relocating=false
 	return true
 
@@ -98,7 +101,8 @@ func handle_input(event: InputEvent) -> bool:
 		if event.keycode==KEY_C and driving: menu.set_camera_mode(1-int(menu.settings.camera_mode));return true
 		if event.keycode==KEY_HOME: driver_look=Vector2.ZERO;return true
 		if event.keycode==KEY_R:
-			place(Vector2(car.position.x,car.position.z),car.rotation.y);return true
+			var ring_position := Ring.coordinates(car.position)
+			place(Vector2(ring_position.x,ring_position.z),car.rotation.y);return true
 	if menu.opened: return true
 	if driving and event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT:
 		Input.mouse_mode=Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE;return true
@@ -118,8 +122,9 @@ func update_camera(delta: float) -> void:
 		if driver_model: driver_model.hide()
 	else:
 		if driver_model: driver_model.show()
-		var target := pose.origin+Vector3.UP*1.4
-		var wanted: Vector3=pose.origin+pose.basis.z*cfg.camera_distance+Vector3.UP*cfg.camera_height
+		var up := Ring.up_at(pose.origin)
+		var target := pose.origin+up*1.4
+		var wanted: Vector3=pose.origin+pose.basis.z*cfg.camera_distance+up*cfg.camera_height
 		var query := PhysicsRayQueryParameters3D.create(target,wanted,3);query.exclude=[car.get_rid()]
 		var hit := arena.get_world_3d().direct_space_state.intersect_ray(query)
 		if not hit.is_empty(): wanted=hit.position+hit.normal*.25
@@ -130,6 +135,7 @@ func update_camera(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	if not initialized or not arena.ready_to_play or relocating: return
+	car.gravity_up=Ring.up_at(car.position)
 	var supply: Node=arena.streamer
 	car.set_stream_ready(supply.ready_at(car.position))
 	car.stream_speed_limit=INF;car.stream_braking=false;car.stream_brake_amount=0.0;car.stream_drive_scale=1.0

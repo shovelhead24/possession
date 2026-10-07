@@ -201,3 +201,21 @@ and drives 35 seconds with streaming. `--satellite-smoke` checks the cached path
 and captures chase/overview views. The session SATELLITE-STAGE-3B.md records the
 measurements. Finer close-range grass/rock and dedicated structure materials
 remain separate visual refinements.
+
+### Curved close terrain (2026-10-07)
+The detailed terrain had remained in the old flat tangent frame while the distant
+DEM scenery used the ring frame. At long distances this produced a visibly raised
+far band. `terrain_drive_ring.gd` is now the shared conversion layer: tile render
+vertices, normals and collision are warped to the ring, while the streamer's tile
+lookup converts world positions back to ring arc/lateral coordinates. The near
+backdrop band uses the same ring conversion and source heights, so it meets the
+close tiles in the same frame.
+
+The Warthog now receives radial gravity and the vehicle/camera placement uses the
+local tangent basis. Satellite UVs derive arc length from the curved vertex rather
+than using global X. Curved terrain has a separate source-cache identity, keeping
+previous caches intact. Focused checks confirm a 1,674.54 m ring lift at 20 km,
+matching inverse height coordinates (0.054 m maximum error), and confirm all four
+wheels stay grounded while driving there. The broader drive profile was updated
+to measure ring coordinates and tangent steering; it retains the 60 FPS overall
+target and collision/cache checks.

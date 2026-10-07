@@ -37,4 +37,5 @@ static func create_material(texture: Texture2D, metadata: Dictionary) -> ShaderM
 	result.set_shader_parameter("satellite",texture)
 	result.set_shader_parameter("home_origin",Vector2(metadata.camera_px[0],metadata.camera_px[1])/Vector2(metadata.w,metadata.h))
 	result.set_shader_parameter("home_span",Vector2(metadata.w,metadata.h)*float(metadata.m_per_px))
+	result.set_shader_parameter("ring_radius",3000000.0/TAU)
 	return result

@@ -1,5 +1,6 @@
 extends Node
 ## One primitive-array worker, paced upload/collision phases, bounded residency.
+const Ring = preload("res://world/terrain_drive_ring.gd")
 var arena: Node3D
 var worker: Thread
 var job_key := Vector2i.ZERO
@@ -32,7 +33,8 @@ func valid_key(key: Vector2i) -> bool:
 	return world_bounds.encloses(rect.grow(1))
 
 func key_at(point: Vector3) -> Vector2i:
-	return Vector2i(floori(point.x/200),floori(point.z/200))
+	var ring_position := Ring.coordinates(point)
+	return Vector2i(floori(ring_position.x/200),floori(ring_position.z/200))
 
 func ready_at(point: Vector3) -> bool:
 	if force_starvation: return false
@@ -43,6 +45,7 @@ func ready_at(point: Vector3) -> bool:
 func plan() -> void:
 	var focus: Vector3=arena.vehicle_kit.car.position if arena.vehicle_kit.driving else arena.camera.position
 	var centre := key_at(focus)
+	var ring_focus := Ring.coordinates(focus)
 	wanted.clear()
 	for z in range(centre.y-8,centre.y+8):
 		for x in range(centre.x-8,centre.x+8):
@@ -57,7 +60,7 @@ func plan() -> void:
 	for key in wanted:
 		if arena.tile_entries.has(key) or (worker and key==job_key) or (not stage.is_empty() and stage.key==key) or (not publish.is_empty() and publish.key==key): continue
 		pending.append(key)
-	pending.sort_custom(func(a,b): return (Vector2(a)*200+Vector2.ONE*100-Vector2(focus.x,focus.z)).length_squared()<(Vector2(b)*200+Vector2.ONE*100-Vector2(focus.x,focus.z)).length_squared())
+	pending.sort_custom(func(a,b): return (Vector2(a)*200+Vector2.ONE*100-Vector2(ring_focus.x,ring_focus.z)).length_squared()<(Vector2(b)*200+Vector2.ONE*100-Vector2(ring_focus.x,ring_focus.z)).length_squared())
 	# Remove a bounded number per planning tick; never remove the parked car's support.
 	var removed := 0
 	for key in arena.tile_entries.keys():
@@ -81,7 +84,7 @@ func build(key: Vector2i) -> Dictionary:
 		var a: Vector3=result.vertices[result.indices[i]]
 		var b: Vector3=result.vertices[result.indices[i+1]]
 		var c: Vector3=result.vertices[result.indices[i+2]]
-		var mid := (a+b+c)/3
+		var mid := Ring.coordinates((a+b+c)/3)
 		var group := int(mid.x>=centre.x)+2*int(mid.z>=centre.y)
 		groups[group].append(a);groups[group].append(b);groups[group].append(c)
 	result.face_groups=[]

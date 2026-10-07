@@ -21,6 +21,7 @@ var stress_course := false
 var diagnostic := false
 var brief_path := "res://world/terrain_baseline_brief.json"
 var tile_entries := {}
+var curve_to_ring := false
 
 func _ready() -> void:
 	diagnostic=OS.get_cmdline_user_args().has("--baseline-profile")
@@ -49,6 +50,7 @@ func build() -> void:
 	loading_started=Time.get_ticks_msec()
 	await get_tree().process_frame
 	source=Source.new()
+	source.curve_to_ring=curve_to_ring
 	if not source.initialize():
 		push_error("Baseline DEM could not load");get_tree().quit(1);return
 	loading.log_event("Preparing 3,200 m square: 256 terrain tiles, cached LODs and collision.")

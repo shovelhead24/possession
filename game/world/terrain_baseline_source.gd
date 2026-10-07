@@ -5,8 +5,10 @@ const TILE := 200
 const STEP := 8
 const Mesher = preload("res://world/tetra_mesher.gd")
 const Lods = preload("res://world/terrain_render_lods.gd")
+const Ring = preload("res://world/terrain_drive_ring.gd")
 var centre_height := 0.0
 var identity := ""
+var curve_to_ring := false
 
 func initialize() -> bool:
 	if not setup([]): return false
@@ -19,7 +21,7 @@ func initialize() -> bool:
 	var tunnel := Recipe.feature("tunnel",Vector3(10,hill.y+10,-100))
 	tunnel.merge({"end_x":190.0,"end_y":hill.y+10,"end_z":-100.0,"radius":12.0},true)
 	features=[bridge,hill,tunnel]
-	identity=(base_hash+FileAccess.get_file_as_string("res://world/terrain_baseline_source.gd")+FileAccess.get_file_as_string("res://world/terrain_render_lods.gd")+JSON.stringify(features)).sha256_text()
+	identity=(base_hash+FileAccess.get_file_as_string("res://world/terrain_baseline_source.gd")+FileAccess.get_file_as_string("res://world/terrain_render_lods.gd")+FileAccess.get_file_as_string("res://world/terrain_drive_ring.gd")+str(curve_to_ring)+JSON.stringify(features)).sha256_text()
 	return true
 
 func surface_height(point: Vector2, _spacing := 0.0) -> float:
@@ -61,6 +63,7 @@ func build_tile(key: Vector2i) -> Dictionary:
 				supplied[(z*(cells.y+1)+y)*count+x]=Recipe.compose(p,p.y-heights[z*count+x],local)
 	var sampler := Recipe.field.bind(3.0,0.0,local,self)
 	var result := Mesher.build(sampler,origin,cells,STEP,supplied)
+	if curve_to_ring: Ring.warp_mesh(result)
 	Lods.prepare(result,identity+str(key))
 	result.identity=identity;result.cached=false
 	var file := FileAccess.open(path+".tmp",FileAccess.WRITE)

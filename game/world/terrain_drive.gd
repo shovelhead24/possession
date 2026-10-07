@@ -1,4 +1,5 @@
 extends "res://world/terrain_baseline.gd"
+const Ring = preload("res://world/terrain_drive_ring.gd")
 var vehicle_kit: Node
 var streamer: Node
 var jitter_trace: Node
@@ -6,6 +7,7 @@ var backdrop: Node3D
 var satellite_texture: Texture2D
 
 func _ready() -> void:
+	curve_to_ring=true
 	# Enable only for this standalone demo; vehicle visuals and camera must share
 	# the interpolated pose when rendering faster than the 60 Hz physics loop.
 	get_tree().physics_interpolation=true
@@ -38,6 +40,7 @@ func prepare_content() -> void:
 		if arg.begins_with("--cold-cache-tag="):
 			# Isolated diagnostic namespace: exercise cold builds without deleting user caches.
 			cold_source=source.snapshot(source.features);cold_source.centre_height=source.centre_height
+			cold_source.curve_to_ring=source.curve_to_ring
 			cold_source.identity=(source.identity+arg).sha256_text()
 			print("DRIVE_COLD_NAMESPACE ",cold_source.identity)
 	streamer=preload("res://world/terrain_drive_stream.gd").new();streamer.cold_source=cold_source;add_child(streamer);streamer.setup(self)
@@ -65,13 +68,17 @@ func _process(delta: float) -> void:
 	super._process(delta)
 	diagnostic=old_diagnostic
 	if not vehicle_kit.driving and not diagnostic and loading.dismissed:
-		# Leave a margin inside the native DEM's valid sampling rectangle.
-		camera.position.x=clampf(camera.position.x,streamer.world_bounds.position.x+50,streamer.world_bounds.end.x-50)
-		camera.position.z=clampf(camera.position.z,streamer.world_bounds.position.y+50,streamer.world_bounds.end.y-50)
+		# The flight camera remains in the ring's tangent frame as it travels.
+		var ring_position := Ring.coordinates(camera.position)
+		var arc := clampf(ring_position.x,streamer.world_bounds.position.x+50,streamer.world_bounds.end.x-50)
+		var lateral := clampf(ring_position.z,streamer.world_bounds.position.y+50,streamer.world_bounds.end.y-50)
+		var height := maxf(ring_position.y,source.surface_height(Vector2(arc,lateral))+2)
+		camera.position=Ring.point(arc,height,lateral)
 	if vehicle_kit.driving: vehicle_kit.update_camera(delta)
 	var sorted := frame_times.duplicate();sorted.sort()
 	var p95: float=sorted[int(sorted.size()*.95)] if not sorted.is_empty() else 0.0
-	hud.text="TERRAIN / WARTHOG + RINGWORLD\n%d FPS | p95 %.2f ms | %.0f km/h | %d wheels grounded\nWASD drive · Space brake · C camera · E fly/drive · R recover\nF5 vehicle setup · F2 briefing · RMB look · Shift fast flight\nTerrain: %d resident | %d queued | %d generated / %d cache hits\nPosition %.0f, %.0f m | %s" % [Engine.get_frames_per_second(),p95,vehicle_kit.car.linear_velocity.length()*3.6,vehicle_kit.car.grounded_count,tile_entries.size(),streamer.pending.size(),streamer.builds,streamer.hits,vehicle_kit.car.position.x,vehicle_kit.car.position.z,"Waiting for collision" if vehicle_kit.car.streaming_suspended else ("Terrain supply braking" if vehicle_kit.car.stream_braking else "Ready")]
+	var drive_position := Ring.coordinates(vehicle_kit.car.position)
+	hud.text="TERRAIN / WARTHOG + RINGWORLD\n%d FPS | p95 %.2f ms | %.0f km/h | %d wheels grounded\nWASD drive · Space brake · C camera · E fly/drive · R recover\nF5 vehicle setup · F2 briefing · RMB look · Shift fast flight\nTerrain: %d resident | %d queued | %d generated / %d cache hits\nArc %.0f m | lateral %.0f m | %s" % [Engine.get_frames_per_second(),p95,vehicle_kit.car.linear_velocity.length()*3.6,vehicle_kit.car.grounded_count,tile_entries.size(),streamer.pending.size(),streamer.builds,streamer.hits,drive_position.x,drive_position.z,"Waiting for collision" if vehicle_kit.car.streaming_suspended else ("Terrain supply braking" if vehicle_kit.car.stream_braking else "Ready")]
 
 	hud.text+="\n"+jitter_trace.status
 

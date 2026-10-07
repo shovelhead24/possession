@@ -27,6 +27,7 @@ var stream_braking := false
 var stream_control := preload("res://world/stream_speed_control.gd").new()
 var stream_brake_amount := 0.0
 var stream_drive_scale := 1.0
+var gravity_up := Vector3.UP
 
 func set_stream_ready(value: bool) -> void:
 	if streaming_suspended == not value: return
@@ -68,6 +69,9 @@ var rest_hub: Vector2=Linkage.solve(0).hub
 func _ready() -> void:
 	Linkage.prepare_height_search()
 	mass=800
+	# The driving terrain follows the ring. Apply the same 1 g radially instead
+	# of letting Godot's fixed global-down gravity pull away from distant tiles.
+	gravity_scale=0
 	center_of_mass_mode=RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	center_of_mass=Vector3(0,.6,0)
 	linear_damp=.08;angular_damp=.65
@@ -145,6 +149,7 @@ func _physics_process(dt: float) -> void:
 	# Frozen bodies must not accumulate suspension/tyre forces while collision loads.
 	if freeze or streaming_suspended: return
 	if corners.is_empty(): return
+	apply_central_force(-gravity_up*mass*9.8)
 	var up=global_basis.y.normalized()
 	var steer_limit=deg_to_rad(lerpf(steer_max,minf(steer_fast,steer_max),clampf(linear_velocity.length()/25,0,1)))
 	steering=move_toward(steering,turn*steer_limit,dt*steer_rate)
