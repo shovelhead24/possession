@@ -1,4 +1,4 @@
-# Staged demo: Warthog and terrain expansion
+# Staged demo: Warthog, terrain expansion and backdrop
 
 Scene: `res://world/terrain_drive.tscn`, built on the accepted terrain-only scene.
 The previous stress workshop and terrain-only baseline remain separate scenes.
@@ -149,3 +149,33 @@ user confirmation is still needed for any remaining visual symptoms.
 Test harness corrections: await briefing readiness before dismissing it, skip
 empty JSONL tail lines, and recover onto resident terrain instead of an evicted
 starting tile. Initial harness failures were not counted as successful tests.
+
+### First backdrop pass (2026-10-07)
+`terrain_drive_backdrop.gd` adapts the workshop scenery separately, keeping the
+old workshop script and launcher intact. It reuses the 3,000 km circumference /
+50 km width ring, DEM splice heights, satellite preview cache, containment walls,
+existing sky shader and existing haze density. No clouds or new lighting stage.
+The accepted foreground sun and ambient settings remain unchanged; the backdrop
+shader takes its sun direction from that existing light.
+
+The local 16 km square uses the same staged source and height origin, with a
+128 m scenery grid and coarse edge anchors. The outer ring remains coarse.
+A 512-square R8 ownership texture maps one texel to each 200 m terrain tile.
+Its origin derives from native DEM bounds rather than assuming a centred DEM.
+Only published tiles claim ownership; scenery updates after the streamer's
+publication/eviction pass. No scenery collider or terrain cache identity changes.
+This prevents distant terrain drawing over the playable bridge, tunnel or hills.
+
+This is a first visual pass: coarse scenery edges approximate the fine surface,
+and the foreground still has the accepted plain green material. Exact visual
+LOD transition stitching, wider DEM scenery fidelity, clouds and foreground
+material matching are subsequent backdrop refinements. Terrain controls still
+follow the backdrop; trees, lighting, models and weapons remain later stages.
+
+`benchmarks/profile_drive_backdrop.gd` checks the saved configuration, 120 FPS cap,
+physics interpolation and ownership-mask coverage, compares four viewing
+directions with/without scenery, captures the ring, and drives into streamed
+terrain. It waits for briefing screenshot readiness before entering. The
+`--no-drive-backdrop` argument supports a baseline launch; normal play includes
+scenery. A unique `--cold-cache-tag` measures cold exterior generation without
+purging caches. Final measurements are in this session's BACKDROP-STAGE-3A.md.

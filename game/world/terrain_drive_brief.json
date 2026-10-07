@@ -1,7 +1,7 @@
 {
-  "title": "Terrain / Warthog and expansion",
-  "iteration": "2026-10-07 / stage 2",
-  "goal": "Check forward/back camera jitter while driving at 120 FPS. Vehicle rendering and both cameras now follow the same interpolated physics pose. Use F8 to capture any remaining jitter.",
-  "changes": "Same Warthog source model, articulated suspension, physics tuning and saved camera configuration as the previous terrain workshop. Terrain extends within the native DEM coverage, keeps a bounded area resident and preserves collision-supply safeguards. New mesh uploads and collision creation are paced separately. Weapons, trees, backdrop and expanded lighting remain later stages.",
+  "title": "Terrain / first ringworld backdrop",
+  "iteration": "2026-10-07 / stage 3a",
+  "goal": "Inspect the distant terrain, ring and sky while driving. Check the horizon in all directions and watch for scenery covering the playable terrain or appearing during tile streaming. Target 60 FPS; cap remains 120 FPS.",
+  "changes": "Adds the previous workshop ring geometry, coarse DEM scenery, satellite previews, containment walls and sky. A moving ownership mask hides scenery beneath published driving tiles. The existing Warthog, saved tuning, camera interpolation, terrain caches and foreground lighting are preserved. Clouds, terrain controls, trees, expanded lighting and weapons remain later stages.",
   "controls": "WASD drive; Space brake; C chase/driver camera; hold RMB to look; Home centres look. E switches between driving and inspection flight. R places the Warthog upright on loaded ground at its current location. F5 opens the existing vehicle setup; F2 opens this brief. In flight: WASD, Space/Ctrl vertical, Shift faster. Enter starts when ready. F8 starts/stops jitter capture, including the preceding five seconds of suspension, contact, camera and frame history. Logs are saved automatically."
 }

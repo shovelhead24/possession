@@ -2,6 +2,7 @@ extends "res://world/terrain_baseline.gd"
 var vehicle_kit: Node
 var streamer: Node
 var jitter_trace: Node
+var backdrop: Node3D
 
 func _ready() -> void:
 	# Enable only for this standalone demo; vehicle visuals and camera must share
@@ -11,6 +12,11 @@ func _ready() -> void:
 	super._ready()
 
 func prepare_content() -> void:
+	if not OS.get_cmdline_user_args().has("--no-drive-backdrop"):
+		loading.log_event("Preparing distant DEM scenery and the existing ringworld")
+		backdrop=preload("res://world/terrain_drive_backdrop.gd").new();add_child(backdrop)
+		backdrop.setup(self)
+		await get_tree().process_frame
 	camera.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	loading.log_event("Preparing the existing Warthog model, suspension and saved tuning")
 	await get_tree().process_frame
@@ -54,7 +60,7 @@ func _process(delta: float) -> void:
 	if vehicle_kit.driving: vehicle_kit.update_camera(delta)
 	var sorted := frame_times.duplicate();sorted.sort()
 	var p95: float=sorted[int(sorted.size()*.95)] if not sorted.is_empty() else 0.0
-	hud.text="TERRAIN / WARTHOG + EXPANSION\n%d FPS | p95 %.2f ms | %.0f km/h | %d wheels grounded\nWASD drive · Space brake · C camera · E fly/drive · R recover\nF5 vehicle setup · F2 briefing · RMB look · Shift fast flight\nTerrain: %d resident | %d queued | %d generated / %d cache hits\nPosition %.0f, %.0f m | %s" % [Engine.get_frames_per_second(),p95,vehicle_kit.car.linear_velocity.length()*3.6,vehicle_kit.car.grounded_count,tile_entries.size(),streamer.pending.size(),streamer.builds,streamer.hits,vehicle_kit.car.position.x,vehicle_kit.car.position.z,"Waiting for collision" if vehicle_kit.car.streaming_suspended else ("Terrain supply braking" if vehicle_kit.car.stream_braking else "Ready")]
+	hud.text="TERRAIN / WARTHOG + RINGWORLD\n%d FPS | p95 %.2f ms | %.0f km/h | %d wheels grounded\nWASD drive · Space brake · C camera · E fly/drive · R recover\nF5 vehicle setup · F2 briefing · RMB look · Shift fast flight\nTerrain: %d resident | %d queued | %d generated / %d cache hits\nPosition %.0f, %.0f m | %s" % [Engine.get_frames_per_second(),p95,vehicle_kit.car.linear_velocity.length()*3.6,vehicle_kit.car.grounded_count,tile_entries.size(),streamer.pending.size(),streamer.builds,streamer.hits,vehicle_kit.car.position.x,vehicle_kit.car.position.z,"Waiting for collision" if vehicle_kit.car.streaming_suspended else ("Terrain supply braking" if vehicle_kit.car.stream_braking else "Ready")]
 
 	hud.text+="\n"+jitter_trace.status
 
