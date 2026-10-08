@@ -53,11 +53,12 @@ func build() -> void:
 	source.curve_to_ring=curve_to_ring
 	if not source.initialize():
 		push_error("Baseline DEM could not load");get_tree().quit(1);return
+	prepare_source()
 	loading.log_event("Preparing 3,200 m square: 256 terrain tiles, cached LODs and collision.")
 	for z in range(-8,8):
 		for x in range(-8,8):
 			worker=Thread.new()
-			var error := worker.start(source.build_tile.bind(Vector2i(x,z)))
+			var error := worker.start(build_tile.bind(Vector2i(x,z)))
 			if error!=OK: push_error("Terrain worker failed");get_tree().quit(1);return
 			while worker.is_alive(): await get_tree().process_frame
 			var data: Dictionary=worker.wait_to_finish();worker=null
@@ -78,6 +79,12 @@ func build() -> void:
 
 func prepare_content() -> void:
 	pass
+
+func prepare_source() -> void:
+	pass
+
+func build_tile(key: Vector2i) -> Dictionary:
+	return source.build_tile(key)
 
 func install_tile(data: Dictionary, key := Vector2i.ZERO) -> void:
 	var arrays := [];arrays.resize(Mesh.ARRAY_MAX)

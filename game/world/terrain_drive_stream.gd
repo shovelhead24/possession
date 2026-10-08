@@ -43,6 +43,7 @@ func ready_at(point: Vector3) -> bool:
 	return true
 
 func plan() -> void:
+	if arena.destruction and arena.destruction.busy(): return
 	var focus: Vector3=arena.vehicle_kit.car.position if arena.vehicle_kit.driving else arena.camera.position
 	var centre := key_at(focus)
 	var ring_focus := Ring.coordinates(focus)
@@ -76,6 +77,7 @@ func build(key: Vector2i) -> Dictionary:
 	# Initial square retains its original cache identity even in a cold exterior test.
 	var source: RefCounted=cold_source if cold_source and (key.x< -8 or key.x>=8 or key.y< -8 or key.y>=8) else arena.source
 	var result: Dictionary=source.build_tile(key)
+	if arena.destruction: result=arena.destruction.apply(result,key)
 	# Partition complete triangles, without moving/removing any vertex. Each native
 	# collision BVH can then be installed in a separate short main-thread phase.
 	var groups: Array=[[],[],[],[]]
@@ -126,7 +128,7 @@ func _process(delta: float) -> void:
 	if worker:
 		if worker.is_alive(): return
 		stage=worker.wait_to_finish();worker=null;return
-	if not pending.is_empty() and not pause_generation:
+	if not pending.is_empty() and not pause_generation and (not arena.destruction or not arena.destruction.busy()):
 		job_key=pending.pop_front();worker=Thread.new()
 		var error := worker.start(build.bind(job_key))
 		if error!=OK: worker=null;push_error("Terrain streaming worker failed")

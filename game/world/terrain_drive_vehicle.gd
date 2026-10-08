@@ -102,7 +102,7 @@ func handle_input(event: InputEvent) -> bool:
 		if event.keycode==KEY_HOME: driver_look=Vector2.ZERO;return true
 		if event.keycode==KEY_R:
 			var ring_position := Ring.coordinates(car.position)
-			place(Vector2(ring_position.x,ring_position.z),car.rotation.y);return true
+			place(Vector2(ring_position.x,ring_position.z),Ring.tangent_yaw(car.position,-car.global_basis.z));return true
 	if menu.opened: return true
 	if driving and event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_RIGHT:
 		Input.mouse_mode=Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE;return true

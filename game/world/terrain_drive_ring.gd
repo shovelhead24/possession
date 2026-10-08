@@ -17,8 +17,15 @@ static func spinward_at(world_point: Vector3) -> Vector3:
 
 static func tangent_basis(world_point: Vector3, yaw: float) -> Basis:
 	var up := up_at(world_point)
-	var basis := Basis(spinward_at(world_point),up,Vector3.FORWARD)
+	# Keep the existing forward heading (+lateral at yaw zero), but use a
+	# proper rotation. +spinward/up/-lateral had determinant -1: it reflected
+	# the body, driver and camera and reversed local wheel animation rotations.
+	var basis := Basis(-spinward_at(world_point),up,Vector3.FORWARD)
 	return Basis(up,yaw)*basis
+
+static func tangent_yaw(world_point: Vector3, forward: Vector3) -> float:
+	# Recover relative yaw from heading, not Euler angles of the ring-tilted body.
+	return atan2(forward.dot(spinward_at(world_point)),forward.z)
 
 static func warp_mesh(result: Dictionary) -> void:
 	var vertices: PackedVector3Array=result.vertices
@@ -34,6 +41,6 @@ static func warp_mesh(result: Dictionary) -> void:
 		# three axes into the same local ring frame as the curved vertex.
 		if i<normals.size():
 			var normal := normals[i]
-			normals[i]=(spinward*normal.x+up*normal.y+Vector3.FORWARD*normal.z).normalized()
+			normals[i]=(spinward*normal.x+up*normal.y+Vector3.BACK*normal.z).normalized()
 	result.vertices=vertices
 	result.normals=normals

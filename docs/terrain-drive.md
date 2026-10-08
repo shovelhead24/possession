@@ -219,3 +219,133 @@ matching inverse height coordinates (0.054 m maximum error), and confirm all fou
 wheels stay grounded while driving there. The broader drive profile was updated
 to measure ring coordinates and tangent steering; it retains the 60 FPS overall
 target and collision/cache checks.
+
+## Local destructible grenades — 2026-10-07
+
+B throws the existing two-second grenade in driving or flight mode. Gravity,
+settling and the crater offset use the local radial up direction. Only affected
+8 m cells are refined to the original grenade lab's 2 m sampling grid. The field
+inside those cells interpolates the baseline's coarse tetrahedra, preserving the
+surface at refinement boundaries. A blast subtracts a 2 m radius sphere.
+
+One worker rebuilds affected tiles while their old surfaces remain active.
+Replacement meshes and colliders switch together on a physics tick, including
+neighbours across tile seams. Streaming pauses new work during an edit and
+replays the session cut history on returning tiles. Cuts reset on restart.
+Admission requires resident affected tiles, with 32 pending / 2048 session cuts.
+Edited tiles currently keep full-detail indices; untouched tiles retain LODs.
+
+`check_drive_grenades.gd` covers fused radial projectiles, overlapping cuts, seam
+collision, and streamed mesh replay near the origin and at 20 km. Add
+`-- --baseline-profile --no-drive-satellite --no-drive-backdrop --full-drive-grenades`
+to test the full demo's B control in both driving and flight. Both passed.
+The existing flat grenade and curved Warthog regressions also passed.
+
+This is terrain destruction only; no combat damage, blast impulse or restart
+save restoration. Main-thread mesh/collider preparation can still hitch. These
+headless checks do not establish rendered appearance or a 60 FPS guarantee.
+
+## Terrain tools and Warthog orientation — 2026-10-07
+
+F1 switches between play and a four-tool editor: Raise, Lower, Tunnel boring,
+and Mountain fill. Raise/lower reuse `sdf_brush.gd` and the established recipe
+falloff. Hold LMB on terrain; radius and strength are adjustable. A tunnel uses
+an entrance click followed by an exit click; Alt-click picks a far-facing
+surface and Esc cancels the first point. Mountain fill is one click with radius,
+height, seed and the existing ridged/simplex/Perlin generation controls.
+
+Hold RMB + WASD to move the editor camera, Space/Ctrl vertically, Shift for
+speed. Wheel zooms; Shift-wheel changes brush radius. Undo/Redo act on completed
+edit batches. Ctrl+S saves; Ctrl+Z/Y undo/redo. F1 restores the previous play mode.
+
+`terrain_drive_editor.gd` is the interface. `terrain_drive_destruction.gd` now
+stores ordered recipe features (including grenades), coordinates rebuilds and
+handles history/persistence. `terrain_drive_cuts.gd` retains the compact grenade
+path and rebuilds affected vertical columns for sculpting, mountains and tunnels.
+The base piecewise-linear field is refined to a 2 m lattice in affected regions.
+Unedited distant tiles keep their original coarse geometry. You can edit at any
+loaded location on the map; this is not a fixed workshop boundary.
+
+Save explicitly to `user://terrain-drive-edits.json` (HaloTest userdata). Saves
+write a pending file, back up the previous save as `.bak`, then rename into place.
+Saved edits load before startup tile construction and replay on streamed reloads.
+The old `sdf-authoring.json` workshop save is untouched. Invalid or mismatched
+saves are rejected without replacing the current terrain. Saves include crater
+features too. This supersedes the earlier session-only grenade limitation.
+
+The placement basis used +spinward/up/-lateral, a reflection with determinant -1.
+It now uses -spinward/up/-lateral, preserving the previous forward heading while
+restoring the model/driver/camera handedness and wheel animation direction.
+Recovery derives ring-relative yaw from the forward vector. Steering inputs,
+tyre force formulas and tuning were not changed. Ring mesh normals also now use
+the positive lateral derivative that matches ring positions.
+
+Validation: four tools, exact expected raise/lower displacement, traversable
+bore through generated mountain collision, undo/redo, save/backup, fresh recipe
+replay, invalid-save rejection, and sculpting at 20 km passed in
+`check_drive_editor.gd`. Its `--editor-scene-check` mode passed with a real
+Compatibility renderer: F1 panel, four tools, Save, return to driving, destruction
+of the scene, reconstruction from the saved file, and matching saved collision.
+The panel and mountain screenshot was visually inspected. Grenade regression
+still passed. The vehicle frame test and rendered vehicle regression passed,
+including both steering signs, driver side and heading-preserving recovery.
+
+Limits: edits require their footprint's terrain tiles to be resident. Radius is
+2–120 m in the editor; tunnel endpoints must be 4–500 m apart. There are 2048
+recipe operations, 32 queued requests and 64 undo snapshots. Held sculpting is
+paced by completed rebuilds. Large edits can take time, and main-thread collider
+creation can hitch. Far DEM scenery still shows the original geography outside
+the resident edited tiles. No 60 FPS guarantee or large-world mountain LOD bake
+is established by these checks. Explicit Save is required before quitting.
+
+## Continuous brush recovery — 2026-10-08
+
+The first drive-editor integration rebuilt all previously edited columns in each
+200 m tile, re-evaluated analytical normals, and waited for publication before
+accepting another brush dab. It also restarted `sdf_brush.gd` on every dab, losing
+its continuous-path interpolation and dose aggregation. This was the regression
+behind the slow raise/lower response.
+
+The drive path now reuses the existing `sdf_field_cache.gd`: cached base samples,
+2D brush kernels, per-column compiled offsets and sampled-gradient normals.
+`terrain_drive_edit_cache.gd` retains up to 24 tile builders/base meshes and shares
+the 32 MiB field-cache budget. Each builder reuses unaffected column meshes and
+stable 32 m vertical bands. Cached base arrays are explicitly duplicated before
+appending edited vertices so repeated updates cannot corrupt the immutable base.
+
+Input continuously accumulates in the original brush while the worker runs.
+Pending doses with the same footprint are consolidated, not dropped. Path samples
+are interpolated, each held stroke has one undo group, and Save waits for all
+collected input and the final collision/mesh publication. Undo/Redo/Load requested
+at release also wait for that stroke to finish.
+
+`terrain_drive_recipe.gd` consolidates equal-footprint, equal-sign additive
+operations. Its identity uses full-precision settings; Y is ignored only for
+additive height brushes, whose equations do not use it. Tunnels, spheres and
+mountains are explicit ordering barriers. Existing saves are accepted and
+consolidated on load; the next explicit Save writes that compact representation
+with the existing backup/atomic-write path. No approximate terrain fitting,
+new save format or destructive rewrite of existing files was introduced.
+
+Matched moving-brush A/B (same cached base, radius 12 m, ten updates): before
+282–1162 ms, after 31–87 ms. Later warm updates were 31–85 ms. Cold replay exactly
+matched warm output; comparison with the prior evaluator's vertex positions
+had a maximum error of 0.031 mm from float sampling. The frozen reference is
+`benchmarks/drive_brush_reference.gd`, used only by `profile_drive_brush.gd`.
+
+A continuous stationary-plus-seam-crossing test published 78 updates: median
+worker 41 ms, median complete publication 80 ms, p95 140 ms, worst 339 ms. It
+preserved the full expected 12.067 m stationary dose, continuous ridge collision,
+whole-stroke undo/redo and exact save/replay meshes. A rendered four-second held
+mouse test published 39 updates (median 83 ms); frame p95 was 20.4 ms and worst
+230 ms. These short diagnostic runs disable satellite/backdrop rendering and do
+not establish a universal FPS guarantee. First-touch/cold work and whole-tile
+main-thread collider creation can still hitch.
+
+600 identical stationary input samples compacted to one operation: 98,291 to
+161 JSON bytes for that feature array. Mixed tunnel ordering differed by less
+than 2e-12 field units in the compaction test. Four-tool/collision/save tests and
+the grenade seam/overlap/replay regression passed. A separate terrain-rendering
+pass is not required: the worker compiles derived mesh data while the compact
+recipe remains authoritative. Persisting compiled edited meshes to accelerate
+cold loads, and finer-grained collider swaps, remain separate future work.
