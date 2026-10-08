@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="HaloTest"
-run/main_scene="res://test_combat.tscn"
+config/name="Tree Demo"
+run/main_scene="res://world/terrain_drive.tscn"
 config/features=PackedStringArray("4.5", "GL Compatibility")
 config/icon="res://icon.svg"
 
