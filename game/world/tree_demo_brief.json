@@ -1,0 +1,7 @@
+{
+  "title": "Tree Demo / terrain and tree painting",
+  "iteration": "2026-10-09 / paint, erase and save trees",
+  "goal": "Press F1 and select Paint trees. Choose a species, brush radius, height and density, then hold LMB and drag on terrain. Erase trees removes your painted trees. Only painted trees populate the world.",
+  "changes": "Each drag is one undo step. Ctrl+Z/Y applies to the selected tool: tree painting or terrain. Ctrl+S saves both terrain and painted trees; Load trees reloads tree placement. Painted trees also load automatically next launch. Placement is limited to loaded terrain, slopes up to 38 degrees, 3m minimum spacing and 4096 painted trees. Trees follow terrain edits and use the existing mesh/billboard LODs. Automatic demo trees have been removed; Daylight settings in F1 adjust the sun and ambient light, compare original lighting and enable optional near shadows: Balanced uses simplified tree shadows, Fast reduces their range, and Detailed restores leaf-card shadows. Wind remains off.",
+  "controls": "F1 editor; Paint trees / Erase trees; hold LMB to brush; Shift-wheel changes radius; hold RMB + WASD to fly, Space/Ctrl vertical, Shift faster. Ctrl+S save terrain + trees; Ctrl+Z/Y undo/redo for selected tool. F6 all trees on/off; F9 tree views; F10 LOD comparison; F11 120 FPS cap/uncapped. E exit/enter Warthog; on foot: WASD walk, Shift sprint, Space jump, mouse look, Esc releases cursor; F1 editor flight returns to the previous mode; B grenade; F5 vehicle setup; F8 jitter capture; F2 briefing."
+}

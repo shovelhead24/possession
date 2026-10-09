@@ -41,7 +41,18 @@ func terrain_context() -> Dictionary:
 
 func frame_context() -> Dictionary:
 	var car: Node3D=arena.vehicle_kit.car
-	return {"physics_frame":Engine.get_physics_frames(),"interpolation_fraction":Engine.get_physics_interpolation_fraction(),"car_position":vector(car.global_position),"car_render_position":vector(car.get_global_transform_interpolated().origin),"camera_position":vector(arena.camera.global_position),"camera_rotation":vector(arena.camera.global_rotation),"camera_mode":arena.vehicle_kit.menu.settings.camera_mode,"terrain":terrain_context()}
+	var context := {"physics_frame":Engine.get_physics_frames(),"interpolation_fraction":Engine.get_physics_interpolation_fraction(),"car_position":vector(car.global_position),"car_render_position":vector(car.get_global_transform_interpolated().origin),"camera_position":vector(arena.camera.global_position),"camera_rotation":vector(arena.camera.global_rotation),"camera_mode":arena.vehicle_kit.menu.settings.camera_mode,"terrain":terrain_context()}
+
+	context["max_fps"]=Engine.max_fps
+	if arena.get("daylight"):
+		var light: Node=arena.daylight
+		context["lighting"]={"shadows":light.sun.shadow_enabled,"quality":light.shadow_quality,"range":light.sun.directional_shadow_max_distance,"baseline":light.baseline,"sun":light.sun.light_energy,"split_1":light.sun.directional_shadow_split_1,"blend_splits":light.sun.directional_shadow_blend_splits,"filter":light.shadow_filter,"normal_bias":light.sun.shadow_normal_bias,"sun_rotation":vector(light.sun.rotation_degrees),"ambient":light.environment.ambient_light_energy}
+		context["trees"]={"enabled":arena.trees.enabled,"painted_enabled":arena.painted_trees.enabled,"painted_count":arena.painted_trees.count_limit,"demo_lods":arena.trees.counts.duplicate(),"painted_lods":arena.painted_trees.counts.duplicate(),"proxy_count":light.proxies.tree_count,"proxies_visible":light.proxies.visible}
+	if arena.get("edited_render_lods"):
+		context["edited_lods"]={"enabled":arena.edited_render_lods.enabled,"published":arena.edited_render_lods.published,"worker_active":arena.edited_render_lods.worker!=null,"generated_tiles":arena.edited_render_lods.generated_tiles,"requested_tiles":arena.edited_render_lods.requested.size(),"hidden_edit_tiles":arena.edited_render_lods.hidden_keys.size()}
+	if arena.get("on_foot"):
+		context["movement_mode"]=("editor" if arena.editor.opened else ("on_foot" if arena.on_foot.active else ("driving" if arena.vehicle_kit.driving else "observer")))
+	return context
 
 func write_event(event: String, data: Dictionary) -> void:
 	if not file: return
