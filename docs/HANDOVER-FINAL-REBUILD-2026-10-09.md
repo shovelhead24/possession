@@ -43,10 +43,6 @@ Other background:
 
 Current Tree Demo deliberately builds on the stable terrain/vehicle slice rather than loading the old expanded workshop wholesale.
 
-## Final cleanup after acceptance
-
-The user requested removal of all automatic unpainted demo trees before the next build. The deterministic candidate generator has been removed from `tree_patch.gd`; its base node only prepares shared assets and starts with zero candidates. **Only saved or newly painted trees populate the world.** F7 density control was removed, so it cannot bring the demo patch back. F6/F10 and the HUD now serve the painted population. Painted-tree saves were not edited. Historic captures and benchmarks include the former demo patch and must not be treated as exact measurements of this cleaned state. `check_tree_patch.gd` is now a historical demo-population diagnostic; use the painting tests for current placement behaviour.
-
 ## Current foundation and integration constraints
 
 `tree_demo.gd` extends `terrain_drive.gd`, which extends the terrain baseline. Tree Demo adds trees, painted-tree storage, daylight, an edited-terrain render manager, on-foot movement and an extended editor. The existing Warthog controller/camera, unified DEM/SDF terrain generation, ring coordinate system, collision, streaming, satellite terrain materials and editing remain the foundation.
@@ -67,8 +63,7 @@ Files: `tree_patch_assets.gd`, `tree_patch.gd`, `tree_paint.gd`, `tree_paint_sto
 - Mesh LOD0/1/2 plus original authored multi-plane billboard LOD3. These preserve the source atlas UVs; they are not generic full-atlas crossed quads or new multi-view impostors.
 - Triangle counts LOD0/1/2/3: tall 12969/6633/3268/20; medium 6813/3598/2278/20; sapling 599/437/318/20.
 - Normalized variant meshes retain matching base/height across levels. Distance selection scales with tree height: effective distance is distance × 10 / height; thresholds 22/55/110, with 4 m adjacent-band hysteresis. Cull range 650 m.
-- **MultiMesh instancing is active** for both the deterministic demo patch and painted trees. Spatial cells: 96 m for meshes, 192 m for billboard batches. Do not replace this with a node per visual tree.
-- Automatic demo population removed in final cleanup. Base node has zero candidates; all tree placements come from painting/saved painted trees.
+- **MultiMesh instancing is active** for painted trees. Spatial cells: 96 m for meshes, 192 m for billboard batches. Do not replace this with a node per visual tree.
 - Grounding follows actual resident terrain, ring orientation and a 38-degree slope limit. Nearby trunk collision support is bounded around the vehicle, approximately 80 m.
 - Static instance ownership disables physics interpolation to prevent unrelated instance slots streaking during LOD transitions.
 - Black billboard/leaf-card fringes were improved by extending colour into transparent texels (`fix_alpha_edges`) before mipmap generation, with cache invalidation.
@@ -79,7 +74,7 @@ Files: `tree_patch_assets.gd`, `tree_patch.gd`, `tree_paint.gd`, `tree_paint_sto
 
 F1 editor adds Paint trees / Erase trees alongside terrain tools. Mixed/Tall/Medium/Sapling, size 1–30 m with variation, density 1–12 per 100 m², radius 2–60 m. Spacing and slope/resident-ground checks bound placements. Stroke work is paced; settings are latched per stroke.
 
-Painted-tree storage has stable IDs and ring coordinates, schema/base identity, a 4096-tree cap, 32 undo strokes and atomic save handling. Erase removes painted trees only. Ctrl+Z/Y operates on the selected tool context; Ctrl+S saves both terrain and painted trees. Saves autoload separately. The latest analysed capture had **818 painted trees**, plus the former demo patch; that patch has since been removed. The painted count is a snapshot, not a fixed target.
+Painted-tree storage has stable IDs and ring coordinates, schema/base identity, a temporary 4096-placement limit for the entire painted save layer (not a renderer/world capacity; needs spatial streaming before large-world population), 32 undo strokes and atomic save handling. Erase removes painted trees only. Ctrl+Z/Y operates on the selected tool context; Ctrl+S saves both terrain and painted trees. Saves autoload separately. The latest analysed capture had **818 painted trees**.
 
 ### Authored-terrain LODs are an explicit editor pass
 
@@ -140,7 +135,6 @@ F1 editor returns to the foot camera on close. Driving camera/handling remain es
 | WASD / Space / R / C driving | Drive / brake / recover / camera mode |
 | F5 | Existing vehicle/camera tuning |
 | F6 | Toggle painted-tree visuals |
-| F7 | Removed; no automatic tree population |
 | F9 | Three debug tree viewpoints |
 | F10 | Auto → LOD0 → LOD1 → LOD2 → LOD3 → Auto |
 | F11 | 120 FPS cap / uncapped |
@@ -167,7 +161,7 @@ Before performance runs, check for other Godot/editor instances. A console wrapp
 
 Measure matched views, then re-check driving, foot movement and editing. Timing drift was substantial in some short runs; draw counts are clearer than precise percentage speedups. User's earlier ~70 FPS far from trees was not proof that shadows alone caused the cost. Distant authored terrain and backdrop were investigated separately. Explicit render LODs improved far cost; backdrop optimization remains a possible follow-up. Heavy shadows/population still consume budget.
 
-Useful validation scripts in `game/benchmarks`: `check_tree_patch.gd`, `check_tree_edges.gd`, `check_tree_paint.gd`, `check_tree_paint_editor.gd`, `check_tree_shadow_proxy.gd`, `check_explicit_terrain_lods.gd`, `check_tree_on_foot.gd`, `check_tree_on_foot_editor.gd`, `check_shadow_controls.gd`. These passed during their respective implementation stages. Last change was validated with shadow-control tests and rendered filter comparisons; this was not a fresh full-suite rerun.
+Useful validation scripts in `game/benchmarks`: `check_tree_edges.gd`, `check_tree_paint.gd`, `check_tree_paint_editor.gd`, `check_tree_shadow_proxy.gd`, `check_explicit_terrain_lods.gd`, `check_tree_on_foot.gd`, `check_tree_on_foot_editor.gd`, `check_shadow_controls.gd`. These passed during their respective implementation stages. Last change was validated with shadow-control tests and rendered filter comparisons; this was not a fresh full-suite rerun.
 
 Evidence in this conversation's outputs: `tree-patch-guide.md`, `tree-edge-and-trim-findings.md`, `tree-paint-guide.md`, `shadow-optimisation.md`, `distance-performance.md`, `explicit-terrain-pass-and-shadows.md`, `on-foot-guide.md`, and **`shadow-cascade-review/notes.md`** with captures/results. Older guides can describe superseded UI/defaults; this handover and current source take precedence.
 
