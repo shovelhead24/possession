@@ -1,5 +1,4 @@
 extends RefCounted
-const LIMIT := 4096
 var records: Array=[]
 var undo_stack: Array=[]
 var redo_stack: Array=[]
@@ -64,7 +63,6 @@ func load_saved(species: Array, initial := false) -> bool:
 	var doc: Variant=JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not doc is Dictionary or doc.get("schema")!=1 or doc.get("base")!=base or doc.get("frame")!="terrain-drive-ring-metres" or not doc.get("trees") is Array:
 		notice="Invalid tree save; current trees retained.";return false
-	if doc.trees.size()>LIMIT: notice="Tree save exceeds the 4096-tree limit.";return false
 	var ids := {};var loaded := []
 	for entry in doc.trees:
 		if not entry is Dictionary or entry.get("species") not in species:

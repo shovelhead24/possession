@@ -64,7 +64,7 @@ Files: `tree_patch_assets.gd`, `tree_patch.gd`, `tree_paint.gd`, `tree_paint_sto
 - Triangle counts LOD0/1/2/3: tall 12969/6633/3268/20; medium 6813/3598/2278/20; sapling 599/437/318/20.
 - Normalized variant meshes retain matching base/height across levels. Distance selection scales with tree height: effective distance is distance × 10 / height; thresholds 22/55/110, with 4 m adjacent-band hysteresis. Cull range 650 m.
 - **MultiMesh instancing is active** for painted trees. Spatial cells: 96 m for meshes, 192 m for billboard batches. Do not replace this with a node per visual tree.
-- Grounding follows actual resident terrain, ring orientation and a 38-degree slope limit. Nearby trunk collision support is bounded around the vehicle, approximately 80 m.
+- Grounding follows actual resident terrain, ring orientation and a 38-degree slope limit. Trunk collision support is bounded around both the vehicle and active walking player, approximately 80 m.
 - Static instance ownership disables physics interpolation to prevent unrelated instance slots streaking during LOD transitions.
 - Black billboard/leaf-card fringes were improved by extending colour into transparent texels (`fix_alpha_edges`) before mipmap generation, with cache invalidation.
 - Foliage uses alpha cutout, two-sided normals and wrapped diffuse lighting. It is not alpha-blended foliage.
@@ -74,7 +74,13 @@ Files: `tree_patch_assets.gd`, `tree_patch.gd`, `tree_paint.gd`, `tree_paint_sto
 
 F1 editor adds Paint trees / Erase trees alongside terrain tools. Mixed/Tall/Medium/Sapling, size 1–30 m with variation, density 1–12 per 100 m², radius 2–60 m. Spacing and slope/resident-ground checks bound placements. Stroke work is paced; settings are latched per stroke.
 
-Painted-tree storage has stable IDs and ring coordinates, schema/base identity, a temporary 4096-placement limit for the entire painted save layer (not a renderer/world capacity; needs spatial streaming before large-world population), 32 undo strokes and atomic save handling. Erase removes painted trees only. Ctrl+Z/Y operates on the selected tool context; Ctrl+S saves both terrain and painted trees. Saves autoload separately. The latest analysed capture had **818 painted trees**.
+Painted-tree storage has stable IDs and ring coordinates, schema/base identity, no fixed global placement-count cap, 32 undo strokes and atomic save handling. Erase removes painted trees only. Ctrl+Z/Y operates on the selected tool context; Ctrl+S saves both terrain and painted trees. Saves autoload separately. The latest analysed capture had **818 painted trees**.
+
+### Spatial tree streaming
+
+`tree_paint.gd` indexes saved placement metadata in 96 m cells. Only nearby cells create runtime candidates: camera radius 650 m, plus 100 m support around the vehicle and active walking player, with 96 m retention hysteresis. Activation is paced at 64 items/physics tick, grounding at 32. Teleports replace stale queued work; distant runtime items, colliders and empty MultiMeshes retire. Shadow proxies scan active candidates only. Circular ring-seam neighbours are included. Painting spacing and erase query spatial indexes; existing JSON saves remain compatible.
+
+The entire placement metadata and undo history still reside in memory. This is geometry/physics streaming, not disk paging; save/load and undo reconciliation still scale with total records, and dense nearby forests retain their rendering cost. `check_tree_streaming.gd` passed with 50,640 saved placements and only 320 active at the tested origin, including teleport cleanup, collision around foot/car, hysteresis, toggles, seam selection, >4096 save/load and paint undo/redo. Painting/shadow regression and real-scene foot/editor checks passed. F8 reports saved count, active count, active cells, queued activations and cell-query count.
 
 ### Authored-terrain LODs are an explicit editor pass
 
@@ -161,7 +167,7 @@ Before performance runs, check for other Godot/editor instances. A console wrapp
 
 Measure matched views, then re-check driving, foot movement and editing. Timing drift was substantial in some short runs; draw counts are clearer than precise percentage speedups. User's earlier ~70 FPS far from trees was not proof that shadows alone caused the cost. Distant authored terrain and backdrop were investigated separately. Explicit render LODs improved far cost; backdrop optimization remains a possible follow-up. Heavy shadows/population still consume budget.
 
-Useful validation scripts in `game/benchmarks`: `check_tree_edges.gd`, `check_tree_paint.gd`, `check_tree_paint_editor.gd`, `check_tree_shadow_proxy.gd`, `check_explicit_terrain_lods.gd`, `check_tree_on_foot.gd`, `check_tree_on_foot_editor.gd`, `check_shadow_controls.gd`. These passed during their respective implementation stages. Last change was validated with shadow-control tests and rendered filter comparisons; this was not a fresh full-suite rerun.
+Useful validation scripts in `game/benchmarks`: `check_tree_edges.gd`, `check_tree_streaming.gd`, `check_tree_paint.gd`, `check_tree_paint_editor.gd`, `check_tree_shadow_proxy.gd`, `check_explicit_terrain_lods.gd`, `check_tree_on_foot.gd`, `check_tree_on_foot_editor.gd`, `check_shadow_controls.gd`. These passed during their respective implementation stages. Last change was validated with shadow-control tests and rendered filter comparisons; this was not a fresh full-suite rerun.
 
 Evidence in this conversation's outputs: `tree-patch-guide.md`, `tree-edge-and-trim-findings.md`, `tree-paint-guide.md`, `shadow-optimisation.md`, `distance-performance.md`, `explicit-terrain-pass-and-shadows.md`, `on-foot-guide.md`, and **`shadow-cascade-review/notes.md`** with captures/results. Older guides can describe superseded UI/defaults; this handover and current source take precedence.
 

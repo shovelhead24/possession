@@ -9,6 +9,19 @@ var released := false
 var last_point := Vector2(INF,INF)
 var settings := {}
 var save_requested := false
+const CELL_SIZE := 96.0
+const VIEW_RADIUS := 650.0
+const RETAIN_MARGIN := 96.0
+const ACTIVATE_PER_TICK := 64
+var cells := {} # Persistent placement metadata; no geometry or physics bodies.
+var records_by_id := {}
+var record_indices := {}
+var active_cells := {}
+var activation_queue: Array=[]
+var activation_head := 0
+var stream_clock := 0.0
+var last_stream_checks := 0
+
 
 func setup(owner_arena: Node3D) -> void:
 	arena=owner_arena;physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -19,24 +32,132 @@ func setup(owner_arena: Node3D) -> void:
 	store.load_saved(names,true);sync_records()
 
 func sync_records() -> void:
-	var next := {};candidates.clear();occupied.clear()
-	for record in store.records:
-		var item: Dictionary=by_id[record.id] if by_id.has(record.id) else make_item(record)
-		# Reloaded records may reuse IDs with different transforms/species.
-		if item.point!=Vector2(record.x,record.z) or item.variant!=names.find(record.species) or not is_equal_approx(item.height,record.height) or not is_equal_approx(item.yaw,record.yaw):
-			if is_instance_valid(item.body): item.body.queue_free()
-			item=make_item(record)
-		next[record.id]=item;candidates.append(item)
-		var cell := Vector2i((item.point/3.0).floor())
-		if not occupied.has(cell): occupied[cell]=[]
-		occupied[cell].append(item.point)
-	for id in by_id:
-		if not next.has(id) and is_instance_valid(by_id[id].body): by_id[id].body.queue_free()
-	by_id=next;count_limit=candidates.size();cursor=0;dirty=true
-	update_batches()
+	cells.clear();records_by_id.clear();record_indices.clear();occupied.clear()
+	for index in store.records.size(): index_record(store.records[index],index)
+	for id in by_id.keys():
+		if not records_by_id.has(id): retire_item(id);continue
+		var record: Dictionary=records_by_id[id]
+		var item: Dictionary=by_id[id]
+		if item.point!=Vector2(record.x,record.z) or item.variant!=names.find(record.species) or not is_equal_approx(item.height,record.height) or not is_equal_approx(item.yaw,record.yaw): retire_item(id)
+	active_cells.clear();activation_queue.clear();activation_head=0
+	refresh_stream();activate_pending();rebuild_candidates();update_batches()
+
+func index_record(record: Dictionary, index: int) -> void:
+	var point := Vector2(record.x,record.z)
+	var cell := Vector2i((point/CELL_SIZE).floor())
+	if not cells.has(cell): cells[cell]={}
+	cells[cell][record.id]=record;records_by_id[record.id]=record;record_indices[record.id]=index
+	var space := Vector2i((point/3.0).floor())
+	if not occupied.has(space): occupied[space]=[]
+	occupied[space].append(point)
+
+func retire_item(id: int) -> void:
+	var item: Dictionary=by_id[id]
+	if is_instance_valid(item.body): item.body.queue_free()
+	by_id.erase(id);dirty=true
+
+func rebuild_candidates() -> void:
+	candidates.assign(by_id.values());count_limit=candidates.size();cursor=cursor%maxi(1,count_limit)
+
+func stream_centres() -> Array:
+	var result := []
+	for pair in [[arena.camera.global_position,VIEW_RADIUS],[arena.vehicle_kit.car.global_position,100.0]]:
+		var coord := Ring.coordinates(pair[0]);result.append([Vector2(coord.x,coord.z),pair[1]])
+	var foot: Node=arena.get("on_foot")
+	if foot and foot.active:
+		var coord := Ring.coordinates(foot.global_position);result.append([Vector2(coord.x,coord.z),100.0])
+	# The ring coordinate seam joins +half circumference to -half circumference.
+	var circumference: float=Ring.Frame.CIRCUMFERENCE
+	for centre in result.duplicate():
+		if absf(centre[0].x)>circumference*.5-VIEW_RADIUS-RETAIN_MARGIN-CELL_SIZE:
+			result.append([centre[0]-Vector2(signf(centre[0].x)*circumference,0),centre[1]])
+	return result
+
+func cell_distance(cell: Vector2i, point: Vector2) -> float:
+	var low := Vector2(cell)*CELL_SIZE
+	return point.distance_to(point.clamp(low,low+Vector2.ONE*CELL_SIZE))
+
+func refresh_stream() -> void:
+	var wanted := {};var retired := false;last_stream_checks=0
+	var centres := stream_centres()
+	if enabled:
+		for centre in centres:
+			var radius: float=centre[1]
+			var low := Vector2i(((centre[0]-Vector2.ONE*radius)/CELL_SIZE).floor())
+			var high := Vector2i(((centre[0]+Vector2.ONE*radius)/CELL_SIZE).floor())
+			for z in range(low.y,high.y+1):
+				for x in range(low.x,high.x+1):
+					var cell := Vector2i(x,z);last_stream_checks+=1
+					if cells.has(cell) and cell_distance(cell,centre[0])<=radius: wanted[cell]=true
+		# Retain already loaded cells slightly farther out to avoid boundary churn.
+		for cell in active_cells:
+			for centre in centres:
+				if cell_distance(cell,centre[0])<=centre[1]+RETAIN_MARGIN: wanted[cell]=true;break
+	for id in by_id.keys():
+		var cell := Vector2i((by_id[id].point/CELL_SIZE).floor())
+		if not wanted.has(cell): retire_item(id);retired=true
+	if wanted!=active_cells:
+		# Replace obsolete work on teleports; nearby cells are activated first.
+		activation_queue.clear();activation_head=0
+		var ordered := wanted.keys()
+		ordered.sort_custom(func(a,b): return priority_distance(a,centres)<priority_distance(b,centres))
+		for cell in ordered:
+			for id in cells[cell]:
+				if not by_id.has(id): activation_queue.append(id)
+	active_cells=wanted
+	if retired: rebuild_candidates()
+
+func priority_distance(cell: Vector2i, centres: Array) -> float:
+	var distance := INF
+	for centre in centres: distance=minf(distance,cell_distance(cell,centre[0]))
+	return distance
+
+func activate_pending() -> void:
+	var changed := false
+	for attempt in ACTIVATE_PER_TICK:
+		if activation_head>=activation_queue.size(): break
+		var id: int=activation_queue[activation_head];activation_head+=1
+		if by_id.has(id) or not records_by_id.has(id): continue
+		var record: Dictionary=records_by_id[id]
+		var cell := Vector2i((Vector2(record.x,record.z)/CELL_SIZE).floor())
+		if not active_cells.has(cell): continue
+		by_id[id]=make_item(record);changed=true
+	if activation_head>=activation_queue.size(): activation_queue.clear();activation_head=0
+	if changed: rebuild_candidates();dirty=true
+
+func remove_record(id: int) -> void:
+	var record: Dictionary=records_by_id[id];var point := Vector2(record.x,record.z)
+	var cell := Vector2i((point/CELL_SIZE).floor());cells[cell].erase(id)
+	if cells[cell].is_empty(): cells.erase(cell);active_cells.erase(cell)
+	var space := Vector2i((point/3.0).floor());occupied[space].erase(point)
+	if occupied[space].is_empty(): occupied.erase(space)
+	var index: int=record_indices[id];var last: Dictionary=store.records.back()
+	store.records[index]=last;record_indices[last.id]=index;store.records.pop_back()
+	record_indices.erase(id);records_by_id.erase(id)
+	if by_id.has(id): retire_item(id)
+
+func erase_dab(point: Vector2, radius: float) -> bool:
+	var removed := []
+	var low := Vector2i(((point-Vector2.ONE*radius)/CELL_SIZE).floor())
+	var high := Vector2i(((point+Vector2.ONE*radius)/CELL_SIZE).floor())
+	for z in range(low.y,high.y+1):
+		for x in range(low.x,high.x+1):
+			for record in cells.get(Vector2i(x,z),{}).values():
+				if Vector2(record.x,record.z).distance_squared_to(point)<=radius*radius: removed.append(record.id)
+	for id in removed: remove_record(id)
+	return not removed.is_empty()
+
+func set_enabled(value: bool) -> void:
+	super.set_enabled(value)
+	activation_queue.clear();activation_head=0
+	if value: active_cells.clear()
+	refresh_stream();activate_pending();rebuild_candidates();update_batches()
+
+func status() -> String:
+	return super.status()+" | saved %d / active cells %d / queued %d" % [store.records.size(),active_cells.size(),activation_queue.size()-activation_head]
 
 func make_item(record: Dictionary) -> Dictionary:
-	return {"point":Vector2(record.x,record.z),"variant":names.find(record.species),"height":record.height,"yaw":record.yaw,"transform":Transform3D.IDENTITY,"lod":-1,"valid":false,"body_id":0,"revision":-1,"body":null}
+	return {"id":record.id,"point":Vector2(record.x,record.z),"variant":names.find(record.species),"height":record.height,"yaw":record.yaw,"transform":Transform3D.IDENTITY,"lod":-1,"valid":false,"body_id":0,"revision":-1,"body":null}
 
 func busy() -> bool:
 	return store.active
@@ -71,16 +192,16 @@ func release() -> void:
 	released=true
 
 func _physics_process(delta: float) -> void:
+	stream_clock-=delta
+	if stream_clock<=0: stream_clock=.2;refresh_stream()
+	activate_pending()
 	if store.active and not arena.destruction.busy():
 		var changed := false
 		for attempt in 32:
 			if queue.is_empty(): break
 			var dab: Dictionary=queue[0]
 			if settings.erase:
-				var kept := []
-				for record in store.records:
-					if Vector2(record.x,record.z).distance_squared_to(dab.point)>settings.radius*settings.radius: kept.append(record)
-				changed=changed or kept.size()!=store.records.size();store.records=kept;queue.pop_front();break
+				changed=erase_dab(dab.point,settings.radius) or changed;queue.pop_front();break
 			var cell := Vector2i(dab.x,dab.z)
 			dab.x+=1
 			if dab.x>dab.high.x: dab.x=dab.low.x;dab.z+=1
@@ -90,7 +211,6 @@ func _physics_process(delta: float) -> void:
 			var point: Vector2=(Vector2(cell)+Vector2(.5+rng.randf_range(-.3,.3),.5+rng.randf_range(-.3,.3)))*dab.spacing
 			if point.distance_squared_to(dab.point)>settings.radius*settings.radius: continue
 			visited[cell]=true
-			if store.records.size()>=Store.LIMIT: store.notice="4096 painted-tree limit reached.";queue.clear();released=true;break
 			if crowded(point): continue
 			var terrain_key := Vector2i((point/200.0).floor())
 			if not arena.tile_entries.has(terrain_key): continue
@@ -99,13 +219,11 @@ func _physics_process(delta: float) -> void:
 			var item := make_item(record);ground(item)
 			if not item.valid: continue
 			item.body_id=arena.tile_entries[terrain_key].body.get_instance_id();item.revision=0
-			store.records.append(record);store.next_id+=1;by_id[record.id]=item;candidates.append(item);count_limit=candidates.size()
-			var space_cell := Vector2i((point/3.0).floor())
-			if not occupied.has(space_cell): occupied[space_cell]=[]
-			occupied[space_cell].append(point);changed=true
+			index_record(record,store.records.size());store.records.append(record);store.next_id+=1
+			by_id[record.id]=item;changed=true
+
 		if changed:
-			if settings.erase: sync_records()
-			else: dirty=true
+			rebuild_candidates();dirty=true
 		if queue.is_empty() and released:
 			store.finish();store.notice="%d painted trees. Stroke complete." % store.records.size()
 	if save_requested and not busy(): save_requested=false;store.save()

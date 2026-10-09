@@ -66,7 +66,10 @@ func ground(item: Dictionary) -> void:
 	item.valid=true
 
 func update_collision(item: Dictionary) -> void:
-	var near: bool=enabled and item.valid and item.transform.origin.distance_squared_to(arena.vehicle_kit.car.position)<80.0*80.0
+	var near: bool=item.transform.origin.distance_squared_to(arena.vehicle_kit.car.global_position)<80.0*80.0
+	var foot: Node=arena.get("on_foot")
+	if foot and foot.active: near=near or item.transform.origin.distance_squared_to(foot.global_position)<80.0*80.0
+	near=enabled and item.valid and near
 	if not near:
 		if is_instance_valid(item.body): item.body.queue_free();item.body=null
 		return
@@ -131,4 +134,4 @@ func set_density(value: int) -> void:
 	update_batches()
 
 func status() -> String:
-	return "F6 trees %s | %d placed | LOD %s | update %.2f ms\nF9 tree view | F10 auto/LOD0/1/2/billboard | F11 120 FPS/uncapped | 8.33 ms target" % ["ON" if enabled else "OFF",count_limit,str(counts),update_ms]
+	return "F6 trees %s | %d active | LOD %s | update %.2f ms\nF9 tree view | F10 auto/LOD0/1/2/billboard | F11 120 FPS/uncapped | 8.33 ms target" % ["ON" if enabled else "OFF",count_limit,str(counts),update_ms]

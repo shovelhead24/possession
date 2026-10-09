@@ -37,7 +37,7 @@ The painted layer uses `user://painted-trees.json` in Tree Demo's isolated user
 data. It has its own schema, base-terrain identity, validation, pending-file
 write and previous-save backup. Invalid loads leave existing placements intact.
 Tests override this path with `--tree-paint-file=<absolute test path>`.
-Undo holds at most 32 tree actions; this pilot supports 4096 painted trees.
+Undo holds at most 32 tree actions. Painted placements have no fixed global count cap; runtime trees are spatially streamed.
 
 Painting uses queued, interpolated dabs with at most 32 candidate attempts per
 physics tick. Grounding pauses during terrain rebuilds. The painted renderer
@@ -164,3 +164,22 @@ Shift sprint, Space jump, mouse look, Esc cursor. F1 restores previous walking
 position or driving mode when closed. Ring gravity and streamed DEM/SDF collision
 are used. Driving controller remains unchanged. F8 records movement_mode.
 Validated by check_tree_on_foot.gd and check_tree_on_foot_editor.gd (isolated saves).
+
+## Spatial runtime streaming
+
+Placement metadata is indexed in 96 m cells. Camera cells activate within 650 m,
+with a 96 m retention margin. Vehicle and active walking-player centres each
+retain 100 m of support; trunk colliders still use their 80 m distance check.
+Activation is paced at 64 records per physics tick, grounding at 32 per tick.
+Teleports replace obsolete pending work; distant runtime items, MultiMeshes and
+colliders retire. Ring-seam neighbours are included. Shadow proxies visit only
+the active candidates. Spacing and erasing use spatial indexes.
+
+Existing schema-1 JSON saves load unchanged, including more than 4096 trees.
+Metadata and undo history remain in memory; save/load and undo reconciliation
+can still scale with total placement count. This is runtime streaming, not disk
+paging or a guarantee that an arbitrarily dense nearby forest is cheap.
+F8 records total saved count, active count, cell count, queued count and cell
+queries. `check_tree_streaming.gd` verifies 50,640 distributed placements,
+activation pacing, teleport eviction, collision support, toggle, hysteresis,
+ring seam, save/load above the former cap and paint undo/redo.
