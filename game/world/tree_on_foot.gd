@@ -11,7 +11,6 @@ var notice := ""
 var jump_queued := false
 var test_controls := false
 var test_move := Vector2.ZERO
-var test_sprint := false
 var last_safe := Vector3.ZERO
 
 func setup(owner_arena: Node3D) -> void:
@@ -97,15 +96,13 @@ func _physics_process(delta: float) -> void:
 	up_direction=Ring.up_at(global_position);global_basis=Ring.tangent_basis(global_position,yaw)
 	if not arena.streamer.ready_at(global_position): velocity=Vector3.ZERO;return
 	var axes := test_move if test_controls else Vector2.ZERO
-	var sprint := test_sprint if test_controls else false
 	if not test_controls and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED:
 		axes=Vector2(float(Input.is_physical_key_pressed(KEY_D))-float(Input.is_physical_key_pressed(KEY_A)),float(Input.is_physical_key_pressed(KEY_S))-float(Input.is_physical_key_pressed(KEY_W)))
-		sprint=Input.is_physical_key_pressed(KEY_SHIFT)
 	var direction := global_basis*Vector3(axes.x,0,axes.y).limit_length()
 	if not arena.streamer.ready_at(global_position+direction*2): direction=Vector3.ZERO
 	var vertical := velocity.dot(up_direction)-20*delta
 	if jump_queued and is_on_floor(): vertical=6
-	jump_queued=false;velocity=direction*(9.0 if sprint else 5.0)+up_direction*vertical
+	jump_queued=false;velocity=direction*9.0+up_direction*vertical
 	move_and_slide()
 	if is_on_floor(): last_safe=global_position
 

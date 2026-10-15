@@ -72,7 +72,7 @@ func _process(delta: float) -> void:
 	if ready_to_play and on_foot:
 		hud.text=hud.text.replace("E fly/drive","E exit / enter vehicle")
 		if on_foot.active:
-			hud.text=hud.text.replace("WASD drive · Space brake · C camera · E exit / enter vehicle · R recover","WASD walk · Shift sprint · Space jump · E enter vehicle")
+			hud.text=hud.text.replace("WASD drive · Space brake · C camera · E exit / enter vehicle · R recover","WASD walk · Space jump · E enter vehicle")
 			hud.text=hud.text.replace("RMB look · Shift fast flight","Mouse look · Esc cursor")
-			hud.text+="\nON FOOT · WASD walk · Shift sprint · Space jump · E enter · Esc cursor · Click to look"
+			hud.text+="\nON FOOT · WASD move · Space jump · E enter · Esc cursor · Click to look"
 		if not on_foot.notice.is_empty(): hud.text+="\n"+on_foot.notice
