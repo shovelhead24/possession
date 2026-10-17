@@ -1,5 +1,6 @@
 extends "res://world/terrain_baseline.gd"
 const Ring = preload("res://world/terrain_drive_ring.gd")
+const Grenade = preload("res://world/terrain_grenade.gd")
 var destruction: Node
 var editor: Node
 var grenade_cooldown := 0.0
@@ -19,6 +20,7 @@ func _ready() -> void:
 
 func prepare_source() -> void:
 	destruction=preload("res://world/terrain_drive_destruction.gd").new();destruction.arena=self;add_child(destruction)
+	destruction.reserve_startup(preload("res://world/terrain_drive_vehicle.gd").START_POINT)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--drive-edits-file="): destruction.save_path=arg.trim_prefix("--drive-edits-file=")
 	if FileAccess.file_exists(destruction.save_path):
@@ -57,6 +59,8 @@ func prepare_content() -> void:
 			cold_source.identity=(source.identity+arg).sha256_text()
 			print("DRIVE_COLD_NAMESPACE ",cold_source.identity)
 	streamer=preload("res://world/terrain_drive_stream.gd").new();streamer.cold_source=cold_source;add_child(streamer);streamer.setup(self)
+	loading.log_event("Preparing crater terrain across the full grenade throw range")
+	await destruction.prepare_nearby()
 	editor=preload("res://world/terrain_drive_editor.gd").new();add_child(editor);editor.setup(self)
 	vehicle_kit.car.trace_suspension=true
 	vehicle_kit.car.max_contacts_reported=8
@@ -98,7 +102,7 @@ func _process(delta: float) -> void:
 	var drive_position := Ring.coordinates(vehicle_kit.car.position)
 	hud.text="TERRAIN / WARTHOG + RINGWORLD\n%d FPS | p95 %.2f ms | %.0f km/h | %d wheels grounded\nWASD drive · Space brake · C camera · E fly/drive · R recover\nB grenade · F5 vehicle setup · F2 briefing · RMB look · Shift fast flight\nTerrain: %d resident | %d queued | %d generated / %d cache hits\nArc %.0f m | lateral %.0f m | %s" % [Engine.get_frames_per_second(),p95,vehicle_kit.car.linear_velocity.length()*3.6,vehicle_kit.car.grounded_count,tile_entries.size(),streamer.pending.size(),streamer.builds,streamer.hits,drive_position.x,drive_position.z,"Waiting for collision" if vehicle_kit.car.streaming_suspended else ("Terrain supply braking" if vehicle_kit.car.stream_braking else "Ready")]
 
-	hud.text+="\nF1 terrain tools | %d edits | %s" % [destruction.completed,"Rebuilding" if destruction.busy() else ("Unsaved changes" if destruction.unsaved() else "Saved")]
+	hud.text+="\nF1 terrain tools | %d edits | %s" % [destruction.completed,"Rebuilding" if destruction.editing() else ("Unsaved changes" if destruction.unsaved() else "Saved")]
 	hud.text+="\n"+jitter_trace.status
 
 func fly_bounds() -> Rect2:
@@ -110,12 +114,12 @@ func request_crater(point: Vector3, radius: float) -> bool:
 func throw_grenade() -> void:
 	if grenade_cooldown>0: return
 	grenade_cooldown=.3
-	var grenade := preload("res://world/terrain_grenade.gd").new()
+	var grenade := Grenade.new()
 	grenade.arena=self;grenade.radial_gravity=true
 	grenade.excluded_bodies=[vehicle_kit.car.get_rid()]
 	var up := Ring.up_at(camera.position)
 	var forward := -camera.global_basis.z
 	var origin: Vector3=vehicle_kit.car.position+Ring.up_at(vehicle_kit.car.position)*2.2 if vehicle_kit.driving else camera.position
 	add_child(grenade);grenade.global_position=origin+forward*.5
-	grenade.velocity=forward*16+up*3
+	grenade.velocity=forward*Grenade.THROW_SPEED+up*Grenade.LIFT_SPEED
 	if vehicle_kit.driving: grenade.velocity+=vehicle_kit.car.linear_velocity

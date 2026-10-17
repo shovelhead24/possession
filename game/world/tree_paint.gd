@@ -21,6 +21,23 @@ var activation_queue: Array=[]
 var activation_head := 0
 var stream_clock := 0.0
 var last_stream_checks := 0
+var weapon_max_height := 0.0
+var density_field: RefCounted
+
+func prepare_density() -> void:
+	density_field=preload("res://world/tree_density_field.gd").new()
+	density_field.configure(names,foliage_budget.radii)
+	density_field.sync(store.records,false)
+	if not density_field.load_cache(store.path+".density.json"): density_field.flush()
+	foliage_budget.authored_field=density_field
+	dirty=true
+
+func bake_density() -> bool:
+	if busy(): store.notice="Finish the tree stroke before baking.";return false
+	density_field.sync(store.records)
+	var ok=density_field.save_cache(store.path+".density.json")
+	store.notice="Density cache baked for %d authored trees." % store.records.size() if ok else "Density cache write failed."
+	return ok
 
 
 func setup(owner_arena: Node3D) -> void:
@@ -32,6 +49,7 @@ func setup(owner_arena: Node3D) -> void:
 	store.load_saved(names,true);sync_records()
 
 func sync_records() -> void:
+	if density_field: density_field.sync(store.records)
 	cells.clear();records_by_id.clear();record_indices.clear();occupied.clear()
 	for index in store.records.size(): index_record(store.records[index],index)
 	for id in by_id.keys():
@@ -43,6 +61,8 @@ func sync_records() -> void:
 	refresh_stream();activate_pending();rebuild_candidates();update_batches()
 
 func index_record(record: Dictionary, index: int) -> void:
+	if density_field: density_field.upsert(record)
+	weapon_max_height=maxf(weapon_max_height,record.height)
 	var point := Vector2(record.x,record.z)
 	var cell := Vector2i((point/CELL_SIZE).floor())
 	if not cells.has(cell): cells[cell]={}
@@ -58,6 +78,29 @@ func retire_item(id: int) -> void:
 
 func rebuild_candidates() -> void:
 	candidates.assign(by_id.values());count_limit=candidates.size();cursor=cursor%maxi(1,count_limit)
+
+func weapon_candidates(start: Vector3, end: Vector3, margin: float=0.0) -> Array:
+	# Ring coordinates stay fixed when terrain regrounds a tree. Reuse the existing
+	# placement cells and return live items, so edits/stream retirement stay current.
+	var centre := (start+end)*.5
+	var coord := Ring.coordinates(centre)
+	var radius := start.distance_to(end)+weapon_max_height*.044+1.0+margin
+	var ring_radius: float=Ring.Frame.CIRCUMFERENCE/TAU
+	# Radial trunks do not lean along the arc. Inflate by twice their radius
+	# plus 1 m for float error. The 2x arc bound holds outside half-radius.
+	if absf(coord.y)+radius+weapon_max_height>ring_radius*.5: return candidates
+	var result := [];var seen := {}
+	for shift in [-Ring.Frame.CIRCUMFERENCE,0.0,Ring.Frame.CIRCUMFERENCE]:
+		var point := Vector2(coord.x+shift,coord.z)
+		var low := Vector2i(((point-Vector2.ONE*radius)/CELL_SIZE).floor())
+		var high := Vector2i(((point+Vector2.ONE*radius)/CELL_SIZE).floor())
+		for x in range(low.x,high.x+1):
+			for y in range(low.y,high.y+1):
+				for id in cells.get(Vector2i(x,y),{}):
+					var record: Dictionary=cells[Vector2i(x,y)][id]
+					if absf(record.x-point.x)>radius or absf(record.z-point.y)>radius: continue
+					if by_id.has(id) and not seen.has(id): result.append(by_id[id]);seen[id]=true
+	return result
 
 func stream_centres() -> Array:
 	var result := []
@@ -126,6 +169,7 @@ func activate_pending() -> void:
 	if changed: rebuild_candidates();dirty=true
 
 func remove_record(id: int) -> void:
+	if density_field: density_field.remove(id)
 	var record: Dictionary=records_by_id[id];var point := Vector2(record.x,record.z)
 	var cell := Vector2i((point/CELL_SIZE).floor());cells[cell].erase(id)
 	if cells[cell].is_empty(): cells.erase(cell);active_cells.erase(cell)
@@ -226,7 +270,11 @@ func _physics_process(delta: float) -> void:
 			rebuild_candidates();dirty=true
 		if queue.is_empty() and released:
 			store.finish();store.notice="%d painted trees. Stroke complete." % store.records.size()
-	if save_requested and not busy(): save_requested=false;store.save()
+	if density_field and not density_field.pending.is_empty(): density_field.flush();dirty=true
+	if save_requested and not busy():
+		save_requested=false
+		if store.save() and density_field:
+			if not density_field.save_cache(store.path+".density.json"): store.notice+=" Density cache write failed; rebuilt next load."
 	super._physics_process(delta)
 
 func crowded(point: Vector2) -> bool:

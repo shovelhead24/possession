@@ -1,0 +1,7 @@
+{
+  "title": "Sky Demo / Billboard cloud foundation",
+  "iteration": "2026-10-16 / Horizontal silhouettes and stable zenith",
+  "goal": "Look straight up, turn around, and compare both directions along the ring. Billboard clouds now start enabled.",
+  "changes": "Cloud width now follows the local horizon. Nearby cards preserve orientation through zenith and ease back smoothly as you move away. Looking around does not steer the cards. Distant bands now use smaller, separated cloud masses instead of oversized strips. Approved cloud noise, colours and local sizes are retained.",
+  "controls": "Ctrl+F3: sky controls, individual toggles and combination presets. Ctrl+F12: next preset. Ctrl+F9: painterly on/off. Ctrl+F10: ring deck on/off. F1 > Daylight > Sky and cloud comparisons also opens the panel. F11: frame cap. F2: briefing. Settings reset on restart. All previous gameplay remains. Ctrl+F3 > Cloud brightness adjusts all cloud methods, including dark settings."
+}

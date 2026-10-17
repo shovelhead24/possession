@@ -14,16 +14,16 @@ var legacy_config_path := ""
 
 func _ready() -> void:
 	kit=get_parent();car=kit.vehicles[vehicle_index];layer=20
-	if vehicle_index==1: config_path="user://tank_wheel_tuning.cfg"
+	if car.has_method("fire_cannon"): config_path="user://tank_wheel_tuning.cfg"
 	panel=PanelContainer.new();panel.position=Vector2(24,24);panel.size=Vector2(540,620);add_child(panel)
 	var background=StyleBoxFlat.new();background.bg_color=Color(.055,.065,.075,1)
 	background.content_margin_left=16;background.content_margin_right=16;background.content_margin_top=12;background.content_margin_bottom=12
 	panel.add_theme_stylebox_override("panel",background)
 	var column=VBoxContainer.new();column.add_theme_constant_override("separation",10);panel.add_child(column)
-	var title=Label.new();title.text="ALTAY / VEHICLE SETUP" if vehicle_index==1 else "WARTHOG / VEHICLE SETUP";title.add_theme_font_size_override("font_size",24);column.add_child(title)
+	var title=Label.new();title.text="ALTAY / VEHICLE SETUP" if car.has_method("fire_cannon") else "WARTHOG / VEHICLE SETUP";title.add_theme_font_size_override("font_size",24);column.add_child(title)
 	var hint=Label.new();hint.text="F2 or Esc closes · Changes apply immediately\nVehicle brakes while this menu is open.";column.add_child(hint)
 	var tabs=TabContainer.new();tabs.custom_minimum_size=Vector2(510,430);column.add_child(tabs)
-	if vehicle_index==1:
+	if car.has_method("fire_cannon"):
 		var mobility=page(tabs,"Mobility")
 		slider(mobility,"top_speed","Speed limit · m/s",5,18,1,car.top_speed)
 		slider(mobility,"engine_force","Drive force per wheel · N",500,4000,100,car.engine_force)
@@ -53,6 +53,15 @@ func _ready() -> void:
 		var axles=page(tabs,"Axles")
 		slider(axles,"front_power_percent","Power to front % (remainder to rear)",0,100,5,car.front_power_percent)
 		slider(axles,"front_brake_percent","Braking to front % (remainder to rear)",0,100,5,car.front_brake_percent)
+		var handbrake=page(tabs,"Handbrake")
+		slider(handbrake,"handbrake_feel","Strength / rear slide · %",0,100,5,car.handbrake_feel)
+		var handbrake_hint=Label.new();handbrake_hint.text="Higher settings apply stronger braking to the rear tyres, making the Warthog easier to slide.";handbrake_hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;handbrake.add_child(handbrake_hint)
+	var impacts=page(tabs,"Impacts")
+	slider(impacts,"impact_min_speed","Minimum impact speed · m/s",0.25,8,.25,car.impact_min_speed)
+	slider(impacts,"impact_damage","Damage per m/s above minimum",0,100,1,car.impact_damage)
+	slider(impacts,"impact_forward","Forward launch multiplier",0,4,.1,car.impact_forward)
+	slider(impacts,"impact_lift","Upward launch multiplier",0,4,.1,car.impact_lift)
+	var impact_hint=Label.new();impact_hint.text="Lower minimum = easier punts. Higher damage = easier kills. Launch also applies to fatal ragdolls. Speed is the closing speed into the alien, not the speedometer.";impact_hint.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;impacts.add_child(impact_hint)
 	var camera=page(tabs,"Camera")
 	# Keep the value control for settings serialization; expose two clear view buttons.
 	var mode=OptionButton.new();mode.add_item("Chase camera");mode.add_item("Driver seat");camera.add_child(mode);controls.camera_mode=mode;mode.hide()
@@ -124,5 +133,5 @@ func reset_defaults() -> void:
 
 func _process(_delta: float) -> void:
 	for i in range(camera_buttons.size()): camera_buttons[i].set_pressed_no_signal(int(settings.camera_mode)==i)
-	if opened and vehicle_index==1: readout.text="%.0f km/h · cannon ready in %.1f s" % [car.velocity.length()*3.6,car.cooldown]
+	if opened and car.has_method("fire_cannon"): readout.text="%.0f km/h · cannon ready in %.1f s" % [car.linear_velocity.length()*3.6,car.cooldown]
 	elif opened: readout.text="%.0f km/h · %d wheels grounded · %.2f m compression" % [car.linear_velocity.length()*3.6,car.grounded_count,car.max_compression]

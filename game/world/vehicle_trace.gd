@@ -94,13 +94,14 @@ func _physics_process(delta: float) -> void:
 				var old: Dictionary=previous.get(key,{})
 				var probe: Dictionary={"tested":false}
 				if old.get("grounded",false) and not body.freeze:
-					var q := PhysicsRayQueryParameters3D.create(old.contact+Vector3.UP,old.contact-Vector3.UP*2,1|4)
+					var q := PhysicsRayQueryParameters3D.create(old.contact+body.global_basis.y,old.contact-body.global_basis.y*2,int(body.get("suspension_mask")) if body.get("suspension_mask")!=null else 1|4)
 					q.exclude=[body.get_rid()];q.exclude+=body.suspension_exclusions
 					var hit: Dictionary=body.get_world_3d().direct_space_state.intersect_ray(q)
 					probe={"tested":true,"hit":not hit.is_empty()}
 					if not hit.is_empty():
 						probe.height_delta=hit.position.y-old.contact.y
 						probe.collider_id=hit.collider_id
+						probe.collider_layer=hit.collider.collision_layer
 				wheels.append({"index":i,"grounded":grounded,"contact":vector(contact) if grounded else null,"normal":vector(c.get("trace_normal",Vector3.ZERO)),"collider_id":c.get("trace_collider",0),"travel":c.travel,"travel_delta":float(c.travel)-float(old.get("travel",c.travel)),"compression":c.compression,"omega":c.get("omega",0),"slip":c.get("slip",0),"same_point_probe":probe})
 				previous[key]={"grounded":grounded,"contact":contact,"travel":c.travel}
 				wheels[-1].merge(c.get("trace_forces",{}))
@@ -110,6 +111,7 @@ func _physics_process(delta: float) -> void:
 		bodies[-1].stream_drive_scale=body.stream_drive_scale
 		bodies[-1].rotation=vector(body.global_rotation)
 		bodies[-1].chassis_contacts=body.get_contact_count()
+		bodies[-1].suspension_mask=body.get("suspension_mask")
 	var sample := {"sample_usec":started,"physics_frame":Engine.get_physics_frames(),"delta":delta,"vehicles":bodies,"sampling_ms":(Time.get_ticks_usec()-started)/1000.0}
 	sample.merge(terrain_context())
 	remember(sample)

@@ -37,12 +37,15 @@ func build_contacts() -> void:
 
 func _physics_process(delta: float) -> void:
 	if freeze or streaming_suspended: return
-	super._physics_process(delta)
+	suspension_step(delta)
 	track_speeds=Vector2.ZERO
 	for corner in corners:
 		var side=0 if corner.side<0 else 1
 		track_speeds[side]+=corner.get("omega",0.0)*corner.radius/4.0
 	if tracks: tracks.animate(delta,track_speeds.x,track_speeds.y)
+
+func suspension_step(delta: float) -> void:
+	super._physics_process(delta)
 
 func toggle_inspection() -> void:
 	# No visible suspension wheels: preserve the tank silhouette.

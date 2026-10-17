@@ -53,6 +53,14 @@ const POSE_GRIP_RAILGUN: Dictionary = {
 	"pinky": [-75.0, -80.0, -60.0]   # Full grip
 }
 
+const POSE_GRIP_PLASMA: Dictionary = {
+	"thumb": [-15.0, -25.0, -20.0],
+	"index": [-35.0, -45.0, -30.0],
+	"middle": [-65.0, -75.0, -55.0],
+	"ring": [-70.0, -80.0, -60.0],
+	"pinky": [-75.0, -80.0, -60.0]
+}
+
 func _ready():
 	# Find the skeleton in the imported GLTF scene
 	find_skeleton(self)
@@ -124,12 +132,25 @@ func apply_pose_to_both_hands(pose: Dictionary):
 	apply_pose_to_hand(pose, RIGHT_FINGER_BONES, false)
 
 # Called by player when switching weapons
+func align_grip(point: Vector3, size_multiplier: float) -> void:
+	if not skeleton: return
+	scale*=size_multiplier
+	var centre := Vector3.ZERO
+	var count := 0
+	for bone_name in ["R_palm_039","R_thumb3_029","R_middle3_037"]:
+		var index := skeleton.find_bone(bone_name)
+		if index<0: continue
+		centre+=skeleton.to_global(skeleton.get_bone_global_pose(index).origin);count+=1
+	if count>0: position+=point-get_parent().to_local(centre/float(count))
+
 func set_weapon_pose(weapon_name: String):
 	match weapon_name.to_lower():
 		"carbine":
 			apply_pose_to_hand(POSE_GRIP_CARBINE, RIGHT_FINGER_BONES, false)
 		"railgun":
 			apply_pose_to_hand(POSE_GRIP_RAILGUN, RIGHT_FINGER_BONES, false)
+		"plasma":
+			apply_pose_to_hand(POSE_GRIP_PLASMA, RIGHT_FINGER_BONES, false)
 		"open", "none":
 			apply_pose_to_hand(POSE_OPEN, RIGHT_FINGER_BONES, false)
 		_:

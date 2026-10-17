@@ -47,6 +47,9 @@ func run() -> void:
 		painter.store.records.append({"id":i+1,"x":x,"z":z,"height":9.0,"yaw":0.0,"species":painter.names[0]})
 	painter.store.next_id=50641
 	painter.sync_records()
+	painter.foliage_budget=load("res://world/tree_foliage_budget.gd").new();painter.foliage_budget.configure(painter.variants,painter.names)
+	painter.prepare_density()
+	assert(painter.density_field.entries.size()==50640)
 	assert(painter.count_limit<=Painter.ACTIVATE_PER_TICK,"Activation must be paced")
 	await wait_ticks(30)
 	assert(painter.count_limit==320 and painter.by_id.size()==320)

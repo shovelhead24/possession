@@ -1,5 +1,10 @@
 extends RigidBody3D
+signal actor_impact(body: Node, point: Vector3, relative_velocity: Vector3, normal: Vector3)
 const Linkage=preload("res://world/wishbone.gd")
+var impact_min_speed := 1.0
+var impact_damage := 30.0
+var impact_forward := 1.4
+var impact_lift := 1.5
 var spring_rate := 28000.0
 var damping := 2300.0
 var travel_limit := .28
@@ -12,12 +17,15 @@ var top_speed := 24.0
 var brake_strength := 950.0
 var front_power_percent := 50.0
 var front_brake_percent := 50.0
+var handbrake_feel := 50.0
 var controlled := false
 var recovery_floor := -35.0
 var trace_suspension := false
 var suspension_exclusions: Array[RID]=[]
+var suspension_mask := 1|4
 var balanced_braking := false
 var reverse_engaged := false
+var handbrake_active := false
 var streaming_suspended := false
 var stream_velocity := Vector3.ZERO
 var stream_angular := Vector3.ZERO
@@ -48,6 +56,7 @@ func driver_controls(gas: bool, stop_reverse: bool, biased_stop: bool, steer: fl
 		if stopped: reverse_engaged=true
 	balanced_braking=stop_reverse and not reverse_engaged
 	set_controls(1.0 if gas else (-1.0 if stop_reverse and reverse_engaged else 0.0),steer,biased_stop or balanced_braking)
+	handbrake_active=biased_stop
 var track_extension := 0.0
 var wheel_mount_raise := 0.0
 var throttle := 0.0
@@ -75,6 +84,9 @@ func _ready() -> void:
 	center_of_mass_mode=RigidBody3D.CENTER_OF_MASS_MODE_CUSTOM
 	center_of_mass=Vector3(0,.6,0)
 	linear_damp=.08;angular_damp=.65
+	# Every vehicle must report chassis contacts for alien damage and punts.
+	# Keep this here so authored Warthogs and tanks inherit it too.
+	max_contacts_reported=16
 	continuous_cd=true
 	can_sleep=false
 	metal=StandardMaterial3D.new();metal.albedo_color=Color(.38,.4,.43);metal.metallic=.65;metal.roughness=.5
@@ -130,7 +142,14 @@ func setup(model: Node3D, source_bounds: Callable) -> void:
 	assert(corners.size()==4,"Expected exactly four source wheel assemblies")
 
 func set_controls(gas: float, steer: float, stop: bool) -> void:
-	throttle=gas;turn=steer;braking=stop
+	throttle=gas;turn=steer;braking=stop;handbrake_active=false
+
+func handbrake_torque(front: bool) -> float:
+	var feel=clampf(handbrake_feel/100.0,0.0,1.0)
+	var rear_share=lerpf(.55,.9,feel)
+	var axle_share=1.0-rear_share if front else rear_share
+	var strength=lerpf(.7,2.5,feel)
+	return brake_strength*strength*2.0*axle_share
 
 func toggle_inspection() -> void:
 	inspection=not inspection
@@ -166,7 +185,7 @@ func _physics_process(dt: float) -> void:
 		var ray=PhysicsRayQueryParameters3D.create(origin,origin-up*(bump.hub.y-droop.hub.y+radius+.18))
 		ray.exclude=[get_rid()]
 		ray.exclude+=suspension_exclusions
-		ray.collision_mask=1|4
+		ray.collision_mask=suspension_mask
 		var hit=space.intersect_ray(ray)
 		c.grounded=false
 		if trace_suspension:
@@ -195,6 +214,7 @@ func _physics_process(dt: float) -> void:
 			if absf(c.get("omega",0.0)*radius)>top_speed and signf(drive)==signf(c.get("omega",0.0)): drive=0
 			var brake=0.0
 			if not controlled or balanced_braking: brake=brake_strength
+			elif handbrake_active: brake=handbrake_torque(c.front)
 			elif braking: brake=brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0)
 			if stream_braking: brake=maxf(brake,brake_strength*stream_brake_amount)
 			c.drive_allocation=drive;c.brake_allocation=brake
@@ -206,7 +226,9 @@ func _physics_process(dt: float) -> void:
 			geom=droop;c.slip=0.0
 			var share=2*(front_power_percent/100.0 if c.front else 1-front_power_percent/100.0)
 			var drive=throttle*engine_force*radius*share if controlled else 0.0
-			var brake=brake_strength if not controlled or balanced_braking else (brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0) if braking else 0.0)
+			var brake=brake_strength
+			if controlled and not balanced_braking:
+				brake=handbrake_torque(c.front) if handbrake_active else (brake_strength*2*(front_brake_percent/100.0 if c.front else 1-front_brake_percent/100.0) if braking else 0.0)
 			var dynamics=preload("res://world/tyre_dynamics.gd").step(c.get("omega",0.0),0,0,radius,0,grip,drive,brake,dt)
 			c.omega=dynamics.omega
 		c.spin.rotate_x(-c.omega*dt)
@@ -230,3 +252,12 @@ func _physics_process(dt: float) -> void:
 		rod(c.links[7],mount,seat)
 	if global_position.y < recovery_floor:
 		global_transform=Transform3D(Basis.IDENTITY,Vector3(-17,2,9));linear_velocity=Vector3.ZERO;angular_velocity=Vector3.ZERO
+
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	if not actor_impact.has_connections(): return
+	for i in state.get_contact_count():
+		var body=state.get_contact_collider_object(i)
+		if not is_instance_valid(body) or not body.has_method("vehicle_impact"): continue
+		var relative=state.get_contact_local_velocity_at_position(i)-state.get_contact_collider_velocity_at_position(i)
+		var normal=state.transform.basis*state.get_contact_local_normal(i)
+		actor_impact.emit.call_deferred(body,state.get_contact_collider_position(i),relative,normal)

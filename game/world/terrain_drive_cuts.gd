@@ -12,6 +12,24 @@ var flat_vertices := PackedVector3Array()
 var column_parts := {}
 var column_recipes := {}
 var profile := {}
+var triangle_cells: Array[Vector3i]=[]
+var triangle_columns: Array[Vector2i]=[]
+var base_extents := {}
+var cell_parts := {}
+var cell_recipes := {}
+
+func prepare_base(data: Dictionary) -> void:
+	if not triangle_cells.is_empty(): return
+	var vertices: PackedVector3Array=data.vertices
+	flat_vertices.resize(vertices.size())
+	for i in vertices.size(): flat_vertices[i]=Ring.coordinates(vertices[i]) if source.curve_to_ring else vertices[i]
+	for i in range(0,data.indices.size(),3):
+		var a := flat_vertices[data.indices[i]];var b := flat_vertices[data.indices[i+1]];var c := flat_vertices[data.indices[i+2]]
+		var cell := Vector3i(((a+b+c)/24).floor())
+		var column := Vector2i(cell.x,cell.z)
+		triangle_cells.append(cell);triangle_columns.append(column)
+		var extent: Vector2=base_extents.get(column,Vector2(INF,-INF))
+		base_extents[column]=Vector2(minf(extent.x,minf(a.y,minf(b.y,c.y))),maxf(extent.y,maxf(a.y,maxf(b.y,c.y))))
 
 func lattice(p: Vector3) -> float:
 	var key := Vector3i(p)
@@ -53,23 +71,33 @@ func rebuild(data: Dictionary, key: Vector2i) -> Dictionary:
 				if floori(x*8.0/200)!=key.x or floori(z*8.0/200)!=key.y: continue
 				for y in range(lo.y,hi.y+1): cells[Vector3i(x,y,z)]=true
 	if cells.is_empty(): return data
+	prepare_base(data)
 	var vertices: PackedVector3Array=data.vertices.duplicate()
 	var indices := PackedInt32Array()
 	for i in range(0,data.indices.size(),3):
-		var centre := Vector3.ZERO
-		for j in 3:
-			var p: Vector3=vertices[data.indices[i+j]]
-			centre+=Ring.coordinates(p) if source.curve_to_ring else p
-		var cell := Vector3i((centre/24).floor())
+		var cell := triangle_cells[i/3]
 		if not cells.has(cell):
 			for j in 3: indices.append(data.indices[i+j])
 	var normals: PackedVector3Array=data.normals.duplicate()
+	var ordered := cuts
 	for cell in cells:
-		var patch: Dictionary=Mesher.build(sample,Vector3(cell)*8,Vector3i.ONE*4,2.0)
-		if source.curve_to_ring: Ring.warp_mesh(patch)
+		var area := Rect2(Vector2(cell.x,cell.z)*8,Vector2.ONE*8).grow(.1)
+		cuts=[]
+		for feature in ordered:
+			if not feature.get("localized",false) or Recipe.bounds(feature).intersects(area): cuts.append(feature)
+		var patch: Dictionary
+		if cell_parts.has(cell) and cell_recipes[cell]==cuts:
+			patch=cell_parts[cell]
+		else:
+			patch=Mesher.build(sample,Vector3(cell)*8,Vector3i.ONE*4,2.0)
+			if source.curve_to_ring: Ring.warp_mesh(patch)
+			cell_parts[cell]=patch;cell_recipes[cell]=cuts.duplicate(true)
 		var offset := vertices.size()
 		vertices.append_array(patch.vertices);normals.append_array(patch.normals)
 		for index in patch.indices: indices.append(index+offset)
+	cuts=ordered
+	for cell in cell_parts.keys():
+		if not cells.has(cell): cell_parts.erase(cell);cell_recipes.erase(cell)
 	var result := data.duplicate()
 	result.vertices=vertices;result.normals=normals;result.indices=indices
 	# Simplification must not fill a small crater back in at distance.
@@ -92,18 +120,12 @@ func rebuild_columns(data: Dictionary, key: Vector2i) -> Dictionary:
 			for x in range(lo.x,hi.x+1):
 				if floori(x*8.0/200)==key.x and floori(z*8.0/200)==key.y: columns[Vector2i(x,z)]=Vector2(INF,-INF)
 	var vertices: PackedVector3Array=data.vertices.duplicate()
-	if flat_vertices.is_empty():
-		flat_vertices.resize(vertices.size())
-		for i in vertices.size(): flat_vertices[i]=Ring.coordinates(vertices[i]) if source.curve_to_ring else vertices[i]
-	var flat := flat_vertices
+	prepare_base(data)
 	var indices := PackedInt32Array()
 	for i in range(0,data.indices.size(),3):
-		var a := flat[data.indices[i]];var b := flat[data.indices[i+1]];var c := flat[data.indices[i+2]]
-		var centre := (a+b+c)/3
-		var column := Vector2i(floori(centre.x/8),floori(centre.z/8))
+		var column := triangle_columns[i/3]
 		if columns.has(column):
-			var extent: Vector2=columns[column]
-			columns[column]=Vector2(minf(extent.x,minf(a.y,minf(b.y,c.y))),maxf(extent.y,maxf(a.y,maxf(b.y,c.y))))
+			columns[column]=base_extents[column]
 		else:
 			for j in 3: indices.append(data.indices[i+j])
 	var normals: PackedVector3Array=data.normals.duplicate()

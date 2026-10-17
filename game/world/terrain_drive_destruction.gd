@@ -30,15 +30,80 @@ var last_worker_ms := 0.0
 var job_started := 0
 var last_update_ms := 0.0
 var publications := 0
+var last_mesh_ms := 0.0
+var last_collision_ms := 0.0
+var last_geometry_ms := 0.0
+var last_collision_worker_ms := 0.0
+var last_queue_ms := 0.0
+var queued_at := 0
+var warming := false
+var preparation_clock := 0.0
+var preparation_keys: Array=[]
+var warmed_tiles := 0
+var worker_signature := "[]"
+var last_signature_ms := 0.0
+var signature_count := 0
+var signature_prefix := "[]"
+var signature_append: Array=[]
+
+func reserve_startup(point: Vector2) -> void:
+	# Keep the nearby edit builders already made by initial tile loading. The
+	# actual vehicle configuration/position is used to complete coverage later.
+	var keys: Array=[]
+	var lo := Vector2i(((point-Vector2.ONE*256)/200).floor())
+	var hi := Vector2i(((point+Vector2.ONE*256)/200).floor())
+	for z in range(lo.y,hi.y+1):
+		for x in range(lo.x,hi.x+1): keys.append(Vector2i(x,z))
+	edit_cache.protect(keys)
+
+func nearby_preparation_keys() -> Array:
+	if not arena.has_method("throw_grenade"): return []
+	var origin: Vector3=arena.camera.global_position
+	var speed := 0.0
+	if arena.vehicle_kit and arena.vehicle_kit.driving:
+		origin=arena.vehicle_kit.car.global_position
+		speed=maxf(arena.vehicle_kit.car.linear_velocity.length(),absf(arena.vehicle_kit.car.top_speed))
+	# A conservative displacement bound in every aim direction: launch, lift,
+	# gravity over the full fuse, inherited vehicle speed, plus crater/seam padding.
+	var reach := preload("res://world/terrain_grenade.gd").preparation_reach(speed)
+	var point := Ring.coordinates(origin)
+	var centre := Vector2(point.x,point.z)
+	var lo := Vector2i(((centre-Vector2.ONE*reach)/200).floor())
+	var hi := Vector2i(((centre+Vector2.ONE*reach)/200).floor())
+	var keys: Array=[]
+	for z in range(lo.y,hi.y+1):
+		for x in range(lo.x,hi.x+1):
+			var key := Vector2i(x,z)
+			if arena.tile_entries.has(key): keys.append(key)
+	keys.sort_custom(func(a,b): return (Vector2(a)*200+Vector2.ONE*100-centre).length_squared()<(Vector2(b)*200+Vector2.ONE*100-centre).length_squared())
+	return keys
+
+func refresh_preparation() -> void:
+	preparation_keys=nearby_preparation_keys();edit_cache.protect(preparation_keys)
+	preparation_clock=.25
+
+func prepare_nearby() -> void:
+	# Loading waits for this, so combat starts with the full throw area ready.
+	refresh_preparation()
+	for key in preparation_keys:
+		if not edit_cache.needs_warm(arena.source,key): continue
+		worker=Thread.new();warming=true
+		if worker.start(edit_cache.warm.bind(arena.source,key,cuts))!=OK:
+			worker=null;warming=false;push_error("Crater preparation worker failed");return
+		while worker.is_alive(): await get_tree().process_frame
+		worker.wait_to_finish();worker=null;warming=false;warmed_tiles+=1
 
 func begin_stroke() -> int:
 	stroke_serial+=1;return stroke_serial
 
 func busy() -> bool:
-	return replacing or not pending.is_empty() or worker!=null or not results.is_empty() or not prepared.is_empty()
+	return warming or editing()
+
+func editing() -> bool:
+	return replacing or not pending.is_empty() or (worker!=null and not warming) or not results.is_empty() or not prepared.is_empty()
 
 func unsaved() -> bool:
-	return busy() or current_signature!=saved_signature
+	return editing() or current_signature!=saved_signature
 
 func signature(features: Array) -> String:
 	# JSON reloads numbers as floats. Canonicalise that representation once per
@@ -84,8 +149,9 @@ func request_feature(feature: Dictionary, stroke_id := 0) -> bool:
 			var merged := Compact.compact([old,incoming])
 			if merged.size()==1:
 				merged[0]._stroke_id=stroke_id;pending[i]=merged[0];return true
-	if pending.size()>=32 or Compact.compact(cuts+pending+[incoming]).size()>2048:
+	if pending.size()>=32 or (cuts.size()+pending.size()+1>2048 and Compact.compact(cuts+pending+[incoming]).size()>2048):
 		notice="Edit queue is full; stroke samples are waiting.";return false
+	if pending.is_empty(): queued_at=Time.get_ticks_usec()
 	pending.append(incoming);notice="Updating terrain…"
 	return true
 
@@ -130,6 +196,7 @@ func load_edits(initial := false) -> bool:
 	var loaded := Compact.compact(document.features)
 	if initial:
 		cuts=loaded;completed=cuts.size();current_signature=signature(cuts)
+		signature_count=cuts.size()
 	else:
 		replace_features(loaded)
 	saved_signature=signature(loaded)
@@ -142,48 +209,95 @@ func apply(data: Dictionary, key: Vector2i) -> Dictionary:
 func build(keys: Array) -> Array:
 	var started := Time.get_ticks_usec()
 	var output := []
+	last_geometry_ms=0;last_collision_worker_ms=0
 	for key in keys:
+		var phase_started := Time.get_ticks_usec()
 		var data: Dictionary=edit_cache.build(arena.source,key,cuts)
+		last_geometry_ms+=(Time.get_ticks_usec()-phase_started)/1000.0
+		phase_started=Time.get_ticks_usec()
+		# Build a private collision resource off-thread; scene nodes are installed
+		# only after joining the worker. This avoids the full BVH cost in one frame.
+		var faces := PackedVector3Array();faces.resize(data.indices.size())
+		for i in data.indices.size(): faces[i]=data.vertices[data.indices[i]]
+		var collision := ConcavePolygonShape3D.new();collision.set_faces(faces)
+		# This body and its child are private and outside the active scene tree.
+		# Shape assignment has a significant native cost too; do it here.
+		var body := StaticBody3D.new();body.collision_layer=0;body.collision_mask=0
+		var shape := CollisionShape3D.new();shape.shape=collision;body.add_child(shape)
+		data.collision_body=body
+		last_collision_worker_ms+=(Time.get_ticks_usec()-phase_started)/1000.0
 		data.key=key;output.append(data)
+	var signature_started := Time.get_ticks_usec()
+	if signature_append.is_empty():
+		worker_signature=signature(cuts)
+	else:
+		# Pure crater additions cannot merge earlier recipe entries. Retain their
+		# canonical JSON and canonicalise only the new suffix (same save identity).
+		worker_signature=signature_prefix.left(-1)+("," if signature_count>0 else "")+signature(signature_append).substr(1)
+	last_signature_ms=(Time.get_ticks_usec()-signature_started)/1000.0
 	last_worker_ms=(Time.get_ticks_usec()-started)/1000.0
 	return output
 
 func _process(_delta: float) -> void:
 	if not arena or not arena.ready_to_play or activate: return
+	preparation_clock-=_delta
 	if not results.is_empty():
+		var phase_started := Time.get_ticks_usec()
 		var data: Dictionary=results.pop_front()
 		var arrays := [];arrays.resize(Mesh.ARRAY_MAX)
 		arrays[Mesh.ARRAY_VERTEX]=data.vertices;arrays[Mesh.ARRAY_NORMAL]=data.normals;arrays[Mesh.ARRAY_INDEX]=data.indices
 		var mesh := ArrayMesh.new();mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays,[],data.render_lods)
 		var visual := MeshInstance3D.new();visual.mesh=mesh;visual.material_override=arena.material
 		visual.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;visual.hide();arena.add_child(visual)
-		var body := StaticBody3D.new();body.collision_layer=0;body.collision_mask=0
-		var shape := CollisionShape3D.new();shape.shape=mesh.create_trimesh_shape();body.add_child(shape);arena.add_child(body)
+		last_mesh_ms+=(Time.get_ticks_usec()-phase_started)/1000.0
+		phase_started=Time.get_ticks_usec()
+		var body: StaticBody3D=data.collision_body;arena.add_child(body)
+		last_collision_ms+=(Time.get_ticks_usec()-phase_started)/1000.0
 		prepared.append({"key":data.key,"visual":visual,"body":body})
 		if results.is_empty(): activate=true
 		return
 	if worker:
 		if worker.is_alive(): return
-		results=worker.wait_to_finish();worker=null;return
+		var finished: Variant=worker.wait_to_finish();worker=null
+		if warming: warming=false;warmed_tiles+=1
+		else: results=finished;current_signature=worker_signature;signature_count=cuts.size()
+		return
 	var stream: Node=arena.streamer
-	if (pending.is_empty() and not replacing) or (stream and (stream.worker or not stream.stage.is_empty() or not stream.publish.is_empty())): return
+	if stream and (stream.worker or not stream.stage.is_empty() or not stream.publish.is_empty()): return
+	if preparation_clock<=0: refresh_preparation()
+	if pending.is_empty() and not replacing:
+		for key in preparation_keys:
+			if not edit_cache.needs_warm(arena.source,key): continue
+			worker=Thread.new();warming=true
+			if worker.start(edit_cache.warm.bind(arena.source,key,cuts))!=OK:
+				worker=null;warming=false;push_error("Crater preparation worker failed")
+			break
+		return
 	var batch := []
 	var group := int(pending[0].get("_stroke_id",0)) if not pending.is_empty() else 0
 	if not replacing:
 		while not pending.is_empty() and int(pending[0].get("_stroke_id",0))==group: batch.append(pending.pop_front())
 	var affected := cuts.duplicate() if replacing else batch.duplicate()
-	var next := replacement if replacing else Compact.compact(cuts+batch)
+	var append_carves := not replacing and batch.all(func(feature): return feature.kind=="carve")
+	var appended: Array=[]
+	if append_carves:
+		for feature in batch:
+			var clean: Dictionary=feature.duplicate(true);clean.erase("_stroke_id");appended.append(clean)
+	signature_prefix=current_signature
+	signature_append=appended if append_carves and signature_count==cuts.size() else []
+	var next := replacement if replacing else (cuts+appended if append_carves else Compact.compact(cuts+batch))
 	if (replacing and remember_replacement) or (not replacing and (group==0 or group!=last_history_group)):
 		undo_stack.append(cuts.duplicate(true));redo_stack.clear()
 		if undo_stack.size()>64: undo_stack.pop_front()
 	last_history_group=group if not replacing else -1
 	if replacing: affected.append_array(next)
-	cuts=next.duplicate(true);current_signature=signature(cuts);replacement=[];replacing=false;revision+=1
+	cuts=next.duplicate(true);replacement=[];replacing=false;revision+=1
 	var keys := []
 	for key in keys_for(affected):
 		if arena.tile_entries.has(key): keys.append(key)
-	if keys.is_empty(): completed=cuts.size();applied_revision=revision;notice="Terrain ready.";return
-	job_started=Time.get_ticks_usec();worker=Thread.new()
+	if keys.is_empty(): current_signature=signature(cuts);signature_count=cuts.size();completed=cuts.size();applied_revision=revision;notice="Terrain ready.";return
+	job_started=Time.get_ticks_usec();last_queue_ms=(job_started-queued_at)/1000.0 if queued_at>0 else 0.0
+	last_mesh_ms=0.0;last_collision_ms=0.0;worker=Thread.new()
 	if worker.start(build.bind(keys))!=OK:
 		worker=null;push_error("Terrain edit worker could not start")
 		notice="Terrain worker failed; reload the last save."
@@ -203,4 +317,10 @@ func _physics_process(_delta: float) -> void:
 	last_update_ms=(Time.get_ticks_usec()-job_started)/1000.0;publications+=1
 
 func _exit_tree() -> void:
-	if worker: worker.wait_to_finish()
+	if worker:
+		var unfinished: Variant=worker.wait_to_finish()
+		if unfinished is Array:
+			for data in unfinished:
+				if data.has("collision_body"): data.collision_body.free()
+	for data in results:
+		if data.has("collision_body"): data.collision_body.free()

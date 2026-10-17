@@ -43,7 +43,7 @@ func run() -> void:
 	var source := Source.new();source.curve_to_ring=true;require(source.initialize(),"Source failed")
 	var arena := Support.Fixture.new();arena.source=source;root.add_child(arena)
 	var edits := Edits.new();edits.arena=arena;arena.destruction=edits;arena.add_child(edits)
-	edits.save_path="C:/Users/Bran the builder/Documents/Codex/2026-10-07/co/work/editor-test-%d.json" % OS.get_process_id()
+	edits.save_path="C:/Users/Bran the builder/Documents/Codex/2026-10-16/yo/work/editor-test-%d.json" % OS.get_process_id()
 	var editor := Editor.new();editor.arena=arena
 	for key in [Vector2i(0,1),Vector2i(1,1)]: install(arena,key,source.build_tile(key))
 	await physics_frame;await physics_frame
@@ -132,4 +132,3 @@ func scene_check() -> void:
 	require(absf(Ring.coordinates(ground(scene,200,300)).y-saved_height)<.02,"Startup collision differs from saved terrain")
 	if not failed: print("DRIVE_EDITOR_SCENE_PASS: F1 panel, four tools, save action, return to driving, restart auto-load and collision")
 	quit(1 if failed else 0)
-

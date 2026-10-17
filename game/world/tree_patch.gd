@@ -21,6 +21,8 @@ var last_camera := Vector3(INF,INF,INF)
 var checks_per_tick := 8
 var retire_empty_batches := false
 var shadow_revision := 0
+var foliage_budget: RefCounted
+var last_forward := Vector3.ZERO
 
 func setup(owner_arena: Node3D) -> void:
 	arena=owner_arena
@@ -50,7 +52,7 @@ func _physics_process(delta: float) -> void:
 	refresh_clock-=delta
 	if refresh_clock<=0:
 		refresh_clock=.2
-		if dirty or arena.camera.position.distance_squared_to(last_camera)>1.0: update_batches()
+		if dirty or arena.camera.position.distance_squared_to(last_camera)>1.0 or (foliage_budget and foliage_budget.enabled and last_forward.dot(-arena.camera.global_basis.z)<.985): update_batches()
 
 func ground(item: Dictionary) -> void:
 	var point: Vector2=item.point
@@ -75,6 +77,7 @@ func update_collision(item: Dictionary) -> void:
 		return
 	if not is_instance_valid(item.body):
 		var body := StaticBody3D.new();body.collision_layer=2;body.collision_mask=2
+		body.add_to_group("trex_passable_tree") # Original Tyrant rule; other actors still collide.
 		var shape := CollisionShape3D.new();var cylinder := CylinderShape3D.new()
 		cylinder.radius=maxf(.12,item.height*.022);cylinder.height=item.height*.45
 		shape.shape=cylinder;shape.position.y=cylinder.height*.5;body.add_child(shape);add_child(body);item.body=body
@@ -92,16 +95,19 @@ static func choose_lod(distance: float, previous: int) -> int:
 func update_batches() -> void:
 	shadow_revision+=1
 	var started := Time.get_ticks_usec();var buckets := {};counts=[0,0,0,0];pending_ground=0
-	dirty=false;last_camera=arena.camera.position
+	if dirty and foliage_budget: foliage_budget.invalidate()
+	dirty=false;last_camera=arena.camera.position;last_forward=-arena.camera.global_basis.z
+	var budget_lods=foliage_budget.select(candidates,count_limit,arena.camera) if foliage_budget and foliage_budget.enabled and forced_lod<0 else PackedInt32Array()
+	var edited_lods=arena.get("edited_render_lods")
 	for index in count_limit:
 		var item: Dictionary=candidates[index]
 		if item.revision<0: pending_ground+=1
 		if not item.valid or not enabled: continue
-		if arena.get("edited_render_lods") and arena.edited_render_lods.is_edit_hidden(Vector2i((item.point/200.0).floor())): continue
-		var distance: float=item.transform.origin.distance_to(arena.camera.position)
-		if distance>650: continue
+		if edited_lods and edited_lods.is_edit_hidden(Vector2i((item.point/200.0).floor())): continue
+		var distance_squared: float=foliage_budget.distances[index] if not budget_lods.is_empty() else item.transform.origin.distance_squared_to(last_camera)
+		if distance_squared>650.0*650.0: continue
 		# Approximate projected size: saplings switch earlier than tall firs.
-		item.lod=forced_lod if forced_lod>=0 else choose_lod(distance*10.0/item.height,item.lod)
+		item.lod=forced_lod if forced_lod>=0 else (budget_lods[index] if not budget_lods.is_empty() else choose_lod(sqrt(distance_squared)*10.0/item.height,item.lod))
 		var cell := Vector2i((item.point/(192.0 if item.lod==3 else 96.0)).floor())
 		var key := Vector4i(cell.x,cell.y,item.variant,item.lod)
 		if not buckets.has(key): buckets[key]=[]
@@ -115,10 +121,14 @@ func update_batches() -> void:
 		var transforms: Array=buckets.get(key,[])
 		if retire_empty_batches and transforms.is_empty():
 			batches[key].queue_free();batches.erase(key);uploaded.erase(key);continue
-		if uploaded.get(key,[])==transforms: continue
+		var previous: Array=uploaded.get(key,[])
+		if previous==transforms: continue
+		var mm: MultiMesh=batches[key].multimesh
+		var resized=mm.instance_count!=transforms.size()
+		if resized: mm.instance_count=transforms.size()
+		for i in transforms.size():
+			if resized or i>=previous.size() or previous[i]!=transforms[i]: mm.set_instance_transform(i,transforms[i])
 		uploaded[key]=transforms
-		var mm: MultiMesh=batches[key].multimesh;mm.instance_count=transforms.size()
-		for i in transforms.size(): mm.set_instance_transform(i,transforms[i])
 	update_ms=(Time.get_ticks_usec()-started)/1000.0
 
 func set_enabled(value: bool) -> void:
@@ -134,4 +144,5 @@ func set_density(value: int) -> void:
 	update_batches()
 
 func status() -> String:
-	return "F6 trees %s | %d active | LOD %s | update %.2f ms\nF9 tree view | F10 auto/LOD0/1/2/billboard | F11 120 FPS/uncapped | 8.33 ms target" % ["ON" if enabled else "OFF",count_limit,str(counts),update_ms]
+	var budget_note=" | slice detail %d density / %d cap" % [foliage_budget.dense_adjusted,foliage_budget.budget_adjusted] if foliage_budget and foliage_budget.enabled and forced_lod<0 else ""
+	return "F6 trees %s | %d active | LOD %s | update %.2f ms\nF9 tree view | F10 auto/LOD0/1/2/billboard | F11 120 FPS/uncapped | 8.33 ms target" % ["ON" if enabled else "OFF",count_limit,str(counts),update_ms]+budget_note
