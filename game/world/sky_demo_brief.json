@@ -1,7 +1,7 @@
 {
-  "title": "Sky Demo / Faster grenade craters",
-  "iteration": "2026-10-17 / Terrain prepared before combat",
-  "goal": "Throw grenades with B or controller L1. Compare the delay between the explosion and the crater, then try a new area.",
-  "changes": "Nearby terrain is prepared during loading and as you move, covering the full grenade throw including vehicle speed. Prepared terrain remains cached around you. Unchanged crater sections are reused, and collision preparation runs on the terrain worker. The two-second grenade fuse is unchanged. Sky settings keep mouse access when using the controller.",
-  "controls": "Ctrl+F3: sky controls. Upper cloud coverage variation: 0 restores the uniform layer, 1 gives strongest variation. Blue distance haze: toggle, strength and reach in km; larger reach keeps terrain clear further away. Altitude and brightness controls remain. Ctrl+F9 toggles upper clouds; Ctrl+F12 cycles presets. Settings reset on restart. All gameplay/editor controls remain. Controller L1 throws the same crater-forming grenade as B; nearby elite aliens dive from either grenade type."
+  "title": "Sky Demo / Rockets and continuous blast physics",
+  "iteration": "2026-10-17 / Chained explosions",
+  "goal": "Select weapon 6 and fire two rockets at crates or terrain. Watch crates move through both explosions while craters update. F8 records diagnostics.",
+  "changes": "Rocket Launcher added: two rockets per reload, impact explosions, blast damage, crate impulses and 3 m craters. Crates and actors now keep moving during terrain edits; missing streamed terrain still suspends them safely. The prepared grenade terrain and sky controls remain available.",
+  "controls": "6 selects Rocket Launcher; Q or controller Triangle cycles weapons. LMB / R2 fires; R / Square reloads. B / L1 throws grenades. F8 records diagnostics. Ctrl+F3 opens sky controls; Ctrl+F9 toggles upper clouds; Ctrl+F12 cycles sky presets. Rocket Launcher model by irons3th, CC-BY-4.0; source and full credit in assets/rocket_launcher/license.txt."
 }

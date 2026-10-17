@@ -1,8 +1,8 @@
 extends RefCounted
 const Ring=preload("res://world/terrain_drive_ring.gd")
 # Tuned for this demo's mixed arsenal, not claimed original CE tag values.
-const RANGES=[85.0,140.0,45.0,40.0,45.0]
-const ANGLES=[2.0,1.0,3.0,3.5,3.0]
+const RANGES=[85.0,140.0,45.0,40.0,45.0,100.0]
+const ANGLES=[2.0,1.0,3.0,3.5,3.0,1.0]
 var friction := .4
 var adhesion := .35
 var tracked: Node3D

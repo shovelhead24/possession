@@ -53,7 +53,10 @@ func target() -> Node3D:
 	if arena.vehicle_kit.driving: return arena.vehicle_kit.car
 	return null
 func is_target(body: Node) -> bool: return is_instance_valid(body) and body==target()
-func resident(point: Vector3) -> bool: return arena.streamer.ready_at(point) and not arena.destruction.editing()
+func resident(point: Vector3) -> bool:
+	# Edits retain the old collision until an atomic physics-tick swap. Only
+	# genuinely missing streamed terrain requires actors and props to suspend.
+	return arena.streamer.ready_at(point)
 func all_rids() -> Array[RID]:
 	var ids: Array[RID]=[arena.on_foot.get_rid(),arena.vehicle_kit.car.get_rid()]
 	for unit in enemies:

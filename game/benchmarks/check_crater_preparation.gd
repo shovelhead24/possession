@@ -40,7 +40,7 @@ func run():
 	assert(d.busy() and not d.editing() and not d.unsaved(),"Preparation masquerades as a terrain edit")
 	var aliens=preload("res://world/aliens/manager.gd").new();aliens.arena=arena
 	assert(aliens.resident(arena.camera.position),"Preparation pauses aliens")
-	d.pending.append({"kind":"carve"});assert(d.editing() and not aliens.resident(arena.camera.position));d.pending.clear();d.warming=false
+	d.pending.append({"kind":"carve"});assert(d.editing() and aliens.resident(arena.camera.position));d.pending.clear();d.warming=false
 	aliens.free()
 	print("PASS ",cases," complete trajectories and crater bounds (0/45/80 m/s), preparation does not mark terrain dirty or pause aliens")
 	quit()

@@ -1,11 +1,12 @@
 extends Node
 ## Restored workshop weapons, independent of the old arena/possession controller.
-const CAPACITY := [30,5,100,80,100]
-const INTERVAL := [.18,1.0,.12,.14,.12]
-const DAMAGE := [25.0,120.0,14.0,18.0,14.0]
-const REACH := [250.0,600.0,200.0,200.0,200.0]
-const NAMES := ["Carbine","Railgun","Plasma Rifle","Doom Plasma Gun","Halo CE Plasma Rifle"]
-const COLORS := [Color(.4,1,.5),Color(.5,.8,1),Color(.15,.7,1),Color(.15,.7,1),Color(.15,.7,1)]
+const Rocket=preload("res://world/explosive_rocket.gd")
+const CAPACITY := [30,5,100,80,100,2]
+const INTERVAL := [.18,1.0,.12,.14,.12,.65]
+const DAMAGE := [25.0,120.0,14.0,18.0,14.0,220.0]
+const REACH := [250.0,600.0,200.0,200.0,200.0,350.0]
+const NAMES := ["Carbine","Railgun","Plasma Rifle","Doom Plasma Gun","Halo CE Plasma Rifle","Rocket Launcher"]
+const COLORS := [Color(.4,1,.5),Color(.5,.8,1),Color(.15,.7,1),Color(.15,.7,1),Color(.15,.7,1),Color(1,.5,.1)]
 var arena: Node3D
 var initialized := false
 var models: Array[Node3D]=[]
@@ -19,15 +20,15 @@ var crosshair: Control
 var aim_assist=preload("res://world/weapon_aim.gd").new()
 var aim_state: Dictionary={}
 var aim_clock := 0.0
-const BASE_SPREAD=[.08,.02,.35,.5,.3]
-const MAX_SPREAD=[.35,.02,1.6,2.0,1.5]
-var bloom=[0.0,0.0,0.0,0.0,0.0]
+const BASE_SPREAD=[.08,.02,.35,.5,.3,0.0]
+const MAX_SPREAD=[.35,.02,1.6,2.0,1.5,0.0]
+var bloom=[0.0,0.0,0.0,0.0,0.0,0.0]
 var spread_rng=RandomNumberGenerator.new()
 var last_shot_aim := {}
 var audio: AudioStreamPlayer
 var sounds: Array[AudioStream]=[]
 var selected := 0
-var ammo := [30,5,100,80,100]
+var ammo := [30,5,100,80,100,2]
 var cooldown := 0.0
 var reload_time := 0.0
 var trigger_held := false
@@ -64,7 +65,7 @@ func setup(owner_arena: Node3D) -> void:
 	for index in NAMES.size():
 		arena.loading.log_event("Importing "+NAMES[index]+" and preparing its firing sound")
 		await get_tree().process_frame
-		var name: String=["halo_-_carbine.zip","halo_railgun_redesigned.zip","halo_-_plasma_rifle.glb","doom-plasma.glb","halo-ce-plasma.glb"][index]
+		var name: String=["halo_-_carbine.zip","halo_railgun_redesigned.zip","halo_-_plasma_rifle.glb","doom-plasma.glb","halo-ce-plasma.glb","rocket_launcher/scene.gltf"][index]
 		var model: Node3D=importer.import_source(ProjectSettings.globalize_path("res://../assets/"+name).simplify_path())
 		if not model:
 			push_error("Weapon archive unavailable: "+name);importer.contact_debug.free();importer.free();get_tree().quit(1);return
@@ -75,6 +76,9 @@ func setup(owner_arena: Node3D) -> void:
 			model.transform=Transform3D(Basis(Vector3(0,0,.0035),Vector3(0,.0035,0),Vector3(.0035,0,0)),Vector3(-.25,.23,.29))
 		elif index==2:
 			model.rotation.y=PI;model.scale=Vector3.ONE*.065;model.position=Vector3(-.08,-.01,-.01)
+		elif index==5:
+			# Source orientation/placement is shared with the viewmodel preview.
+			configure_launcher(model,importer)
 		else:
 			model.rotation.y=PI if index==3 else PI*.5
 			var bounds: AABB=importer.model_bounds(model)
@@ -85,12 +89,20 @@ func setup(owner_arena: Node3D) -> void:
 		holder.add_child(model);models.append(model)
 	importer.contact_debug.free();importer.free()
 	sounds=[load("res://plasma_rifle.mp3"),load("res://quake railgun sound effect.mp3"),AudioStreamWAV.load_from_file("res://effects/plasma/terminator-single.wav")]
-	sounds.append(sounds[2]);sounds.append(sounds[2])
+	sounds.append(sounds[2]);sounds.append(sounds[2]);sounds.append(Rocket.sound(false))
 	audio=AudioStreamPlayer.new();audio.volume_db=-18;audio.max_polyphony=4;add_child(audio)
 	build_effects()
 	plasma=preload("res://world/plasma_billboards.gd").new();arena.add_child(plasma);plasma.setup(self)
 	select_weapon(0);await plasma.warmup();initialized=true
-	arena.loading.log_event("Weapons ready: Carbine / Railgun / Plasma Rifle / Doom / Halo CE · fire, switch, reload · editor-safe")
+	arena.loading.log_event("Weapons ready: Carbine / Railgun / Plasma Rifle / Doom / Halo CE / Rocket Launcher · fire, switch, reload")
+
+static func configure_launcher(model: Node3D, importer: Node) -> void:
+	var bounds: AABB=importer.model_bounds(model)
+	if bounds.size.x>bounds.size.z: model.rotate_y(PI*.5)
+	bounds=importer.model_bounds(model)
+	model.scale*=Vector3.ONE*(.95/maxf(bounds.size.z,.001))
+	bounds=importer.model_bounds(model)
+	model.position+=Vector3(.02,.02,-.12)-bounds.get_center()
 
 static func strip_ce_markers(root: Node3D) -> void:
 	# The CE source includes blue attachment spheres and white direction cones.
@@ -149,6 +161,7 @@ func handle_input(event: InputEvent) -> bool:
 			KEY_3: select_weapon(2);return true
 			KEY_4: select_weapon(3);return true
 			KEY_5: select_weapon(4);return true
+			KEY_6: select_weapon(5);return true
 			KEY_R: start_reload();return true
 			KEY_BRACKETLEFT,KEY_BRACKETRIGHT:
 				var change=1 if event.keycode==KEY_BRACKETRIGHT else -1
@@ -180,7 +193,8 @@ func start_reload() -> bool:
 
 func fire() -> bool:
 	if not available() or Input.mouse_mode!=Input.MOUSE_MODE_CAPTURED or cooldown>0 or reload_time>0 or ammo[selected]<=0: return false
-	if selected>=2 and (not plasma or plasma.bolts.size()>=plasma.LIMIT): return false
+	if selected in [2,3,4] and (not plasma or plasma.bolts.size()>=plasma.LIMIT): return false
+	if selected==5 and get_tree().get_nodes_in_group("explosive_rockets").size()>=8: return false
 	ammo[selected]-=1;cooldown=INTERVAL[selected];recoil=.07;shots+=1
 	# Camera-space aim works in every ring orientation. Exclude only our capsule.
 	aim_state=aim_assist.solve(self)
@@ -189,7 +203,13 @@ func fire() -> bool:
 	bloom[selected]=minf(MAX_SPREAD[selected]-BASE_SPREAD[selected],bloom[selected]+.18)
 	var shot_hit=trace_segment(origin,origin+direction*REACH[selected])
 	var visual_origin: Vector3=origin+arena.camera.global_basis.x*.22-arena.camera.global_basis.y*.18+direction*.6
-	if selected>=2:
+	if selected==5:
+		last_hit={}
+		var aim_point: Vector3=shot_hit.position if not shot_hit.is_empty() else origin+direction*REACH[selected]
+		var rocket=Rocket.new();rocket.weapon=self;rocket.velocity=(aim_point-visual_origin).normalized()*Rocket.SPEED
+		rocket.origin=origin;rocket.remaining=REACH[selected];rocket.damage=DAMAGE[selected]
+		arena.add_child(rocket);rocket.global_position=visual_origin
+	elif selected>=2:
 		last_hit={}
 		# Aim ray only chooses direction; it never applies damage or fixes a future hit.
 		var aim: Dictionary=shot_hit
@@ -303,7 +323,7 @@ func _process(delta: float) -> void:
 	crosshair.configure(selected,BASE_SPREAD[selected]+bloom[selected])
 	crosshair.position=size*.5-crosshair.size*.5
 	crosshair.modulate=Color(1,.12,.12) if aim_state.get("on_enemy",false) else Color(.15,.65,1)
-	ammo_label.text="%s   %d / %d\n%s" % [NAMES[selected],ammo[selected],CAPACITY[selected],"Reloading…" if reload_time>0 else ("R reload · unlimited reserve" if ammo[selected]==0 else "LMB fire · Q / 1–5 switch · R reload")]
+	ammo_label.text="%s   %d / %d\n%s" % [NAMES[selected],ammo[selected],CAPACITY[selected],"Reloading…" if reload_time>0 else ("R reload · unlimited reserve" if ammo[selected]==0 else "LMB fire · Q / 1–6 switch · R reload")]
 	ammo_label.text+="\nAuto-aim %d%% | %.1f deg / %.0f m | [ ] strength, Shift+[ ] cone" % [roundi(aim_assist.strength*100),aim_assist.cone(selected),aim_assist.RANGES[selected]]
 	ammo_label.text+="\nController friction %d%% / tracking %d%% | Ctrl+[ ] / Alt+[ ]" % [roundi(aim_assist.friction*100),roundi(aim_assist.adhesion*100)]
 	if notice_time>0: ammo_label.text+="\n"+notice
