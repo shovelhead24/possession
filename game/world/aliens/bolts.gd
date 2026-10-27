@@ -4,6 +4,10 @@ const LIMIT=64
 var manager: Node
 var bolts: Array=[]
 var batch: MultiMeshInstance3D
+func origin_shifted(delta: Vector3):
+	for bolt in bolts:bolt.point-=delta
+	batch.position=Vector3.ZERO
+	for i in bolts.size():batch.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY,bolts[i].point))
 func _ready() -> void:
 	batch=MultiMeshInstance3D.new();batch.multimesh=MultiMesh.new();batch.multimesh.transform_format=MultiMesh.TRANSFORM_3D;batch.multimesh.use_colors=true
 	var quad=QuadMesh.new();quad.size=Vector2.ONE*.22;batch.multimesh.mesh=quad;batch.multimesh.instance_count=LIMIT;batch.multimesh.visible_instance_count=0

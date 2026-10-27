@@ -4,6 +4,7 @@ const Lizard=preload("res://world/aliens/lizard_actor.gd")
 const Rex=preload("res://world/aliens/trex.gd")
 const Ring=preload("res://world/terrain_drive_ring.gd")
 var kind := ""
+func _init():set_meta("floating_origin_root",true)
 func configure(value: String, arena: Node3D) -> void:
 	if kind==value: return
 	kind=value

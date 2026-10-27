@@ -1,0 +1,7 @@
+{
+  "title": "Performance Demo / Regular trees and lighter shadows",
+  "iteration": "2026-10-27 / World-lit weapons and arms",
+  "goal": "Enter and watch weather, clouds, wind and daylight run automatically.",
+  "changes": "First-person weapons and hands now follow world sun, moon and ambient light instead of a fixed studio light. Turning changes which surfaces catch the light; the interval between sun and planet remains dark. Cached weapon rendering is retained, with lighting changes checked at 10 Hz. Planet size and environment defaults are unchanged.",
+  "controls": "Enter: begin. Ctrl+F4: Weather / Daylight / Clouds / Wind controls. Selecting a weather preset pauses its automatic cycle; re-enable Cycle weather to resume. Scrub daylight to hold a time; Animate day resumes."
+}

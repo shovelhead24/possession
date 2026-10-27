@@ -51,7 +51,7 @@ func _physics_process(delta: float) -> void:
 	bolts=live
 	if bolts.is_empty(): set_physics_process(false)
 func instance_at(index: int, point: Vector3, size: float, opacity: float) -> void:
-	batch.multimesh.set_instance_transform(index,Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*size),point))
+	batch.multimesh.set_instance_transform(index,Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*size),batch.to_local(point)))
 	batch.multimesh.set_instance_color(index,Color(1,1,1,opacity))
 func _process(delta: float) -> void:
 	flash=maxf(0,flash-delta)
@@ -79,3 +79,11 @@ func _process(delta: float) -> void:
 	if bolts.is_empty() and bursts.is_empty() and flash<=0: set_process(false)
 func _exit_tree() -> void:
 	if is_instance_valid(muzzle): muzzle.queue_free()
+
+func origin_shifted(delta: Vector3) -> void:
+	for bolt in bolts:
+		for key in ["point","previous","start","origin"]:bolt[key]-=delta
+	for burst in bursts:burst.point-=delta
+	# This is a world-coordinate batch, not an object anchored at its old location.
+	batch.global_transform=Transform3D.IDENTITY
+	_process(0.0)

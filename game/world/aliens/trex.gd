@@ -1,6 +1,8 @@
 extends CharacterBody3D
 const Ring=preload("res://world/terrain_drive_ring.gd")
 var animation_elapsed := 0.0
+var screen_size_animation := false
+var animation_schedule := 0.0
 var physics_usec := 0
 var pose_usec := 0
 var runtime_active := false
@@ -51,6 +53,12 @@ var target_scan_timer := 0.0
 var cached_prey: Node3D
 var path_timer := 0.0
 var path_goal := Vector3.INF
+func origin_shifted(delta: Vector3):
+	bite_lift_origin-=delta;path_goal-=delta;progress_position-=delta;motion_previous-=delta
+	stomp_point-=delta;slam_origin-=delta
+	for i in patrol.size():patrol[i]-=delta
+	for i in path.size():path[i]-=delta
+	if authored_route:authored_route.origin_shifted(delta)
 var path: Array[Vector3]=[]
 var tree_exception_timer := 0.0
 const WALK_PLAYBACK_RATE := 1.0 # Previous patrol rate .8, increased by 25%.
@@ -676,7 +684,14 @@ func _process(delta):
 	animation_elapsed+=delta
 	# Close combat stays at 60 Hz. Distant walking poses advance at 30/15 Hz.
 	var interval=1.0/(60.0 if bite_time>0 or distance<35 else (30.0 if distance<110 else 15.0))
-	if animation_elapsed<interval: return
+	if screen_size_animation:
+		var focal=arena.camera.get_viewport().get_visible_rect().size.y/(2*tan(deg_to_rad(arena.camera.fov)*.5))
+		var pixels=SCALE_HEIGHT*focal/maxf(distance,1)
+		interval=1.0/(60.0 if bite_time>0 or pixels>80 else (30.0 if pixels>24 else 15.0))
+		animation_schedule+=delta
+		if animation_schedule<interval: return
+		animation_schedule=fmod(animation_schedule,interval)
+	elif animation_elapsed<interval: return
 	var began=Time.get_ticks_usec()
 	animator.advance(animation_elapsed);animation_elapsed=0
 	pose_usec=Time.get_ticks_usec()-began

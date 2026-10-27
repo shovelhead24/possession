@@ -38,6 +38,9 @@ var outline: MeshInstance3D
 var preview_clock := 0.0
 var displayed_revision := -1
 var syncing := false
+func origin_shifted(delta: Vector3):
+	super.origin_shifted(delta)
+	outline.position=Vector3.ZERO;edge_guide.position=Vector3.ZERO
 
 func setup(owner_arena: Node3D) -> void:
 	forge=owner_arena.forge

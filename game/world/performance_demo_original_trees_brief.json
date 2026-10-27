@@ -1,0 +1,7 @@
+{
+  "title": "Performance Demo / Regular trees and HUD improvements",
+  "iteration": "2026-10-20 / Regular trees restored",
+  "goal": "Compare play with the HUD shown and hidden using Tab. Check immediate ammo updates, reload and entering or leaving the Warthog.",
+  "changes": "Regular fir trees are restored with all painted placements preserved. Hidden HUD text no longer rebuilds every frame. The diagnostic panel refreshes ten times per second; ammo updates immediately when it changes. Low-poly tank and cloud improvements remain active.",
+  "controls": "Tab hides/shows HUD; F8 starts/stops diagnostic recording. E enters/exits vehicles. LMB / R2 fires; R / Square reloads. 6 selects Rocket Launcher; Q / Triangle cycles weapons. B / L1 throws grenades. Ctrl+F3 opens sky controls; Ctrl+F9 toggles upper clouds; Ctrl+F12 cycles sky presets. Rocket Launcher by irons3th, CC-BY-4.0; source and credit in assets/rocket_launcher/license.txt."
+}

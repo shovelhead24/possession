@@ -40,7 +40,7 @@ func prepare_content() -> void:
 	ai_debug=preload("res://world/ai_diagnostics.gd").new();add_child(ai_debug);ai_debug.setup(self)
 	controller=preload("res://world/rebuild_controller.gd").new();add_child(controller);controller.source_mode=devices.controller_mode;controller.setup(self)
 	devices.add_menu(vehicle_kit.menu)
-	loading.log_event("Restoring reduced-detail Altay tank, tracks and cannon")
+	loading.log_event("Preparing low-poly tank, turret and cannon" if has_method("performance_features") else "Restoring reduced-detail Altay tank, tracks and cannon")
 	vehicle_kit.restore_tank()
 
 func _input(event: InputEvent) -> void:
@@ -57,7 +57,7 @@ func _input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	if ready_to_play:
+	if ready_to_play and hud_refresh_due:
 		hud.text="REBUILD DEMO / tactical aliens + weapons + construction\n"+hud.text
 		if rebuild_content: hud.text+="\n"+rebuild_content.status
 

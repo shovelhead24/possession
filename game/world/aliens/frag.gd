@@ -37,7 +37,9 @@ func detonate() -> void:
 		elif unit.has_method("take_hit") and unit.get("dead")!=true: unit.take_hit(150*(1-distance/9),global_position,point)
 	manager.alert_shot(global_position)
 	var flash=MeshInstance3D.new();var sphere=SphereMesh.new();sphere.radius=.4;sphere.height=.8;sphere.radial_segments=12;sphere.rings=6;flash.mesh=sphere
-	var mat=StandardMaterial3D.new();mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;mat.albedo_color=Color(1,.55,.1);flash.material_override=mat;flash.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat=StandardMaterial3D.new();mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;mat.albedo_color=Color(1,.55,.1);
+	if manager.arena.has_method("performance_features"): mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;mat.albedo_color.a=.65
+	flash.material_override=mat;flash.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	manager.add_child(flash);flash.global_position=global_position
 	var tween=flash.create_tween();tween.tween_property(flash,"scale",Vector3.ONE*6,.1);tween.tween_property(flash,"scale",Vector3.ZERO,.25);tween.tween_callback(flash.queue_free)
 	queue_free()

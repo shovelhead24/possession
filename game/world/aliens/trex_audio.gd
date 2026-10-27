@@ -17,6 +17,7 @@ var feet: Array[AudioStreamPlayer3D]=[]
 var airborne := [false,false]
 var foot_cooldown := [0.0,0.0]
 var previous_position := Vector3.ZERO
+func origin_shifted(delta: Vector3):previous_position-=delta
 var roar_cooldown := 0.0
 var pain_cooldown := 0.0
 var ambient_timer := 8.0

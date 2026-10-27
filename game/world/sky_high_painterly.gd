@@ -2,6 +2,7 @@ extends MeshInstance3D
 const Ring=preload("res://world/terrain_drive_ring.gd")
 var altitude := 6000.0
 func _ready():
+	position=-Ring.offset()
 	var arrays=[];arrays.resize(Mesh.ARRAY_MAX)
 	var vertices=PackedVector3Array();var uv=PackedVector2Array();var indices=PackedInt32Array()
 	# Full cylinder: physical clouds remain in front of distant inner-ring terrain.
@@ -9,7 +10,7 @@ func _ready():
 		var arc=float(a)/2048.0*3000000.0
 		for z in 5:
 			var lat=lerpf(-25000,25000,z/4.0)
-			vertices.append(Ring.point(arc,altitude,lat));uv.append(Vector2(arc,lat))
+			vertices.append(Ring.Frame.position(arc,altitude,lat));uv.append(Vector2(arc,lat))
 	for a in 2048:
 		for z in 4:
 			var v=a*5+z;indices.append_array([v,v+5,v+1,v+1,v+5,v+6])

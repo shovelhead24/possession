@@ -21,6 +21,8 @@ var activation_queue: Array=[]
 var activation_head := 0
 var stream_clock := 0.0
 var last_stream_checks := 0
+var stream_retirement_scan_required := true
+var stream_retirement_scan_count := 0
 var weapon_max_height := 0.0
 var density_field: RefCounted
 
@@ -58,6 +60,9 @@ func sync_records() -> void:
 		var item: Dictionary=by_id[id]
 		if item.point!=Vector2(record.x,record.z) or item.variant!=names.find(record.species) or not is_equal_approx(item.height,record.height) or not is_equal_approx(item.yaw,record.yaw): retire_item(id)
 	active_cells.clear();activation_queue.clear();activation_head=0
+	# The previous stream set is being discarded; surviving instances need a
+	# retirement pass even if the newly computed wanted set is also empty.
+	stream_retirement_scan_required=true
 	refresh_stream();activate_pending();rebuild_candidates();update_batches()
 
 func index_record(record: Dictionary, index: int) -> void:
@@ -136,9 +141,15 @@ func refresh_stream() -> void:
 		for cell in active_cells:
 			for centre in centres:
 				if cell_distance(cell,centre[0])<=centre[1]+RETAIN_MARGIN: wanted[cell]=true;break
-	for id in by_id.keys():
-		var cell := Vector2i((by_id[id].point/CELL_SIZE).floor())
-		if not wanted.has(cell): retire_item(id);retired=true
+	if wanted!=active_cells or stream_retirement_scan_required:
+		stream_retirement_scan_count+=1
+		for id in by_id.keys():
+			var cell := Vector2i((by_id[id].point/CELL_SIZE).floor())
+			if not wanted.has(cell): retire_item(id);retired=true
+		# Every remaining live instance is now in a wanted cell. Activation below
+		# only adds items after checking active_cells, so this remains true until
+		# a paint insertion outside the active set or a stream reset.
+		stream_retirement_scan_required=false
 	if wanted!=active_cells:
 		# Replace obsolete work on teleports; nearby cells are activated first.
 		activation_queue.clear();activation_head=0
@@ -194,7 +205,8 @@ func erase_dab(point: Vector2, radius: float) -> bool:
 func set_enabled(value: bool) -> void:
 	super.set_enabled(value)
 	activation_queue.clear();activation_head=0
-	if value: active_cells.clear()
+	if value:
+		active_cells.clear();stream_retirement_scan_required=true
 	refresh_stream();activate_pending();rebuild_candidates();update_batches()
 
 func status() -> String:
@@ -235,6 +247,13 @@ func enqueue_dab(point: Vector2) -> void:
 func release() -> void:
 	released=true
 
+func register_painted_item(record: Dictionary, item: Dictionary) -> void:
+	index_record(record,store.records.size());store.records.append(record);store.next_id+=1
+	by_id[record.id]=item
+	# Paint hits can be up to 800 m from the camera, beyond VIEW_RADIUS.
+	# Preserve the next refresh's retirement behavior for such placements.
+	if not active_cells.has(Vector2i((item.point/CELL_SIZE).floor())): stream_retirement_scan_required=true
+
 func _physics_process(delta: float) -> void:
 	stream_clock-=delta
 	if stream_clock<=0: stream_clock=.2;refresh_stream()
@@ -263,8 +282,7 @@ func _physics_process(delta: float) -> void:
 			var item := make_item(record);ground(item)
 			if not item.valid: continue
 			item.body_id=arena.tile_entries[terrain_key].body.get_instance_id();item.revision=0
-			index_record(record,store.records.size());store.records.append(record);store.next_id+=1
-			by_id[record.id]=item;changed=true
+			register_painted_item(record,item);changed=true
 
 		if changed:
 			rebuild_candidates();dirty=true

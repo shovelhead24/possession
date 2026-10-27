@@ -22,7 +22,7 @@ func prepare_base(data: Dictionary) -> void:
 	if not triangle_cells.is_empty(): return
 	var vertices: PackedVector3Array=data.vertices
 	flat_vertices.resize(vertices.size())
-	for i in vertices.size(): flat_vertices[i]=Ring.coordinates(vertices[i]) if source.curve_to_ring else vertices[i]
+	for i in vertices.size(): flat_vertices[i]=Ring.Frame.coordinates(vertices[i]) if source.curve_to_ring else vertices[i]
 	for i in range(0,data.indices.size(),3):
 		var a := flat_vertices[data.indices[i]];var b := flat_vertices[data.indices[i+1]];var c := flat_vertices[data.indices[i+2]]
 		var cell := Vector3i(((a+b+c)/24).floor())

@@ -14,6 +14,8 @@ var near_band: MeshInstance3D
 var ownership_texture: ImageTexture
 var ownership_keys: Array=[]
 var ownership_origin := Vector2i(-256,-256)
+## Shared by the per-frame backdrop update and optional time-of-day preview.
+var horizon_color := Vector3(DAY_HORIZON.r,DAY_HORIZON.g,DAY_HORIZON.b)
 
 
 func update_ownership() -> void:
@@ -231,12 +233,12 @@ func _update_arena_light() -> void:
 	_sky_mat.set_shader_parameter("local_up",Vector3.UP)
 	_sky_mat.set_shader_parameter("day",1.0)
 	_sky_mat.set_shader_parameter("day_zenith",Vector3(DAY_ZENITH.r,DAY_ZENITH.g,DAY_ZENITH.b))
-	_sky_mat.set_shader_parameter("day_horizon",Vector3(DAY_HORIZON.r,DAY_HORIZON.g,DAY_HORIZON.b))
+	_sky_mat.set_shader_parameter("day_horizon",horizon_color)
 	for material in [_mat,_wall_mat,_field_mat]:
 		if material == null: continue
 		material.set_shader_parameter("to_sun",to_sun)
 		material.set_shader_parameter("haze_density",haze_density)
-		material.set_shader_parameter("sky_color",Vector3(DAY_HORIZON.r,DAY_HORIZON.g,DAY_HORIZON.b))
+		material.set_shader_parameter("sky_color",horizon_color)
 func _process(_delta: float) -> void:
 	if not background_ready: return
 	update_ownership()

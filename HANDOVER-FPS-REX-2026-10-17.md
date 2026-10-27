@@ -22,7 +22,13 @@ Launcher: existing Desktop Sky Demo.lnk. Preserve other shortcuts.
 Executable: C:\Godot\Godot_v4.5.1-stable_win64_console.exe
 Read AGENTS.md, SKY-DEMO.md and TREE-DEMO-HANDOVER.md. game/mocks/dem is a shared read-only junction.
 
-Earlier checkpoint: 309182c, Build sky demo and optimize terrain grenade craters (450 files, accumulated project work). An initial push was rejected by automatic approval review. After being informed of the exact repository, branch and payload, the user explicitly renewed the request to commit and push all latest changes on 2026-10-17. This handover is included in that new commit. Destination: https://github.com/shovelhead24/possession.git, branch sky-demo. Inspect git log and upstream status for the final commit and push state; do not assume 309182c is still HEAD.
+Push confirmed successful on 2026-10-17. Both checkpoints are backed up at https://github.com/shovelhead24/possession/tree/sky-demo:
+- 309182c — Build sky demo and optimize terrain grenade craters.
+- 2f33164 — Add rocket launcher and keep blast physics active during terrain edits. Includes source files, model assets, tests and the handover.
+
+Verified HEAD and origin/sky-demo both equal 2f33164a6ed25230d721dd79a3b043a665393ed5, with zero commits ahead or behind. The local sky-demo branch now tracks origin/sky-demo. Git LFS asset upload also completed. The earlier approval blocks were resolved by the user's explicit authorization; the push is no longer pending.
+
+Use this complete pushed build as the starting point for the new performance branch/scene/shortcut. This subsequent status-only handover update is saved in both the repository and the chat outputs; it has not itself been committed or pushed.
 
 The subsequent checkpoint includes the completed rocket launcher and crate freeze fix below, plus an unfinished diagnostic script. Preserve generated Godot cache dirt and other existing files; do not reset the checkout. No Godot process was running when handing over.
 

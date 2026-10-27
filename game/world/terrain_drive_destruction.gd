@@ -248,10 +248,11 @@ func _process(_delta: float) -> void:
 		arrays[Mesh.ARRAY_VERTEX]=data.vertices;arrays[Mesh.ARRAY_NORMAL]=data.normals;arrays[Mesh.ARRAY_INDEX]=data.indices
 		var mesh := ArrayMesh.new();mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays,[],data.render_lods)
 		var visual := MeshInstance3D.new();visual.mesh=mesh;visual.material_override=arena.material
+		visual.position=-Ring.offset()
 		visual.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;visual.hide();arena.add_child(visual)
 		last_mesh_ms+=(Time.get_ticks_usec()-phase_started)/1000.0
 		phase_started=Time.get_ticks_usec()
-		var body: StaticBody3D=data.collision_body;arena.add_child(body)
+		var body: StaticBody3D=data.collision_body;body.position=-Ring.offset();arena.add_child(body)
 		last_collision_ms+=(Time.get_ticks_usec()-phase_started)/1000.0
 		prepared.append({"key":data.key,"visual":visual,"body":body})
 		if results.is_empty(): activate=true

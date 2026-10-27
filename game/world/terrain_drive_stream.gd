@@ -38,6 +38,7 @@ func key_at(point: Vector3) -> Vector2i:
 
 func ready_at(point: Vector3) -> bool:
 	if force_starvation: return false
+	if arena.get("ring_landing") and arena.ring_landing.ready_at(point):return true
 	for offset in [Vector3(-12,0,-12),Vector3(12,0,-12),Vector3(-12,0,12),Vector3(12,0,12)]:
 		if not arena.tile_entries.has(key_at(point+offset)): return false
 	return true
@@ -86,7 +87,7 @@ func build(key: Vector2i) -> Dictionary:
 		var a: Vector3=result.vertices[result.indices[i]]
 		var b: Vector3=result.vertices[result.indices[i+1]]
 		var c: Vector3=result.vertices[result.indices[i+2]]
-		var mid := Ring.coordinates((a+b+c)/3)
+		var mid := Ring.Frame.coordinates((a+b+c)/3)
 		var group := int(mid.x>=centre.x)+2*int(mid.z>=centre.y)
 		groups[group].append(a);groups[group].append(b);groups[group].append(c)
 	result.face_groups=[]
@@ -109,6 +110,7 @@ func _process(delta: float) -> void:
 			arrays[Mesh.ARRAY_VERTEX]=stage.vertices;arrays[Mesh.ARRAY_NORMAL]=stage.normals;arrays[Mesh.ARRAY_INDEX]=stage.indices
 			var mesh := ArrayMesh.new();mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays,[],stage.render_lods)
 			var visual := MeshInstance3D.new();visual.mesh=mesh;visual.material_override=arena.material
+			visual.position=-Ring.offset()
 			visual.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;visual.hide();arena.add_child(visual);stage.visual=visual
 		else:
 			last_phase="collision"
@@ -119,6 +121,7 @@ func _process(delta: float) -> void:
 				geometry.set_faces(faces);shape.shape=geometry;stage.body.add_child(shape)
 			stage.next_collision+=1
 			if stage.next_collision==4:
+				stage.body.position=-Ring.offset()
 				arena.add_child(stage.body)
 				publish={"key":stage.key,"visual":stage.visual,"body":stage.body,"cached":stage.cached}
 				stage={}

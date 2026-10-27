@@ -75,6 +75,7 @@ func _process(delta):
 		if item.kind==0:
 			_spawn_chunk(key,0)
 			if _chunks.has(key):
+				_chunks[key].mi.position=-Ring.offset()
 				_chunks[key].mi.custom_aabb=AABB(Vector3(-700000,-700000,-700000),Vector3(1400000,1400000,1400000))
 			else: empty_chunks[key]=true
 			break

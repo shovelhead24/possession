@@ -13,9 +13,11 @@ var models: Array[Node3D]=[]
 var arms: Node3D
 var arms_rest_transform := Transform3D.IDENTITY
 var holder: Node3D
+var world_lighting=preload("res://world/weapon_world_lighting.gd").new()
 var view: SubViewport
 var container: SubViewportContainer
 var ammo_label: Label
+var ammo_layout_size := Vector2(-1,-1)
 var crosshair: Control
 var aim_assist=preload("res://world/weapon_aim.gd").new()
 var aim_state: Dictionary={}
@@ -130,6 +132,7 @@ func build_overlay() -> void:
 	var environment := WorldEnvironment.new();environment.environment=Environment.new();environment.environment.background_mode=Environment.BG_CLEAR_COLOR
 	environment.environment.ambient_light_source=Environment.AMBIENT_SOURCE_COLOR;environment.environment.ambient_light_color=Color.WHITE;environment.environment.ambient_light_energy=.7;view.add_child(environment)
 	var light := DirectionalLight3D.new();light.rotation_degrees=Vector3(-48,-35,0);light.shadow_enabled=false;view.add_child(light)
+	world_lighting.setup(view,environment.environment,light)
 	holder=Node3D.new();holder.position=Vector3(.3,-.25,-.5);camera.add_child(holder)
 	ammo_label=Label.new();ammo_label.mouse_filter=Control.MOUSE_FILTER_IGNORE;ammo_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT;layer.add_child(ammo_label)
 	ammo_label.add_theme_font_size_override("font_size",20)
@@ -238,6 +241,7 @@ func trace_segment(start: Vector3, end: Vector3) -> Dictionary:
 	var began := Time.get_ticks_usec()
 	var query := PhysicsRayQueryParameters3D.create(start,end,7)
 	query.exclude=[arena.on_foot.get_rid()];query.hit_from_inside=true
+	if arena.has_method("performance_features"): query.collision_mask=7|16;query.collide_with_areas=true
 	var hit := arena.get_world_3d().direct_space_state.intersect_ray(query)
 	var stop: Vector3=hit.position if not hit.is_empty() else end
 	var static_hit := preload("res://world/weapon_obstruction.gd").cast(arena,start,stop)
@@ -306,6 +310,7 @@ func _process(delta: float) -> void:
 	crosshair.visible=active and Input.mouse_mode==Input.MOUSE_MODE_CAPTURED
 	ammo_label.visible=active and not hud_hidden
 	if not active: return
+	if world_lighting.sync(arena,delta,redraw_frames>0):redraw_frames=maxi(redraw_frames,1)
 	recoil=move_toward(recoil,0,delta*.6)
 	# Move the cached viewmodel image for recoil/reload instead of reskinning and
 	# rendering the arms and weapon every frame of automatic fire.
@@ -323,12 +328,16 @@ func _process(delta: float) -> void:
 	crosshair.configure(selected,BASE_SPREAD[selected]+bloom[selected])
 	crosshair.position=size*.5-crosshair.size*.5
 	crosshair.modulate=Color(1,.12,.12) if aim_state.get("on_enemy",false) else Color(.15,.65,1)
-	ammo_label.text="%s   %d / %d\n%s" % [NAMES[selected],ammo[selected],CAPACITY[selected],"Reloading…" if reload_time>0 else ("R reload · unlimited reserve" if ammo[selected]==0 else "LMB fire · Q / 1–6 switch · R reload")]
-	ammo_label.text+="\nAuto-aim %d%% | %.1f deg / %.0f m | [ ] strength, Shift+[ ] cone" % [roundi(aim_assist.strength*100),aim_assist.cone(selected),aim_assist.RANGES[selected]]
-	ammo_label.text+="\nController friction %d%% / tracking %d%% | Ctrl+[ ] / Alt+[ ]" % [roundi(aim_assist.friction*100),roundi(aim_assist.adhesion*100)]
-	if notice_time>0: ammo_label.text+="\n"+notice
-	ammo_label.reset_size()
-	ammo_label.position=Vector2(size.x-ammo_label.size.x-20,size.y-ammo_label.size.y-20)
+	if arena.get("hud_updates_enabled")==false: return
+	if arena.get("hud_skip_when_hidden")==true and hud_hidden: return
+	var ammo_text="%s   %d / %d\n%s" % [NAMES[selected],ammo[selected],CAPACITY[selected],"Reloading…" if reload_time>0 else ("R reload · unlimited reserve" if ammo[selected]==0 else "LMB fire · Q / 1–6 switch · R reload")]
+	ammo_text+="\nAuto-aim %d%% | %.1f deg / %.0f m | [ ] strength, Shift+[ ] cone" % [roundi(aim_assist.strength*100),aim_assist.cone(selected),aim_assist.RANGES[selected]]
+	ammo_text+="\nController friction %d%% / tracking %d%% | Ctrl+[ ] / Alt+[ ]" % [roundi(aim_assist.friction*100),roundi(aim_assist.adhesion*100)]
+	if notice_time>0: ammo_text+="\n"+notice
+	# Ammo/reload changes remain immediate; stable text does not need reshaping.
+	if ammo_label.text!=ammo_text or ammo_layout_size!=size:
+		ammo_label.text=ammo_text;ammo_label.reset_size();ammo_layout_size=size
+		ammo_label.position=Vector2(size.x-ammo_label.size.x-20,size.y-ammo_label.size.y-20)
 
 func _exit_tree() -> void:
 	if is_instance_valid(plasma): plasma.queue_free()

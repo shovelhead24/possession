@@ -25,6 +25,7 @@ var upper_altitude := 6000.0
 var haze_enabled := true
 var haze_strength := 1.0
 var haze_reach_km := 100.0
+var weather_haze_density := 0.0
 var coverage_variation := 0.8
 const PRESETS := ["Rebuild baseline", "Billboard clouds", "Marching cubes", "Legacy three layers", "Ring five layers", "High painterly layer", "Marching cubes + billboards", "Billboards + high cirrus", "Marching cubes + billboards + high cirrus", "Billboards + high painterly layer"]
 
@@ -94,7 +95,7 @@ func add_number(column: VBoxContainer,title: String,minimum: float,maximum: floa
 func apply_atmosphere() -> void:
 	for mat in [arena.backdrop._mat,arena.backdrop._wall_mat]:
 		if not mat: continue
-		mat.set_shader_parameter("haze_density",1.0/(haze_reach_km*1000.0))
+		mat.set_shader_parameter("haze_density",maxf(weather_haze_density,1.0/(haze_reach_km*1000.0)))
 		mat.set_shader_parameter("haze_strength",haze_strength if haze_enabled else 0.0)
 	if high_painterly: high_painterly.material_override.set_shader_parameter("coverage_variation",coverage_variation)
 
@@ -149,7 +150,8 @@ func set_weather(index: int) -> void:
 	arena.frame_times.clear()
 
 func update_clouds() -> void:
-	clouds.update_around(arena.camera.global_position)
+	clouds.update_around(Ring.absolute_point(arena.camera.global_position))
+	for layer in clouds._layers:layer.position=-Ring.offset()
 	clouds.bright_mult=brightness
 	clouds.set_day(1.0,arena.daylight.sun.global_basis.z)
 

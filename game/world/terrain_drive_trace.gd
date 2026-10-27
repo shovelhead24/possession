@@ -9,6 +9,9 @@ var mutex := Mutex.new()
 var signal_work := Semaphore.new()
 var events: Array=[]
 var dropped := 0
+func origin_shifted(delta: Vector3):
+	previous.clear();cached_context.clear();context_elapsed=INF
+	write_event("origin_shift",{"delta":vector(delta),"origin_offset":[preload("res://world/terrain_drive_ring.gd").origin_x,preload("res://world/terrain_drive_ring.gd").origin_y,preload("res://world/terrain_drive_ring.gd").origin_z]})
 
 func save_events(output: FileAccess) -> void:
 	var flushed := Time.get_ticks_usec()
@@ -45,6 +48,11 @@ func frame_context() -> Dictionary:
 
 	context["camera_assist"]={"idle_seconds":arena.vehicle_kit.camera_input_idle,"manual_look":str(arena.vehicle_kit.driver_look),"close_view":arena.vehicle_kit.camera_close_view,"lead":vector(arena.vehicle_kit.look_spring_offset)}
 	context["max_fps"]=Engine.max_fps
+	if arena.has_method("ring_position_data"):context["ring_position"]=arena.ring_position_data()
+	var viewport_size=arena.get_viewport().get_visible_rect().size
+	var window_size=DisplayServer.window_get_size()
+	context["runtime"]={"viewport_size":[viewport_size.x,viewport_size.y],"window_size":[window_size.x,window_size.y],"window_focused":DisplayServer.window_is_focused(),"vsync_mode":DisplayServer.window_get_vsync_mode()}
+	context["physics_world"]={"active_objects":Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS),"collision_pairs":Performance.get_monitor(Performance.PHYSICS_3D_COLLISION_PAIRS),"islands":Performance.get_monitor(Performance.PHYSICS_3D_ISLAND_COUNT)}
 	if arena.get("daylight"):
 		var light: Node=arena.daylight
 		context["lighting"]={"shadows":light.sun.shadow_enabled,"quality":light.shadow_quality,"range":light.sun.directional_shadow_max_distance,"baseline":light.baseline,"sun":light.sun.light_energy,"split_1":light.sun.directional_shadow_split_1,"blend_splits":light.sun.directional_shadow_blend_splits,"filter":light.shadow_filter,"normal_bias":light.sun.shadow_normal_bias,"sun_rotation":vector(light.sun.rotation_degrees),"ambient":light.environment.ambient_light_energy}
@@ -107,7 +115,7 @@ func toggle() -> void:
 		if writer.start(save_events.bind(file))!=OK:
 			writer=null;file=null;status="Capture failed: writer unavailable";return
 		marker_id+=1
-		write_event("capture_begin",{"marker_id":marker_id,"schema":1,"physics_ticks_per_second":Engine.physics_ticks_per_second,"max_fps":Engine.max_fps,"physics_interpolation":get_tree().physics_interpolation,"tuning":arena.vehicle_kit.saved_values})
+		write_event("capture_begin",{"marker_id":marker_id,"schema":1,"physics_ticks_per_second":Engine.physics_ticks_per_second,"max_fps":Engine.max_fps,"physics_interpolation":get_tree().physics_interpolation,"tuning":arena.vehicle_kit.saved_values,"engine_timing_monitor_semantics":"previous reporting interval maximum, not average per-frame cost"})
 		if arena.get("ai_debug"): write_event("ai_preroll",{"samples":arena.ai_debug.preroll.duplicate(true),"recent_transitions":arena.ai_debug.transitions.duplicate(true)})
 		mark(marker_id,true)
 		status="RECORDING AI + MOTION · F8: stop and save"

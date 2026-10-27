@@ -29,6 +29,9 @@ var tool_buttons: Array=[]
 var cursor: MeshInstance3D
 var guide: MeshInstance3D
 var aim := Vector3.ZERO
+func origin_shifted(delta: Vector3):
+	aim-=delta;entrance-=delta
+	cursor.position=Vector3.ZERO;guide.position=Vector3.ZERO
 var aim_valid := false
 var input_strokes: Array=[]
 var active_stroke := {}

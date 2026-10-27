@@ -19,6 +19,6 @@ func _input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	super._process(delta)
-	if ready_to_play and sky_comparison:
+	if ready_to_play and hud_refresh_due and sky_comparison:
 		hud.text=hud.text.replace("REBUILD DEMO /", "SKY DEMO /")
 		hud.text+="\n"+sky_comparison.status()

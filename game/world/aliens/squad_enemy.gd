@@ -23,6 +23,9 @@ var routed := false
 var crouch_order := false
 var crouched := false
 var destination := Vector3.ZERO
+func origin_shifted(delta: Vector3):
+	destination-=delta;last_position-=delta
+	for i in path.size():path[i]-=delta
 var pace := 1.25
 var gait := "Walk"
 var tactical_role := ""

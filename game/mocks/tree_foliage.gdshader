@@ -4,7 +4,7 @@ render_mode cull_disabled, depth_prepass_alpha;
 // planes; the up-facing one catches full sun (normal = straight up) and blows out while the vertical
 // planes go dark — hence the harsh contrast. Wrapped (half-Lambert) diffuse compresses that: nothing
 // fully bright or fully black, so the cards read as one soft canopy mass. Engine ambient still fills.
-uniform sampler2D tex : source_color;
+uniform sampler2D tex : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
 uniform float cut = 0.5;          // alpha cutout
 uniform float wrap = 0.55;        // 0 = plain lambert (harsh), 1 = flat; 0.55 = soft canopy
 uniform float sun_gain = 0.85;    // tame the peak so the horizontal cap doesn't over-expose

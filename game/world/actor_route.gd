@@ -1,6 +1,8 @@
 extends RefCounted
 ## Shared arrival/wait semantics. Empty routes hold at the authored spawn.
 var points: Array=[]
+func origin_shifted(delta: Vector3):
+	for i in points.size():points[i]-=delta
 var index := 0
 var wait := 0.0
 var remaining := 0.0

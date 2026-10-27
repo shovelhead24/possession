@@ -67,6 +67,7 @@ func _physics_process(delta: float) -> void:
 		if not accepted: push_warning("Grenade crater not accepted: terrain/volume boundary or edit queue limit")
 		var flash := MeshInstance3D.new();var sphere := SphereMesh.new();sphere.radius=1;sphere.height=2;flash.mesh=sphere
 		var material := StandardMaterial3D.new();material.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;material.albedo_color=Color(1,.65,.15)
+		if arena.has_method("performance_features"): material.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;material.albedo_color.a=.65
 		flash.material_override=material;arena.add_child(flash);flash.position=position
 		get_tree().create_timer(.08).timeout.connect(flash.queue_free)
 		queue_free()

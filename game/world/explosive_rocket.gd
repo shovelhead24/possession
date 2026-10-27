@@ -9,6 +9,7 @@ static var explosion_sound: AudioStreamWAV
 var weapon: Node
 var velocity := Vector3.ZERO
 var origin := Vector3.ZERO
+func origin_shifted(delta: Vector3):origin-=delta
 var remaining := 350.0
 var damage := 220.0
 var first_sweep := true
@@ -46,6 +47,10 @@ func detonate(hit: Dictionary) -> void:
 	var up=Ring.up_at(global_position)
 	var normal: Vector3=hit.get("normal",up)
 	var blast_point=global_position+normal*.2
+	var direct: Node3D
+	if arena.has_method("performance_features"):
+		direct=preload("res://world/weapon_aim.gd").new().enemy(hit.get("collider"),arena)
+		if direct: direct.take_hit(damage,origin,global_position)
 	preload("res://world/prop_blast.gd").apply(self,blast_point,BLAST_RADIUS,3200.0)
 	if arena.get("aliens"):
 		var manager: Node=arena.aliens
@@ -53,7 +58,7 @@ func detonate(hit: Dictionary) -> void:
 		for rex in get_tree().get_nodes_in_group("tyrants"): targets.append(rex)
 		if manager.target(): targets.append(manager.target())
 		for unit in targets:
-			if not is_instance_valid(unit): continue
+			if not is_instance_valid(unit) or unit==direct: continue
 			var point: Vector3=unit.global_position+Ring.up_at(unit.global_position)*.6
 			var distance=point.distance_to(blast_point)
 			if distance>=BLAST_RADIUS: continue
@@ -69,6 +74,7 @@ func detonate(hit: Dictionary) -> void:
 		weapon.notice="Blast hit; crater unavailable outside loaded terrain or while queue is full";weapon.notice_time=2
 	var flash=MeshInstance3D.new();var sphere=SphereMesh.new();sphere.radius=.4;sphere.height=.8;sphere.radial_segments=12;sphere.rings=6;flash.mesh=sphere
 	var mat=StandardMaterial3D.new();mat.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED;mat.albedo_color=Color(1,.5,.08);flash.material_override=mat
+	if arena.has_method("performance_features"): mat.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA;mat.albedo_color.a=.65
 	flash.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;arena.add_child(flash);flash.global_position=blast_point
 	var tween=flash.create_tween();tween.tween_property(flash,"scale",Vector3.ONE*7,.09);tween.tween_property(flash,"scale",Vector3.ZERO,.3);tween.tween_callback(flash.queue_free)
 	var audio=AudioStreamPlayer3D.new();audio.stream=sound(true);audio.volume_db=-10;audio.unit_size=15;audio.max_distance=180;arena.add_child(audio);audio.global_position=blast_point

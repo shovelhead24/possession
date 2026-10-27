@@ -12,6 +12,8 @@ var clock := 0.0
 var fps_clock := 0.0
 var fps_label: Label
 var materials: Array[StandardMaterial3D]=[]
+func fps_text() -> String:
+	return "%d FPS" % Engine.get_frames_per_second()+(" | "+arena.ring_position_text() if arena.has_method("ring_position_text") else "")
 func setup(owner_arena: Node3D) -> void:
 	arena=owner_arena
 	for color in [Color(.15,.9,1,.8),Color(1,.72,.12,.9),Color(1,.25,.65,.9)]:
@@ -37,7 +39,7 @@ func set_enabled(value: bool) -> void:
 		overlays.clear();queued.clear();queued_ids.clear()
 func toggle_hud() -> void:
 	hud_hidden=not hud_hidden;set_process(enabled or hud_hidden);fps_clock=0
-	fps_label.visible=hud_hidden;fps_label.text="%d FPS" % Engine.get_frames_per_second()
+	fps_label.visible=hud_hidden;fps_label.text=fps_text()
 	if hud_items.is_empty():
 		hud_items.append(arena.hud)
 		if arena.weapons:
@@ -83,7 +85,7 @@ func build_pending() -> void:
 func _process(delta: float) -> void:
 	fps_clock-=delta
 	if fps_clock<=0:
-		fps_clock=.25;fps_label.text="%d FPS" % Engine.get_frames_per_second();fps_label.visible=hud_hidden and arena.loading.dismissed
+		fps_clock=.25;fps_label.text=fps_text();fps_label.visible=hud_hidden and arena.loading.dismissed
 	if not enabled: return
 	clock-=delta
 	if clock<=0: clock=.25;scan()

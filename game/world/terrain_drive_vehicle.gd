@@ -266,7 +266,8 @@ func ensure_tank_menu(tank: RigidBody3D) -> void:
 	arena.devices.add_menu(tank_menu)
 
 func restore_tank() -> void:
-	preload("res://world/rebuild_tank_factory.gd").prepare()
+	if arena.has_method("performance_features"): preload("res://world/performance_tank_factory.gd").prepare()
+	else: preload("res://world/rebuild_tank_factory.gd").prepare()
 	for offset in [Vector3(12,0,0),Vector3(-12,0,0),Vector3(0,0,14),Vector3(18,0,12)]:
 		var hit=arena.aliens.ground(original_car.global_position+original_car.global_basis*offset)
 		if hit.is_empty(): continue

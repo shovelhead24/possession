@@ -33,6 +33,8 @@ static func prepare() -> void:
 	audit={"source_triangles":original,"reduced_triangles":reduced}
 	print("REBUILD_TANK_MODEL ",JSON.stringify(audit))
 static func create(kit: Node, pose: Transform3D) -> RigidBody3D:
+	if kit.arena.has_method("performance_features"):
+		return preload("res://world/performance_tank_factory.gd").create(kit,pose)
 	prepare()
 	var tank=preload("res://world/rebuild_tank.gd").new();tank.name="Altay";tank.kit=kit
 	kit.arena.add_child(tank);tank.set_stream_ready(false);tank.recovery_floor=-INF;tank.collision_layer=2;tank.collision_mask=7;tank.suspension_mask=7

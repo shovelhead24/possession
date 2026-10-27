@@ -6,7 +6,7 @@ const STEPS=[512.0,1700.0,5000.0]
 const RANGES=[6500.0,34000.0,125000.0]
 const FADES=[Vector4(0,0,5000,6500),Vector4(5000,7000,27000,34000),Vector4(25000,33000,105000,125000)]
 const CELLS=16
-const CACHE="user://sky-cloud-chunks-v1/"
+const CACHE="user://sky-cloud-chunks-v2-absolute/"
 var chunks={}
 var wanted={}
 var queue: Array=[]
@@ -21,6 +21,8 @@ var disk_hits=0
 var memory_hits=0
 var max_build_ms=0.0
 var exclude_near=0.0
+var gpu_orientation := false
+var animation_bounds_margin := 0.0
 
 func _ready():
 	physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -49,7 +51,7 @@ func update_around(camera: Vector3,delta: float):
 		var key=queue.pop_front()
 		if wanted.has(key) and not chunks.has(key): create_chunk(key,camera)
 	if camera.distance_squared_to(last_camera)>0.0001: settle=2.0
-	if settle>0.0:
+	if settle>0.0 and not gpu_orientation:
 		settle-=delta
 		for key in chunks:
 			if key.x==0 and wanted.has(key): orient(chunks[key],camera,delta)
@@ -87,12 +89,17 @@ func create_chunk(key: Vector3i,camera: Vector3):
 	else:
 		mm=build_chunk(key);ResourceSaver.save(mm,path);generated+=1
 	var node=MultiMeshInstance3D.new();node.multimesh=mm;node.material_override=materials[key.x]
+	node.position=-Ring.offset()
+	node.extra_cull_margin=animation_bounds_margin
 	node.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;node.gi_mode=GeometryInstance3D.GI_MODE_DISABLED
 	add_child(node)
-	var record={"node":node,"used":Time.get_ticks_msec(),"base":[],"right":[]}
+	var record={"node":node,"used":Time.get_ticks_msec(),"base":[],"right":[],"up":[],"size":[]}
 	if key.x==0:
-		for i in mm.instance_count: record.base.append(mm.get_instance_transform(i));record.right.append(Vector3.ZERO)
+		for i in mm.instance_count:
+			var pose := mm.get_instance_transform(i)
+			record.base.append(pose);record.right.append(Vector3.ZERO)
+			record.up.append(pose.basis.y.normalized());record.size.append(Vector2(pose.basis.x.length(),pose.basis.y.length()))
 		orient(record,camera,0.0)
 	chunks[key]=record
 	max_build_ms=maxf(max_build_ms,(Time.get_ticks_usec()-started)/1000.0)
@@ -117,7 +124,7 @@ func build_chunk(key: Vector3i) -> MultiMesh:
 				altitude=rng.randf_range(850,1550)
 				width=rng.randf_range(650,1400) if tier==1 else rng.randf_range(1100,2300)
 				height=rng.randf_range(250,550) if tier==1 else rng.randf_range(350,700)
-			var p=Ring.point(arc,altitude,lat);var b=Ring.tangent_basis(p,0)
+			var p=Ring.Frame.position(arc,altitude,lat);var b=Ring.tangent_basis(Ring.local_point(p),0)
 			b.x*=width;b.y*=height;transforms.append(Transform3D(b,p));seeds.append(Color(0,0,0,rng.randf()))
 			var r=Vector2(width,height).length()*0.5;var box=AABB(p-Vector3.ONE*r,Vector3.ONE*r*2)
 			bounds=box if first else bounds.merge(box);first=false
@@ -127,13 +134,16 @@ func build_chunk(key: Vector3i) -> MultiMesh:
 	return mm
 
 func orient(record: Dictionary,camera: Vector3,delta: float):
-	var mm=record.node.multimesh
-	for i in record.base.size():
-		var base: Transform3D=record.base[i]
+	camera-=record.node.global_position
+	var mm: MultiMesh=record.node.multimesh
+	var bases: Array=record.base;var rights: Array=record.right;var ups: Array=record.up;var sizes: Array=record.size
+	for i in bases.size():
+		var base: Transform3D=bases[i]
 		if base.origin.distance_squared_to(camera)>7500.0*7500.0: continue
-		var front=(camera-base.origin).normalized()
-		var right=Facing.right_axis(front,base.basis.y.normalized(),record.right[i],delta);record.right[i]=right
-		mm.set_instance_transform(i,Transform3D(Basis(right*base.basis.x.length(),front.cross(right)*base.basis.y.length(),front),base.origin))
+		var front: Vector3=(camera-base.origin).normalized()
+		var right: Vector3=Facing.right_axis(front,ups[i],rights[i],delta);rights[i]=right
+		var size: Vector2=sizes[i]
+		mm.set_instance_transform(i,Transform3D(Basis(right*size.x,front.cross(right)*size.y,front),base.origin))
 
 func status() -> String:
 	return "%d batches / %d queued / cache %d disk + %d memory" % [wanted.size(),queue.size(),disk_hits,memory_hits]

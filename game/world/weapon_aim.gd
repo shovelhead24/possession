@@ -67,7 +67,7 @@ func solve(weapon: Node) -> Dictionary:
 		nodes.append_array(arena.get_tree().get_nodes_in_group("tyrants"))
 		for node in nodes:
 			if not is_instance_valid(node) or enemy(node,arena)!=node or not node.is_visible_in_tree() or node.has_meta("trex_held"): continue
-			for child in node.get_children():
+			for child in node.get_children()+node.get_meta("damage_regions",[]):
 				if not child is CollisionShape3D or child.disabled or not child.shape: continue
 				if not (child.shape is BoxShape3D or child.shape is SphereShape3D or child.shape is CapsuleShape3D): continue
 				var nearest=nearest_point(child,origin,forward,minf(reach,RANGES[weapon.selected]))

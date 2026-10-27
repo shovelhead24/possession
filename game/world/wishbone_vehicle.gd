@@ -36,6 +36,9 @@ var stream_control := preload("res://world/stream_speed_control.gd").new()
 var stream_brake_amount := 0.0
 var stream_drive_scale := 1.0
 var gravity_up := Vector3.UP
+func origin_shifted(delta: Vector3):
+	for corner in corners:
+		if corner.has("contact"):corner.contact-=delta
 
 func set_stream_ready(value: bool) -> void:
 	if streaming_suspended == not value: return
@@ -74,6 +77,10 @@ var velocity: Vector3:
 var metal: StandardMaterial3D
 var spring_mat: StandardMaterial3D
 var rest_hub: Vector2=Linkage.solve(0).hub
+var cached_travel_limit := INF
+var cached_droop: Dictionary
+var cached_bump: Dictionary
+var suspension_query := PhysicsRayQueryParameters3D.new()
 
 func _ready() -> void:
 	Linkage.prepare_height_search()
@@ -174,18 +181,21 @@ func _physics_process(dt: float) -> void:
 	steering=move_toward(steering,turn*steer_limit,dt*steer_rate)
 	grounded_count=0;max_compression=0
 	var space=get_world_3d().direct_space_state
+	if cached_travel_limit!=travel_limit:
+		cached_travel_limit=travel_limit
+		cached_droop=Linkage.solve(-travel_limit);cached_bump=Linkage.solve(travel_limit)
+	suspension_query.exclude=[get_rid()]+suspension_exclusions
+	suspension_query.collision_mask=suspension_mask
 	for c in corners:
 		var anchor: Vector3=c.anchor
 		var side: float=c.side
 		var radius: float=c.radius
-		var droop: Dictionary=Linkage.solve(-travel_limit)
-		var bump: Dictionary=Linkage.solve(travel_limit)
+		var droop: Dictionary=cached_droop
+		var bump: Dictionary=cached_bump
 		var geom: Dictionary=Linkage.solve(c.travel)
 		var origin=to_global(point(anchor,Vector2(geom.hub.x,bump.hub.y+.12),side))
-		var ray=PhysicsRayQueryParameters3D.create(origin,origin-up*(bump.hub.y-droop.hub.y+radius+.18))
-		ray.exclude=[get_rid()]
-		ray.exclude+=suspension_exclusions
-		ray.collision_mask=suspension_mask
+		var ray=suspension_query
+		ray.from=origin;ray.to=origin-up*(bump.hub.y-droop.hub.y+radius+.18)
 		var hit=space.intersect_ray(ray)
 		c.grounded=false
 		if trace_suspension:

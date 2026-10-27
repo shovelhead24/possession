@@ -13,6 +13,7 @@ var jump_queued := false
 var test_controls := false
 var test_move := Vector2.ZERO
 var last_safe := Vector3.ZERO
+func origin_shifted(delta: Vector3):last_safe-=delta
 var toss_velocity := Vector3.ZERO
 var toss_time := 0.0
 

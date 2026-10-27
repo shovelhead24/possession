@@ -14,6 +14,11 @@ var lod_triangles := 0
 var loading_started := 0
 var material: Material
 var hud_clock := 0.0
+var hud_refresh_due := true
+var hud_updates_enabled := true
+var hud_skip_when_hidden := false
+var hud_refresh_interval := 0.0
+var hud_refresh_elapsed := 0.0
 var frame_times: Array[float]=[]
 var last_frame := 0
 var worker: Thread
@@ -128,6 +133,10 @@ func _input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	if not ready_to_play: return
+	hud_refresh_elapsed+=delta
+	hud_refresh_due=hud_updates_enabled and hud_refresh_elapsed>=hud_refresh_interval
+	if hud_skip_when_hidden and (not hud.is_visible_in_tree() or hud.self_modulate.a<=0.0): hud_refresh_due=false
+	if hud_refresh_due: hud_refresh_elapsed=0.0
 	var now := Time.get_ticks_usec()
 	if last_frame>0:
 		frame_times.append((now-last_frame)/1000.0)
@@ -142,6 +151,7 @@ func _process(delta: float) -> void:
 		camera.position.x=clampf(camera.position.x,bounds.position.x+2,bounds.end.x-2);camera.position.z=clampf(camera.position.z,bounds.position.y+2,bounds.end.y-2)
 		camera.position.y=maxf(camera.position.y,source.surface_height(Vector2(camera.position.x,camera.position.z))+2)
 	hud_clock+=delta
+	if not hud_refresh_due: return
 	if hud_clock<.25: return
 	hud_clock=0
 	var sorted := frame_times.duplicate();sorted.sort()

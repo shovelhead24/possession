@@ -1,12 +1,29 @@
 extends RefCounted
 ## Shared world/ring conversion for the curved driving terrain and its physics.
 const Frame = preload("res://world/ring_frame.gd")
+## Cartesian offset is held in scalar doubles, never accumulated in Vector3.
+## Cached terrain stays in the original frame; gameplay uses local coordinates.
+static var origin_x: float=0.0
+static var origin_y: float=0.0
+static var origin_z: float=0.0
+
+static func offset() -> Vector3:return Vector3(origin_x,origin_y,origin_z)
+static func reset_origin() -> void:
+	origin_x=0.0;origin_y=0.0;origin_z=0.0
+static func absolute_point(local: Vector3) -> Vector3:
+	return Vector3(origin_x+local.x,origin_y+local.y,origin_z+local.z)
+static func local_point(absolute: Vector3) -> Vector3:
+	return Vector3(float(absolute.x)-origin_x,float(absolute.y)-origin_y,float(absolute.z)-origin_z)
 
 static func point(arc: float, height: float, lateral: float) -> Vector3:
-	return Frame.position(arc,height,lateral)
+	var radius=Frame.CIRCUMFERENCE/TAU
+	var theta=arc/radius;var radial=radius-height
+	return Vector3(radial*sin(theta)-origin_x,height+2.0*radial*pow(sin(theta*.5),2.0)-origin_y,lateral-origin_z)
 
 static func coordinates(world_point: Vector3) -> Vector3:
-	return Frame.coordinates(world_point)
+	var radius=Frame.CIRCUMFERENCE/TAU
+	var x=origin_x+world_point.x;var y=origin_y+world_point.y
+	return Vector3(atan2(x,radius-y)*radius,radius-sqrt(x*x+pow(radius-y,2.0)),origin_z+world_point.z)
 
 static func up_at(world_point: Vector3) -> Vector3:
 	return Frame.up(coordinates(world_point).x)
@@ -36,7 +53,7 @@ static func warp_mesh(result: Dictionary) -> void:
 		var theta := flat.x/radius
 		var spinward := Vector3(cos(theta),sin(theta),0)
 		var up := Vector3(-sin(theta),cos(theta),0)
-		vertices[i]=point(flat.x,flat.y,flat.z)
+		vertices[i]=Frame.position(flat.x,flat.y,flat.z)
 		# The field normal is expressed in the source tangent frame. Rotate its
 		# three axes into the same local ring frame as the curved vertex.
 		if i<normals.size():

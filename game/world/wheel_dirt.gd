@@ -1,5 +1,9 @@
 extends Node3D
 var emitters: Array[CPUParticles3D]=[]
+func origin_shifted(_delta: Vector3):
+	# World-space CPU particles cannot be rebased individually. Clear the brief
+	# dust trail rather than leaving it behind in the old simulation frame.
+	for emitter in emitters:emitter.restart()
 func _ready() -> void:
 	name="WheelDirt"
 	var img=Image.create(32,32,false,Image.FORMAT_RGBA8)

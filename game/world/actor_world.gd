@@ -10,6 +10,10 @@ var routes := {}
 var revision := -1
 var clock := 0.0
 var pending := 0
+func origin_shifted(delta: Vector3):
+	for state in snapshots.values():
+		if state.has("position"):state.position-=delta
+	for route in routes.values():route.origin_shifted(delta)
 func setup(owner_arena: Node3D) -> void:
 	arena=owner_arena;process_physics_priority=-40
 	store.base=arena.source.identity

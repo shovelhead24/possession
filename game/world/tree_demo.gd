@@ -63,13 +63,13 @@ func _process(delta: float) -> void:
 	if on_foot and on_foot.active: diagnostic=true
 	super._process(delta)
 	diagnostic=old_diagnostic
-	if ready_to_play and trees:
-		# Parent rewrites its HUD every frame; append once after it.
+	if ready_to_play and hud_refresh_due and trees:
+		# Append only when the parent has rebuilt the HUD.
 		hud.text+="\n"+painted_trees.status()+" | "+("AUTO" if painted_trees.forced_lod<0 else "FORCED LOD "+str(painted_trees.forced_lod))
 		hud.text+="\nPainted trees: %d | %s | F1 paint / erase" % [painted_trees.store.records.size(),"Unsaved" if painted_trees.store.unsaved() else "Saved"]
 
 
-	if ready_to_play and on_foot:
+	if ready_to_play and hud_refresh_due and on_foot:
 		hud.text=hud.text.replace("E fly/drive","E exit / enter vehicle")
 		if on_foot.active:
 			hud.text=hud.text.replace("WASD drive · Space brake · C camera · E exit / enter vehicle · R recover","WASD walk · Space jump · E enter vehicle")

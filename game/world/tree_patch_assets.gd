@@ -76,7 +76,7 @@ func append(out: ArrayMesh, mesh: Mesh, xf: Transform3D) -> void:
 					if img: texture=ImageTexture.create_from_image(prepare_foliage_image(img))
 					var shader_material := ShaderMaterial.new();shader_material.shader=FOLIAGE
 					shader_material.set_shader_parameter("tex",texture)
-					shader_material.set_shader_parameter("cut",material.alpha_scissor_threshold)
+					shader_material.set_shader_parameter("cut",maxf(.35,material.alpha_scissor_threshold))
 					materials[id]=shader_material
 				else: materials[id]=material
 			material=materials[id]

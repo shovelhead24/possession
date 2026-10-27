@@ -24,12 +24,21 @@ var shadow_revision := 0
 var foliage_budget: RefCounted
 var last_forward := Vector3.ZERO
 
+func origin_shifted(delta: Vector3):
+	for item in candidates:item.transform.origin-=delta
+	last_camera-=delta;dirty=true;uploaded.clear()
+	# Shifted batch nodes already render correctly. Re-upload on the usual budget.
+
 func setup(owner_arena: Node3D) -> void:
 	arena=owner_arena
 	# Static instance slots change ownership when LOD buckets change. Interpolating
 	# those slots would blend unrelated trees and produces streaks during swaps.
 	physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
-	variants=Assets.new().load_meshes();names=variants.keys()
+	if arena.has_method("performance_features") and "--pine-trees" in OS.get_cmdline_user_args() and not "--original-trees" in OS.get_cmdline_user_args():
+		variants=preload("res://world/performance_tree_assets.gd").new().load_meshes()
+	else:
+		variants=Assets.new().load_meshes()
+	names=variants.keys()
 	assert(not names.is_empty(),"Tree assets unavailable")
 	print("TREE_ASSET_AUDIT ",JSON.stringify(Assets.audit(variants)))
 	# Automatic demonstration placement was removed; authored trees load separately.
@@ -123,6 +132,7 @@ func update_batches() -> void:
 			batches[key].queue_free();batches.erase(key);uploaded.erase(key);continue
 		var previous: Array=uploaded.get(key,[])
 		if previous==transforms: continue
+		batches[key].position=Vector3.ZERO
 		var mm: MultiMesh=batches[key].multimesh
 		var resized=mm.instance_count!=transforms.size()
 		if resized: mm.instance_count=transforms.size()

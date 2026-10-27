@@ -12,6 +12,10 @@ var frame_history: Array=[]
 var frame_cursor := 0
 var pending_frames: Array=[]
 var last_frame_usec := 0
+var passive_sample_interval := 0.0
+var passive_physics_elapsed := 0.0
+var context_elapsed := INF
+var cached_context := {}
 
 func write_event(event: String, data: Dictionary) -> void:
 	arena.trace_edit(event,data)
@@ -69,7 +73,10 @@ func _process(_delta: float) -> void:
 	var now := Time.get_ticks_usec()
 	if last_frame_usec and not traced_vehicles().is_empty():
 		var sample := {"sample_usec":now,"frame_ms":(now-last_frame_usec)/1000.0,"cpu_monitor_ms":Performance.get_monitor(Performance.TIME_PROCESS)*1000,"physics_monitor_ms":Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)*1000,"draw_calls":Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),"triangles":Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)}
-		sample.merge(frame_context())
+		context_elapsed+=_delta
+		if active_id or passive_sample_interval<=0 or context_elapsed>=passive_sample_interval:
+			cached_context=frame_context();cached_context["context_sample_usec"]=now;context_elapsed=0
+		sample.merge(cached_context)
 		if frame_history.size()<CAPACITY: frame_history.append(sample)
 		else: frame_history[frame_cursor]=sample
 		frame_cursor=(frame_cursor+1)%CAPACITY
@@ -78,6 +85,9 @@ func _process(_delta: float) -> void:
 	drain() # Serialization stays outside the physics callback.
 
 func _physics_process(delta: float) -> void:
+	passive_physics_elapsed+=delta
+	if not active_id and passive_sample_interval>0 and passive_physics_elapsed<passive_sample_interval: return
+	delta=passive_physics_elapsed;passive_physics_elapsed=0
 	var started := Time.get_ticks_usec()
 	var vehicles := traced_vehicles()
 	if vehicles.is_empty(): return

@@ -21,6 +21,15 @@ var render_clock := 0.0
 var grenade_cooldown := 0.0
 var respawn_clock := 0.0
 var spawn := Vector3.ZERO
+func origin_shifted(delta: Vector3):
+	spawn-=delta
+	for entry in garrisons:
+		entry.home-=delta;entry.last_known-=delta
+		for state in entry.snapshot.values():
+			if state is Dictionary and state.has("position"):state.position-=delta
+	if navigation:navigation.invalidate()
+	if cover:
+		for i in cover.slots.size():cover.slots[i]-=delta
 var physics_usec := 0
 var stream_enabled := true
 var initialized := false

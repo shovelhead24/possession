@@ -15,6 +15,10 @@ var source_foot_heights: Array=[]
 var settle_weight := 0.0
 var mouth_bones: Array[int]=[]
 var last_mouth := Vector3.ZERO
+func origin_shifted(delta: Vector3):
+	last_head-=delta;last_mouth-=delta;last_head_pose.origin-=delta
+	for i in last_feet.size():last_feet[i]-=delta
+	for i in last_targets.size():last_targets[i]-=delta
 var neck_bone := -1
 var jaw_bone := -1
 var spine_bone := -1

@@ -1,4 +1,5 @@
 shader_type spatial;
+global uniform vec3 ring_origin_offset;
 render_mode cull_disabled, shadows_disabled, blend_mix, depth_draw_never, unshaded;
 
 uniform vec3  color_top    : source_color = vec3(1.0,  1.0,  1.0);
@@ -121,7 +122,7 @@ void vertex() {
 		world_pos = vec3(rr * sin(theta), ring_radius - rr * cos(theta), lat);
 		VERTEX = world_pos;   // identity model transform, so VERTEX is the world position
 	} else {
-		world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+		world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz + ring_origin_offset;
 		ring_uv = world_pos.xz;
 	}
 }
@@ -176,7 +177,7 @@ void fragment() {
 	float lighting = under_ambient + transmit * under_transmit * max(0.0, sun3d.y);
 	// From below, the original mix selected only transmission. Avoid the two
 	// six-octave gradient evaluations and top-lighting work that it discarded.
-	if (CAMERA_POSITION_WORLD.y >= world_pos.y) {
+	if (CAMERA_POSITION_WORLD.y + ring_origin_offset.y >= world_pos.y) {
 	float e = 0.5;
 	float ndx = fbm(uv + warp + vec2(e, 0.0)) - base_raw;
 	float ndz = fbm(uv + warp + vec2(0.0, e)) - base_raw;

@@ -14,6 +14,8 @@ var clock := 0.0
 var shadow_quality := 0 # 0 balanced proxies, 1 fast proxies, 2 original detailed trees
 var proxies: Node3D
 var applied_quality := -1
+var balanced_shadow_map_size := 2048
+var applied_shadow_map_size := -1
 var shadow_distance := 121.0
 var near_split_percent := 12.0
 var blend_splits := false
@@ -111,7 +113,10 @@ func apply() -> void:
 	if applied_quality!=shadow_quality:
 		applied_quality=shadow_quality
 		sun.directional_shadow_mode=DirectionalLight3D.SHADOW_ORTHOGONAL if shadow_quality==1 else DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
-		RenderingServer.directional_shadow_atlas_set_size(1024 if shadow_quality==1 else 2048,false)
+	var map_size := 1024 if shadow_quality==1 else (balanced_shadow_map_size if shadow_quality==0 else 2048)
+	if applied_shadow_map_size!=map_size:
+		applied_shadow_map_size=map_size
+		RenderingServer.directional_shadow_atlas_set_size(map_size,false)
 	if applied_filter!=shadow_filter:
 		applied_filter=shadow_filter
 		var filters := [RenderingServer.SHADOW_QUALITY_HARD,RenderingServer.SHADOW_QUALITY_SOFT_LOW,RenderingServer.SHADOW_QUALITY_SOFT_HIGH]

@@ -20,6 +20,9 @@ var active_count := 0
 var update_ms := 0.0
 var collision_queue: Array=[]
 
+func origin_shifted(delta: Vector3):
+	last_camera=Vector3.INF;uploaded.clear()
+
 func setup(owner_arena: Node3D) -> void:
 	arena=owner_arena;physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	store.base=arena.source.identity
@@ -96,6 +99,7 @@ func update_visuals(camera: Vector3) -> void:
 			node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_ON if group.shadow else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			add_child(node);batches[key]=node
 		if uploaded.get(key,[])==group.poses: continue
+		batches[key].position=Vector3.ZERO
 		uploaded[key]=group.poses
 		var mm: MultiMesh=batches[key].multimesh;mm.instance_count=group.poses.size()
 		for i in group.poses.size(): mm.set_instance_transform(i,group.poses[i])

@@ -21,6 +21,10 @@ var authored_mode := 0
 var patrol_speed := 1.25
 var route: RefCounted
 var route_target := Vector3.ZERO
+func origin_shifted(delta: Vector3):
+	home-=delta;last_known-=delta;route_target-=delta
+	for pair in assault_pairs.pairs:pair.goal-=delta
+	if route:route.origin_shifted(delta)
 func configure_authored(record: Dictionary) -> void:
 	authored=true;authored_mode=record.mode;patrol_speed=record.speed;home=preload("res://world/actor_store.gd").point(record.p)
 	route=preload("res://world/actor_route.gd").new();route.configure(record)

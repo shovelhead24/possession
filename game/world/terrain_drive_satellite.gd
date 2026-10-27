@@ -2,10 +2,10 @@ extends RefCounted
 ## Full-resolution home imagery, decoded/compressed before entry; no terrain cache changes.
 const SOURCE := "res://mocks/dem/millstreet_sat.dat"
 
-static func load_image() -> Image:
-	var source_file := FileAccess.open(SOURCE,FileAccess.READ)
+static func load_image(source: String=SOURCE) -> Image:
+	var source_file := FileAccess.open(source,FileAccess.READ)
 	if not source_file: return null
-	var identity := (SOURCE+str(FileAccess.get_modified_time(SOURCE))+str(source_file.get_length())+"rgb8-mips-s3tc-v1").sha256_text()
+	var identity := (source+str(FileAccess.get_modified_time(source))+str(source_file.get_length())+"rgb8-mips-s3tc-v1").sha256_text()
 	source_file.close()
 	var directory := "user://terrain-satellite/"
 	var path := directory+identity+".bin"
@@ -18,7 +18,7 @@ static func load_image() -> Image:
 				print("DRIVE_SATELLITE cache width=",cached.get_width()," bytes=",cached.get_data().size())
 				return cached
 	var image := Image.new()
-	if image.load_png_from_buffer(FileAccess.get_file_as_bytes(SOURCE))!=OK: return null
+	if image.load_png_from_buffer(FileAccess.get_file_as_bytes(source))!=OK: return null
 	image.convert(Image.FORMAT_RGB8)
 	image.generate_mipmaps()
 	if image.compress(Image.COMPRESS_S3TC,Image.COMPRESS_SOURCE_SRGB)!=OK:

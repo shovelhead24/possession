@@ -97,6 +97,7 @@ func _process(delta: float) -> void:
 		var height := maxf(ring_position.y,source.surface_height(Vector2(arc,lateral))+2)
 		camera.position=Ring.point(arc,height,lateral)
 	if vehicle_kit.driving: vehicle_kit.update_camera(delta)
+	if not hud_refresh_due: return
 	var sorted := frame_times.duplicate();sorted.sort()
 	var p95: float=sorted[int(sorted.size()*.95)] if not sorted.is_empty() else 0.0
 	var drive_position := Ring.coordinates(vehicle_kit.car.position)

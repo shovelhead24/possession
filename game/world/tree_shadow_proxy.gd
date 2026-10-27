@@ -6,6 +6,8 @@ var uploaded := {}
 var tree_count := 0
 var update_ms := 0.0
 var last_state: Array=[]
+func origin_shifted(_delta: Vector3):
+	last_state.clear();uploaded.clear()
 
 func setup(patch: Node3D) -> void:
 	physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -62,6 +64,7 @@ func refresh(arena: Node3D, active: bool) -> void:
 			node.multimesh=MultiMesh.new();node.multimesh.transform_format=MultiMesh.TRANSFORM_3D
 			node.multimesh.mesh=meshes[key.z];add_child(node);batches[key]=node
 		if uploaded.get(key,[])==groups[key]: continue
+		batches[key].position=Vector3.ZERO
 		uploaded[key]=groups[key]
 		var mm: MultiMesh=batches[key].multimesh;mm.instance_count=groups[key].size()
 		for index in groups[key].size(): mm.set_instance_transform(index,groups[key][index])

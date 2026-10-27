@@ -130,3 +130,10 @@ lighting_test={
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+
+[shader_globals]
+
+ring_origin_offset={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
